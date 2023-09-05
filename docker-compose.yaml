@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  angular:
+    container_name: gkfeed-front
+    build:
+      context: .
+    ports:
+      - "4200:80"
