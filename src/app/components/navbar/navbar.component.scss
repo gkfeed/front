@@ -1,0 +1,24 @@
+.nav { background-color: #1f1c1c;
+  display: flex;
+}
+
+.logo {
+  color: #5d1f1f;
+  background-color: #bd8d7b;
+  border-radius: 30px;
+  border: 2px solid #5d1f1f;
+  margin: 15px;
+  padding: 15px;
+  font-size: 25px;
+}
+
+.link {
+  cursor: pointer;
+  color: #ecdcbb;
+  // background-color: #ecdcbb;
+  border-radius: 30px;
+  // border: 2px solid #5d1f1f;
+  margin: 15px;
+  padding: 15px;
+  font-size: 25px;
+}

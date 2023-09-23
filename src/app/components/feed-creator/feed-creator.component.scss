@@ -9,9 +9,10 @@ form {
   max-width: 400px;
   width: 100%;
   padding: 20px;
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
+  border: 1px solid #5d1f1f;
+  background-color: #bd8d7b;
   border-radius: 20px;
+  color: #5d1f1f;
 }
 
 form div {
@@ -27,14 +28,15 @@ input[type="text"],
 input[type="email"] {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #5d1f1f;
   border-radius: 20px;
   box-sizing: border-box;
+  background-color: #bcac9b;
 }
 
 button {
   background-color: #4caf50;
-  color: white;
+  text-color: ecdcbb;
   padding: 10px 20px;
   border: none;
   border-radius: 20px;
@@ -42,7 +44,8 @@ button {
 }
 
 button:disabled {
-  background-color: #ccc;
+  background-color: #bcac9b;
+  color: ecdcbb;
   cursor: not-allowed;
 }
 

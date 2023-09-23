@@ -7,10 +7,27 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { FeedsListComponent } from './components/feeds-list/feeds-list.component';
 import { FeedCreatorComponent } from './components/feed-creator/feed-creator.component';
+import { FeedListPageComponent } from './pages/feed-list-page/feed-list-page.component';
+import { FeedCreatePageComponent } from './pages/feed-create-page/feed-create-page.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
-  declarations: [AppComponent, FeedsListComponent, FeedCreatorComponent],
-  imports: [BrowserModule, AppRoutingModule, HttpClientModule, FormsModule],
+  declarations: [
+    AppComponent,
+    FeedsListComponent,
+    FeedCreatorComponent,
+    FeedListPageComponent,
+    FeedCreatePageComponent,
+    NavbarComponent,
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule,
+    BrowserAnimationsModule,
+  ],
   providers: [],
   bootstrap: [AppComponent],
 })
