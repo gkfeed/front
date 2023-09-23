@@ -1,3 +1,7 @@
-<h1 *ngFor="let feed of feeds">
-  {{ feed.title }} {{ feed.type }} {{ feed.url }}
-</h1>
+<div class="container">
+  <div *ngFor="let feed of feeds" class="feed">
+    <span><b>Title:</b> {{ feed.title }}</span>
+    <span><b>Type:</b> {{ feed.type }}</span>
+    <span><b>Url:</b> {{ feed.url }}</span>
+  </div>
+</div>
