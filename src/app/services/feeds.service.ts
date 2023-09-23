@@ -19,4 +19,9 @@ export class FeedsService {
       tap((feeds) => (this.feeds = feeds))
     );
   }
+
+  create(feed: IFeed): Observable<IFeed> {
+    console.log('creating');
+    return this.http.post<IFeed>(environment.api_root + 'add', feed).pipe();
+  }
 }
