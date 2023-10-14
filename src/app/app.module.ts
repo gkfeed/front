@@ -11,6 +11,8 @@ import { FeedListPageComponent } from './pages/feed-list-page/feed-list-page.com
 import { FeedCreatePageComponent } from './pages/feed-create-page/feed-create-page.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FeedCardComponent } from './components/feed-card/feed-card.component';
+import { FeedPageComponent } from './pages/feed-page/feed-page.component';
 
 @NgModule({
   declarations: [
@@ -20,6 +22,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     FeedListPageComponent,
     FeedCreatePageComponent,
     NavbarComponent,
+    FeedCardComponent,
+    FeedPageComponent,
   ],
   imports: [
     BrowserModule,

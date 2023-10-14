@@ -1,7 +1,5 @@
 <div class="container">
-  <div *ngFor="let feed of feeds" class="feed">
-    <span><b>Title:</b> {{ feed.title }}</span>
-    <span><b>Type:</b> {{ feed.type }}</span>
-    <span><b>Url:</b> {{ feed.url }}</span>
+  <div *ngFor="let feed of feeds" class="link">
+    <app-feed-card [feed]="feed"></app-feed-card>
   </div>
 </div>

@@ -1,0 +1,20 @@
+.delete {
+  max-width: 400px;
+  min-width: 400px;
+  width: 100%;
+  padding: 20px;
+  background-color: #af4c50;
+  border: none;
+  border-radius: 20px;
+  margin-left: 20px;
+  border-radius: 20px;
+  color: ecdcbb;
+  text-align: center;
+  cursor: pointer;
+}
+
+.container {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+}
