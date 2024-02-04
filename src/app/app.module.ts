@@ -14,6 +14,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FeedCardComponent } from './components/feed-card/feed-card.component';
 import { FeedPageComponent } from './pages/feed-page/feed-page.component';
 import { LoginPageComponent } from './pages/login-page/login-page.component';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 @NgModule({
   declarations: [
@@ -34,7 +35,9 @@ import { LoginPageComponent } from './pages/login-page/login-page.component';
     FormsModule,
     BrowserAnimationsModule,
   ],
-  providers: [],
+  providers: [
+    provideAnimationsAsync()
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
