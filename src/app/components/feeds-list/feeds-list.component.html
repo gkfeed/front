@@ -1,5 +1,7 @@
 <div class="container">
-  <div *ngFor="let feed of feeds" class="link">
+  @for (feed of feeds; track feed) {
+  <div class="link">
     <app-feed-card [feed]="feed"></app-feed-card>
   </div>
+  }
 </div>

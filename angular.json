@@ -66,10 +66,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "gkfeed-front:build:production"
+              "buildTarget": "gkfeed-front:build:production"
             },
             "development": {
-              "browserTarget": "gkfeed-front:build:development"
+              "buildTarget": "gkfeed-front:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -77,7 +77,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "gkfeed-front:build"
+            "buildTarget": "gkfeed-front:build"
           }
         },
         "test": {

@@ -13,6 +13,7 @@ import { NavbarComponent } from './components/navbar/navbar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FeedCardComponent } from './components/feed-card/feed-card.component';
 import { FeedPageComponent } from './pages/feed-page/feed-page.component';
+import { LoginPageComponent } from './pages/login-page/login-page.component';
 
 @NgModule({
   declarations: [
@@ -24,6 +25,7 @@ import { FeedPageComponent } from './pages/feed-page/feed-page.component';
     NavbarComponent,
     FeedCardComponent,
     FeedPageComponent,
+    LoginPageComponent,
   ],
   imports: [
     BrowserModule,
