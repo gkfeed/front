@@ -1,4 +1,4 @@
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -16,28 +16,22 @@ import { FeedPageComponent } from './pages/feed-page/feed-page.component';
 import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    FeedsListComponent,
-    FeedCreatorComponent,
-    FeedListPageComponent,
-    FeedCreatePageComponent,
-    NavbarComponent,
-    FeedCardComponent,
-    FeedPageComponent,
-    LoginPageComponent,
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    HttpClientModule,
-    FormsModule,
-    BrowserAnimationsModule,
-  ],
-  providers: [
-    provideAnimationsAsync()
-  ],
-  bootstrap: [AppComponent],
-})
+@NgModule({ declarations: [
+        AppComponent,
+        FeedsListComponent,
+        FeedCreatorComponent,
+        FeedListPageComponent,
+        FeedCreatePageComponent,
+        NavbarComponent,
+        FeedCardComponent,
+        FeedPageComponent,
+        LoginPageComponent,
+    ],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        AppRoutingModule,
+        FormsModule,
+        BrowserAnimationsModule], providers: [
+        provideAnimationsAsync(),
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class AppModule {}

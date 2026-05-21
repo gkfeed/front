@@ -4,9 +4,10 @@ import { IFeed } from 'src/app/models/feed';
 import { FeedsService } from 'src/app/services/feeds.service';
 
 @Component({
-  selector: 'app-feeds-list',
-  templateUrl: './feeds-list.component.html',
-  styleUrls: ['./feeds-list.component.scss'],
+    selector: 'app-feeds-list',
+    templateUrl: './feeds-list.component.html',
+    styleUrls: ['./feeds-list.component.scss'],
+    standalone: false
 })
 export class FeedsListComponent {
   constructor(public feedsService: FeedsService) {}

@@ -4,9 +4,10 @@ import { IFeed } from 'src/app/models/feed';
 import { FeedsService } from 'src/app/services/feeds.service';
 
 @Component({
-  selector: 'app-feed-page',
-  templateUrl: './feed-page.component.html',
-  styleUrls: ['./feed-page.component.scss'],
+    selector: 'app-feed-page',
+    templateUrl: './feed-page.component.html',
+    styleUrls: ['./feed-page.component.scss'],
+    standalone: false
 })
 export class FeedPageComponent {
   constructor(
