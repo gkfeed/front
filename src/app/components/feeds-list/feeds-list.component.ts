@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import { IFeed } from 'src/app/models/feed';
+import { FeedSearchService } from 'src/app/services/feed-search.service';
 import { FeedsService } from 'src/app/services/feeds.service';
 
 @Component({
@@ -12,7 +13,24 @@ import { FeedsService } from 'src/app/services/feeds.service';
 export class FeedsListComponent implements OnInit {
   feeds: IFeed[] = [];
 
-  constructor(private readonly feedsService: FeedsService) {}
+  constructor(
+    private readonly feedsService: FeedsService,
+    private readonly feedSearchService: FeedSearchService,
+  ) {}
+
+  get filteredFeeds(): IFeed[] {
+    const query = this.feedSearchService.searchTerm.trim().toLowerCase();
+
+    if (!query) {
+      return this.feeds;
+    }
+
+    return this.feeds.filter((feed) =>
+      [feed.title, feed.type, feed.url].some((value) =>
+        value.toLowerCase().includes(query),
+      ),
+    );
+  }
 
   ngOnInit(): void {
     this.feedsService.getAll().subscribe((feeds) => (this.feeds = feeds));

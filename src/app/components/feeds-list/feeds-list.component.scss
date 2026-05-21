@@ -10,4 +10,10 @@ span {
   display: grid;
   justify-content: center;
   align-items: center;
+  gap: 12px;
+}
+
+.empty {
+  color: #ddd;
+  text-align: center;
 }

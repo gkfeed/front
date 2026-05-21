@@ -3,4 +3,12 @@
   <div class="link" routerLink="/">List</div>
   <div class="link" routerLink="/create">Create</div>
   <div class="link" routerLink="/login">Login</div>
+  <input
+    class="search"
+    type="search"
+    placeholder="Search feeds..."
+    aria-label="Search feeds"
+    [(ngModel)]="feedSearchService.searchTerm"
+    routerLink="/"
+  />
 </div>
