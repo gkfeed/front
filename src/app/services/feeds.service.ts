@@ -1,34 +1,27 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { delay, Observable, retry, tap } from 'rxjs';
-import { IFeed } from '../models/feed';
-import { environment } from 'src/enviroments/enviroment';
-import { map } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { map, Observable, retry, tap } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root',
-})
+import { environment } from 'src/enviroments/enviroment';
+import { IFeed } from '../models/feed';
+import { AuthService } from './auth.service';
+
+@Injectable({ providedIn: 'root' })
 export class FeedsService {
-  constructor(private http: HttpClient) {}
+  private readonly apiRoot = environment.api_root;
 
   feeds: IFeed[] = [];
 
+  constructor(
+    private readonly http: HttpClient,
+    private readonly authService: AuthService,
+  ) {}
+
   getAll(): Observable<IFeed[]> {
-    const username = localStorage.getItem('username');
-    const password = localStorage.getItem('password');
-
-    const headers = new HttpHeaders({
-      Authorization: 'Basic ' + btoa(username + ':' + password),
-      // other headers
-    });
-
-    return this.http
-      .get<IFeed[]>(environment.api_root + 'list', { headers })
-      .pipe(
-        delay(200),
-        retry(2),
-        tap((feeds) => (this.feeds = feeds)),
-      );
+    return this.http.get<IFeed[]>(this.endpoint('list'), this.httpOptions()).pipe(
+      retry(2),
+      tap((feeds) => (this.feeds = feeds)),
+    );
   }
 
   getFeedById(id: number): Observable<IFeed | undefined> {
@@ -37,31 +30,27 @@ export class FeedsService {
     );
   }
 
-  deleteFeedById(id: number): Observable<IFeed | undefined> {
-    const username = localStorage.getItem('username');
-    const password = localStorage.getItem('password');
-
-    const headers = new HttpHeaders({
-      Authorization: 'Basic ' + btoa(username + ':' + password),
-      // other headers
-    });
+  deleteFeedById(id: number): Observable<IFeed> {
     const params = new HttpParams().set('id', id);
-    return this.http
-      .get<IFeed>(environment.api_root + 'delete', { params, headers })
-      .pipe();
+    return this.http.get<IFeed>(this.endpoint('delete'), {
+      ...this.httpOptions(),
+      params,
+    });
   }
 
   create(feed: IFeed): Observable<IFeed> {
-    const username = localStorage.getItem('username');
-    const password = localStorage.getItem('password');
+    return this.http.post<IFeed>(this.endpoint('add'), feed, this.httpOptions());
+  }
 
-    const headers = new HttpHeaders({
-      Authorization: 'Basic ' + btoa(username + ':' + password),
-      // other headers
-    });
-    console.log('creating');
-    return this.http
-      .post<IFeed>(environment.api_root + 'add', feed, { headers })
-      .pipe();
+  private endpoint(path: string): string {
+    return `${this.apiRoot}${path}`;
+  }
+
+  private httpOptions(): { headers?: HttpHeaders } {
+    const authorization = this.authService.authorizationHeader;
+
+    return authorization
+      ? { headers: new HttpHeaders({ Authorization: authorization }) }
+      : {};
   }
 }

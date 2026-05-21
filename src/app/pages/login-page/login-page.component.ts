@@ -1,23 +1,26 @@
 import { Component } from '@angular/core';
 
+import { AuthService, Credentials } from 'src/app/services/auth.service';
+
 @Component({
-    selector: 'app-login-page',
-    templateUrl: './login-page.component.html',
-    styleUrl: './login-page.component.scss',
-    standalone: false
+  selector: 'app-login-page',
+  templateUrl: './login-page.component.html',
+  styleUrl: './login-page.component.scss',
+  standalone: false,
 })
 export class LoginPageComponent {
-  username: string = '';
-  password: string = '';
-  show: string | null =
-    localStorage.getItem('username') + ' : ' + localStorage.getItem('password');
+  credentials: Credentials = {
+    username: '',
+    password: '',
+  };
 
-  onSubmit() {
-    localStorage.setItem('username', this.username);
-    localStorage.setItem('password', this.password);
-    this.show =
-      localStorage.getItem('username') +
-      ' : ' +
-      localStorage.getItem('password');
+  savedUsername = this.authService.credentials?.username ?? '';
+
+  constructor(private readonly authService: AuthService) {}
+
+  onSubmit(): void {
+    this.authService.save(this.credentials);
+    this.savedUsername = this.credentials.username;
+    this.credentials = { username: '', password: '' };
   }
 }

@@ -1,26 +1,33 @@
 <div class="container">
   <form #userForm="ngForm" (ngSubmit)="onSubmit()">
-    <h2>{{ this.show }}</h2>
+    @if (savedUsername) {
+      <h2>Logged in as {{ savedUsername }}</h2>
+    }
+
     <div>
-      <label for="title">Username:</label>
+      <label for="username">Username:</label>
       <input
         type="text"
-        id="title"
-        name="title"
-        [(ngModel)]="username"
+        id="username"
+        name="username"
+        [(ngModel)]="credentials.username"
+        autocomplete="username"
         required
       />
     </div>
+
     <div>
-      <label for="title">Password:</label>
+      <label for="password">Password:</label>
       <input
         type="password"
-        id="type"
-        name="type"
-        [(ngModel)]="password"
+        id="password"
+        name="password"
+        [(ngModel)]="credentials.password"
+        autocomplete="current-password"
         required
       />
     </div>
+
     <button type="submit" [disabled]="!userForm.valid">Submit</button>
   </form>
 </div>

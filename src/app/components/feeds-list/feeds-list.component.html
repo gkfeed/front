@@ -1,5 +1,5 @@
 <div class="container">
-  @for (feed of feeds; track feed) {
+  @for (feed of feeds; track feed.id) {
   <div class="link">
     <app-feed-card [feed]="feed"></app-feed-card>
   </div>

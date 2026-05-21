@@ -1,29 +1,30 @@
 import { Component } from '@angular/core';
+
 import { IFeed } from 'src/app/models/feed';
 import { FeedsService } from 'src/app/services/feeds.service';
 
+const EMPTY_FEED: IFeed = {
+  title: '',
+  type: '',
+  url: '',
+};
+
 @Component({
-    selector: 'app-feed-creator',
-    templateUrl: './feed-creator.component.html',
-    styleUrls: ['./feed-creator.component.scss'],
-    standalone: false
+  selector: 'app-feed-creator',
+  templateUrl: './feed-creator.component.html',
+  styleUrls: ['./feed-creator.component.scss'],
+  standalone: false,
 })
 export class FeedCreatorComponent {
-  constructor(private feedService: FeedsService) {}
+  feed: IFeed = { ...EMPTY_FEED };
 
-  feed: IFeed = {
-    title: '',
-    type: '',
-    url: '',
-  };
+  constructor(private readonly feedService: FeedsService) {}
 
-  onSubmit() {
-    console.log('Form submitted:', this.feed);
-    this.feedService.create(this.feed).subscribe();
-    this.feed = {
-      title: '',
-      type: '',
-      url: '',
-    };
+  onSubmit(): void {
+    this.feedService.create(this.feed).subscribe(() => this.resetForm());
+  }
+
+  private resetForm(): void {
+    this.feed = { ...EMPTY_FEED };
   }
 }

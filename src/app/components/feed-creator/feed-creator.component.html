@@ -11,7 +11,7 @@
       />
     </div>
     <div>
-      <label for="title">Type:</label>
+      <label for="type">Type:</label>
       <input
         type="text"
         id="type"
@@ -21,7 +21,7 @@
       />
     </div>
     <div>
-      <label for="title">Url:</label>
+      <label for="url">Url:</label>
       <input type="text" id="url" name="url" [(ngModel)]="feed.url" required />
     </div>
     <button type="submit" [disabled]="!userForm.valid">Submit</button>
