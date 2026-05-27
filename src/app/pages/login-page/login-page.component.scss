@@ -2,17 +2,18 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 50vh;
+  min-height: 50vh;
+  padding: 32px 16px;
 }
 
 form {
   max-width: 400px;
   width: 100%;
   padding: 20px;
-  border: 1px solid #5d1f1f;
-  background-color: #bd8d7b;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
   border-radius: 20px;
-  color: #5d1f1f;
+  color: var(--color-ink);
 }
 
 form div {
@@ -27,16 +28,27 @@ label {
 input[type="text"],
 input[type="password"] {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #5d1f1f;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
   border-radius: 20px;
-  box-sizing: border-box;
-  background-color: #bcac9b;
+  background-color: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+input:focus-visible {
+  border-color: var(--color-ink);
+  background-color: oklch(74% 0.035 58);
+  outline: none;
 }
 
 button {
-  background-color: #4caf50;
-  text-color: ecdcbb;
+  background-color: var(--color-accent);
+  color: var(--color-ink-inverse);
   padding: 10px 20px;
   border: none;
   border-radius: 20px;
@@ -44,8 +56,7 @@ button {
 }
 
 button:disabled {
-  background-color: #bcac9b;
-  color: ecdcbb;
+  background-color: var(--color-disabled);
+  color: var(--color-ink);
   cursor: not-allowed;
 }
-

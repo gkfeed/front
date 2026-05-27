@@ -1,9 +1,7 @@
 <div class="container">
   @for (feed of filteredFeeds; track feed.id) {
-  <div class="link">
     <app-feed-card [feed]="feed"></app-feed-card>
-  </div>
   } @empty {
-  <p class="empty">No feeds found.</p>
+    <p class="empty">No feeds found.</p>
   }
 </div>

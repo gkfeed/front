@@ -3,10 +3,24 @@ body {
   height: 100%;
 }
 
+:root {
+  --color-canvas: oklch(19% 0.012 28);
+  --color-surface: oklch(74% 0.055 47);
+  --color-surface-muted: oklch(70% 0.035 58);
+  --color-ink: oklch(31% 0.08 27);
+  --color-ink-inverse: oklch(91% 0.03 78);
+  --color-border: oklch(38% 0.09 27);
+  --color-accent: oklch(58% 0.15 145);
+  --color-danger: oklch(53% 0.16 25);
+  --color-disabled: oklch(65% 0.03 58);
+  --color-focus: oklch(88% 0.035 78);
+}
+
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  background-color: #1f1c1c;
+  background-color: var(--color-canvas);
+  color: var(--color-ink-inverse);
 }
 
 button,
@@ -17,4 +31,10 @@ a {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }

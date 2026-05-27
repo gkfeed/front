@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable, retry, tap } from 'rxjs';
+import { map, Observable, of, retry, tap } from 'rxjs';
 
 import { environment } from 'src/enviroments/enviroment';
 import { IFeed } from '../models/feed';
@@ -25,6 +25,12 @@ export class FeedsService {
   }
 
   getFeedById(id: number): Observable<IFeed | undefined> {
+    const feed = this.feeds.find((cachedFeed) => cachedFeed.id === id);
+
+    if (feed) {
+      return of(feed);
+    }
+
     return this.getAll().pipe(
       map((feeds) => feeds.find((feed) => feed.id === id)),
     );
