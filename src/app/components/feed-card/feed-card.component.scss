@@ -33,6 +33,13 @@ a.feed:focus-visible {
   justify-self: end;
 }
 
+.feed__topline {
+  align-items: baseline;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .feed--corner-logo {
   overflow: hidden;
   padding-left: 98px;
@@ -102,6 +109,31 @@ a.feed:focus-visible {
   margin-top: 2px;
   padding-top: 12px;
   width: 100%;
+}
+
+.feed--title-id-badge {
+  gap: 7px;
+  padding-bottom: 11px;
+  padding-top: 13px;
+}
+
+.feed--title-id-badge .feed__id {
+  border: 1px solid oklch(58% 0.05 48 / 0.55);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.feed--title-id-badge .feed__title {
+  line-height: 1.08;
+}
+
+.feed--title-id-badge .feed__url {
+  line-height: 1.25;
+}
+
+.feed--title-id-badge .feed__action {
+  margin-top: 0;
+  padding-top: 8px;
 }
 
 .feed__action-hint {
