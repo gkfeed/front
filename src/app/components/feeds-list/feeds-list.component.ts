@@ -1,4 +1,5 @@
 import { Component, DoCheck, OnInit } from '@angular/core';
+import { finalize } from 'rxjs';
 
 import { IFeed } from 'src/app/models/feed';
 import { FeedSearchService } from 'src/app/services/feed-search.service';
@@ -13,6 +14,7 @@ import { FeedsService } from 'src/app/services/feeds.service';
 export class FeedsListComponent implements DoCheck, OnInit {
   feeds: IFeed[] = [];
   filteredFeeds: IFeed[] = [];
+  isLoading = true;
   private searchTerm = '';
 
   constructor(
@@ -21,11 +23,14 @@ export class FeedsListComponent implements DoCheck, OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.feedsService.getAll().subscribe((feeds) => {
-      this.feeds = feeds;
-      this.searchTerm = this.feedSearchService.searchTerm;
-      this.updateFilteredFeeds();
-    });
+    this.feedsService
+      .getAll()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe((feeds) => {
+        this.feeds = feeds;
+        this.searchTerm = this.feedSearchService.searchTerm;
+        this.updateFilteredFeeds();
+      });
   }
 
   ngDoCheck(): void {

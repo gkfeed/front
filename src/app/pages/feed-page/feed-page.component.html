@@ -1,6 +1,6 @@
 @if (feed) {
   <div class="container">
-    <app-feed-card [feed]="feed"></app-feed-card>
+    <app-feed-card [feed]="feed" [asLink]="false"></app-feed-card>
     <button type="button" (click)="deleteFeed()" class="delete">Delete</button>
   </div>
 }

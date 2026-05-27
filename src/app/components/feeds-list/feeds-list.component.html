@@ -1,7 +1,20 @@
 <div class="container">
-  @for (feed of filteredFeeds; track feed.id) {
-    <app-feed-card [feed]="feed"></app-feed-card>
-  } @empty {
-    <p class="empty">No feeds found.</p>
+  @if (isLoading) {
+    <div class="loading" role="status" aria-live="polite" aria-label="Loading feeds">
+      @for (item of [1, 2, 3]; track item) {
+        <div class="feed-skeleton" aria-hidden="true">
+          <span class="skeleton-line skeleton-title"></span>
+          <span class="skeleton-line"></span>
+          <span class="skeleton-line skeleton-url"></span>
+        </div>
+      }
+      <span class="sr-only">Loading feeds...</span>
+    </div>
+  } @else {
+    @for (feed of filteredFeeds; track feed.id) {
+      <app-feed-card [feed]="feed"></app-feed-card>
+    } @empty {
+      <p class="empty">No feeds found.</p>
+    }
   }
 </div>

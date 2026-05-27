@@ -1,16 +1,79 @@
-span {
-  margin: 5px;
-}
-
 .container {
   display: grid;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px 32px;
+  gap: 14px;
+  margin: 0 auto;
+  max-width: 680px;
+  padding: 10px 16px 40px;
+  width: 100%;
+}
+
+.loading {
+  display: grid;
+  gap: 14px;
+}
+
+.feed-skeleton {
+  width: 100%;
+  padding: 18px 20px 16px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid oklch(58% 0.05 48);
+  border-radius: 18px;
+  background: oklch(78% 0.041 62);
+  box-shadow: 0 16px 38px oklch(10% 0.018 28 / 0.2);
+}
+
+.skeleton-line {
+  height: 14px;
+  width: 48%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    oklch(68% 0.036 58) 0%,
+    oklch(84% 0.032 62) 42%,
+    oklch(68% 0.036 58) 84%
+  );
+  background-size: 220% 100%;
+  animation: feed-loading 1.1s ease-out infinite;
+}
+
+.skeleton-title {
+  width: 64%;
+}
+
+.skeleton-url {
+  width: 88%;
 }
 
 .empty {
   color: var(--color-ink-inverse);
   text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line {
+    animation: none;
+  }
+}
+
+@keyframes feed-loading {
+  from {
+    background-position: 120% 0;
+  }
+
+  to {
+    background-position: -120% 0;
+  }
 }
