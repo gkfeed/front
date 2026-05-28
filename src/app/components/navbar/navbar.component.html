@@ -1,12 +1,14 @@
-<nav class="nav" aria-label="Primary navigation">
-  <span class="logo"><b>GKFEED</b></span>
-  <a class="link" routerLink="/">List</a>
-  <a class="link" routerLink="/create">Create</a>
-  <a class="link" routerLink="/login">Login</a>
+<nav class="nav nav-live-leftbar" aria-label="Primary navigation">
+  <a class="nav-live-leftbar__brand" routerLink="/" aria-label="GKFEED home">GKFEED</a>
+  <span class="nav-live-leftbar__links" aria-label="Feed sections">
+    <a class="nav-live-leftbar__link" routerLink="/">List</a>
+    <a class="nav-live-leftbar__link" routerLink="/create">Create</a>
+    <a class="nav-live-leftbar__link" routerLink="/login">Login</a>
+  </span>
   <input
-    class="search"
+    class="nav-live-leftbar__search"
     type="search"
-    placeholder="Search feeds..."
+    placeholder="Search feeds"
     aria-label="Search feeds"
     [(ngModel)]="feedSearchService.searchTerm"
     routerLink="/"
