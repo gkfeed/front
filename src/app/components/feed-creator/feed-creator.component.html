@@ -1,29 +1,89 @@
-<div class="container">
-  <form #userForm="ngForm" (ngSubmit)="onSubmit()">
-    <div>
-      <label for="title">Title:</label>
-      <input
-        type="text"
-        id="title"
-        name="title"
-        [(ngModel)]="feed.title"
-        required
-      />
+<section class="creator" aria-labelledby="feed-create-title">
+  <form class="creator__form" #feedForm="ngForm" (ngSubmit)="onSubmit(feedForm)">
+    <header class="creator__header">
+      <h1 id="feed-create-title">Create feed</h1>
+      <p>Add a source with a clear name and feed URL.</p>
+    </header>
+
+    <div class="creator__fields">
+      <div class="field field--title">
+        <label for="title">Title</label>
+        <div class="field__control">
+          <span class="field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false" width="21" height="21" fill="currentColor">
+              <path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 2v14h10V5H7Zm3 4h5v2h-5V9Zm0 4h5v2h-5v-2Z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            [(ngModel)]="feed.title"
+            autocomplete="off"
+            placeholder="Product updates"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="type">Type</label>
+        <div class="field__control">
+          <span class="field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M5.5 5.5c7.2 0 13 5.8 13 13" />
+              <path d="M5.5 11c4.1 0 7.5 3.4 7.5 7.5" />
+              <path d="M6.2 18.4h.01" stroke-width="4" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="type"
+            name="type"
+            [(ngModel)]="feed.type"
+            autocomplete="off"
+            placeholder="rss"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="field field--url">
+        <label for="url">URL</label>
+        <div class="field__control">
+          <span class="field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false" width="21" height="21" fill="currentColor">
+              <path d="M10.6 13.4a1.5 1.5 0 0 1 0-2.1l3.9-3.9a3 3 0 0 1 4.2 4.2l-2.1 2.1a1 1 0 0 0 1.4 1.4l2.1-2.1a5 5 0 0 0-7.1-7.1L9.2 9.9a3.5 3.5 0 0 0 0 5 1 1 0 1 0 1.4-1.5Zm2.8-2.8a1.5 1.5 0 0 1 0 2.1l-3.9 3.9a3 3 0 0 1-4.2-4.2l2.1-2.1A1 1 0 0 0 6 8.9L3.9 11a5 5 0 0 0 7.1 7.1l3.9-3.9a3.5 3.5 0 0 0 0-5 1 1 0 1 0-1.5 1.4Z" />
+            </svg>
+          </span>
+          <input
+            type="url"
+            id="url"
+            name="url"
+            [(ngModel)]="feed.url"
+            autocomplete="url"
+            placeholder="https://example.com/feed.xml"
+            required
+          />
+        </div>
+      </div>
     </div>
-    <div>
-      <label for="type">Type:</label>
-      <input
-        type="text"
-        id="type"
-        name="type"
-        [(ngModel)]="feed.type"
-        required
-      />
+
+    <div class="creator__actions">
+      <span class="creator__status" aria-live="polite">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 10v6M12 7h.01" />
+        </svg>
+        {{ feedForm.valid ? 'Ready to save' : 'Complete all fields' }}
+      </span>
+      <button type="submit" [disabled]="!feedForm.valid || isSaving">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4">
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M12 8v8M8 12h8" />
+        </svg>
+        {{ isSaving ? 'Saving source' : 'Create feed' }}
+      </button>
     </div>
-    <div>
-      <label for="url">Url:</label>
-      <input type="text" id="url" name="url" [(ngModel)]="feed.url" required />
-    </div>
-    <button type="submit" [disabled]="!userForm.valid">Submit</button>
   </form>
-</div>
+</section>

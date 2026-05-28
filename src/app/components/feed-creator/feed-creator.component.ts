@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 import { IFeed } from 'src/app/models/feed';
 import { FeedsService } from 'src/app/services/feeds.service';
 
 const EMPTY_FEED: IFeed = {
   title: '',
-  type: '',
+  type: 'rss',
   url: '',
 };
 
@@ -17,14 +19,24 @@ const EMPTY_FEED: IFeed = {
 })
 export class FeedCreatorComponent {
   feed: IFeed = { ...EMPTY_FEED };
+  isSaving = false;
 
   constructor(private readonly feedService: FeedsService) {}
 
-  onSubmit(): void {
-    this.feedService.create(this.feed).subscribe(() => this.resetForm());
+  onSubmit(form: NgForm): void {
+    if (form.invalid || this.isSaving) {
+      return;
+    }
+
+    this.isSaving = true;
+    this.feedService
+      .create(this.feed)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe(() => this.resetForm(form));
   }
 
-  private resetForm(): void {
+  private resetForm(form: NgForm): void {
     this.feed = { ...EMPTY_FEED };
+    form.resetForm(this.feed);
   }
 }
