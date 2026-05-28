@@ -56,8 +56,8 @@ export class FeedCardComponent {
   };
 
   getFeedIcon(feed: IFeed): FeedTypeIcon {
-    const type = feed.type.trim().toLowerCase();
-    const url = feed.url.toLowerCase();
+    const type = (feed.type ?? '').trim().toLowerCase();
+    const url = (feed.url ?? '').toLowerCase();
 
     if (this.typeIcons[type]) {
       return this.typeIcons[type];

@@ -10,6 +10,8 @@
       }
       <span class="sr-only">Loading feeds...</span>
     </div>
+  } @else if (errorMessage) {
+    <p class="empty" role="alert">{{ errorMessage }}</p>
   } @else {
     @for (feed of filteredFeeds; track feed.id) {
       <app-feed-card [feed]="feed"></app-feed-card>

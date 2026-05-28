@@ -1,4 +1,5 @@
-import { Component, DoCheck, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, DoCheck, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
 import { IFeed } from 'src/app/models/feed';
@@ -15,21 +16,35 @@ export class FeedsListComponent implements DoCheck, OnInit {
   feeds: IFeed[] = [];
   filteredFeeds: IFeed[] = [];
   isLoading = true;
+  errorMessage = '';
   private searchTerm = '';
 
   constructor(
     private readonly feedsService: FeedsService,
     private readonly feedSearchService: FeedSearchService,
+    private readonly changeDetectorRef: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
+    this.errorMessage = '';
+
     this.feedsService
       .getAll()
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe((feeds) => {
-        this.feeds = feeds;
-        this.searchTerm = this.feedSearchService.searchTerm;
-        this.updateFilteredFeeds();
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.changeDetectorRef.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (feeds) => {
+          this.feeds = feeds;
+          this.searchTerm = this.feedSearchService.searchTerm;
+          this.updateFilteredFeeds();
+        },
+        error: (error: unknown) => {
+          this.errorMessage = this.getLoadErrorMessage(error);
+        },
       });
   }
 
@@ -56,8 +71,16 @@ export class FeedsListComponent implements DoCheck, OnInit {
 
     this.filteredFeeds = this.feeds.filter((feed) =>
       [feed.title, feed.type, feed.url].some((value) =>
-        value.toLowerCase().includes(query),
+        (value ?? '').toLowerCase().includes(query),
       ),
     );
+  }
+
+  private getLoadErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse && error.status === 401) {
+      return 'Unable to load feeds. Log in and try again.';
+    }
+
+    return 'Unable to load feeds. Check your connection and try again.';
   }
 }
