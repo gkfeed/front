@@ -20,23 +20,24 @@
     </span>
   </a>
 } @else {
-  <article class="feed feed--corner-logo">
-    <ng-container [ngTemplateOutlet]="feedContent"></ng-container>
+  <article class="feed feed--corner-logo feed--action-footer feed--title-id-badge">
+    <span class="feed__type-logo" role="img" [attr.aria-label]="getFeedIcon(feed).label">
+      <svg [attr.viewBox]="getFeedIcon(feed).viewBox" aria-hidden="true" focusable="false">
+        <path [attr.d]="getFeedIcon(feed).path" fill="currentColor"></path>
+      </svg>
+    </span>
+    <span class="feed__topline">
+      <strong class="feed__title">{{ feed.title }}</strong>
+      <span class="feed__meta">
+        @if (feed.id) {
+          <span class="feed__id">#{{ feed.id }}</span>
+        }
+      </span>
+    </span>
+    <span class="feed__url">{{ feed.url }}</span>
+    <span class="feed__action">
+      <span class="feed__action-copy">Feed details</span>
+      <span class="feed__action-hint">source record</span>
+    </span>
   </article>
 }
-
-<ng-template #feedContent>
-  <span class="feed__type-logo" role="img" [attr.aria-label]="getFeedIcon(feed).label">
-    <svg [attr.viewBox]="getFeedIcon(feed).viewBox" aria-hidden="true" focusable="false">
-      <path [attr.d]="getFeedIcon(feed).path" fill="currentColor"></path>
-    </svg>
-  </span>
-  <span class="feed__meta">
-    @if (feed.id) {
-      <span class="feed__id">#{{ feed.id }}</span>
-    }
-  </span>
-
-  <strong class="feed__title">{{ feed.title }}</strong>
-  <span class="feed__url">{{ feed.url }}</span>
-</ng-template>
