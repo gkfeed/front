@@ -1,8 +1,8 @@
 @if (asLink) {
   <a class="feed feed--corner-logo feed--action-footer feed--title-id-badge" [routerLink]="['/feed', feed.id]" [attr.aria-label]="'Open feed ' + feed.title">
-    <span class="feed__type-logo" role="img" [attr.aria-label]="getFeedIcon(feed).label">
-      <svg [attr.viewBox]="getFeedIcon(feed).viewBox" aria-hidden="true" focusable="false">
-        <path [attr.d]="getFeedIcon(feed).path" fill="currentColor"></path>
+    <span class="feed__type-logo" role="img" [attr.aria-label]="feedIcon.label">
+      <svg [attr.viewBox]="feedIcon.viewBox" aria-hidden="true" focusable="false">
+        <path [attr.d]="feedIcon.path" fill="currentColor"></path>
       </svg>
     </span>
     <span class="feed__topline">
@@ -21,9 +21,9 @@
   </a>
 } @else {
   <article class="feed feed--corner-logo feed--action-footer feed--title-id-badge">
-    <span class="feed__type-logo" role="img" [attr.aria-label]="getFeedIcon(feed).label">
-      <svg [attr.viewBox]="getFeedIcon(feed).viewBox" aria-hidden="true" focusable="false">
-        <path [attr.d]="getFeedIcon(feed).path" fill="currentColor"></path>
+    <span class="feed__type-logo" role="img" [attr.aria-label]="feedIcon.label">
+      <svg [attr.viewBox]="feedIcon.viewBox" aria-hidden="true" focusable="false">
+        <path [attr.d]="feedIcon.path" fill="currentColor"></path>
       </svg>
     </span>
     <span class="feed__topline">

@@ -1,16 +1,18 @@
 <nav class="nav nav-live-leftbar" aria-label="Primary navigation">
   <a class="nav-live-leftbar__brand" routerLink="/" aria-label="GKFEED home">GKFEED</a>
   <span class="nav-live-leftbar__links" aria-label="Feed sections">
-    <a class="nav-live-leftbar__link" routerLink="/">List</a>
-    <a class="nav-live-leftbar__link" routerLink="/create">Create</a>
-    <a class="nav-live-leftbar__link" routerLink="/login">Login</a>
+    <a class="nav-live-leftbar__link" routerLink="/" routerLinkActive="nav-live-leftbar__link--active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">List</a>
+    <a class="nav-live-leftbar__link" routerLink="/create" routerLinkActive="nav-live-leftbar__link--active" ariaCurrentWhenActive="page">Create</a>
+    <a class="nav-live-leftbar__link" routerLink="/login" routerLinkActive="nav-live-leftbar__link--active" ariaCurrentWhenActive="page">Login</a>
   </span>
   <input
     class="nav-live-leftbar__search"
     type="search"
     placeholder="Search feeds"
     aria-label="Search feeds"
-    [(ngModel)]="feedSearchService.searchTerm"
+    [value]="feedSearchService.searchTerm"
+    (input)="onSearchInput($event)"
+    (search)="onSearchInput($event)"
     routerLink="/"
   />
 </nav>

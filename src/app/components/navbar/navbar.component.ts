@@ -10,4 +10,8 @@ import { FeedSearchService } from 'src/app/services/feed-search.service';
 })
 export class NavbarComponent {
   constructor(public readonly feedSearchService: FeedSearchService) {}
+
+  onSearchInput(event: Event): void {
+    this.feedSearchService.searchTerm = (event.target as HTMLInputElement).value;
+  }
 }

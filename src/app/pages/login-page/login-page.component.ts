@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NgForm } from '@angular/forms';
 
 import { AuthService, Credentials } from 'src/app/services/auth.service';
 
@@ -18,7 +19,11 @@ export class LoginPageComponent {
 
   constructor(private readonly authService: AuthService) {}
 
-  onSubmit(): void {
+  onSubmit(form: NgForm): void {
+    if (form.invalid) {
+      return;
+    }
+
     this.authService.save(this.credentials);
     this.savedUsername = this.credentials.username;
     this.credentials = { username: '', password: '' };

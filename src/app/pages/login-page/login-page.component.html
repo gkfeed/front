@@ -19,7 +19,7 @@
       </div>
     </div>
   } @else {
-  <form class="login__form" #userForm="ngForm" (ngSubmit)="onSubmit()">
+  <form class="login__form" #userForm="ngForm" (ngSubmit)="onSubmit(userForm)">
     <header class="login__header">
       <p class="login__eyebrow">Account access</p>
       <h1 id="login-title">Sign in to GKFEED</h1>
@@ -35,15 +35,22 @@
             </svg>
           </span>
           <input
+            #usernameCtrl="ngModel"
             type="text"
             id="username"
             name="username"
             [(ngModel)]="credentials.username"
             autocomplete="username"
             placeholder="gakawarstone"
+            aria-describedby="username-help username-error"
+            [attr.aria-invalid]="usernameCtrl.invalid && (usernameCtrl.touched || userForm.submitted) ? 'true' : null"
             required
           />
         </div>
+        <p id="username-help" class="field__hint">Required. Enter your username.</p>
+        @if (usernameCtrl.invalid && (usernameCtrl.touched || userForm.submitted)) {
+          <p id="username-error" class="field__error">Enter your username.</p>
+        }
       </div>
 
       <div class="field">
@@ -55,14 +62,21 @@
             </svg>
           </span>
           <input
+            #passwordCtrl="ngModel"
             type="password"
             id="password"
             name="password"
             [(ngModel)]="credentials.password"
             autocomplete="current-password"
+            aria-describedby="password-help password-error"
+            [attr.aria-invalid]="passwordCtrl.invalid && (passwordCtrl.touched || userForm.submitted) ? 'true' : null"
             required
           />
         </div>
+        <p id="password-help" class="field__hint">Required. Enter your password.</p>
+        @if (passwordCtrl.invalid && (passwordCtrl.touched || userForm.submitted)) {
+          <p id="password-error" class="field__error">Enter your password.</p>
+        }
       </div>
     </div>
 

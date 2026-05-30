@@ -53,12 +53,12 @@
 }
 
 .status {
-  color: var(--color-muted);
+  color: var(--color-focus-light);
   margin: 0;
 }
 
 .status--error {
-  color: var(--color-danger);
+  color: color-mix(in oklch, var(--color-danger) 58%, var(--color-focus-light));
 }
 
 .page-title {

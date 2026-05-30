@@ -39,6 +39,11 @@
   border-bottom-color: color-mix(in oklch, var(--color-ink-inverse) 64%, var(--color-surface));
 }
 
+.nav-live-leftbar__link--active {
+  border-bottom-color: var(--color-ink-inverse);
+  font-weight: 800;
+}
+
 .nav-live-leftbar__search {
   background: color-mix(in oklch, var(--color-page) 82%, var(--color-border));
   border: 1px solid color-mix(in oklch, var(--color-border) 88%, transparent);

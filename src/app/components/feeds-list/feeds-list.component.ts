@@ -1,23 +1,31 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, DoCheck, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { distinctUntilChanged, finalize, Subscription } from 'rxjs';
 
 import { IFeed } from 'src/app/models/feed';
 import { FeedSearchService } from 'src/app/services/feed-search.service';
 import { FeedsService } from 'src/app/services/feeds.service';
+
+interface SearchableFeed {
+  feed: IFeed;
+  text: string;
+}
 
 @Component({
   selector: 'app-feeds-list',
   templateUrl: './feeds-list.component.html',
   styleUrls: ['./feeds-list.component.scss'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FeedsListComponent implements DoCheck, OnInit {
+export class FeedsListComponent implements OnDestroy, OnInit {
   feeds: IFeed[] = [];
   filteredFeeds: IFeed[] = [];
   isLoading = true;
   errorMessage = '';
+  private searchableFeeds: SearchableFeed[] = [];
   private searchTerm = '';
+  private readonly subscription = new Subscription();
 
   constructor(
     private readonly feedsService: FeedsService,
@@ -28,33 +36,45 @@ export class FeedsListComponent implements DoCheck, OnInit {
   ngOnInit(): void {
     this.errorMessage = '';
 
-    this.feedsService
-      .getAll()
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.changeDetectorRef.detectChanges();
-        }),
-      )
-      .subscribe({
-        next: (feeds) => {
-          this.feeds = feeds;
-          this.searchTerm = this.feedSearchService.searchTerm;
+    this.subscription.add(
+      this.feedSearchService.searchTerm$
+        .pipe(distinctUntilChanged())
+        .subscribe((searchTerm) => {
+          this.searchTerm = searchTerm;
           this.updateFilteredFeeds();
-        },
-        error: (error: unknown) => {
-          this.errorMessage = this.getLoadErrorMessage(error);
-        },
-      });
+          this.changeDetectorRef.markForCheck();
+        }),
+    );
+
+    this.subscription.add(
+      this.feedsService
+        .getAll()
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.changeDetectorRef.markForCheck();
+          }),
+        )
+        .subscribe({
+          next: (feeds) => {
+            this.feeds = feeds;
+            this.searchableFeeds = feeds.map((feed) => ({
+              feed,
+              text: `${feed.title} ${feed.type} ${feed.url}`.toLowerCase(),
+            }));
+            this.updateFilteredFeeds();
+            this.changeDetectorRef.markForCheck();
+          },
+          error: (error: unknown) => {
+            this.errorMessage = this.getLoadErrorMessage(error);
+            this.changeDetectorRef.markForCheck();
+          },
+        }),
+    );
   }
 
-  ngDoCheck(): void {
-    const searchTerm = this.feedSearchService.searchTerm;
-
-    if (searchTerm !== this.searchTerm) {
-      this.searchTerm = searchTerm;
-      this.updateFilteredFeeds();
-    }
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
   trackByFeedId(_: number, feed: IFeed): number | undefined {
@@ -69,11 +89,9 @@ export class FeedsListComponent implements DoCheck, OnInit {
       return;
     }
 
-    this.filteredFeeds = this.feeds.filter((feed) =>
-      [feed.title, feed.type, feed.url].some((value) =>
-        (value ?? '').toLowerCase().includes(query),
-      ),
-    );
+    this.filteredFeeds = this.searchableFeeds
+      .filter((searchableFeed) => searchableFeed.text.includes(query))
+      .map((searchableFeed) => searchableFeed.feed);
   }
 
   private getLoadErrorMessage(error: unknown): string {
