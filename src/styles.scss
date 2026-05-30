@@ -202,10 +202,10 @@ a.feed:focus-visible {
 
 .creator__form,
 .login__form {
-  background: linear-gradient(var(--color-surface), var(--color-surface-muted));
-  border: 1px solid var(--color-border-soft);
+  background: linear-gradient(180deg, var(--color-card-hover), var(--color-card));
+  border: 1px solid var(--color-card-border);
   border-radius: 24px;
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--shadow-card);
   color: var(--color-ink);
   display: grid;
   gap: 26px;
@@ -264,7 +264,7 @@ a.feed:focus-visible {
 }
 
 .login__eyebrow {
-  color: var(--color-muted-warm);
+  color: var(--color-accent-border);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.095em;
@@ -280,7 +280,7 @@ a.feed:focus-visible {
 .field__control {
   align-items: center;
   background: var(--color-field);
-  border: 1px solid color-mix(in oklch, var(--color-border-soft) 72%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-card-border) 60%, transparent);
   border-radius: 16px;
   display: grid;
   gap: 12px;
@@ -341,7 +341,7 @@ a.feed:focus-visible {
 .creator__actions,
 .login__actions {
   align-items: center;
-  border-top: 1px solid color-mix(in oklch, var(--color-border-soft) 62%, transparent);
+  border-top: 1px solid color-mix(in oklch, var(--color-card-border) 72%, transparent);
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
@@ -356,7 +356,7 @@ a.feed:focus-visible {
 
 .creator__status,
 .login__status {
-  color: var(--color-muted-warm);
+  color: var(--color-muted);
 }
 
 .creator__status {
