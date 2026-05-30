@@ -32,4 +32,9 @@ export class AuthService {
     localStorage.setItem(USERNAME_KEY, credentials.username);
     localStorage.setItem(PASSWORD_KEY, credentials.password);
   }
+
+  clear(): void {
+    localStorage.removeItem(USERNAME_KEY);
+    localStorage.removeItem(PASSWORD_KEY);
+  }
 }

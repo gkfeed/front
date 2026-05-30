@@ -23,4 +23,10 @@ export class LoginPageComponent {
     this.savedUsername = this.credentials.username;
     this.credentials = { username: '', password: '' };
   }
+
+  onLogout(): void {
+    this.authService.clear();
+    this.savedUsername = '';
+    this.credentials = { username: '', password: '' };
+  }
 }

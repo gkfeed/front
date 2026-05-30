@@ -1,33 +1,77 @@
-<div class="container">
-  <form #userForm="ngForm" (ngSubmit)="onSubmit()">
-    @if (savedUsername) {
-      <h2>Logged in as {{ savedUsername }}</h2>
-    }
+<section class="login" aria-labelledby="login-title">
+  @if (savedUsername) {
+    <div class="login__form login__form--saved">
+      <header class="login__header">
+        <h1 id="login-title">Account access</h1>
+      </header>
 
-    <div>
-      <label for="username">Username:</label>
-      <input
-        type="text"
-        id="username"
-        name="username"
-        [(ngModel)]="credentials.username"
-        autocomplete="username"
-        required
-      />
+      <div class="field__control">
+        <span class="field__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false" width="22" height="22" fill="currentColor">
+            <path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.1 0-7.5 2.3-7.5 5.1 0 1 .8 1.9 1.9 1.9h11.2c1.1 0 1.9-.9 1.9-1.9 0-2.8-3.4-5.1-7.5-5.1Z" />
+          </svg>
+        </span>
+        <span>Logged in as <strong>{{ savedUsername }}</strong></span>
+      </div>
+
+      <div class="login__actions">
+        <button type="button" class="danger" (click)="onLogout()">Log out</button>
+      </div>
+    </div>
+  } @else {
+  <form class="login__form" #userForm="ngForm" (ngSubmit)="onSubmit()">
+    <header class="login__header">
+      <p class="login__eyebrow">Account access</p>
+      <h1 id="login-title">Sign in to GKFEED</h1>
+    </header>
+
+    <div class="login__fields">
+      <div class="field">
+        <label for="username">Username</label>
+        <div class="field__control">
+          <span class="field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false" width="21" height="21" fill="currentColor">
+              <path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.1 0-7.5 2.3-7.5 5.1 0 1 .8 1.9 1.9 1.9h11.2c1.1 0 1.9-.9 1.9-1.9 0-2.8-3.4-5.1-7.5-5.1Z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            [(ngModel)]="credentials.username"
+            autocomplete="username"
+            placeholder="gakawarstone"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="field__control">
+          <span class="field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false" width="21" height="21" fill="currentColor">
+              <path d="M7 10V8a5 5 0 0 1 10 0v2h.5A2.5 2.5 0 0 1 20 12.5v6A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-6A2.5 2.5 0 0 1 6.5 10H7Zm2 0h6V8a3 3 0 1 0-6 0v2Zm3 4a1.5 1.5 0 0 0-1 2.6V18h2v-1.4A1.5 1.5 0 0 0 12 14Z" />
+            </svg>
+          </span>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            [(ngModel)]="credentials.password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+      </div>
     </div>
 
-    <div>
-      <label for="password">Password:</label>
-      <input
-        type="password"
-        id="password"
-        name="password"
-        [(ngModel)]="credentials.password"
-        autocomplete="current-password"
-        required
-      />
+    <div class="login__actions">
+      <span class="login__status" aria-live="polite">
+        {{ userForm.valid ? 'Ready to save' : 'Enter credentials' }}
+      </span>
+      <button type="submit" [disabled]="!userForm.valid">Save login</button>
     </div>
-
-    <button type="submit" [disabled]="!userForm.valid">Submit</button>
   </form>
-</div>
+  }
+</section>
