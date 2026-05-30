@@ -20,6 +20,7 @@ const EMPTY_FEED: IFeed = {
 export class FeedCreatorComponent {
   feed: IFeed = { ...EMPTY_FEED };
   isSaving = false;
+  saveStatus: 'idle' | 'saving' | 'success' | 'error' = 'idle';
 
   constructor(private readonly feedService: FeedsService) {}
 
@@ -29,10 +30,37 @@ export class FeedCreatorComponent {
     }
 
     this.isSaving = true;
+    this.saveStatus = 'saving';
     this.feedService
       .create(this.feed)
       .pipe(finalize(() => (this.isSaving = false)))
-      .subscribe(() => this.resetForm(form));
+      .subscribe({
+        next: () => {
+          this.resetForm(form);
+          this.saveStatus = 'success';
+        },
+        error: () => {
+          this.saveStatus = 'error';
+        },
+      });
+  }
+
+  get statusMessage(): string {
+    if (this.saveStatus === 'saving') {
+      return 'Saving source...';
+    }
+
+    if (this.saveStatus === 'success') {
+      return 'Feed source saved.';
+    }
+
+    if (this.saveStatus === 'error') {
+      return 'Could not save feed source. Try again.';
+    }
+
+    return this.feed.title && this.feed.type && this.feed.url
+      ? 'Ready to save'
+      : 'Complete all fields';
   }
 
   private resetForm(form: NgForm): void {

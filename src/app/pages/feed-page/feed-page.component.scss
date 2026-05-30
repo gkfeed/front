@@ -4,7 +4,7 @@
   min-height: 44px;
   padding: 11px 20px;
   background-color: var(--color-danger);
-  border: 1px solid oklch(43% 0.13 25);
+  border: 1px solid var(--color-danger-border);
   border-radius: 999px;
   margin: 0;
   color: var(--color-ink-inverse);
@@ -16,8 +16,15 @@
 }
 
 .delete:hover {
-  background-color: oklch(57% 0.17 25);
+  background-color: color-mix(in oklch, var(--color-danger) 88%, var(--color-focus-light));
   transform: translateY(-1px);
+}
+
+.delete:disabled {
+  background-color: var(--color-disabled);
+  border-color: color-mix(in oklch, var(--color-danger-border) 40%, transparent);
+  cursor: not-allowed;
+  transform: none;
 }
 
 .delete:focus-visible {
@@ -37,4 +44,29 @@
 .container app-feed-card {
   display: block;
   width: 100%;
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.status {
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.status--error {
+  color: var(--color-danger);
+}
+
+.page-title {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }

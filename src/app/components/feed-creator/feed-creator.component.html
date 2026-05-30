@@ -70,12 +70,12 @@
     </div>
 
     <div class="creator__actions">
-      <span class="creator__status" aria-live="polite">
+      <span class="creator__status" [attr.role]="saveStatus === 'error' ? 'alert' : null" aria-live="polite">
         <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4">
           <circle cx="12" cy="12" r="9" />
           <path d="M12 10v6M12 7h.01" />
         </svg>
-        {{ feedForm.valid ? 'Ready to save' : 'Complete all fields' }}
+        {{ statusMessage }}
       </span>
       <button type="submit" [disabled]="!feedForm.valid || isSaving">
         <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4">
