@@ -1,0 +1,103 @@
+:host {
+  display: block;
+  margin: 0 auto;
+  max-width: 480px;
+}
+
+.creator {
+  max-width: none;
+  padding: 28px 12px 44px;
+}
+
+.creator__form {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-ink-inverse);
+  box-shadow: none;
+  gap: 18px;
+  max-width: 440px;
+  padding: 0;
+}
+
+.creator__header h1 {
+  color: var(--color-ink-inverse);
+  font-size: 1.28rem;
+  letter-spacing: -0.02em;
+}
+
+.creator__fields {
+  gap: 12px;
+}
+
+.field {
+  gap: 6px;
+}
+
+.creator label {
+  color: color-mix(in oklch, var(--color-ink-inverse) 78%, var(--color-page));
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.field__control {
+  background: color-mix(in oklch, var(--color-field) 68%, var(--color-surface));
+  border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
+  border-radius: 9px;
+  display: block;
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+.field__control:focus-within {
+  background: var(--color-field-focus);
+}
+
+.creator input {
+  color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
+  min-height: 36px;
+}
+
+.creator input::placeholder {
+  color: color-mix(in oklch, var(--color-muted) 76%, var(--color-page));
+}
+
+.field__error {
+  color: color-mix(in oklch, var(--color-danger) 76%, var(--color-ink-inverse));
+  font-size: 0.84rem;
+}
+
+.creator__actions {
+  border-top: 0;
+  justify-content: flex-end;
+  margin-top: 0;
+  padding-top: 2px;
+}
+
+.creator__status {
+  color: color-mix(in oklch, var(--color-ink-inverse) 72%, var(--color-page));
+  font-size: 0.9rem;
+}
+
+.creator button {
+  border-radius: 9px;
+  min-height: 36px;
+  min-width: 112px;
+  padding: 8px 14px;
+}
+
+.creator button:disabled {
+  background: color-mix(in oklch, var(--color-field) 64%, var(--color-page));
+  border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
+  color: color-mix(in oklch, var(--color-ink-strong) 66%, var(--color-field));
+}
+
+@media (max-width: 640px) {
+  .creator {
+    padding: 24px 12px 36px;
+  }
+
+  .creator__form {
+    padding: 0;
+  }
+}
