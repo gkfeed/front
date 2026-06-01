@@ -5,13 +5,15 @@
     <a class="nav-live-leftbar__link" routerLink="/create" routerLinkActive="nav-live-leftbar__link--active" ariaCurrentWhenActive="page">Create</a>
     <a class="nav-live-leftbar__link" routerLink="/login" routerLinkActive="nav-live-leftbar__link--active" ariaCurrentWhenActive="page">Login</a>
   </span>
-  <input
-    class="nav-live-leftbar__search"
-    type="search"
-    placeholder="Search feeds"
-    aria-label="Search feeds"
-    [value]="feedSearchService.searchTerm"
-    (input)="onSearchInput($event)"
-    (search)="onSearchInput($event)"
-  />
+  @if (showSearch) {
+    <input
+      class="nav-live-leftbar__search"
+      type="search"
+      placeholder="Search feeds"
+      aria-label="Search feeds"
+      [value]="feedSearchService.searchTerm"
+      (input)="onSearchInput($event)"
+      (search)="onSearchInput($event)"
+    />
+  }
 </nav>

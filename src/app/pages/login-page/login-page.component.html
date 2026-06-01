@@ -42,7 +42,7 @@
             [(ngModel)]="credentials.username"
             autocomplete="username"
             placeholder="gakawarstone"
-            aria-describedby="username-help username-error"
+            [attr.aria-describedby]="usernameCtrl.invalid && (usernameCtrl.touched || userForm.submitted) ? 'username-help username-error' : 'username-help'"
             [attr.aria-invalid]="usernameCtrl.invalid && (usernameCtrl.touched || userForm.submitted) ? 'true' : null"
             required
           />
@@ -68,7 +68,7 @@
             name="password"
             [(ngModel)]="credentials.password"
             autocomplete="current-password"
-            aria-describedby="password-help password-error"
+            [attr.aria-describedby]="passwordCtrl.invalid && (passwordCtrl.touched || userForm.submitted) ? 'password-help password-error' : 'password-help'"
             [attr.aria-invalid]="passwordCtrl.invalid && (passwordCtrl.touched || userForm.submitted) ? 'true' : null"
             required
           />
