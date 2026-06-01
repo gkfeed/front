@@ -45,7 +45,7 @@
   border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
   border-radius: 9px;
   display: block;
-  min-height: 38px;
+  min-height: 44px;
   padding: 0 10px;
 }
 
@@ -55,7 +55,7 @@
 
 .creator input {
   color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
-  min-height: 36px;
+  min-height: 44px;
 }
 
 .creator input::placeholder {
@@ -81,7 +81,7 @@
 
 .creator button {
   border-radius: 9px;
-  min-height: 36px;
+  min-height: 44px;
   min-width: 112px;
   padding: 8px 14px;
 }

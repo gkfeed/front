@@ -23,6 +23,7 @@ export class FeedsListComponent implements OnDestroy, OnInit {
   filteredFeeds: IFeed[] = [];
   isLoading = true;
   errorMessage = '';
+  resultsAnnouncement = '';
   private searchableFeeds: SearchableFeed[] = [];
   private searchTerm = '';
   private readonly subscription = new Subscription();
@@ -86,12 +87,26 @@ export class FeedsListComponent implements OnDestroy, OnInit {
 
     if (!query) {
       this.filteredFeeds = this.feeds;
+      this.resultsAnnouncement = this.getResultsAnnouncement(this.filteredFeeds.length);
       return;
     }
 
     this.filteredFeeds = this.searchableFeeds
       .filter((searchableFeed) => searchableFeed.text.includes(query))
       .map((searchableFeed) => searchableFeed.feed);
+    this.resultsAnnouncement = this.getResultsAnnouncement(this.filteredFeeds.length, query);
+  }
+
+  private getResultsAnnouncement(count: number, query = ''): string {
+    const feedLabel = count === 1 ? 'feed' : 'feeds';
+
+    if (!query) {
+      return `Showing ${count} ${feedLabel}.`;
+    }
+
+    return count === 0
+      ? `No feeds found for search term ${query}.`
+      : `${count} ${feedLabel} found for search term ${query}.`;
   }
 
   private getLoadErrorMessage(error: unknown): string {

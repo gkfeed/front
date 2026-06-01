@@ -14,6 +14,7 @@ export class FeedPageComponent implements OnInit {
   feed?: IFeed;
   isLoading = true;
   isDeleting = false;
+  isConfirmingDelete = false;
   loadError = '';
   deleteError = '';
   private feedId?: number;
@@ -51,6 +52,19 @@ export class FeedPageComponent implements OnInit {
     });
   }
 
+  requestDelete(): void {
+    this.deleteError = '';
+    this.isConfirmingDelete = true;
+  }
+
+  cancelDelete(): void {
+    if (this.isDeleting) {
+      return;
+    }
+
+    this.isConfirmingDelete = false;
+  }
+
   deleteFeed(): void {
     if (!this.feedId || this.isDeleting) {
       return;
@@ -63,6 +77,7 @@ export class FeedPageComponent implements OnInit {
       next: () => this.router.navigate(['/']),
       error: () => {
         this.isDeleting = false;
+        this.isConfirmingDelete = false;
         this.deleteError = 'Could not delete this feed source. Try again.';
       },
     });

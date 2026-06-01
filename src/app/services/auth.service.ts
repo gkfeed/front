@@ -5,20 +5,16 @@ export interface Credentials {
   password: string;
 }
 
-const USERNAME_KEY = 'username';
-const PASSWORD_KEY = 'password';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private savedCredentials: Credentials | null = null;
+
+  get savedUsername(): string {
+    return this.savedCredentials?.username ?? '';
+  }
+
   get credentials(): Credentials | null {
-    const username = localStorage.getItem(USERNAME_KEY);
-    const password = localStorage.getItem(PASSWORD_KEY);
-
-    if (!username || !password) {
-      return null;
-    }
-
-    return { username, password };
+    return this.savedCredentials;
   }
 
   get authorizationHeader(): string | null {
@@ -29,12 +25,10 @@ export class AuthService {
   }
 
   save(credentials: Credentials): void {
-    localStorage.setItem(USERNAME_KEY, credentials.username);
-    localStorage.setItem(PASSWORD_KEY, credentials.password);
+    this.savedCredentials = { ...credentials };
   }
 
   clear(): void {
-    localStorage.removeItem(USERNAME_KEY);
-    localStorage.removeItem(PASSWORD_KEY);
+    this.savedCredentials = null;
   }
 }

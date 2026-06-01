@@ -15,7 +15,7 @@ export class LoginPageComponent {
     password: '',
   };
 
-  savedUsername = this.authService.credentials?.username ?? '';
+  savedUsername = this.authService.savedUsername;
 
   constructor(private readonly authService: AuthService) {}
 

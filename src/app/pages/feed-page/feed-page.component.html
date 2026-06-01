@@ -8,9 +8,21 @@
   } @else if (feed) {
     <app-feed-card [feed]="feed" [asLink]="false"></app-feed-card>
     <div class="actions">
-      <button type="button" (click)="deleteFeed()" class="delete" [disabled]="isDeleting">
-        {{ isDeleting ? 'Deleting...' : 'Delete' }}
-      </button>
+      @if (isConfirmingDelete) {
+        <p class="status" id="delete-confirmation">Delete this feed source? This cannot be undone.</p>
+        <div class="actions__confirm" aria-describedby="delete-confirmation">
+          <button type="button" class="secondary" (click)="cancelDelete()" [disabled]="isDeleting">
+            Cancel
+          </button>
+          <button type="button" (click)="deleteFeed()" class="delete" [disabled]="isDeleting">
+            {{ isDeleting ? 'Deleting...' : 'Delete feed source' }}
+          </button>
+        </div>
+      } @else {
+        <button type="button" (click)="requestDelete()" class="delete" [disabled]="isDeleting">
+          Delete
+        </button>
+      }
       @if (deleteError) {
         <p class="status status--error" role="alert">{{ deleteError }}</p>
       } @else if (isDeleting) {

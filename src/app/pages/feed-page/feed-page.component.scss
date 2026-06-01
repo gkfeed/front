@@ -1,13 +1,11 @@
-.delete {
+.delete,
+.secondary {
   box-sizing: border-box;
   justify-self: end;
   min-height: 44px;
   padding: 11px 20px;
-  background-color: var(--color-danger);
-  border: 1px solid var(--color-danger-border);
   border-radius: 999px;
   margin: 0;
-  color: var(--color-ink-inverse);
   text-align: center;
   cursor: pointer;
   font-weight: 700;
@@ -15,19 +13,38 @@
     transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.delete {
+  background-color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-ink-inverse);
+}
+
+.secondary {
+  background-color: color-mix(in oklch, var(--color-field) 76%, var(--color-page));
+  border: 1px solid color-mix(in oklch, var(--color-field) 48%, var(--color-page));
+  color: var(--color-ink-strong);
+}
+
 .delete:hover {
   background-color: color-mix(in oklch, var(--color-danger) 88%, var(--color-focus-light));
   transform: translateY(-1px);
 }
 
-.delete:disabled {
+.secondary:hover {
+  background-color: var(--color-field-focus);
+  transform: translateY(-1px);
+}
+
+.delete:disabled,
+.secondary:disabled {
   background-color: var(--color-disabled);
   border-color: color-mix(in oklch, var(--color-danger-border) 40%, transparent);
   cursor: not-allowed;
   transform: none;
 }
 
-.delete:focus-visible {
+.delete:focus-visible,
+.secondary:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 3px;
 }
@@ -50,6 +67,13 @@
   display: grid;
   gap: 10px;
   justify-items: end;
+}
+
+.actions__confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: end;
 }
 
 .status {
