@@ -2,41 +2,23 @@
   "name": "gkfeed-front",
   "version": "0.0.0",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "start": "vite --host 0.0.0.0 --port 4200",
+    "dev": "vite --host 0.0.0.0 --port 4200",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4200"
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^21.2.14",
-    "@angular/cdk": "^21.2.12",
-    "@angular/common": "^21.2.14",
-    "@angular/compiler": "^21.2.14",
-    "@angular/core": "^21.2.14",
-    "@angular/forms": "^21.2.14",
-    "@angular/material": "^21.2.12",
-    "@angular/platform-browser": "^21.2.14",
-    "@angular/platform-browser-dynamic": "^21.2.14",
-    "@angular/router": "^21.2.14",
-    "rxjs": "~7.8.0",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.15.1"
+    "@vitejs/plugin-react": "^5.0.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.3",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.7"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^21.2.12",
-    "@angular/cli": "~21.2.12",
-    "@angular/compiler-cli": "^21.2.14",
-    "@angular/language-server": "^21.2.14",
-    "@angular/language-service": "^21.2.14",
-    "@types/jasmine": "~4.3.0",
-    "jasmine-core": "~4.5.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.1.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.0.0",
-    "typescript": "~5.9.3"
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "sass-embedded": "^1.100.0"
   }
 }
