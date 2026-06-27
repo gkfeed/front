@@ -1,10 +1,8 @@
 .PHONY: update dev
 
 update:
-	git fetch && git pull
-	docker compose stop && docker compose rm -f
-	docker compose build
-	docker compose up -d
+	git pull --ff-only
+	docker compose up -d --build
 
 dev:
-	npm start
+	npm run dev

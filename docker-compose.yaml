@@ -1,8 +1,5 @@
-version: '3.8'
 services:
   react:
-    container_name: gkfeed-front
-    build:
-      context: .
+    build: .
     ports:
       - "4200:80"
