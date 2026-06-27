@@ -26,12 +26,16 @@ function authorization(credentials: Credentials | null): Record<string, string> 
   return { Authorization: `Basic ${btoa(String.fromCharCode(...bytes))}` };
 }
 
-async function requestJson(input: RequestInfo | URL, init?: RequestInit): Promise<unknown> {
+async function request(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const response = await fetch(input, { signal: AbortSignal.timeout(10_000), ...init });
   if (!response.ok) {
     throw Object.assign(new Error(`Request failed with ${response.status}`), { status: response.status });
   }
-  return response.json();
+  return response;
+}
+
+async function requestJson(input: RequestInfo | URL, init?: RequestInit): Promise<unknown> {
+  return (await request(input, init)).json();
 }
 
 export function getAllFeeds(credentials: Credentials | null): Promise<Feed[]> {
@@ -46,13 +50,13 @@ export function deleteFeedById(id: number, credentials: Credentials | null): Pro
   return requestJson(`${endpoint('delete')}?id=${id}`, { headers: authorization(credentials) }).then(parseFeed);
 }
 
-export function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<Feed> {
-  return requestJson(endpoint('add'), {
+export async function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<void> {
+  await request(endpoint('add'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...authorization(credentials),
     },
     body: JSON.stringify(feed),
-  }).then(parseFeed);
+  });
 }

@@ -12,6 +12,10 @@ function respondWith(body: unknown, status = 200) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(body, { status })));
 }
 
+function respondWithoutBody(status = 201) {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status })));
+}
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe('feed service', () => {
@@ -39,9 +43,9 @@ describe('feed service', () => {
 
   it('creates a feed with JSON and basic authentication', async () => {
     const input = { title: 'News', type: 'rss', url: 'https://example.com/feed.xml' };
-    respondWith(FEEDS[0]);
+    respondWithoutBody();
 
-    await expect(createFeed(input, { username: 'üser', password: 'päss' })).resolves.toEqual(FEEDS[0]);
+    await expect(createFeed(input, { username: 'üser', password: 'päss' })).resolves.toBeUndefined();
     expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Basic w7xzZXI6cMOkc3M=' },
