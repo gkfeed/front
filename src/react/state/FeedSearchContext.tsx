@@ -12,11 +12,11 @@ export function FeedSearchProvider({ children }: { children: ReactNode }) {
   const [searchTerm, setSearchTerm] = useState('');
   const value = useMemo(() => ({ searchTerm, setSearchTerm }), [searchTerm]);
 
-  return <FeedSearchContext.Provider value={value}>{children}</FeedSearchContext.Provider>;
+  return <FeedSearchContext value={value}>{children}</FeedSearchContext>;
 }
 
 export function useFeedSearch(): FeedSearchContextValue {
-  const context = useContext(FeedSearchContext);
-  if (!context) throw new Error('useFeedSearch must be used inside FeedSearchProvider');
-  return context;
+  const value = useContext(FeedSearchContext);
+  if (!value) throw new Error('useFeedSearch must be used inside FeedSearchProvider');
+  return value;
 }

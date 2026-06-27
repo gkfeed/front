@@ -16,19 +16,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextValue>(() => ({
     credentials,
-    saveCredentials(nextCredentials) {
-      setCredentials(nextCredentials);
-    },
-    clearCredentials() {
-      setCredentials(null);
-    },
+    saveCredentials: setCredentials,
+    clearCredentials: () => setCredentials(null),
   }), [credentials]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext value={value}>{children}</AuthContext>;
 }
 
 export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used inside AuthProvider');
-  return context;
+  const value = useContext(AuthContext);
+  if (!value) throw new Error('useAuth must be used inside AuthProvider');
+  return value;
 }
