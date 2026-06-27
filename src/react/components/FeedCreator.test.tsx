@@ -23,21 +23,24 @@ describe('FeedCreator', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create feed' }));
     expect(screen.getByLabelText('Title').getAttribute('aria-invalid')).toBe('true');
     expect(screen.getAllByRole('alert')).toHaveLength(2);
+    expect(screen.getByRole('combobox', { name: 'Type' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'YouTube' }).getAttribute('value')).toBe('yt');
 
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'News' } });
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'yt' } });
     fireEvent.change(screen.getByLabelText('URL'), { target: { value: 'javascript:alert(1)' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create feed' }));
     expect(screen.getByLabelText('URL').getAttribute('aria-invalid')).toBe('true');
     expect(create).not.toHaveBeenCalled();
 
-    const input = { title: 'News', type: 'rss', url: 'https://example.com/feed.xml' };
+    const input = { title: 'News', type: 'yt', url: 'https://example.com/feed.xml' };
     fireEvent.change(screen.getByLabelText('URL'), { target: { value: input.url } });
     create.mockRejectedValueOnce(new Error('offline'));
     fireEvent.click(screen.getByRole('button', { name: 'Create feed' }));
     expect(await screen.findByText('Could not save feed source. Try again.')).toBeTruthy();
     expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('News');
 
-    create.mockResolvedValueOnce({ id: 1, ...input });
+    create.mockResolvedValueOnce();
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: '  News  ' } });
     fireEvent.change(screen.getByLabelText('URL'), { target: { value: '  https://example.com/feed.xml  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create feed' }));

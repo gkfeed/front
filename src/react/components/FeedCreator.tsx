@@ -7,7 +7,7 @@ import type { FeedInput } from '../types';
 
 const EMPTY_FEED: FeedInput = {
   title: '',
-  type: 'rss',
+  type: 'web',
   url: '',
 };
 
@@ -15,8 +15,40 @@ type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 
 const FIELDS = [
   { id: 'title', label: 'Title', type: 'text', placeholder: 'Product updates', error: 'Enter a feed title.' },
-  { id: 'type', label: 'Type', type: 'text', placeholder: 'rss', error: 'Enter a feed type.' },
+  { id: 'type', label: 'Type', type: 'select', placeholder: '', error: 'Select a feed type.' },
   { id: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com/feed.xml', error: 'Enter a valid feed URL.' },
+] as const;
+
+const FEED_TYPE_OPTIONS = [
+  { value: 'web', label: 'Web' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'kinogo', label: 'Kinogo' },
+  { value: 'twitch', label: 'Twitch' },
+  { value: 'yummyanime', label: 'YummyAnime' },
+  { value: 'shiki', label: 'Shiki' },
+  { value: 'reddit', label: 'Reddit' },
+  { value: 'vk', label: 'VK' },
+  { value: 'yt', label: 'YouTube' },
+  { value: 'ranobe.me', label: 'Ranobe.me' },
+  { value: 'spoti', label: 'Spotify artist' },
+  { value: 'rezka', label: 'Rezka' },
+  { value: 'inst', label: 'Instagram' },
+  { value: 'stories', label: 'Instagram stories' },
+  { value: 'insolarance', label: 'Insolarance' },
+  { value: 'mangalib', label: 'MangaLib' },
+  { value: 'x', label: 'X' },
+  { value: 'spoti:playlist', label: 'Spotify playlist' },
+  { value: 'onefootball', label: 'OneFootball' },
+  { value: 'rtl', label: 'RTL' },
+  { value: 'rezka:collection', label: 'Rezka collection' },
+  { value: 'matreshka', label: 'Matreshka' },
+  { value: 'shiki:ongoing', label: 'Shiki ongoing' },
+  { value: 'anilibria', label: 'AniLibria' },
+  { value: 'pornhub', label: 'PornHub' },
+  { value: 'porno365', label: 'Porno365' },
+  { value: 'hltv', label: 'HLTV' },
+  { value: 'liquidpedia', label: 'Liquipedia' },
+  { value: 'sasflix', label: 'Sasflix' },
 ] as const;
 
 export function FeedCreator() {
@@ -111,19 +143,36 @@ function CreatorField(props: {
     <div className={`field field--${props.id}`}>
       <label htmlFor={props.id}>{props.label}</label>
       <div className="field__control">
-        <input
-          type={props.type}
-          id={props.id}
-          name={props.id}
-          value={props.value}
-          onChange={(event) => props.onChange(event.target.value)}
-          autoComplete={props.id === 'url' ? 'url' : 'off'}
-          placeholder={props.placeholder}
-          aria-describedby={props.invalid ? errorId : undefined}
-          aria-invalid={props.invalid ? 'true' : undefined}
-          disabled={props.disabled}
-          required
-        />
+        {props.id === 'type' ? (
+          <select
+            id={props.id}
+            name={props.id}
+            value={props.value}
+            onChange={(event) => props.onChange(event.target.value)}
+            aria-describedby={props.invalid ? errorId : undefined}
+            aria-invalid={props.invalid ? 'true' : undefined}
+            disabled={props.disabled}
+            required
+          >
+            {FEED_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={props.type}
+            id={props.id}
+            name={props.id}
+            value={props.value}
+            onChange={(event) => props.onChange(event.target.value)}
+            autoComplete={props.id === 'url' ? 'url' : 'off'}
+            placeholder={props.placeholder}
+            aria-describedby={props.invalid ? errorId : undefined}
+            aria-invalid={props.invalid ? 'true' : undefined}
+            disabled={props.disabled}
+            required
+          />
+        )}
       </div>
       {props.invalid ? <p id={errorId} className="field__error" role="alert">{props.error}</p> : null}
     </div>
