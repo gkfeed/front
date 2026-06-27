@@ -1,8 +1,11 @@
-export interface Feed {
-  id?: number;
+export interface FeedInput {
   title: string;
   type: string;
   url: string;
+}
+
+export interface Feed extends FeedInput {
+  id: number;
 }
 
 export interface Credentials {
