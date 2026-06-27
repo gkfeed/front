@@ -3,9 +3,9 @@ import type { FormEvent } from 'react';
 
 import { createFeed } from '../services/feeds';
 import { useAuth } from '../state/AuthContext';
-import type { Feed } from '../types';
+import type { FeedInput } from '../types';
 
-const EMPTY_FEED: Feed = {
+const EMPTY_FEED: FeedInput = {
   title: '',
   type: 'rss',
   url: '',
@@ -13,16 +13,28 @@ const EMPTY_FEED: Feed = {
 
 type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 
+const FIELDS = [
+  { id: 'title', label: 'Title', type: 'text', placeholder: 'Product updates', error: 'Enter a feed title.' },
+  { id: 'type', label: 'Type', type: 'text', placeholder: 'rss', error: 'Enter a feed type.' },
+  { id: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com/feed.xml', error: 'Enter a valid feed URL.' },
+] as const;
+
 export function FeedCreator() {
   const { credentials } = useAuth();
-  const [feed, setFeed] = useState<Feed>(EMPTY_FEED);
+  const [feed, setFeed] = useState<FeedInput>(EMPTY_FEED);
   const [submitted, setSubmitted] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-  const isValid = Boolean(feed.title.trim() && feed.type.trim() && feed.url.trim());
+  const isSaving = saveStatus === 'saving';
+  const isValid = FIELDS.every(({ id }) => isFieldValid(id));
 
-  function updateFeed(field: keyof Feed, value: string) {
+  function isFieldValid(field: keyof FeedInput) {
+    const value = feed[field].trim();
+    return Boolean(value && (field !== 'url' || URL.canParse(value) && /^https?:$/.test(new URL(value).protocol)));
+  }
+
+  function updateFeed(field: keyof FeedInput, value: string) {
     setFeed((current) => ({ ...current, [field]: value }));
+    setSaveStatus('idle');
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -31,22 +43,23 @@ export function FeedCreator() {
 
     if (!isValid || isSaving) return;
 
-    setIsSaving(true);
     setSaveStatus('saving');
 
     try {
-      await createFeed(feed, credentials);
+      await createFeed({
+        title: feed.title.trim(),
+        type: feed.type.trim(),
+        url: feed.url.trim(),
+      }, credentials);
       setFeed(EMPTY_FEED);
       setSubmitted(false);
       setSaveStatus('success');
     } catch {
       setSaveStatus('error');
-    } finally {
-      setIsSaving(false);
     }
   }
 
-  const statusMessage = getStatusMessage(saveStatus, feed);
+  const statusMessage = getStatusMessage(saveStatus);
 
   return (
     <section className="creator" aria-labelledby="feed-create-title">
@@ -55,36 +68,16 @@ export function FeedCreator() {
           <h1 id="feed-create-title">Create feed</h1>
         </header>
         <div className="creator__fields">
-          <CreatorField
-            id="title"
-            label="Title"
-            type="text"
-            value={feed.title}
-            placeholder="Product updates"
-            error="Enter a feed title."
-            invalid={submitted && !feed.title.trim()}
-            onChange={(value) => updateFeed('title', value)}
-          />
-          <CreatorField
-            id="type"
-            label="Type"
-            type="text"
-            value={feed.type}
-            placeholder="rss"
-            error="Enter a feed type."
-            invalid={submitted && !feed.type.trim()}
-            onChange={(value) => updateFeed('type', value)}
-          />
-          <CreatorField
-            id="url"
-            label="URL"
-            type="url"
-            value={feed.url}
-            placeholder="https://example.com/feed.xml"
-            error="Enter a valid feed URL."
-            invalid={submitted && !feed.url.trim()}
-            onChange={(value) => updateFeed('url', value)}
-          />
+          {FIELDS.map((field) => (
+            <CreatorField
+              {...field}
+              key={field.id}
+              value={feed[field.id]}
+              invalid={submitted && !isFieldValid(field.id)}
+              disabled={isSaving}
+              onChange={(value) => updateFeed(field.id, value)}
+            />
+          ))}
         </div>
         <div className="creator__actions">
           {saveStatus !== 'idle' ? (
@@ -92,7 +85,7 @@ export function FeedCreator() {
               {statusMessage}
             </span>
           ) : null}
-          <button type="submit" disabled={!isValid || isSaving}>
+          <button type="submit" disabled={isSaving}>
             {isSaving ? 'Saving source' : 'Create feed'}
           </button>
         </div>
@@ -102,13 +95,14 @@ export function FeedCreator() {
 }
 
 function CreatorField(props: {
-  id: keyof Feed;
+  id: keyof FeedInput;
   label: string;
   type: string;
   value: string;
   placeholder: string;
   error: string;
   invalid: boolean;
+  disabled: boolean;
   onChange: (value: string) => void;
 }) {
   const errorId = `${props.id}-error`;
@@ -127,17 +121,18 @@ function CreatorField(props: {
           placeholder={props.placeholder}
           aria-describedby={props.invalid ? errorId : undefined}
           aria-invalid={props.invalid ? 'true' : undefined}
+          disabled={props.disabled}
           required
         />
       </div>
-      {props.invalid ? <p id={errorId} className="field__error">{props.error}</p> : null}
+      {props.invalid ? <p id={errorId} className="field__error" role="alert">{props.error}</p> : null}
     </div>
   );
 }
 
-function getStatusMessage(saveStatus: SaveStatus, feed: Feed): string {
+function getStatusMessage(saveStatus: SaveStatus): string {
   if (saveStatus === 'saving') return 'Saving source...';
   if (saveStatus === 'success') return 'Feed source saved.';
   if (saveStatus === 'error') return 'Could not save feed source. Try again.';
-  return feed.title && feed.type && feed.url ? 'Ready to save' : 'Complete all fields';
+  return '';
 }

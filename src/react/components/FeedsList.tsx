@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { getAllFeeds } from '../services/feeds';
 import { useAuth } from '../state/AuthContext';
@@ -9,46 +10,40 @@ import { FeedCard } from './FeedCard';
 export function FeedsList() {
   const { credentials } = useAuth();
   const { searchTerm } = useFeedSearch();
-  const [feeds, setFeeds] = useState<Feed[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [result, setResult] = useState<{ feeds: Feed[]; errorMessage?: string }>();
+  const [attempt, setAttempt] = useState(0);
+  const { feeds = [], errorMessage = '' } = result ?? {};
+  const isLoading = !result;
 
   useEffect(() => {
     let isActive = true;
-    setIsLoading(true);
-    setErrorMessage('');
+    setResult(undefined);
 
     getAllFeeds(credentials)
       .then((nextFeeds) => {
-        if (isActive) setFeeds(nextFeeds);
+        if (isActive) setResult({ feeds: nextFeeds });
       })
       .catch((error: unknown) => {
-        if (!isActive) return;
-        setErrorMessage(getLoadErrorMessage(error));
-      })
-      .finally(() => {
-        if (isActive) setIsLoading(false);
+        if (isActive) setResult({ feeds: [], errorMessage: getLoadErrorMessage(error) });
       });
 
     return () => {
       isActive = false;
     };
-  }, [credentials]);
+  }, [attempt, credentials]);
 
-  const filteredFeeds = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) return feeds;
+  const query = searchTerm.trim().toLowerCase();
+  const filteredFeeds = query
+    ? feeds.filter((feed) => `${feed.title} ${feed.type} ${feed.url}`.toLowerCase().includes(query))
+    : feeds;
+  const resultsAnnouncement = isLoading ? 'Loading feeds.' : getResultsAnnouncement(filteredFeeds.length, searchTerm.trim());
 
-    return feeds.filter((feed) => `${feed.title} ${feed.type} ${feed.url}`.toLowerCase().includes(query));
-  }, [feeds, searchTerm]);
-  const resultsAnnouncement = getResultsAnnouncement(filteredFeeds.length, searchTerm.trim());
-
-  if (isLoading) {
-    return (
-      <div className="container">
-        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-          {resultsAnnouncement}
-        </p>
+  return (
+    <div className="container">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {resultsAnnouncement}
+      </p>
+      {isLoading ? (
         <div className="loading" role="status" aria-live="polite" aria-label="Loading feeds">
           {[1, 2, 3].map((item) => (
             <div key={item} className="feed-skeleton" aria-hidden="true">
@@ -59,21 +54,17 @@ export function FeedsList() {
           ))}
           <span className="sr-only">Loading feeds...</span>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container">
-      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-        {resultsAnnouncement}
-      </p>
-      {errorMessage ? (
-        <p className="empty" role="alert">{errorMessage}</p>
+      ) : errorMessage ? (
+        <div className="empty">
+          <span role="alert">{errorMessage}</span>
+          <button type="button" className="secondary" onClick={() => setAttempt((value) => value + 1)}>Try again</button>
+        </div>
       ) : filteredFeeds.length ? (
-        filteredFeeds.map((feed) => <FeedCard key={feed.id ?? feed.url} feed={feed} />)
+        filteredFeeds.map((feed) => <FeedCard key={feed.id} feed={feed} />)
       ) : (
-        <p className="empty">No feeds found.</p>
+        <p className="empty">
+          {query ? 'No matching feeds.' : <>No feeds yet. <Link to="/create">Create one</Link>.</>}
+        </p>
       )}
     </div>
   );
