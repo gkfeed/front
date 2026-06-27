@@ -16,9 +16,7 @@ body {
   --color-ink-strong: oklch(24% 0.068 28);
   --color-ink-inverse: oklch(91% 0.03 78);
   --color-border: oklch(38% 0.09 27);
-  --color-border-soft: oklch(63% 0.034 52 / 0.72);
   --color-muted: oklch(40% 0.036 36);
-  --color-muted-warm: oklch(45% 0.104 68);
   --color-accent: oklch(45% 0.132 145);
   --color-accent-border: oklch(34% 0.094 145);
   --color-accent-focus: oklch(48% 0.122 145);
@@ -27,16 +25,14 @@ body {
   --color-disabled: oklch(65% 0.03 58);
   --color-focus: oklch(88% 0.035 78);
   --color-focus-light: oklch(94% 0.02 78);
-  --color-canvas: var(--color-page);
   --shadow-card: 0 16px 38px oklch(10% 0.018 28 / 0.2);
   --shadow-card-hover: 0 20px 48px oklch(10% 0.018 28 / 0.26);
-  --shadow-panel: 0 18px 46px oklch(10% 0.018 28 / 0.3);
 }
 
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: var(--color-canvas);
+  background-color: var(--color-page);
   color: var(--color-ink-inverse);
 }
 
@@ -50,6 +46,24 @@ a {
   text-decoration: none;
 }
 
+.skip-link {
+  background: var(--color-surface);
+  color: var(--color-ink-strong);
+  inset: 8px auto auto 8px;
+  padding: 10px 14px;
+  position: fixed;
+  transform: translateY(-150%);
+  z-index: 1;
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+main:focus {
+  outline: 0;
+}
+
 *,
 *::before,
 *::after {
@@ -58,14 +72,16 @@ a {
 
 .feed {
   width: 100%;
-  padding: 18px 20px 16px;
+  padding: 13px 20px 11px 98px;
   background: linear-gradient(180deg, var(--color-card-hover), var(--color-card));
   color: var(--color-ink);
   border: 1px solid var(--color-card-border);
   border-radius: 18px;
   box-shadow: var(--shadow-card);
   display: grid;
-  gap: 10px;
+  gap: 7px;
+  overflow: hidden;
+  position: relative;
   transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -90,12 +106,6 @@ a.feed:focus-visible {
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.feed--corner-logo {
-  overflow: hidden;
-  padding-left: 98px;
-  position: relative;
 }
 
 .feed__type-logo {
@@ -126,66 +136,40 @@ a.feed:focus-visible {
 }
 
 .feed__id {
+  border: 1px solid color-mix(in oklch, var(--color-card-border) 55%, transparent);
+  border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
+  padding: 1px 7px;
 }
 
 .feed__title {
   color: var(--color-ink-strong);
   font-size: 1.18rem;
   font-weight: 800;
-  line-height: 1.18;
+  line-height: 1.08;
   overflow-wrap: anywhere;
 }
 
 .feed__url {
   font-size: 0.93rem;
-  line-height: 1.42;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
 .feed__action {
   align-items: center;
-  color: var(--color-accent-border);
+  border-top: 1px solid color-mix(in oklch, var(--color-card-border) 72%, transparent);
+  color: var(--color-ink);
   display: inline-flex;
   font-size: 0.9rem;
   font-weight: 800;
   gap: 6px;
-  justify-self: start;
-}
-
-.feed--action-footer .feed__action {
-  border-top: 1px solid color-mix(in oklch, var(--color-card-border) 72%, transparent);
-  color: var(--color-ink);
   justify-content: space-between;
-  margin-top: 2px;
-  padding-top: 12px;
-  width: 100%;
-}
-
-.feed--title-id-badge {
-  gap: 7px;
-  padding-bottom: 11px;
-  padding-top: 13px;
-}
-
-.feed--title-id-badge .feed__id {
-  border: 1px solid color-mix(in oklch, var(--color-card-border) 55%, transparent);
-  border-radius: 999px;
-  padding: 1px 7px;
-}
-
-.feed--title-id-badge .feed__title {
-  line-height: 1.08;
-}
-
-.feed--title-id-badge .feed__url {
-  line-height: 1.25;
-}
-
-.feed--title-id-badge .feed__action {
+  justify-self: start;
   margin-top: 0;
   padding-top: 8px;
+  width: 100%;
 }
 
 .feed__action-hint {
@@ -204,11 +188,14 @@ a.feed:focus-visible {
 }
 
 .nav-live-leftbar__brand {
+  align-items: center;
   color: var(--color-ink-inverse);
+  display: inline-flex;
   font-size: 1.34rem;
   font-weight: 800;
   letter-spacing: 0.035em;
   line-height: 1;
+  min-height: 44px;
   white-space: nowrap;
 }
 
@@ -312,7 +299,18 @@ a.feed:focus-visible {
 
 .empty {
   color: var(--color-ink-inverse);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
   text-align: center;
+}
+
+.empty a {
+  text-decoration: underline;
+}
+
+.empty .secondary {
+  justify-self: center;
 }
 
 .sr-only,
@@ -763,8 +761,12 @@ a.feed:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton-line {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -814,11 +816,7 @@ a.feed:focus-visible {
 
 @media (max-width: 520px) {
   .feed {
-    padding: 16px;
-  }
-
-  .feed--corner-logo {
-    padding-left: 84px;
+    padding: 16px 16px 16px 84px;
   }
 
   .feed__type-logo {

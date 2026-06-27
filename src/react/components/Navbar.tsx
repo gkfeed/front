@@ -8,7 +8,7 @@ export function Navbar() {
   const showSearch = location.pathname === '/';
 
   return (
-    <nav className="nav nav-live-leftbar" aria-label="Primary navigation">
+    <nav className="nav" aria-label="Primary navigation">
       <NavLink className="nav-live-leftbar__brand" to="/" aria-label="GKFEED home">GKFEED</NavLink>
       <span className="nav-live-leftbar__links" aria-label="Feed sections">
         <NavLink className={({ isActive }) => `nav-live-leftbar__link${isActive ? ' nav-live-leftbar__link--active' : ''}`} to="/" end>List</NavLink>
