@@ -22,8 +22,8 @@ describe('FeedCreator', () => {
   it('uses URL-only creation by default', async () => {
     render(<AuthProvider><FeedCreator /></AuthProvider>);
 
-    expect(screen.getByRole('tab', { name: 'Lazy' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('tab', { name: 'Extended' }).getAttribute('aria-selected')).toBe('false');
+    expect(screen.getByRole('tab', { name: 'URL only' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Manual' }).getAttribute('aria-selected')).toBe('false');
     expect(screen.queryByLabelText('Title')).toBeNull();
     expect(screen.queryByRole('combobox', { name: 'Type' })).toBeNull();
 
@@ -55,9 +55,9 @@ describe('FeedCreator', () => {
   it('saves title and type from the extended tab', async () => {
     render(<AuthProvider><FeedCreator /></AuthProvider>);
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Extended' }));
-    expect(screen.getByRole('tab', { name: 'Lazy' }).getAttribute('aria-selected')).toBe('false');
-    expect(screen.getByRole('tab', { name: 'Extended' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Manual' }));
+    expect(screen.getByRole('tab', { name: 'URL only' }).getAttribute('aria-selected')).toBe('false');
+    expect(screen.getByRole('tab', { name: 'Manual' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('combobox', { name: 'Type' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'YouTube' }).getAttribute('value')).toBe('yt');
 

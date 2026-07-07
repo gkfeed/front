@@ -12,11 +12,11 @@ type CreatorFieldConfig = {
   error: string;
 };
 
-const FIELDS: readonly CreatorFieldConfig[] = [
+const URL_FIELDS: readonly CreatorFieldConfig[] = [
   { id: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com/feed.xml', error: 'Enter a valid feed URL.' },
 ] as const;
 
-const ADVANCED_FIELDS: readonly CreatorFieldConfig[] = [
+const MANUAL_FIELDS: readonly CreatorFieldConfig[] = [
   { id: 'title', label: 'Title', type: 'text', placeholder: 'Product updates', error: 'Enter a feed title.' },
   { id: 'type', label: 'Type', type: 'select', placeholder: '', error: 'Select a feed type.' },
   { id: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com/feed.xml', error: 'Enter a valid feed URL.' },
@@ -79,15 +79,15 @@ export function FeedCreator() {
         <header className="creator__header">
           <h1 id="feed-create-title">Create feed</h1>
           <div className="creator__tabs" role="tablist" aria-label="Feed creation mode">
-            <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>Lazy</ModeTab>
-            <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>Extended</ModeTab>
+            <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>URL only</ModeTab>
+            <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>Manual</ModeTab>
           </div>
         </header>
         {mode === 'lazy' ? (
           <CreatorPanel
             id="feed-create-lazy-panel"
             labelledBy="feed-create-lazy-tab"
-            fields={FIELDS}
+            fields={URL_FIELDS}
             feed={feed}
             submitted={submitted}
             isSaving={isSaving}
@@ -98,7 +98,7 @@ export function FeedCreator() {
           <CreatorPanel
             id="feed-create-extended-panel"
             labelledBy="feed-create-extended-tab"
-            fields={ADVANCED_FIELDS}
+            fields={MANUAL_FIELDS}
             feed={feed}
             submitted={submitted}
             isSaving={isSaving}
@@ -107,11 +107,13 @@ export function FeedCreator() {
           />
         )}
         <div className="creator__actions">
-          {saveStatus !== 'idle' ? (
-            <span className="creator__status" role={saveStatus === 'error' ? 'alert' : undefined} aria-live="polite">
-              {statusMessage}
-            </span>
-          ) : null}
+          <span
+            className={`creator__status creator__status--${saveStatus}`}
+            role={saveStatus === 'error' ? 'alert' : undefined}
+            aria-live="polite"
+          >
+            {statusMessage}
+          </span>
           <button className="creator__submit" type="submit" disabled={isSaving}>
             {isSaving ? 'Saving source' : 'Add feed'}
           </button>
@@ -205,7 +207,7 @@ function CreatorField({
   const errorId = `${id}-error`;
 
   return (
-    <div className={`field field--${id}`}>
+    <div className={`field field--${id}${invalid ? ' field--invalid' : ''}`}>
       <label htmlFor={id}>{label}</label>
       <div className="field__control">
         {id === 'type' ? (
