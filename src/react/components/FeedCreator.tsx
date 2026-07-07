@@ -5,15 +5,24 @@ import { createFeed } from '../services/feeds';
 import { useAuth } from '../state/AuthContext';
 import type { FeedInput } from '../types';
 
+type CreatorFieldConfig = {
+  id: keyof FeedInput;
+  label: string;
+  type: 'select' | 'text' | 'url';
+  placeholder: string;
+  error: string;
+};
+
+type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
+
 const EMPTY_FEED: FeedInput = {
   title: '',
   type: 'web',
   url: '',
 };
+const VALID_URL_PROTOCOLS: Record<string, true> = { 'http:': true, 'https:': true };
 
-type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
-
-const FIELDS = [
+const FIELDS: readonly CreatorFieldConfig[] = [
   { id: 'title', label: 'Title', type: 'text', placeholder: 'Product updates', error: 'Enter a feed title.' },
   { id: 'type', label: 'Type', type: 'select', placeholder: '', error: 'Select a feed type.' },
   { id: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com/feed.xml', error: 'Enter a valid feed URL.' },
@@ -57,11 +66,13 @@ export function FeedCreator() {
   const [submitted, setSubmitted] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const isSaving = saveStatus === 'saving';
-  const isValid = FIELDS.every(({ id }) => isFieldValid(id));
+  const isValid = FIELDS.every(({ id }) => isFeedFieldValid(id));
 
-  function isFieldValid(field: keyof FeedInput) {
+  function isFeedFieldValid(field: keyof FeedInput) {
     const value = feed[field].trim();
-    return Boolean(value && (field !== 'url' || URL.canParse(value) && /^https?:$/.test(new URL(value).protocol)));
+    if (!value) return false;
+
+    return field === 'url' ? isValidFeedUrl(value) : true;
   }
 
   function updateFeed(field: keyof FeedInput, value: string) {
@@ -77,12 +88,14 @@ export function FeedCreator() {
 
     setSaveStatus('saving');
 
+    const trimmedFeed = {
+      title: feed.title.trim(),
+      type: feed.type.trim(),
+      url: feed.url.trim(),
+    };
+
     try {
-      await createFeed({
-        title: feed.title.trim(),
-        type: feed.type.trim(),
-        url: feed.url.trim(),
-      }, credentials);
+      await createFeed(trimmedFeed, credentials);
       setFeed(EMPTY_FEED);
       setSubmitted(false);
       setSaveStatus('success');
@@ -105,7 +118,7 @@ export function FeedCreator() {
               {...field}
               key={field.id}
               value={feed[field.id]}
-              invalid={submitted && !isFieldValid(field.id)}
+              invalid={submitted && !isFeedFieldValid(field.id)}
               disabled={isSaving}
               onChange={(value) => updateFeed(field.id, value)}
             />
@@ -126,32 +139,39 @@ export function FeedCreator() {
   );
 }
 
-function CreatorField(props: {
-  id: keyof FeedInput;
-  label: string;
-  type: string;
+type CreatorFieldProps = CreatorFieldConfig & {
   value: string;
-  placeholder: string;
-  error: string;
   invalid: boolean;
   disabled: boolean;
   onChange: (value: string) => void;
-}) {
-  const errorId = `${props.id}-error`;
+};
+
+function CreatorField({
+  id,
+  label,
+  type,
+  value,
+  placeholder,
+  error,
+  invalid,
+  disabled,
+  onChange,
+}: CreatorFieldProps) {
+  const errorId = `${id}-error`;
 
   return (
-    <div className={`field field--${props.id}`}>
-      <label htmlFor={props.id}>{props.label}</label>
+    <div className={`field field--${id}`}>
+      <label htmlFor={id}>{label}</label>
       <div className="field__control">
-        {props.id === 'type' ? (
+        {id === 'type' ? (
           <select
-            id={props.id}
-            name={props.id}
-            value={props.value}
-            onChange={(event) => props.onChange(event.target.value)}
-            aria-describedby={props.invalid ? errorId : undefined}
-            aria-invalid={props.invalid ? 'true' : undefined}
-            disabled={props.disabled}
+            id={id}
+            name={id}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            aria-describedby={invalid ? errorId : undefined}
+            aria-invalid={invalid ? 'true' : undefined}
+            disabled={disabled}
             required
           >
             {FEED_TYPE_OPTIONS.map((option) => (
@@ -160,23 +180,31 @@ function CreatorField(props: {
           </select>
         ) : (
           <input
-            type={props.type}
-            id={props.id}
-            name={props.id}
-            value={props.value}
-            onChange={(event) => props.onChange(event.target.value)}
-            autoComplete={props.id === 'url' ? 'url' : 'off'}
-            placeholder={props.placeholder}
-            aria-describedby={props.invalid ? errorId : undefined}
-            aria-invalid={props.invalid ? 'true' : undefined}
-            disabled={props.disabled}
+            type={type}
+            id={id}
+            name={id}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            autoComplete={id === 'url' ? 'url' : 'off'}
+            placeholder={placeholder}
+            aria-describedby={invalid ? errorId : undefined}
+            aria-invalid={invalid ? 'true' : undefined}
+            disabled={disabled}
             required
           />
         )}
       </div>
-      {props.invalid ? <p id={errorId} className="field__error" role="alert">{props.error}</p> : null}
+      {invalid ? <p id={errorId} className="field__error" role="alert">{error}</p> : null}
     </div>
   );
+}
+
+function isValidFeedUrl(value: string): boolean {
+  try {
+    return VALID_URL_PROTOCOLS[new URL(value).protocol] === true;
+  } catch {
+    return false;
+  }
 }
 
 function getStatusMessage(saveStatus: SaveStatus): string {

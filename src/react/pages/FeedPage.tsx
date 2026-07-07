@@ -1,53 +1,109 @@
+import { useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { FeedCard } from '../components/FeedCard';
 import { useFeed } from '../hooks/useFeed';
 
+const RETRYABLE_LOAD_ERROR_PREFIX = 'Could';
+
 export function FeedPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { feed, isLoading, isDeleting, isConfirmingDelete, loadError, deleteError, requestDelete, cancelDelete, deleteFeed, retryLoad } = useFeed(id, () => navigate('/'));
+  const handleDeleted = useCallback(() => navigate('/'), [navigate]);
+  const {
+    feed,
+    isLoading,
+    isDeleting,
+    isConfirmingDelete,
+    loadError,
+    deleteError,
+    requestDelete,
+    cancelDelete,
+    deleteFeed,
+    retryLoad,
+  } = useFeed(id, handleDeleted);
+
+  let content: ReactNode = null;
+
+  if (isLoading) {
+    content = <p className="status" aria-live="polite">Loading feed source</p>;
+  } else if (loadError) {
+    content = <LoadErrorState message={loadError} onRetry={retryLoad} />;
+  } else if (feed) {
+    content = (
+      <>
+        <FeedCard feed={feed} asLink={false} />
+        <DeleteActions
+          isConfirmingDelete={isConfirmingDelete}
+          isDeleting={isDeleting}
+          deleteError={deleteError}
+          onRequestDelete={requestDelete}
+          onCancelDelete={cancelDelete}
+          onDelete={deleteFeed}
+        />
+      </>
+    );
+  }
 
   return (
     <section className="container" aria-labelledby="feed-page-title">
       <h1 id="feed-page-title" className="page-title">Feed source details</h1>
+      {content}
+    </section>
+  );
+}
 
-      {isLoading ? (
-        <p className="status" aria-live="polite">Loading feed source</p>
-      ) : loadError ? (
+function LoadErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <>
+      <p className="status status--error" role="alert">{message}</p>
+      {message.startsWith(RETRYABLE_LOAD_ERROR_PREFIX) ? (
+        <button type="button" className="secondary" onClick={onRetry}>Try again</button>
+      ) : null}
+    </>
+  );
+}
+
+function DeleteActions({
+  isConfirmingDelete,
+  isDeleting,
+  deleteError,
+  onRequestDelete,
+  onCancelDelete,
+  onDelete,
+}: {
+  isConfirmingDelete: boolean;
+  isDeleting: boolean;
+  deleteError: string;
+  onRequestDelete: () => void;
+  onCancelDelete: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="actions">
+      {isConfirmingDelete ? (
         <>
-          <p className="status status--error" role="alert">{loadError}</p>
-          {loadError.startsWith('Could') ? <button type="button" className="secondary" onClick={retryLoad}>Try again</button> : null}
-        </>
-      ) : feed ? (
-        <>
-          <FeedCard feed={feed} asLink={false} />
-          <div className="actions">
-            {isConfirmingDelete ? (
-              <>
-                <p className="status" id="delete-confirmation">Delete this feed source? This cannot be undone.</p>
-                <div className="actions__confirm" aria-describedby="delete-confirmation">
-                  <button type="button" className="secondary" onClick={cancelDelete} disabled={isDeleting} autoFocus>
-                    Cancel
-                  </button>
-                  <button type="button" onClick={deleteFeed} className="delete" disabled={isDeleting}>
-                    {isDeleting ? 'Deleting...' : 'Delete feed source'}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <button type="button" onClick={requestDelete} className="delete" disabled={isDeleting}>
-                Delete
-              </button>
-            )}
-            {deleteError ? (
-              <p className="status status--error" role="alert">{deleteError}</p>
-            ) : isDeleting ? (
-              <p className="status" aria-live="polite">Deleting feed source</p>
-            ) : null}
+          <p className="status" id="delete-confirmation">Delete this feed source? This cannot be undone.</p>
+          <div className="actions__confirm" aria-describedby="delete-confirmation">
+            <button type="button" className="secondary" onClick={onCancelDelete} disabled={isDeleting} autoFocus>
+              Cancel
+            </button>
+            <button type="button" onClick={onDelete} className="delete" disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete feed source'}
+            </button>
           </div>
         </>
+      ) : (
+        <button type="button" onClick={onRequestDelete} className="delete" disabled={isDeleting}>
+          Delete
+        </button>
+      )}
+      {deleteError ? (
+        <p className="status status--error" role="alert">{deleteError}</p>
+      ) : isDeleting ? (
+        <p className="status" aria-live="polite">Deleting feed source</p>
       ) : null}
-    </section>
+    </div>
   );
 }

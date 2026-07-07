@@ -9,24 +9,29 @@ interface LoadResult {
   loadError?: string;
 }
 
+type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
+
+const FEED_NOT_FOUND_MESSAGE = 'Feed source not found.';
+const LOAD_ERROR_MESSAGE = 'Could not load this feed source.';
+const DELETE_ERROR_MESSAGE = 'Could not delete this feed source. Try again.';
+
 export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) {
   const { credentials } = useAuth();
   const [loadResult, setLoadResult] = useState<LoadResult>();
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [deleteState, setDeleteState] = useState<'idle' | 'confirming' | 'deleting' | 'error'>('idle');
-  const feedId = Number(feedIdParam);
-  const isValidFeedId = Number.isSafeInteger(feedId) && feedId > 0;
+  const [deleteState, setDeleteState] = useState<DeleteState>('idle');
+  const feedId = parseFeedId(feedIdParam);
   const { feed, loadError = '' } = loadResult ?? {};
   const isLoading = !loadResult;
   const isDeleting = deleteState === 'deleting';
   const isConfirmingDelete = deleteState !== 'idle';
-  const deleteError = deleteState === 'error' ? 'Could not delete this feed source. Try again.' : '';
+  const deleteError = deleteState === 'error' ? DELETE_ERROR_MESSAGE : '';
 
   useEffect(() => {
     setLoadResult(undefined);
 
-    if (!isValidFeedId) {
-      setLoadResult({ loadError: 'Feed source not found.' });
+    if (feedId === null) {
+      setLoadResult({ loadError: FEED_NOT_FOUND_MESSAGE });
       return;
     }
 
@@ -35,19 +40,19 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     getFeedById(feedId, credentials)
       .then((nextFeed) => {
         if (!isActive) return;
-        setLoadResult(nextFeed ? { feed: nextFeed } : { loadError: 'Feed source not found.' });
+        setLoadResult(nextFeed ? { feed: nextFeed } : { loadError: FEED_NOT_FOUND_MESSAGE });
       })
       .catch(() => {
-        if (isActive) setLoadResult({ loadError: 'Could not load this feed source.' });
+        if (isActive) setLoadResult({ loadError: LOAD_ERROR_MESSAGE });
       });
 
     return () => {
       isActive = false;
     };
-  }, [credentials, feedId, isValidFeedId, loadAttempt]);
+  }, [credentials, feedId, loadAttempt]);
 
   async function deleteFeed() {
-    if (!isValidFeedId || isDeleting) return;
+    if (feedId === null || isDeleting) return;
 
     setDeleteState('deleting');
 
@@ -79,4 +84,10 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     cancelDelete,
     deleteFeed,
   };
+}
+
+function parseFeedId(feedIdParam: string | undefined): number | null {
+  const feedId = Number(feedIdParam);
+
+  return Number.isSafeInteger(feedId) && feedId > 0 ? feedId : null;
 }

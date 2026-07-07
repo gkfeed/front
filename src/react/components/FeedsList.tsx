@@ -1,52 +1,31 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { getAllFeeds } from '../services/feeds';
 import { useAuth } from '../state/AuthContext';
 import { useFeedSearch } from '../state/FeedSearchContext';
-import type { Feed } from '../types';
+import type { Credentials, Feed } from '../types';
 import { FeedCard } from './FeedCard';
+
+const SEARCH_DEBOUNCE_MS = 80;
+const SKELETON_ITEMS = [1, 2, 3] as const;
+
+interface FeedLoadResult {
+  feeds: Feed[];
+  errorMessage?: string;
+}
 
 export function FeedsList() {
   const { credentials } = useAuth();
   const { searchTerm } = useFeedSearch();
   const deferredSearchTerm = useDeferredValue(searchTerm);
-  const settledSearchTerm = useDebouncedValue(deferredSearchTerm, 80);
-  const [result, setResult] = useState<{ feeds: Feed[]; errorMessage?: string }>();
-  const [attempt, setAttempt] = useState(0);
-  const { feeds = [], errorMessage = '' } = result ?? {};
-  const isLoading = !result;
-
-  useEffect(() => {
-    let isActive = true;
-    setResult(undefined);
-
-    getAllFeeds(credentials)
-      .then((nextFeeds) => {
-        if (isActive) setResult({ feeds: nextFeeds });
-      })
-      .catch((error: unknown) => {
-        if (isActive) setResult({ feeds: [], errorMessage: getLoadErrorMessage(error) });
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [attempt, credentials]);
-
-  const indexedFeeds = useMemo(
-    () => feeds.map((feed) => ({
-      feed,
-      searchableText: `${feed.title} ${feed.type} ${feed.url}`.toLowerCase(),
-    })),
-    [feeds],
-  );
-  const query = settledSearchTerm.trim().toLowerCase();
-  const filteredFeeds = useMemo(
-    () => (query ? indexedFeeds.filter(({ searchableText }) => searchableText.includes(query)).map(({ feed }) => feed) : feeds),
-    [feeds, indexedFeeds, query],
-  );
-  const resultsAnnouncement = isLoading ? 'Loading feeds.' : getResultsAnnouncement(filteredFeeds.length, settledSearchTerm.trim());
+  const settledSearchTerm = useDebouncedValue(deferredSearchTerm, SEARCH_DEBOUNCE_MS);
+  const { feeds, errorMessage, isLoading, retry } = useFeeds(credentials);
+  const displayQuery = settledSearchTerm.trim();
+  const normalizedQuery = displayQuery.toLowerCase();
+  const filteredFeeds = useMemo(() => filterFeeds(feeds, normalizedQuery), [feeds, normalizedQuery]);
+  const resultsAnnouncement = isLoading ? 'Loading feeds.' : getResultsAnnouncement(filteredFeeds.length, displayQuery);
 
   return (
     <div className="container">
@@ -55,7 +34,7 @@ export function FeedsList() {
       </p>
       {isLoading ? (
         <div className="loading" role="status" aria-live="polite" aria-label="Loading feeds">
-          {[1, 2, 3].map((item) => (
+          {SKELETON_ITEMS.map((item) => (
             <div key={item} className="feed-skeleton" aria-hidden="true">
               <span className="skeleton-line skeleton-title" />
               <span className="skeleton-line" />
@@ -67,13 +46,13 @@ export function FeedsList() {
       ) : errorMessage ? (
         <div className="empty">
           <span role="alert">{errorMessage}</span>
-          <button type="button" className="secondary" onClick={() => setAttempt((value) => value + 1)}>Try again</button>
+          <button type="button" className="secondary" onClick={retry}>Try again</button>
         </div>
       ) : filteredFeeds.length ? (
         filteredFeeds.map((feed) => <FeedCard key={feed.id} feed={feed} />)
       ) : (
         <p className="empty">
-          {query ? 'No matching feeds.' : <>No feeds yet. <Link to="/create">Create one</Link>.</>}
+          {normalizedQuery ? 'No matching feeds.' : <>No feeds yet. <Link to="/create">Create one</Link>.</>}
         </p>
       )}
     </div>
@@ -90,15 +69,44 @@ function getResultsAnnouncement(count: number, query = ''): string {
     : `${count} ${feedLabel} found for search term ${query}.`;
 }
 
-function useDebouncedValue(value: string, delayMs: number): string {
-  const [debouncedValue, setDebouncedValue] = useState(value);
+function useFeeds(credentials: Credentials | null) {
+  const [result, setResult] = useState<FeedLoadResult>();
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => setDebouncedValue(value), delayMs);
-    return () => window.clearTimeout(timeoutId);
-  }, [delayMs, value]);
+    let isActive = true;
+    setResult(undefined);
 
-  return debouncedValue;
+    getAllFeeds(credentials)
+      .then((nextFeeds) => {
+        if (isActive) setResult({ feeds: nextFeeds });
+      })
+      .catch((error: unknown) => {
+        if (isActive) setResult({ feeds: [], errorMessage: getLoadErrorMessage(error) });
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [loadAttempt, credentials]);
+
+  const retry = useCallback(() => setLoadAttempt((value) => value + 1), []);
+  const { feeds = [], errorMessage = '' } = result ?? {};
+
+  return {
+    feeds,
+    errorMessage,
+    isLoading: !result,
+    retry,
+  };
+}
+
+function filterFeeds(feeds: Feed[], normalizedQuery: string): Feed[] {
+  if (!normalizedQuery) return feeds;
+
+  return feeds.filter((feed) => (
+    `${feed.title} ${feed.type} ${feed.url}`.toLowerCase().includes(normalizedQuery)
+  ));
 }
 
 function getLoadErrorMessage(error: unknown): string {
