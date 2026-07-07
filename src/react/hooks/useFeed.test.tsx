@@ -23,6 +23,7 @@ describe('useFeed', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.loadError).toBe('Feed source not found.');
+    expect(result.current.canRetryLoad).toBe(false);
     expect(getFeed).not.toHaveBeenCalled();
   });
 
@@ -45,6 +46,7 @@ describe('useFeed', () => {
     const { result } = renderHook(() => useFeed('1', vi.fn()), { wrapper });
 
     await waitFor(() => expect(result.current.loadError).toBe('Could not load this feed source.'));
+    expect(result.current.canRetryLoad).toBe(true);
     act(result.current.retryLoad);
     await waitFor(() => expect(result.current.feed).toEqual(feed));
     expect(getFeed).toHaveBeenCalledTimes(2);

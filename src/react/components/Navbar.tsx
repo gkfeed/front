@@ -12,15 +12,15 @@ export function Navbar() {
 
   return (
     <nav className="nav" aria-label="Primary navigation">
-      <NavLink className="nav-live-leftbar__brand" to="/" aria-label="GKFEED home">GKFEED</NavLink>
-      <span className="nav-live-leftbar__links" aria-label="Feed sections">
-        <NavLink className={({ isActive }) => `nav-live-leftbar__link${isActive ? ' nav-live-leftbar__link--active' : ''}`} to="/" end>List</NavLink>
-        <NavLink className={({ isActive }) => `nav-live-leftbar__link${isActive ? ' nav-live-leftbar__link--active' : ''}`} to="/create">Create</NavLink>
-        <NavLink className={({ isActive }) => `nav-live-leftbar__link${isActive ? ' nav-live-leftbar__link--active' : ''}`} to="/login">Login</NavLink>
+      <NavLink className="nav__brand" to="/" aria-label="GKFEED home">GKFEED</NavLink>
+      <span className="nav__links" aria-label="Feed sections">
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/" end>List</NavLink>
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/create">Create</NavLink>
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/login">Login</NavLink>
       </span>
       {showSearch ? (
         <input
-          className="nav-live-leftbar__search"
+          className="nav__search"
           type="search"
           placeholder="Search feeds"
           aria-label="Search feeds"

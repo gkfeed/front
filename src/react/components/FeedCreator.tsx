@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import type { FormEvent } from 'react';
 
-import { createFeed } from '../services/feeds';
-import { useAuth } from '../state/AuthContext';
+import { useFeedCreator } from '../hooks/useFeedCreator';
+import type { FeedCreatorMode } from '../hooks/useFeedCreator';
 import type { FeedInput } from '../types';
 
 type CreatorFieldConfig = {
@@ -13,16 +12,11 @@ type CreatorFieldConfig = {
   error: string;
 };
 
-type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
-
-const EMPTY_FEED: FeedInput = {
-  title: '',
-  type: 'web',
-  url: '',
-};
-const VALID_URL_PROTOCOLS: Record<string, true> = { 'http:': true, 'https:': true };
-
 const FIELDS: readonly CreatorFieldConfig[] = [
+  { id: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com/feed.xml', error: 'Enter a valid feed URL.' },
+] as const;
+
+const ADVANCED_FIELDS: readonly CreatorFieldConfig[] = [
   { id: 'title', label: 'Title', type: 'text', placeholder: 'Product updates', error: 'Enter a feed title.' },
   { id: 'type', label: 'Type', type: 'select', placeholder: '', error: 'Select a feed type.' },
   { id: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com/feed.xml', error: 'Enter a valid feed URL.' },
@@ -61,81 +55,132 @@ const FEED_TYPE_OPTIONS = [
 ] as const;
 
 export function FeedCreator() {
-  const { credentials } = useAuth();
-  const [feed, setFeed] = useState<FeedInput>(EMPTY_FEED);
-  const [submitted, setSubmitted] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-  const isSaving = saveStatus === 'saving';
-  const isValid = FIELDS.every(({ id }) => isFeedFieldValid(id));
-
-  function isFeedFieldValid(field: keyof FeedInput) {
-    const value = feed[field].trim();
-    if (!value) return false;
-
-    return field === 'url' ? isValidFeedUrl(value) : true;
-  }
-
-  function updateFeed(field: keyof FeedInput, value: string) {
-    setFeed((current) => ({ ...current, [field]: value }));
-    setSaveStatus('idle');
-  }
+  const {
+    feed,
+    mode,
+    submitted,
+    saveStatus,
+    isSaving,
+    statusMessage,
+    isFeedFieldValid,
+    updateMode,
+    updateFeed,
+    submitFeed,
+  } = useFeedCreator();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
-
-    if (!isValid || isSaving) return;
-
-    setSaveStatus('saving');
-
-    const trimmedFeed = {
-      title: feed.title.trim(),
-      type: feed.type.trim(),
-      url: feed.url.trim(),
-    };
-
-    try {
-      await createFeed(trimmedFeed, credentials);
-      setFeed(EMPTY_FEED);
-      setSubmitted(false);
-      setSaveStatus('success');
-    } catch {
-      setSaveStatus('error');
-    }
+    await submitFeed();
   }
-
-  const statusMessage = getStatusMessage(saveStatus);
 
   return (
     <section className="creator" aria-labelledby="feed-create-title">
       <form className="creator__form" onSubmit={onSubmit} noValidate>
         <header className="creator__header">
           <h1 id="feed-create-title">Create feed</h1>
+          <div className="creator__tabs" role="tablist" aria-label="Feed creation mode">
+            <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>Lazy</ModeTab>
+            <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>Extended</ModeTab>
+          </div>
         </header>
-        <div className="creator__fields">
-          {FIELDS.map((field) => (
-            <CreatorField
-              {...field}
-              key={field.id}
-              value={feed[field.id]}
-              invalid={submitted && !isFeedFieldValid(field.id)}
-              disabled={isSaving}
-              onChange={(value) => updateFeed(field.id, value)}
-            />
-          ))}
-        </div>
+        {mode === 'lazy' ? (
+          <CreatorPanel
+            id="feed-create-lazy-panel"
+            labelledBy="feed-create-lazy-tab"
+            fields={FIELDS}
+            feed={feed}
+            submitted={submitted}
+            isSaving={isSaving}
+            isFeedFieldValid={isFeedFieldValid}
+            updateFeed={updateFeed}
+          />
+        ) : (
+          <CreatorPanel
+            id="feed-create-extended-panel"
+            labelledBy="feed-create-extended-tab"
+            fields={ADVANCED_FIELDS}
+            feed={feed}
+            submitted={submitted}
+            isSaving={isSaving}
+            isFeedFieldValid={isFeedFieldValid}
+            updateFeed={updateFeed}
+          />
+        )}
         <div className="creator__actions">
           {saveStatus !== 'idle' ? (
             <span className="creator__status" role={saveStatus === 'error' ? 'alert' : undefined} aria-live="polite">
               {statusMessage}
             </span>
           ) : null}
-          <button type="submit" disabled={isSaving}>
-            {isSaving ? 'Saving source' : 'Create feed'}
+          <button className="creator__submit" type="submit" disabled={isSaving}>
+            {isSaving ? 'Saving source' : 'Add feed'}
           </button>
         </div>
       </form>
     </section>
+  );
+}
+
+type ModeTabProps = {
+  children: string;
+  mode: FeedCreatorMode;
+  currentMode: FeedCreatorMode;
+  disabled: boolean;
+  onSelect: (mode: FeedCreatorMode) => void;
+};
+
+function ModeTab({ children, mode, currentMode, disabled, onSelect }: ModeTabProps) {
+  const selected = mode === currentMode;
+
+  return (
+    <button
+      id={`feed-create-${mode}-tab`}
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      aria-controls={`feed-create-${mode}-panel`}
+      disabled={disabled}
+      onClick={() => onSelect(mode)}
+    >
+      {children}
+    </button>
+  );
+}
+
+type CreatorPanelProps = {
+  id: string;
+  labelledBy: string;
+  fields: readonly CreatorFieldConfig[];
+  feed: FeedInput;
+  submitted: boolean;
+  isSaving: boolean;
+  isFeedFieldValid: (field: keyof FeedInput) => boolean;
+  updateFeed: (field: keyof FeedInput, value: string) => void;
+};
+
+function CreatorPanel({
+  id,
+  labelledBy,
+  fields,
+  feed,
+  submitted,
+  isSaving,
+  isFeedFieldValid,
+  updateFeed,
+}: CreatorPanelProps) {
+  return (
+    <div id={id} className="creator__fields" role="tabpanel" aria-labelledby={labelledBy}>
+      {fields.map((field) => (
+        <CreatorField
+          {...field}
+          key={field.id}
+          value={feed[field.id]}
+          invalid={submitted && !isFeedFieldValid(field.id)}
+          disabled={isSaving}
+          onChange={(value) => updateFeed(field.id, value)}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -197,19 +242,4 @@ function CreatorField({
       {invalid ? <p id={errorId} className="field__error" role="alert">{error}</p> : null}
     </div>
   );
-}
-
-function isValidFeedUrl(value: string): boolean {
-  try {
-    return VALID_URL_PROTOCOLS[new URL(value).protocol] === true;
-  } catch {
-    return false;
-  }
-}
-
-function getStatusMessage(saveStatus: SaveStatus): string {
-  if (saveStatus === 'saving') return 'Saving source...';
-  if (saveStatus === 'success') return 'Feed source saved.';
-  if (saveStatus === 'error') return 'Could not save feed source. Try again.';
-  return '';
 }

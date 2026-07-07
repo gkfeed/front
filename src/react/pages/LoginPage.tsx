@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LockIcon, UserIcon } from '../components/Icons';
 import { useAuth } from '../state/AuthContext';
+import { getRedirectTarget } from '../state/routes';
 
 const EMPTY_FORM = { username: '', password: '' };
 const FIELDS = [
@@ -19,7 +20,7 @@ export function LoginPage() {
   const [submitted, setSubmitted] = useState(false);
   const savedUsername = credentials?.username ?? '';
   const isValid = Boolean(form.username.trim() && form.password);
-  const redirectTo = getRedirectPath(location.state);
+  const redirectTo = getRedirectTarget(location.state);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -90,13 +91,4 @@ export function LoginPage() {
       )}
     </section>
   );
-}
-
-function getRedirectPath(state: unknown): string {
-  if (!state || typeof state !== 'object') return '/';
-
-  const from = (state as { from?: { pathname?: unknown; search?: unknown; hash?: unknown } }).from;
-  if (!from || typeof from.pathname !== 'string' || from.pathname === '/login') return '/';
-
-  return `${from.pathname}${typeof from.search === 'string' ? from.search : ''}${typeof from.hash === 'string' ? from.hash : ''}`;
 }

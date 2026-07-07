@@ -187,7 +187,7 @@ a.feed:focus-visible {
   padding: 12px 15px;
 }
 
-.nav-live-leftbar__brand {
+.nav__brand {
   align-items: center;
   color: var(--color-ink-inverse);
   display: inline-flex;
@@ -199,14 +199,14 @@ a.feed:focus-visible {
   white-space: nowrap;
 }
 
-.nav-live-leftbar__links {
+.nav__links {
   align-items: center;
   display: flex;
   gap: 14px;
   justify-self: start;
 }
 
-.nav-live-leftbar__link {
+.nav__link {
   align-items: center;
   border-bottom: 1px solid transparent;
   color: var(--color-ink-inverse);
@@ -218,16 +218,16 @@ a.feed:focus-visible {
   padding: 0 2px;
 }
 
-.nav-live-leftbar__link:hover {
+.nav__link:hover {
   border-bottom-color: color-mix(in oklch, var(--color-ink-inverse) 64%, var(--color-surface));
 }
 
-.nav-live-leftbar__link--active {
+.nav__link--active {
   border-bottom-color: var(--color-ink-inverse);
   font-weight: 800;
 }
 
-.nav-live-leftbar__search {
+.nav__search {
   background: color-mix(in oklch, var(--color-page) 82%, var(--color-border));
   border: 1px solid color-mix(in oklch, var(--color-border) 88%, transparent);
   border-radius: 14px;
@@ -240,17 +240,17 @@ a.feed:focus-visible {
   width: min(34vw, 390px);
 }
 
-.nav-live-leftbar__search::placeholder {
+.nav__search::placeholder {
   color: color-mix(in oklch, var(--color-ink-inverse) 56%, var(--color-surface));
 }
 
-.nav-live-leftbar__search::selection {
+.nav__search::selection {
   background: var(--color-surface);
   color: var(--color-page);
 }
 
-.nav-live-leftbar__link:focus-visible,
-.nav-live-leftbar__search:focus-visible {
+.nav__link:focus-visible,
+.nav__search:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 3px;
 }
@@ -534,29 +534,44 @@ a.feed:focus-visible {
 }
 
 .creator {
-  max-width: 480px;
-  padding: 28px 12px 44px;
+  max-width: 496px;
+  padding: 32px 16px 48px;
 }
 
 .creator__form {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
+  background: color-mix(in oklch, var(--color-page) 86%, var(--color-field));
+  border: 1px solid color-mix(in oklch, var(--color-field) 24%, var(--color-page));
+  border-radius: 18px;
   color: var(--color-ink-inverse);
-  box-shadow: none;
-  gap: 18px;
-  max-width: 440px;
-  padding: 0;
+  box-shadow: 0 18px 42px oklch(10% 0.018 28 / 0.18);
+  gap: 16px;
+  max-width: 464px;
+  padding: 20px;
+}
+
+.creator__header {
+  gap: 14px;
 }
 
 .creator__header h1 {
   color: var(--color-ink-inverse);
-  font-size: 1.28rem;
+  font-size: 1.22rem;
   letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.creator__tabs {
+  background: color-mix(in oklch, var(--color-page) 76%, var(--color-field));
+  border: 1px solid color-mix(in oklch, var(--color-field) 26%, var(--color-page));
+  border-radius: 12px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
 }
 
 .creator__fields {
-  gap: 12px;
+  gap: 14px;
 }
 
 .field {
@@ -565,24 +580,30 @@ a.feed:focus-visible {
 
 .creator label {
   color: color-mix(in oklch, var(--color-ink-inverse) 78%, var(--color-page));
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 650;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
 }
 
 .creator .field__control {
-  background: color-mix(in oklch, var(--color-field) 68%, var(--color-surface));
-  border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
-  border-radius: 9px;
+  background: color-mix(in oklch, var(--color-field) 82%, var(--color-page));
+  border-color: color-mix(in oklch, var(--color-field) 34%, var(--color-page));
+  border-radius: 12px;
   display: block;
-  min-height: 44px;
-  padding: 0 10px;
+  min-height: 46px;
+  padding: 0 12px;
+  transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .creator .field__control:focus-within {
   background: var(--color-field-focus);
+  border-color: var(--color-accent-focus);
 }
 
-.creator input {
+.creator input,
+.creator select {
   color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
   min-height: 44px;
 }
@@ -598,24 +619,58 @@ a.feed:focus-visible {
 
 .creator__actions {
   border-top: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
   justify-content: flex-end;
   margin-top: 0;
-  padding-top: 2px;
+  padding-top: 0;
 }
 
 .creator__status {
   color: color-mix(in oklch, var(--color-ink-inverse) 72%, var(--color-page));
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  min-height: 20px;
 }
 
-.creator button {
-  border-radius: 9px;
+.creator__submit {
+  border-radius: 12px;
+  grid-column: 2;
   min-height: 44px;
-  min-width: 112px;
-  padding: 8px 14px;
+  min-width: 118px;
+  padding: 8px 16px;
+  transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.creator button:disabled {
+.creator__submit:not(:disabled):hover {
+  background: color-mix(in oklch, var(--color-accent) 88%, var(--color-focus-light));
+  transform: translateY(-1px);
+}
+
+.creator__tabs button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: color-mix(in oklch, var(--color-ink-inverse) 70%, var(--color-page));
+  min-height: 34px;
+  min-width: 0;
+  padding: 6px 10px;
+  transform: none;
+}
+
+.creator__tabs button[aria-selected="true"] {
+  background: color-mix(in oklch, var(--color-field) 86%, var(--color-page));
+  border-color: color-mix(in oklch, var(--color-field) 42%, var(--color-page));
+  color: color-mix(in oklch, var(--color-ink-strong) 86%, var(--color-page));
+}
+
+.creator__tabs button:not([aria-selected="true"]):hover {
+  background: color-mix(in oklch, var(--color-field) 18%, transparent);
+  transform: none;
+}
+
+.creator__submit:disabled {
   background: color-mix(in oklch, var(--color-field) 64%, var(--color-page));
   border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
   color: color-mix(in oklch, var(--color-ink-strong) 66%, var(--color-field));
@@ -785,12 +840,12 @@ a.feed:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .nav-live-leftbar__search {
+  .nav__search {
     justify-self: stretch;
     width: 100%;
   }
 
-  .nav-live-leftbar__links {
+  .nav__links {
     flex-wrap: wrap;
   }
 }
@@ -803,14 +858,26 @@ a.feed:focus-visible {
 
   .creator__form,
   .login__form {
-    padding: 26px 18px 20px;
+    padding: 22px 18px 20px;
   }
 
   .creator__actions,
+  .login__actions {
+    width: 100%;
+  }
+
+  .creator__actions {
+    grid-template-columns: 1fr;
+  }
+
   .login__actions,
-  .creator button,
+  .creator__submit,
   .login button {
     width: 100%;
+  }
+
+  .creator__submit {
+    grid-column: auto;
   }
 }
 

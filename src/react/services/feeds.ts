@@ -1,12 +1,23 @@
-import type { Credentials, Feed, FeedInput } from '../types';
+import type { Credentials, Feed, FeedInput, FeedLazyInput } from '../types';
+import { getObjectProperty } from '../unknownObject';
 
 const API_ROOT = `${(import.meta.env.VITE_API_ROOT ?? 'https://feed.gws.freemyip.com/api/v1').replace(/\/+$/, '')}/`;
 
 const endpoint = (path: string) => `${API_ROOT}${path}`;
 
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 function isFeed(value: unknown): value is Feed {
-  if (!value || typeof value !== 'object') return false;
-  const { id, title, type, url } = value as Partial<Feed>;
+  const id = getObjectProperty(value, 'id');
+  const title = getObjectProperty(value, 'title');
+  const type = getObjectProperty(value, 'type');
+  const url = getObjectProperty(value, 'url');
+
   return typeof id === 'number' && Number.isSafeInteger(id) && id > 0 && [title, type, url].every((field) => typeof field === 'string');
 }
 
@@ -28,13 +39,13 @@ function authorization(credentials: Credentials): Record<string, string> {
 function requireCredentials(credentials: Credentials | null): Credentials {
   if (credentials) return credentials;
 
-  throw Object.assign(new Error('Login required'), { status: 401 });
+  throw new ApiError('Login required', 401);
 }
 
 async function request(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const response = await fetch(input, { signal: AbortSignal.timeout(10_000), ...init });
   if (!response.ok) {
-    throw Object.assign(new Error(`Request failed with ${response.status}`), { status: response.status });
+    throw new ApiError(`Request failed with ${response.status}`, response.status);
   }
   return response;
 }
@@ -59,6 +70,19 @@ export async function createFeed(feed: FeedInput, credentials: Credentials | nul
   const authCredentials = requireCredentials(credentials);
 
   await request(endpoint('add'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authorization(authCredentials),
+    },
+    body: JSON.stringify(feed),
+  });
+}
+
+export async function createFeedFromUrl(feed: FeedLazyInput, credentials: Credentials | null): Promise<void> {
+  const authCredentials = requireCredentials(credentials);
+
+  await request(endpoint('add_lazy'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

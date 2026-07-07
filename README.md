@@ -16,6 +16,8 @@ Run `npm run build` to create a production build in `dist/`.
 
 Run `npm test` to execute the automated tests.
 
+Run `npm run check` or `make check` to execute both the test suite and production build.
+
 ## Preview
 
 Run `npm run preview` to serve the production build locally.

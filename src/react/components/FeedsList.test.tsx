@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getAllFeeds } from '../services/feeds';
 import { AuthProvider } from '../state/AuthContext';
 import { FeedSearchProvider } from '../state/FeedSearchContext';
+import { createStatusError, getControlValue } from '../testUtils';
 import { FeedsList } from './FeedsList';
 import { Navbar } from './Navbar';
 
@@ -43,18 +44,18 @@ describe('FeedsList', () => {
 
     await screen.findByText('News');
 
-    const searchInput = screen.getByLabelText('Search feeds') as HTMLInputElement;
+    const searchInput = screen.getByLabelText('Search feeds');
     fireEvent.change(searchInput, { target: { value: 'n' } });
     fireEvent.change(searchInput, { target: { value: 'ne' } });
     fireEvent.change(searchInput, { target: { value: 'new' } });
 
-    expect(searchInput.value).toBe('new');
+    expect(getControlValue(searchInput)).toBe('new');
     expect(getFeeds).toHaveBeenCalledTimes(1);
   });
 
   it('explains authentication failures', async () => {
     getFeeds
-      .mockRejectedValueOnce(Object.assign(new Error('unauthorized'), { status: 401 }))
+      .mockRejectedValueOnce(createStatusError('unauthorized', 401))
       .mockResolvedValueOnce([]);
     render(<FeedsList />, { wrapper });
 

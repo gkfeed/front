@@ -1,6 +1,7 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
+import { useAsyncLoad } from '../hooks/useAsyncLoad';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { getAllFeeds } from '../services/feeds';
 import { useAuth } from '../state/AuthContext';
@@ -70,35 +71,23 @@ function getResultsAnnouncement(count: number, query = ''): string {
 }
 
 function useFeeds(credentials: Credentials | null) {
-  const [result, setResult] = useState<FeedLoadResult>();
-  const [loadAttempt, setLoadAttempt] = useState(0);
-
-  useEffect(() => {
-    let isActive = true;
-    setResult(undefined);
-
-    getAllFeeds(credentials)
-      .then((nextFeeds) => {
-        if (isActive) setResult({ feeds: nextFeeds });
-      })
-      .catch((error: unknown) => {
-        if (isActive) setResult({ feeds: [], errorMessage: getLoadErrorMessage(error) });
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [loadAttempt, credentials]);
-
-  const retry = useCallback(() => setLoadAttempt((value) => value + 1), []);
+  const { result, isLoading, retry } = useAsyncLoad(() => loadFeeds(credentials), [credentials]);
   const { feeds = [], errorMessage = '' } = result ?? {};
 
   return {
     feeds,
     errorMessage,
-    isLoading: !result,
+    isLoading,
     retry,
   };
+}
+
+async function loadFeeds(credentials: Credentials | null): Promise<FeedLoadResult> {
+  try {
+    return { feeds: await getAllFeeds(credentials) };
+  } catch (error) {
+    return { feeds: [], errorMessage: getLoadErrorMessage(error) };
+  }
 }
 
 function filterFeeds(feeds: Feed[], normalizedQuery: string): Feed[] {
@@ -110,7 +99,13 @@ function filterFeeds(feeds: Feed[], normalizedQuery: string): Feed[] {
 }
 
 function getLoadErrorMessage(error: unknown): string {
-  return error instanceof Error && 'status' in error && error.status === 401
+  return isStatusError(error) && error.status === 401
     ? 'Unable to load feeds. Log in and try again.'
     : 'Unable to load feeds. Check your connection and try again.';
+}
+
+function isStatusError(error: unknown): error is Error & { status: number } {
+  return error instanceof Error
+    && 'status' in error
+    && typeof error.status === 'number';
 }

@@ -4,6 +4,10 @@ export interface FeedInput {
   url: string;
 }
 
+export interface FeedLazyInput {
+  url: string;
+}
+
 export interface Feed extends FeedInput {
   id: number;
 }

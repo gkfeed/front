@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import type { ReactNode } from 'react';
 
 import type { Credentials } from '../types';
+import { getObjectProperty } from '../unknownObject';
 
 interface AuthContextValue {
   credentials: Credentials | null;
@@ -42,31 +43,55 @@ export function useAuth(): AuthContextValue {
 }
 
 function readStoredCredentials(): Credentials | null {
+  const storage = getCredentialStorage();
+  if (!storage) return null;
+
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = storage.getItem(STORAGE_KEY);
     if (!stored) return null;
 
-    const parsed = JSON.parse(stored) as Partial<Credentials>;
-    return typeof parsed.username === 'string' && typeof parsed.password === 'string'
-      ? { username: parsed.username, password: parsed.password }
-      : null;
+    const parsed: unknown = JSON.parse(stored);
+    return isCredentials(parsed) ? parsed : null;
   } catch {
     return null;
   }
 }
 
+function isCredentials(value: unknown): value is Credentials {
+  const username = getObjectProperty(value, 'username');
+  const password = getObjectProperty(value, 'password');
+
+  return typeof username === 'string' && typeof password === 'string';
+}
+
 function writeStoredCredentials(credentials: Credentials) {
+  const storage = getCredentialStorage();
+  if (!storage) return;
+
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(credentials));
+    storage.setItem(STORAGE_KEY, JSON.stringify(credentials));
   } catch {
     // Keep the in-memory login usable if storage is unavailable.
   }
 }
 
 function removeStoredCredentials() {
+  const storage = getCredentialStorage();
+  if (!storage) return;
+
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    storage.removeItem(STORAGE_KEY);
   } catch {
     // Nothing to recover; the in-memory state has already been cleared.
+  }
+}
+
+function getCredentialStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
   }
 }

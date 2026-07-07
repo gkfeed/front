@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createFeed, deleteFeedById, getAllFeeds, getFeedById } from './feeds';
+import { createFeed, createFeedFromUrl, deleteFeedById, getAllFeeds, getFeedById } from './feeds';
 import type { Feed } from '../types';
 
 vi.hoisted(() => {
@@ -70,6 +70,20 @@ describe('feed service', () => {
       signal: expect.any(AbortSignal),
     });
   });
+
+  it('creates a feed lazily from URL only', async () => {
+    const input = { url: 'https://www.youtube.com/@gkfeed' };
+    respondWithoutBody();
+
+    await expect(createFeedFromUrl(input, CREDENTIALS)).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/add_lazy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Basic w7xzZXI6cMOkc3M=' },
+      body: JSON.stringify(input),
+      signal: expect.any(AbortSignal),
+    });
+  });
+
 
   it('exposes the status of failed requests', async () => {
     respondWith(null, 401);

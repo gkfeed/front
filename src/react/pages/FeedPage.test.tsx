@@ -16,6 +16,44 @@ afterEach(() => {
 });
 
 describe('FeedPage', () => {
+  it('does not offer retry for missing feed routes', async () => {
+    render(
+      <MemoryRouter initialEntries={['/feed/0']}>
+        <AuthProvider>
+          <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Feed source not found.');
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+    expect(vi.mocked(getFeedById)).not.toHaveBeenCalled();
+  });
+
+  it('offers retry for load failures', async () => {
+    vi.mocked(getFeedById)
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({
+        id: 1,
+        title: 'News',
+        type: 'rss',
+        url: 'https://example.com/feed.xml',
+      });
+
+    render(
+      <MemoryRouter initialEntries={['/feed/1']}>
+        <AuthProvider>
+          <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Could not load this feed source.');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('News')).toBeTruthy();
+    expect(vi.mocked(getFeedById)).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps focus and confirmation available after delete failure', async () => {
     vi.mocked(getFeedById).mockResolvedValue({
       id: 1,

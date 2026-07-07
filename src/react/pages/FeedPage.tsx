@@ -5,8 +5,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FeedCard } from '../components/FeedCard';
 import { useFeed } from '../hooks/useFeed';
 
-const RETRYABLE_LOAD_ERROR_PREFIX = 'Could';
-
 export function FeedPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -16,6 +14,7 @@ export function FeedPage() {
     isLoading,
     isDeleting,
     isConfirmingDelete,
+    canRetryLoad,
     loadError,
     deleteError,
     requestDelete,
@@ -29,7 +28,7 @@ export function FeedPage() {
   if (isLoading) {
     content = <p className="status" aria-live="polite">Loading feed source</p>;
   } else if (loadError) {
-    content = <LoadErrorState message={loadError} onRetry={retryLoad} />;
+    content = <LoadErrorState message={loadError} canRetry={canRetryLoad} onRetry={retryLoad} />;
   } else if (feed) {
     content = (
       <>
@@ -54,11 +53,11 @@ export function FeedPage() {
   );
 }
 
-function LoadErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+function LoadErrorState({ message, canRetry, onRetry }: { message: string; canRetry: boolean; onRetry: () => void }) {
   return (
     <>
       <p className="status status--error" role="alert">{message}</p>
-      {message.startsWith(RETRYABLE_LOAD_ERROR_PREFIX) ? (
+      {canRetry ? (
         <button type="button" className="secondary" onClick={onRetry}>Try again</button>
       ) : null}
     </>
