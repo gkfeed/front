@@ -6,6 +6,7 @@ import './styles.scss';
 import { FeedCreator } from './react/components/FeedCreator';
 import { FeedsList } from './react/components/FeedsList';
 import { Navbar } from './react/components/Navbar';
+import { RequireAuth } from './react/components/RequireAuth';
 import { FeedPage } from './react/pages/FeedPage';
 import { LoginPage } from './react/pages/LoginPage';
 import { AuthProvider } from './react/state/AuthContext';
@@ -41,10 +42,10 @@ function App() {
             <Navbar />
             <main id="main" tabIndex={-1}>
               <Routes>
-                <Route path="/" element={<FeedListPage />} />
-                <Route path="/create" element={<FeedCreator />} />
+                <Route path="/" element={<RequireAuth><FeedListPage /></RequireAuth>} />
+                <Route path="/create" element={<RequireAuth><FeedCreator /></RequireAuth>} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/feed/:id" element={<FeedPage />} />
+                <Route path="/feed/:id" element={<RequireAuth><FeedPage /></RequireAuth>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
