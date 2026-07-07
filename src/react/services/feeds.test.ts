@@ -1,7 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createFeed, deleteFeedById, getAllFeeds, getFeedById } from './feeds';
 import type { Feed } from '../types';
+
+vi.hoisted(() => {
+  vi.stubEnv('VITE_API_ROOT', 'https://feed.gws.freemyip.com/api/v1');
+});
 
 const CREDENTIALS = { username: 'üser', password: 'päss' };
 const FEEDS: Feed[] = [
@@ -18,6 +22,7 @@ function respondWithoutBody(status = 201) {
 }
 
 afterEach(() => vi.unstubAllGlobals());
+afterAll(() => vi.unstubAllEnvs());
 
 describe('feed service', () => {
   it('lists feeds with basic authentication', async () => {
