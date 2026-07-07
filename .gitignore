@@ -4,6 +4,8 @@
 coverage
 dist
 node_modules
+playwright-report
+test-results
 *.local
 *.log
 .DS_Store
