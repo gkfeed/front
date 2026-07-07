@@ -2,7 +2,7 @@ import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
-import './styles.scss';
+import './styles.css';
 import { FeedCreator } from './react/components/FeedCreator';
 import { FeedsList } from './react/components/FeedsList';
 import { Navbar } from './react/components/Navbar';
