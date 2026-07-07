@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 
 import type { Feed } from '../types';
@@ -51,7 +52,7 @@ function FeedContent({ feed, actionCopy }: { feed: Feed; actionCopy: string }) {
   );
 }
 
-export function FeedCard({ feed, asLink = true }: { feed: Feed; asLink?: boolean }) {
+export const FeedCard = memo(function FeedCard({ feed, asLink = true }: { feed: Feed; asLink?: boolean }) {
   return asLink ? (
     <Link className="feed" to={`/feed/${feed.id}`} aria-label={`Open feed ${feed.title}`}>
       <FeedContent feed={feed} actionCopy="Open details" />
@@ -61,4 +62,4 @@ export function FeedCard({ feed, asLink = true }: { feed: Feed; asLink?: boolean
       <FeedContent feed={feed} actionCopy="Feed details" />
     </article>
   );
-}
+});

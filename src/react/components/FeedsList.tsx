@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getAllFeeds } from '../services/feeds';
@@ -10,6 +10,8 @@ import { FeedCard } from './FeedCard';
 export function FeedsList() {
   const { credentials } = useAuth();
   const { searchTerm } = useFeedSearch();
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const settledSearchTerm = useDebouncedValue(deferredSearchTerm, 80);
   const [result, setResult] = useState<{ feeds: Feed[]; errorMessage?: string }>();
   const [attempt, setAttempt] = useState(0);
   const { feeds = [], errorMessage = '' } = result ?? {};
@@ -32,11 +34,19 @@ export function FeedsList() {
     };
   }, [attempt, credentials]);
 
-  const query = searchTerm.trim().toLowerCase();
-  const filteredFeeds = query
-    ? feeds.filter((feed) => `${feed.title} ${feed.type} ${feed.url}`.toLowerCase().includes(query))
-    : feeds;
-  const resultsAnnouncement = isLoading ? 'Loading feeds.' : getResultsAnnouncement(filteredFeeds.length, searchTerm.trim());
+  const indexedFeeds = useMemo(
+    () => feeds.map((feed) => ({
+      feed,
+      searchableText: `${feed.title} ${feed.type} ${feed.url}`.toLowerCase(),
+    })),
+    [feeds],
+  );
+  const query = settledSearchTerm.trim().toLowerCase();
+  const filteredFeeds = useMemo(
+    () => (query ? indexedFeeds.filter(({ searchableText }) => searchableText.includes(query)).map(({ feed }) => feed) : feeds),
+    [feeds, indexedFeeds, query],
+  );
+  const resultsAnnouncement = isLoading ? 'Loading feeds.' : getResultsAnnouncement(filteredFeeds.length, settledSearchTerm.trim());
 
   return (
     <div className="container">
@@ -78,6 +88,17 @@ function getResultsAnnouncement(count: number, query = ''): string {
   return count === 0
     ? `No feeds found for search term ${query}.`
     : `${count} ${feedLabel} found for search term ${query}.`;
+}
+
+function useDebouncedValue(value: string, delayMs: number): string {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => window.clearTimeout(timeoutId);
+  }, [delayMs, value]);
+
+  return debouncedValue;
 }
 
 function getLoadErrorMessage(error: unknown): string {

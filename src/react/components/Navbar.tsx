@@ -1,3 +1,4 @@
+import { useState, useTransition } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { useFeedSearch } from '../state/FeedSearchContext';
@@ -5,6 +6,8 @@ import { useFeedSearch } from '../state/FeedSearchContext';
 export function Navbar() {
   const location = useLocation();
   const { searchTerm, setSearchTerm } = useFeedSearch();
+  const [draftSearchTerm, setDraftSearchTerm] = useState(searchTerm);
+  const [, startSearchTransition] = useTransition();
   const showSearch = location.pathname === '/';
 
   return (
@@ -21,8 +24,12 @@ export function Navbar() {
           type="search"
           placeholder="Search feeds"
           aria-label="Search feeds"
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
+          value={draftSearchTerm}
+          onChange={(event) => {
+            const nextSearchTerm = event.target.value;
+            setDraftSearchTerm(nextSearchTerm);
+            startSearchTransition(() => setSearchTerm(nextSearchTerm));
+          }}
         />
       ) : null}
     </nav>
