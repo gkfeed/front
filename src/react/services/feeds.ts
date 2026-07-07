@@ -20,10 +20,15 @@ function parseFeeds(value: unknown): Feed[] {
   throw new Error('Invalid API response');
 }
 
-function authorization(credentials: Credentials | null): Record<string, string> {
-  if (!credentials) return {};
+function authorization(credentials: Credentials): Record<string, string> {
   const bytes = new TextEncoder().encode(`${credentials.username}:${credentials.password}`);
   return { Authorization: `Basic ${btoa(String.fromCharCode(...bytes))}` };
+}
+
+function requireCredentials(credentials: Credentials | null): Credentials {
+  if (credentials) return credentials;
+
+  throw Object.assign(new Error('Login required'), { status: 401 });
 }
 
 async function request(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
@@ -38,24 +43,26 @@ async function requestJson(input: RequestInfo | URL, init?: RequestInit): Promis
   return (await request(input, init)).json();
 }
 
-export function getAllFeeds(credentials: Credentials | null): Promise<Feed[]> {
-  return requestJson(endpoint('list'), { headers: authorization(credentials) }).then(parseFeeds);
+export async function getAllFeeds(credentials: Credentials | null): Promise<Feed[]> {
+  return requestJson(endpoint('list'), { headers: authorization(requireCredentials(credentials)) }).then(parseFeeds);
 }
 
 export async function getFeedById(id: number, credentials: Credentials | null): Promise<Feed | undefined> {
   return (await getAllFeeds(credentials)).find((feed) => feed.id === id);
 }
 
-export function deleteFeedById(id: number, credentials: Credentials | null): Promise<Feed> {
-  return requestJson(`${endpoint('delete')}?id=${id}`, { headers: authorization(credentials) }).then(parseFeed);
+export async function deleteFeedById(id: number, credentials: Credentials | null): Promise<Feed> {
+  return requestJson(`${endpoint('delete')}?id=${id}`, { headers: authorization(requireCredentials(credentials)) }).then(parseFeed);
 }
 
 export async function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<void> {
+  const authCredentials = requireCredentials(credentials);
+
   await request(endpoint('add'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...authorization(credentials),
+      ...authorization(authCredentials),
     },
     body: JSON.stringify(feed),
   });
