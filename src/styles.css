@@ -539,25 +539,14 @@ a.feed:focus-visible {
 }
 
 .creator__form {
-  background: color-mix(in oklch, var(--color-page) 86%, var(--color-field));
-  border: 1px solid color-mix(in oklch, var(--color-field) 24%, var(--color-page));
-  border-radius: 16px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   color: var(--color-ink-inverse);
-  box-shadow: 0 18px 42px oklch(10% 0.018 28 / 0.2);
-  gap: 18px;
+  gap: 24px;
   max-width: 464px;
-  padding: 22px;
-}
-
-.creator__header {
-  gap: 16px;
-}
-
-.creator__header h1 {
-  color: var(--color-ink-inverse);
-  font-size: 1.28rem;
-  letter-spacing: 0;
-  line-height: 1.15;
+  padding: 0;
 }
 
 .creator__tabs {

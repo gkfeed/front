@@ -76,13 +76,11 @@ export function FeedCreator() {
   return (
     <section className="creator" aria-labelledby="feed-create-title">
       <form className="creator__form" onSubmit={onSubmit} noValidate>
-        <header className="creator__header">
-          <h1 id="feed-create-title">Create feed</h1>
-          <div className="creator__tabs" role="tablist" aria-label="Feed creation mode">
-            <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>URL only</ModeTab>
-            <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>Manual</ModeTab>
-          </div>
-        </header>
+        <h1 id="feed-create-title" className="page-title">Create feed</h1>
+        <div className="creator__tabs" role="tablist" aria-label="Feed creation mode">
+          <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>URL only</ModeTab>
+          <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>Manual</ModeTab>
+        </div>
         {mode === 'lazy' ? (
           <CreatorPanel
             id="feed-create-lazy-panel"
