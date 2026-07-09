@@ -4,6 +4,11 @@ import { getObjectProperty } from '../unknownObject';
 const API_ROOT = `${(import.meta.env.VITE_API_ROOT ?? 'https://feed.gws.freemyip.com/api/v1').replace(/\/+$/, '')}/`;
 
 const endpoint = (path: string) => `${API_ROOT}${path}`;
+const endpointWithSearch = (path: string, params: Record<string, string | number>) => {
+  const url = new URL(endpoint(path));
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
+  return url.toString();
+};
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -54,6 +59,19 @@ async function requestJson(input: RequestInfo | URL, init?: RequestInit): Promis
   return (await request(input, init)).json();
 }
 
+async function postJson(path: string, body: FeedInput | FeedLazyInput, credentials: Credentials | null): Promise<void> {
+  const authCredentials = requireCredentials(credentials);
+
+  await request(endpoint(path), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authorization(authCredentials),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function getAllFeeds(credentials: Credentials | null): Promise<Feed[]> {
   return requestJson(endpoint('list'), { headers: authorization(requireCredentials(credentials)) }).then(parseFeeds);
 }
@@ -63,31 +81,13 @@ export async function getFeedById(id: number, credentials: Credentials | null): 
 }
 
 export async function deleteFeedById(id: number, credentials: Credentials | null): Promise<Feed> {
-  return requestJson(`${endpoint('delete')}?id=${id}`, { headers: authorization(requireCredentials(credentials)) }).then(parseFeed);
+  return requestJson(endpointWithSearch('delete', { id }), { headers: authorization(requireCredentials(credentials)) }).then(parseFeed);
 }
 
 export async function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<void> {
-  const authCredentials = requireCredentials(credentials);
-
-  await request(endpoint('add'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authorization(authCredentials),
-    },
-    body: JSON.stringify(feed),
-  });
+  await postJson('add', feed, credentials);
 }
 
 export async function createFeedFromUrl(feed: FeedLazyInput, credentials: Credentials | null): Promise<void> {
-  const authCredentials = requireCredentials(credentials);
-
-  await request(endpoint('add_lazy'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authorization(authCredentials),
-    },
-    body: JSON.stringify(feed),
-  });
+  await postJson('add_lazy', feed, credentials);
 }
