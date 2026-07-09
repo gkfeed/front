@@ -992,6 +992,10 @@ a.feed:hover {
     padding: 22px 18px 20px;
   }
 
+  .creator__form {
+    padding: 0;
+  }
+
   .creator__actions,
   .login__actions,
   .login button,
