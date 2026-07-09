@@ -15,6 +15,8 @@ const FEED_TYPE_ICONS: Record<string, FeedTypeIcon> = {
 };
 
 const FEED_TYPE_ALIASES: Record<string, string> = {
+  inst: 'instagram',
+  stories: 'instagram',
   twitter: 'x',
   yt: 'youtube',
 };
