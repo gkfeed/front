@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-labelledby="title">
+  <title id="title">GKFEED</title>
+  <rect width="32" height="32" rx="8" fill="#211c1b"/>
+  <path d="M9 10l7 6 7-6M9 16l7 6 7-6" fill="none" stroke="#eee4ca" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="16" cy="8" r="3" fill="#3f8a55"/>
+</svg>

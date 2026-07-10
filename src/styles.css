@@ -111,11 +111,19 @@ main:focus {
 }
 
 .nav__brand {
+  gap: 9px;
   font-size: 1.34rem;
   font-weight: 800;
   letter-spacing: 0.035em;
   line-height: 1;
   white-space: nowrap;
+}
+
+.nav__brand-mark {
+  display: block;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
 }
 
 .nav__links {
