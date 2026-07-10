@@ -1,4 +1,4 @@
-.PHONY: update dev check test build
+.PHONY: update dev check test build merge-to-master
 
 update:
 	git pull --ff-only
@@ -15,3 +15,10 @@ test:
 
 build:
 	npm run build
+
+merge-to-master:
+	git push
+	git checkout master
+	git merge dev
+	git push
+	git checkout dev
