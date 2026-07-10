@@ -25,6 +25,7 @@ body {
   --color-disabled: oklch(65% 0.03 58);
   --color-focus: oklch(88% 0.035 78);
   --color-focus-light: oklch(94% 0.02 78);
+  --color-control-well: color-mix(in oklch, var(--color-page) 80%, var(--color-field));
   --shadow-card: 0 16px 38px oklch(10% 0.018 28 / 0.2);
   --shadow-card-hover: 0 20px 48px oklch(10% 0.018 28 / 0.26);
   --ease: 180ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -350,6 +351,7 @@ a.feed:hover {
 }
 
 .login {
+  width: 100%;
   max-width: 496px;
   padding: 32px 16px 48px;
 }
@@ -367,14 +369,17 @@ a.feed:hover {
 }
 
 .login__form {
+  width: 100%;
   max-width: 464px;
+  margin: 0 auto;
   gap: 24px;
   padding: 0;
   color: var(--color-ink-inverse);
 }
 
 .login__form--saved {
-  gap: 18px;
+  max-width: 464px;
+  gap: 16px;
 }
 
 .creator__header,
@@ -463,27 +468,28 @@ a.feed:hover {
 }
 
 .login__account {
-  min-height: 68px;
+  min-height: 64px;
   padding: 10px 14px;
-  border: 1px solid color-mix(in oklch, var(--color-field) 34%, var(--color-page));
+  border: 1px solid color-mix(in oklch, var(--color-field) 26%, var(--color-page));
   border-radius: 12px;
+  background: var(--color-control-well);
 }
 
 .login__account-copy {
   display: grid;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
-  color: color-mix(in oklch, var(--color-muted) 88%, var(--color-page));
-  font-size: 0.82rem;
+  color: color-mix(in oklch, var(--color-ink-inverse) 66%, var(--color-page));
+  font-size: 0.84rem;
+  line-height: 1.25;
 }
 
 .login__account-copy strong {
   display: block;
-  overflow: hidden;
-  color: var(--color-ink-strong);
-  font-size: 1rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--color-ink-inverse);
+  font-size: 1.05rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .field__control:focus-within {
@@ -730,6 +736,16 @@ a.feed:hover {
   color: color-mix(in oklch, var(--color-ink-strong) 62%, var(--color-accent));
 }
 
+.login__account .field__icon {
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid color-mix(in oklch, var(--color-field) 22%, var(--color-page));
+  border-radius: 10px;
+  background: color-mix(in oklch, var(--color-page) 88%, var(--color-field));
+  color: color-mix(in oklch, var(--color-ink-inverse) 82%, var(--color-surface));
+}
+
 .field__hint,
 .field__error,
 .login__status {
@@ -772,7 +788,7 @@ a.feed:hover {
   padding: 4px;
   border: 1px solid color-mix(in oklch, var(--color-field) 26%, var(--color-page));
   border-radius: 12px;
-  background: color-mix(in oklch, var(--color-page) 80%, var(--color-field));
+  background: var(--color-control-well);
 }
 
 .creator__actions,
@@ -849,6 +865,16 @@ a.feed:hover {
   border: 1px solid var(--color-accent-border);
   background: var(--color-accent);
   color: var(--color-focus-light);
+  transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease), transform var(--ease);
+}
+
+.login button:not(:disabled):hover {
+  background: color-mix(in oklch, var(--color-accent) 88%, var(--color-focus-light));
+  transform: translateY(-1px);
+}
+
+.login button:not(:disabled):active {
+  transform: translateY(0);
 }
 
 .creator button:focus-visible,
@@ -875,8 +901,16 @@ a.feed:hover {
 }
 
 .login .danger {
+  min-width: 128px;
+  min-height: 44px;
   border-color: color-mix(in oklch, var(--color-danger) 66%, var(--color-page));
   background: color-mix(in oklch, var(--color-danger) 88%, var(--color-page));
+}
+
+.login .danger:hover {
+  border-color: var(--color-danger-border);
+  background: color-mix(in oklch, var(--color-danger) 90%, var(--color-focus-light));
+  box-shadow: 0 10px 24px oklch(10% 0.018 28 / 0.18);
 }
 
 .creator__submit {
@@ -1022,6 +1056,14 @@ a.feed:hover {
 
   .creator__form {
     padding: 0;
+  }
+
+  .login__form--saved {
+    padding: 0;
+  }
+
+  .login__account {
+    padding: 10px 12px;
   }
 
   .creator__actions,

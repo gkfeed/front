@@ -64,7 +64,7 @@ function SavedLogin({ username, onLogout }: { username: string; onLogout: () => 
         </span>
       </div>
       <div className="login__actions">
-        <button type="button" className="danger" onClick={onLogout} autoFocus>Log out</button>
+        <button type="button" className="danger" onClick={onLogout}>Log out</button>
       </div>
     </div>
   );

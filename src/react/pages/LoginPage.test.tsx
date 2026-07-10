@@ -29,7 +29,6 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save login' }));
     expect(screen.getByText(/Logged in as/).textContent).toContain('alice');
     expect(storage.get('gkfeed.credentials')).toBe(JSON.stringify({ username: 'alice', password: 'secret' }));
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Log out' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
     expect(storage.has('gkfeed.credentials')).toBe(false);
