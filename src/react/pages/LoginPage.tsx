@@ -56,12 +56,12 @@ export function LoginPage() {
 function SavedLogin({ username, onLogout }: { username: string; onLogout: () => void }) {
   return (
     <div className="login__form login__form--saved">
-      <header className="login__header">
-        <h1 id="login-title">Account access</h1>
-      </header>
-      <div className="field__control" role="status">
+      <h1 id="login-title" className="page-title">Signed in to GKFEED</h1>
+      <div className="login__account" role="status">
         <span className="field__icon" aria-hidden="true"><UserIcon /></span>
-        <span>Logged in as <strong>{username}</strong></span>
+        <span className="login__account-copy">
+          Logged in as <strong>{username}</strong>
+        </span>
       </div>
       <div className="login__actions">
         <button type="button" className="danger" onClick={onLogout} autoFocus>Log out</button>
@@ -85,10 +85,7 @@ function LoginForm({
 }) {
   return (
     <form className="login__form" onSubmit={onSubmit} noValidate>
-      <header className="login__header">
-        <p className="login__eyebrow">Account access</p>
-        <h1 id="login-title">Sign in to GKFEED</h1>
-      </header>
+      <h1 id="login-title" className="page-title">Sign in to GKFEED</h1>
       <div className="login__fields">
         {FIELDS.map((field) => (
           <LoginField

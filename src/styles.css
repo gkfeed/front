@@ -180,7 +180,6 @@ a.feed:focus-visible,
 .login__form,
 .creator__header,
 .creator__fields,
-.login__header,
 .login__fields,
 .field,
 .actions {
@@ -351,8 +350,8 @@ a.feed:hover {
 }
 
 .login {
-  max-width: 500px;
-  padding: 28px 12px 44px;
+  max-width: 496px;
+  padding: 32px 16px 48px;
 }
 
 .creator__form,
@@ -368,12 +367,10 @@ a.feed:hover {
 }
 
 .login__form {
-  gap: 20px;
-  padding: 28px 26px 24px;
-  border: 1px solid var(--color-card-border);
-  border-radius: 20px;
-  background: linear-gradient(180deg, var(--color-card-hover), var(--color-card));
-  box-shadow: var(--shadow-card);
+  max-width: 464px;
+  gap: 24px;
+  padding: 0;
+  color: var(--color-ink-inverse);
 }
 
 .login__form--saved {
@@ -381,13 +378,8 @@ a.feed:hover {
 }
 
 .creator__header,
-.creator__header p,
-.login__eyebrow {
+.creator__header p {
   margin: 0;
-}
-
-.login__header {
-  gap: 6px;
 }
 
 .creator__fields {
@@ -402,8 +394,7 @@ a.feed:hover {
   gap: 6px;
 }
 
-.creator h1,
-.login h1 {
+.creator h1 {
   margin: 0;
   color: var(--color-ink-strong);
   font-weight: 800;
@@ -415,22 +406,10 @@ a.feed:hover {
   font-size: 1.72rem;
 }
 
-.login h1 {
-  font-size: 1.42rem;
-}
-
 .creator__header p {
   color: var(--color-muted);
   font-size: 1rem;
   line-height: 1.4;
-}
-
-.login__eyebrow {
-  color: var(--color-accent-border);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.095em;
-  text-transform: uppercase;
 }
 
 .creator label,
@@ -449,7 +428,11 @@ a.feed:hover {
 }
 
 .login label {
-  color: var(--color-ink);
+  color: color-mix(in oklch, var(--color-ink-inverse) 78%, var(--color-page));
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
 }
 
 .field__control {
@@ -468,11 +451,39 @@ a.feed:hover {
 }
 
 .login .field__control,
-.login__form--saved .field__control {
+.login__account {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
+  border-color: color-mix(in oklch, var(--color-field) 34%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 82%, var(--color-page));
+  color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
+  transition: background-color var(--ease), border-color var(--ease);
+}
+
+.login__account {
+  min-height: 68px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in oklch, var(--color-field) 34%, var(--color-page));
+  border-radius: 12px;
+}
+
+.login__account-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  color: color-mix(in oklch, var(--color-muted) 88%, var(--color-page));
+  font-size: 0.82rem;
+}
+
+.login__account-copy strong {
+  display: block;
+  overflow: hidden;
+  color: var(--color-ink-strong);
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .field__control:focus-within {
@@ -492,7 +503,9 @@ a.feed:hover {
 }
 
 .login .field__control:has([aria-invalid="true"]) {
-  border-color: var(--color-danger-border);
+  border-color: color-mix(in oklch, var(--color-danger) 78%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 78%, var(--color-danger));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-danger) 70%, var(--color-page));
 }
 
 .creator input,
@@ -713,6 +726,10 @@ a.feed:hover {
   color: var(--color-accent-focus);
 }
 
+.login .field__icon {
+  color: color-mix(in oklch, var(--color-ink-strong) 62%, var(--color-accent));
+}
+
 .field__hint,
 .field__error,
 .login__status {
@@ -729,9 +746,17 @@ a.feed:hover {
   color: var(--color-muted);
 }
 
+.login .field__hint {
+  color: color-mix(in oklch, var(--color-ink-inverse) 64%, var(--color-page));
+}
+
 .field__error {
   color: var(--color-danger-border);
   font-weight: 700;
+}
+
+.login .field__error {
+  color: color-mix(in oklch, var(--color-danger) 62%, var(--color-focus-light));
 }
 
 .creator .field__error {
@@ -766,8 +791,6 @@ a.feed:hover {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  padding-top: 18px;
-  border-top: 1px solid color-mix(in oklch, var(--color-card-border) 72%, transparent);
 }
 
 .login__form--saved .login__actions {
@@ -777,6 +800,11 @@ a.feed:hover {
 .creator__status,
 .login__status {
   color: var(--color-muted);
+}
+
+.login__status {
+  color: color-mix(in oklch, var(--color-ink-inverse) 64%, var(--color-page));
+  font-weight: 650;
 }
 
 .creator__status {
@@ -847,8 +875,8 @@ a.feed:hover {
 }
 
 .login .danger {
-  background: var(--color-danger);
-  border-color: var(--color-danger-border);
+  border-color: color-mix(in oklch, var(--color-danger) 66%, var(--color-page));
+  background: color-mix(in oklch, var(--color-danger) 88%, var(--color-page));
 }
 
 .creator__submit {
