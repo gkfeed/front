@@ -1,13 +1,16 @@
 import type { Credentials, Feed, FeedInput, FeedLazyInput } from '../types';
 import { getObjectProperty } from '../unknownObject';
 
-const API_ROOT = `${(import.meta.env.VITE_API_ROOT ?? 'https://feed.gws.freemyip.com/api/v1').replace(/\/+$/, '')}/`;
+const DEFAULT_API_ROOT = import.meta.env.DEV
+  ? '/api/v1'
+  : 'https://feed.gws.freemyip.com/api/v1';
+const API_ROOT = `${(import.meta.env.VITE_API_ROOT || DEFAULT_API_ROOT).replace(/\/+$/, '')}/`;
 
 const endpoint = (path: string) => `${API_ROOT}${path}`;
 const endpointWithSearch = (path: string, params: Record<string, string | number>) => {
-  const url = new URL(endpoint(path));
-  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, String(value)));
-  return url.toString();
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => search.set(key, String(value)));
+  return `${endpoint(path)}?${search}`;
 };
 
 export class ApiError extends Error {
