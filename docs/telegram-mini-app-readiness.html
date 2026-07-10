@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>GKFEED Telegram Mini App Readiness</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18201d;
+      --muted: #5f6b66;
+      --paper: #f5f5f0;
+      --surface: #ffffff;
+      --line: #d7ddd9;
+      --accent: #176b57;
+      --accent-soft: #dff1ea;
+      --warn: #9a5d00;
+      --warn-soft: #fff0cf;
+      --danger: #a33a35;
+      --danger-soft: #fbe4e1;
+      --shadow: 0 16px 42px rgba(24, 32, 29, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    a { color: var(--accent); text-underline-offset: 3px; }
+
+    .shell {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 72px 0 44px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 { line-height: 1.18; }
+
+    h1 {
+      max-width: 820px;
+      margin: 0;
+      font-size: clamp(2.2rem, 6vw, 4.6rem);
+      font-weight: 780;
+    }
+
+    .summary {
+      max-width: 780px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 1.14rem;
+    }
+
+    .verdict {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      margin-top: 32px;
+      padding: 22px;
+      border-left: 5px solid var(--warn);
+      background: var(--warn-soft);
+    }
+
+    .verdict strong { display: block; margin-bottom: 4px; }
+    .verdict p { margin: 0; }
+
+    main { padding: 54px 0 72px; }
+    section + section { margin-top: 58px; }
+
+    h2 {
+      margin: 0 0 20px;
+      font-size: 1.65rem;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .lede { max-width: 780px; color: var(--muted); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric {
+      padding: 22px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 1.35rem;
+    }
+
+    .matrix {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(160px, 0.8fr) 130px minmax(260px, 2fr);
+      gap: 18px;
+      padding: 18px 20px;
+      align-items: start;
+      border-top: 1px solid var(--line);
+    }
+
+    .row:first-child { border-top: 0; }
+    .row p { margin: 0; color: var(--muted); }
+
+    .status {
+      display: inline-flex;
+      width: max-content;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .partial { color: var(--warn); background: var(--warn-soft); }
+    .missing { color: var(--danger); background: var(--danger-soft); }
+    .ready { color: var(--accent); background: var(--accent-soft); }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      counter-reset: step;
+    }
+
+    .step {
+      position: relative;
+      min-height: 176px;
+      padding: 22px 22px 22px 68px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      counter-increment: step;
+    }
+
+    .step::before {
+      content: counter(step, decimal-leading-zero);
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      color: var(--accent);
+      font-weight: 850;
+    }
+
+    .step p { margin: 0; color: var(--muted); }
+
+    code {
+      padding: 0.12em 0.35em;
+      background: #e9ece9;
+      color: #24342e;
+      font: 0.88em ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    .callout {
+      padding: 22px;
+      border: 1px solid #e8c5c1;
+      background: var(--danger-soft);
+    }
+
+    .callout p { margin: 0; }
+
+    .sources {
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .sources ul { margin: 10px 0 0; padding-left: 20px; }
+
+    footer {
+      padding: 24px 0 36px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 28px, 1120px); }
+      header { padding: 48px 0 34px; }
+      main { padding-top: 38px; }
+      .metrics, .steps { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; gap: 7px; }
+      .step { min-height: auto; }
+    }
+
+    @media print {
+      body { background: white; }
+      header { padding-top: 24px; }
+      .metric, .matrix { box-shadow: none; }
+      a { color: inherit; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell">
+      <p class="eyebrow">Technical readiness report · 10 July 2026</p>
+      <h1>GKFEED as a Telegram Mini App</h1>
+      <p class="summary">The existing React site is a sound starting point and can be displayed inside Telegram, but it needs targeted integration work before it behaves like a production Telegram Mini App.</p>
+      <div class="verdict" role="note" aria-label="Readiness verdict">
+        <div>
+          <strong>Verdict: update required</strong>
+          <p>Suitable for an early in-Telegram preview now. Telegram authentication, platform integration, adaptive layout, deployment, and bot configuration are still required for a proper release.</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section aria-labelledby="snapshot-title">
+      <h2 id="snapshot-title">Readiness snapshot</h2>
+      <div class="metrics">
+        <div class="metric"><span>Web foundation</span><strong>Ready</strong></div>
+        <div class="metric"><span>Telegram integration</span><strong>Missing</strong></div>
+        <div class="metric"><span>Overall</span><strong>Needs updates</strong></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="evidence-title">
+      <h2 id="evidence-title">What the code supports today</h2>
+      <p class="lede">GKFEED is already a responsive Vite and React single-page application. Its Nginx configuration supports client-side routes, and the API defaults to a public HTTPS endpoint. Those are useful foundations, but the application currently has no Telegram-specific runtime or identity flow.</p>
+      <div class="matrix" role="list" aria-label="Telegram readiness matrix">
+        <div class="row" role="listitem">
+          <h3>Web application</h3>
+          <span class="status ready">Ready</span>
+          <p>React 19, Vite, responsive CSS, and SPA route fallback provide a usable embedded web foundation.</p>
+        </div>
+        <div class="row" role="listitem">
+          <h3>Telegram SDK</h3>
+          <span class="status missing">Missing</span>
+          <p><code>index.html</code> does not load Telegram's Web App script, so <code>window.Telegram.WebApp</code> and its platform APIs are unavailable.</p>
+        </div>
+        <div class="row" role="listitem">
+          <h3>Authentication</h3>
+          <span class="status missing">Replace</span>
+          <p>The browser stores a username and password in <code>localStorage</code> and sends Basic Authentication. A Mini App should send Telegram <code>initData</code> to the backend for server-side validation and session creation.</p>
+        </div>
+        <div class="row" role="listitem">
+          <h3>Telegram UI behavior</h3>
+          <span class="status missing">Missing</span>
+          <p>The app does not currently call <code>ready()</code>, use Telegram's Back Button, respond to theme changes, or account for Telegram viewport and safe-area values.</p>
+        </div>
+        <div class="row" role="listitem">
+          <h3>Routing</h3>
+          <span class="status ready">Ready</span>
+          <p><code>BrowserRouter</code> can work because Nginx falls back to <code>index.html</code>. Bot launch URLs should still be tested for direct navigation and refresh behavior.</p>
+        </div>
+        <div class="row" role="listitem">
+          <h3>Deployment</h3>
+          <span class="status partial">Verify</span>
+          <p>The container listens on port 80. Production must expose the frontend through a public HTTPS URL, commonly via a reverse proxy or CDN.</p>
+        </div>
+        <div class="row" role="listitem">
+          <h3>Bot configuration</h3>
+          <span class="status missing">Required</span>
+          <p>A Telegram bot must be configured to launch the deployed URL through BotFather or the Bot API, using the chosen menu, main-app, keyboard, or direct-link entry point.</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="plan-title">
+      <h2 id="plan-title">Minimum implementation path</h2>
+      <div class="steps">
+        <article class="step">
+          <h3>Add a Telegram adapter</h3>
+          <p>Load the official Web App script, expose typed access to <code>window.Telegram.WebApp</code>, call <code>ready()</code>, and preserve normal-browser operation when Telegram is absent.</p>
+        </article>
+        <article class="step">
+          <h3>Implement trusted identity</h3>
+          <p>Send raw <code>initData</code> to the API. Validate its signature and freshness on the server, then issue the application's own session. Never trust <code>initDataUnsafe</code> for authorization.</p>
+        </article>
+        <article class="step">
+          <h3>Adapt the interface</h3>
+          <p>Apply Telegram theme values where appropriate, support safe-area insets and changing viewport height, and connect navigation to Telegram's Back Button.</p>
+        </article>
+        <article class="step">
+          <h3>Deploy and register</h3>
+          <p>Publish the built app at a stable HTTPS origin, configure the bot launch URL, and verify launch paths on Telegram for Android, iOS, and Desktop.</p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="security-title">
+      <h2 id="security-title">Important backend dependency</h2>
+      <div class="callout">
+        <p>The frontend cannot complete secure Telegram login by itself. The API must validate Telegram's signed launch payload before associating a Telegram user with a GKFEED account. Until that endpoint exists, the current username/password flow can remain as a browser fallback, but it should not be presented as Telegram-native authentication.</p>
+      </div>
+    </section>
+
+    <section class="sources" aria-labelledby="sources-title">
+      <h2 id="sources-title">Sources and review scope</h2>
+      <p>This report is based on the repository state reviewed on 10 July 2026 and Telegram's official Mini Apps documentation.</p>
+      <ul>
+        <li><a href="https://core.telegram.org/bots/webapps">Telegram Mini Apps documentation</a></li>
+        <li>Reviewed files: <code>index.html</code>, <code>src/main.tsx</code>, <code>src/react/state/AuthContext.tsx</code>, <code>src/react/services/feeds.ts</code>, <code>src/styles.css</code>, <code>package.json</code>, and <code>nginx.conf</code>.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">GKFEED · Telegram Mini App readiness assessment</div>
+  </footer>
+</body>
+</html>
