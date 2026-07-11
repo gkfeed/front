@@ -187,7 +187,6 @@ a.feed:focus-visible,
 .feed-skeleton,
 .creator__form,
 .login__form,
-.creator__header,
 .creator__fields,
 .login__fields,
 .field,
@@ -390,11 +389,6 @@ a.feed:hover {
   gap: 16px;
 }
 
-.creator__header,
-.creator__header p {
-  margin: 0;
-}
-
 .creator__fields {
   gap: 15px;
 }
@@ -410,19 +404,10 @@ a.feed:hover {
 .creator h1 {
   margin: 0;
   color: var(--color-ink-strong);
+  font-size: 1.72rem;
   font-weight: 800;
   line-height: 1.12;
   letter-spacing: 0;
-}
-
-.creator h1 {
-  font-size: 1.72rem;
-}
-
-.creator__header p {
-  color: var(--color-muted);
-  font-size: 1rem;
-  line-height: 1.4;
 }
 
 .creator label,
@@ -523,7 +508,6 @@ a.feed:hover {
 }
 
 .creator input,
-.creator select,
 .login input {
   width: 100%;
   min-height: 48px;
@@ -534,8 +518,7 @@ a.feed:hover {
   color: var(--color-ink);
 }
 
-.creator input,
-.creator select {
+.creator input {
   min-height: 46px;
   color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
 }
