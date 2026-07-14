@@ -7,11 +7,6 @@ const DEFAULT_API_ROOT = import.meta.env.DEV
 const API_ROOT = `${(import.meta.env.VITE_API_ROOT || DEFAULT_API_ROOT).replace(/\/+$/, '')}/`;
 
 const endpoint = (path: string) => `${API_ROOT}${path}`;
-const endpointWithSearch = (path: string, params: Record<string, string | number>) => {
-  const search = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => search.set(key, String(value)));
-  return `${endpoint(path)}?${search}`;
-};
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -88,7 +83,10 @@ export async function getFeedById(id: number, credentials: Credentials | null): 
 }
 
 export async function deleteFeedById(id: number, credentials: Credentials | null): Promise<Feed> {
-  return requestJson(endpointWithSearch('delete', { id }), { headers: authorization(requireCredentials(credentials)) }).then(parseFeed);
+  return requestJson(endpoint(`feeds/${id}`), {
+    method: 'DELETE',
+    headers: authorization(requireCredentials(credentials)),
+  }).then(parseFeed);
 }
 
 export async function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<void> {

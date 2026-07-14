@@ -101,7 +101,8 @@ describe('feed service', () => {
       message: 'Request failed with 401',
       status: 401,
     });
-    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/delete?id=7', {
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/feeds/7', {
+      method: 'DELETE',
       headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
       signal: expect.any(AbortSignal),
     });

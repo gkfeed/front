@@ -20,7 +20,7 @@ describe('development API root', () => {
     }));
   });
 
-  it('builds query strings for same-origin endpoints', async () => {
+  it('deletes feeds through the same-origin API root', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({
       id: 7,
       title: 'News',
@@ -31,6 +31,8 @@ describe('development API root', () => {
 
     await deleteFeedById(7, CREDENTIALS);
 
-    expect(fetch).toHaveBeenCalledWith('/api/v1/delete?id=7', expect.any(Object));
+    expect(fetch).toHaveBeenCalledWith('/api/v1/feeds/7', expect.objectContaining({
+      method: 'DELETE',
+    }));
   });
 });
