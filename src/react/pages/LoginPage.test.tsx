@@ -1,33 +1,44 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiError, validateCredentials } from '../services/feeds';
 import { AuthProvider } from '../state/AuthContext';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { LoginPage } from './LoginPage';
+
+vi.mock('../services/feeds', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../services/feeds')>(),
+  validateCredentials: vi.fn(),
+}));
+
+const validateLogin = vi.mocked(validateCredentials);
 
 afterEach(() => {
   cleanup();
   restoreLocalStorage();
   vi.restoreAllMocks();
+  vi.resetAllMocks();
   vi.unstubAllGlobals();
 });
 
 describe('LoginPage', () => {
-  it('validates, saves, and clears credentials', () => {
+  it('validates with the server before saving and can clear credentials', async () => {
     const storage = stubLocalStorage();
+    validateLogin.mockResolvedValue();
     render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save login' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(screen.getByLabelText('Username').getAttribute('aria-invalid')).toBe('true');
     expect(screen.getByLabelText('Password').getAttribute('aria-invalid')).toBe('true');
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: '  alice  ' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save login' }));
-    expect(screen.getByText(/Logged in as/).textContent).toContain('alice');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect((await screen.findByText(/Logged in as/)).textContent).toContain('alice');
+    expect(validateLogin).toHaveBeenCalledWith({ username: 'alice', password: 'secret' });
     expect(storage.get('gkfeed.credentials')).toBe(JSON.stringify({ username: 'alice', password: 'secret' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
@@ -36,13 +47,40 @@ describe('LoginPage', () => {
     expect(document.activeElement).toBe(screen.getByLabelText('Username'));
   });
 
-  it('loads saved credentials from storage', () => {
+  it('revalidates saved credentials before restoring the login', async () => {
     const storage = stubLocalStorage();
     storage.set('gkfeed.credentials', JSON.stringify({ username: 'alice', password: 'secret' }));
+    validateLogin.mockResolvedValue();
 
     render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
 
-    expect(screen.getByText(/Logged in as/).textContent).toContain('alice');
+    expect(screen.getByRole('status').textContent).toContain('Checking authentication');
+    expect((await screen.findByText(/Logged in as/)).textContent).toContain('alice');
+  });
+
+  it('rejects invalid credentials without saving them', async () => {
+    const storage = stubLocalStorage();
+    validateLogin.mockRejectedValue(new ApiError('Request failed with 401', 401));
+    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'alice' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Invalid username or password.');
+    expect(storage.has('gkfeed.credentials')).toBe(false);
+    expect(screen.getByRole('heading', { name: 'Sign in to GKFEED' })).toBeTruthy();
+  });
+
+  it('removes saved credentials rejected by the server', async () => {
+    const storage = stubLocalStorage();
+    storage.set('gkfeed.credentials', JSON.stringify({ username: 'alice', password: 'wrong' }));
+    validateLogin.mockRejectedValue(new ApiError('Request failed with 401', 401));
+
+    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Sign in to GKFEED' })).toBeTruthy());
+    expect(storage.has('gkfeed.credentials')).toBe(false);
   });
 
   it('ignores malformed stored credentials', () => {

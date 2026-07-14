@@ -79,6 +79,10 @@ export async function getAllFeeds(credentials: Credentials | null): Promise<Feed
   return requestJson(endpoint('list'), { headers: authorization(requireCredentials(credentials)) }).then(parseFeeds);
 }
 
+export async function validateCredentials(credentials: Credentials): Promise<void> {
+  await getAllFeeds(credentials);
+}
+
 export async function getFeedById(id: number, credentials: Credentials | null): Promise<Feed | undefined> {
   return (await getAllFeeds(credentials)).find((feed) => feed.id === id);
 }

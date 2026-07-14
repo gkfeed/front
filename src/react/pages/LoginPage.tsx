@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LockIcon, UserIcon } from '../components/Icons';
+import { ApiError } from '../services/feeds';
 import { useAuth } from '../state/AuthContext';
 import { getRedirectTarget } from '../state/routes';
 
@@ -16,24 +17,38 @@ const FIELDS = [
 ] as const;
 
 export function LoginPage() {
-  const { credentials, saveCredentials, clearCredentials } = useAuth();
+  const { credentials, status, authenticate, clearCredentials } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const savedUsername = credentials?.username ?? '';
   const isValid = Boolean(form.username.trim() && form.password);
   const redirectTo = getRedirectTarget(location.state);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitted(true);
     if (!isValid) return;
 
-    saveCredentials({ ...form, username: form.username.trim() });
-    setForm(EMPTY_FORM);
-    setSubmitted(false);
-    navigate(redirectTo, { replace: true });
+    setIsSubmitting(true);
+    setErrorMessage('');
+    try {
+      await authenticate({ ...form, username: form.username.trim() });
+      setForm(EMPTY_FORM);
+      setSubmitted(false);
+      navigate(redirectTo, { replace: true });
+    } catch (error) {
+      setErrorMessage(authenticationErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (status === 'checking') {
+    return <section className="login"><div className="login__form"><p role="status">Checking authentication…</p></div></section>;
   }
 
   return (
@@ -45,8 +60,13 @@ export function LoginPage() {
           form={form}
           submitted={submitted}
           isValid={isValid}
+          isSubmitting={isSubmitting}
+          errorMessage={errorMessage}
           onSubmit={onSubmit}
-          onChange={(name, value) => setForm((current) => ({ ...current, [name]: value }))}
+          onChange={(name, value) => {
+            setErrorMessage('');
+            setForm((current) => ({ ...current, [name]: value }));
+          }}
         />
       )}
     </section>
@@ -74,12 +94,16 @@ function LoginForm({
   form,
   submitted,
   isValid,
+  isSubmitting,
+  errorMessage,
   onSubmit,
   onChange,
 }: {
   form: LoginFormState;
   submitted: boolean;
   isValid: boolean;
+  isSubmitting: boolean;
+  errorMessage: string;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onChange: (name: LoginFieldName, value: string) => void;
 }) {
@@ -97,9 +121,10 @@ function LoginForm({
           />
         ))}
       </div>
+      {errorMessage ? <p className="field__error" role="alert">{errorMessage}</p> : null}
       <div className="login__actions">
-        <span className="login__status" aria-live="polite">{isValid ? 'Ready to save' : 'Enter credentials'}</span>
-        <button type="submit">Save login</button>
+        <span className="login__status" aria-live="polite">{isSubmitting ? 'Signing in…' : isValid ? 'Ready to sign in' : 'Enter credentials'}</span>
+        <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'}</button>
       </div>
     </form>
   );
@@ -144,4 +169,11 @@ function LoginField({
 
 function isFieldEmpty(value: string): boolean {
   return !value.trim();
+}
+
+function authenticationErrorMessage(error: unknown): string {
+  if (error instanceof ApiError && [401, 403].includes(error.status)) {
+    return 'Invalid username or password.';
+  }
+  return 'Unable to sign in. Try again.';
 }

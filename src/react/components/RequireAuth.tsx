@@ -4,10 +4,11 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../state/AuthContext';
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { credentials } = useAuth();
+  const { status } = useAuth();
   const location = useLocation();
 
-  if (!credentials) return <Navigate to="/login" replace state={{ from: location }} />;
+  if (status === 'checking') return <p role="status">Checking authentication…</p>;
+  if (status !== 'authenticated') return <Navigate to="/login" replace state={{ from: location }} />;
 
   return children;
 }

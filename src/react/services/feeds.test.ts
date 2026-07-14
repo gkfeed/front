@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createFeed, createFeedFromUrl, deleteFeedById, getAllFeeds, getFeedById } from './feeds';
+import { createFeed, createFeedFromUrl, deleteFeedById, getAllFeeds, getFeedById, validateCredentials } from './feeds';
 import type { Feed } from '../types';
 
 vi.hoisted(() => {
@@ -33,6 +33,15 @@ describe('feed service', () => {
       headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
       signal: expect.any(AbortSignal),
     });
+  });
+
+  it('validates credentials against a protected endpoint', async () => {
+    respondWith(FEEDS);
+
+    await expect(validateCredentials(CREDENTIALS)).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/list', expect.objectContaining({
+      headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
+    }));
   });
 
   it('rejects missing credentials before requesting protected endpoints', async () => {
