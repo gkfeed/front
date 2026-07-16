@@ -1,0 +1,62 @@
+.actions {
+  gap: 10px;
+  justify-items: end;
+}
+
+.delete,
+.secondary {
+  justify-self: end;
+  box-sizing: border-box;
+  min-height: 44px;
+  margin: 0;
+  padding: 11px 20px;
+  border-radius: 999px;
+  text-align: center;
+  transition: background-color var(--ease), transform var(--ease);
+}
+
+.delete {
+  border: 1px solid var(--color-danger-border);
+  background: var(--color-danger);
+  color: var(--color-ink-inverse);
+}
+
+.secondary {
+  border: 1px solid color-mix(in oklch, var(--color-field) 48%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 76%, var(--color-page));
+  color: var(--color-ink-strong);
+}
+
+.delete:hover,
+.secondary:hover {
+  transform: translateY(-1px);
+}
+
+.delete:hover {
+  background: color-mix(in oklch, var(--color-danger) 88%, var(--color-focus-light));
+}
+
+.secondary:hover {
+  background: var(--color-field-focus);
+}
+
+.delete:disabled,
+.secondary:disabled {
+  border-color: color-mix(in oklch, var(--color-danger-border) 40%, transparent);
+  background: var(--color-disabled);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.actions__confirm {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 10px;
+}
+
+.status {
+  margin: 0;
+  color: var(--color-focus-light);
+}
+

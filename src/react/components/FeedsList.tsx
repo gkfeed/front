@@ -1,11 +1,11 @@
-import { useDeferredValue, useMemo } from 'react';
+import { useCallback, useDeferredValue, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { getAllFeeds } from '../services/feeds';
-import { useAuth } from '../state/AuthContext';
-import { useFeedSearch } from '../state/FeedSearchContext';
+import { useAuth } from '../state/useAuth';
+import { useFeedSearch } from '../state/useFeedSearch';
 import type { Credentials, Feed } from '../types';
 import { FeedCard } from './FeedCard';
 
@@ -71,7 +71,8 @@ function getResultsAnnouncement(count: number, query = ''): string {
 }
 
 function useFeeds(credentials: Credentials | null) {
-  const { result, isLoading, retry } = useAsyncLoad(() => loadFeeds(credentials), [credentials]);
+  const load = useCallback(() => loadFeeds(credentials), [credentials]);
+  const { result, isLoading, retry } = useAsyncLoad(load);
   const { feeds = [], errorMessage = '' } = result ?? {};
 
   return {

@@ -1,22 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { ApiError, validateCredentials } from '../services/feeds';
 import type { Credentials } from '../types';
 import { getObjectProperty } from '../unknownObject';
-
-type AuthStatus = 'checking' | 'authenticated' | 'anonymous';
-
-interface AuthContextValue {
-  credentials: Credentials | null;
-  status: AuthStatus;
-  authenticate: (credentials: Credentials) => Promise<void>;
-  clearCredentials: () => void;
-}
+import { AuthContext } from './authContext';
+import type { AuthContextValue, AuthStatus } from './authContext';
 
 const STORAGE_KEY = 'gkfeed.credentials';
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [storedCredentials] = useState(readStoredCredentials);
@@ -63,12 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }), [authenticate, clearCredentials, credentials, status]);
 
   return <AuthContext value={value}>{children}</AuthContext>;
-}
-
-export function useAuth(): AuthContextValue {
-  const value = useContext(AuthContext);
-  if (!value) throw new Error('useAuth must be used inside AuthProvider');
-  return value;
 }
 
 function readStoredCredentials(): Credentials | null {

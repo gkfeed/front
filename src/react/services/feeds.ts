@@ -21,7 +21,10 @@ function isFeed(value: unknown): value is Feed {
   const type = getObjectProperty(value, 'type');
   const url = getObjectProperty(value, 'url');
 
-  return typeof id === 'number' && Number.isSafeInteger(id) && id > 0 && [title, type, url].every((field) => typeof field === 'string');
+  return typeof id === 'number'
+    && Number.isSafeInteger(id)
+    && id > 0
+    && [title, type, url].every((field) => typeof field === 'string');
 }
 
 function parseFeed(value: unknown): Feed {
@@ -71,7 +74,10 @@ async function postJson(path: string, body: FeedInput | FeedLazyInput, credentia
 }
 
 export async function getAllFeeds(credentials: Credentials | null): Promise<Feed[]> {
-  return requestJson(endpoint('list'), { headers: authorization(requireCredentials(credentials)) }).then(parseFeeds);
+  const response = await requestJson(endpoint('list'), {
+    headers: authorization(requireCredentials(credentials)),
+  });
+  return parseFeeds(response);
 }
 
 export async function validateCredentials(credentials: Credentials): Promise<void> {
@@ -83,10 +89,11 @@ export async function getFeedById(id: number, credentials: Credentials | null): 
 }
 
 export async function deleteFeedById(id: number, credentials: Credentials | null): Promise<Feed> {
-  return requestJson(endpoint(`feeds/${id}`), {
+  const response = await requestJson(endpoint(`feeds/${id}`), {
     method: 'DELETE',
     headers: authorization(requireCredentials(credentials)),
-  }).then(parseFeed);
+  });
+  return parseFeed(response);
 }
 
 export async function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<void> {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { createFeed, createFeedFromUrl } from '../services/feeds';
-import { useAuth } from '../state/AuthContext';
+import { useAuth } from '../state/useAuth';
 import type { FeedInput } from '../types';
 
 type SaveStatus = 'idle' | 'saving' | 'success' | 'error';

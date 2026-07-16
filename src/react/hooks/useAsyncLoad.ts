@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { DependencyList } from 'react';
 
-export function useAsyncLoad<T>(load: () => Promise<T>, dependencies: DependencyList) {
+export function useAsyncLoad<T>(load: () => Promise<T>) {
   const [result, setResult] = useState<T>();
   const [isLoading, setIsLoading] = useState(true);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -24,7 +23,7 @@ export function useAsyncLoad<T>(load: () => Promise<T>, dependencies: Dependency
     return () => {
       isActive = false;
     };
-  }, [loadAttempt, ...dependencies]);
+  }, [load, loadAttempt]);
 
   const retry = useCallback(() => setLoadAttempt((value) => value + 1), []);
 

@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError, validateCredentials } from '../services/feeds';
-import { AuthProvider } from '../state/AuthContext';
+import { AuthProvider } from '../state/AuthProvider';
 import { getRouteLocation } from '../state/routes';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { RequireAuth } from './RequireAuth';

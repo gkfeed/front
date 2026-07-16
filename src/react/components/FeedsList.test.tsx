@@ -6,8 +6,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getAllFeeds } from '../services/feeds';
-import { AuthProvider } from '../state/AuthContext';
-import { FeedSearchProvider } from '../state/FeedSearchContext';
+import { AuthProvider } from '../state/AuthProvider';
+import { FeedSearchProvider } from '../state/FeedSearchProvider';
 import { createStatusError, getControlValue } from '../testUtils';
 import { FeedsList } from './FeedsList';
 import { Navbar } from './Navbar';

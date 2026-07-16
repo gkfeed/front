@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { useCallback } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -8,7 +9,7 @@ import { useAsyncLoad } from './useAsyncLoad';
 describe('useAsyncLoad', () => {
   it('loads values and retries on demand', async () => {
     const load = vi.fn().mockResolvedValueOnce('first').mockResolvedValueOnce('second');
-    const { result } = renderHook(() => useAsyncLoad(load, []));
+    const { result } = renderHook(() => useAsyncLoad(load));
 
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.result).toBe('first'));
@@ -29,9 +30,10 @@ describe('useAsyncLoad', () => {
         })
         : Promise.resolve(value)
     ));
-    const { result, rerender } = renderHook(({ value }) => (
-      useAsyncLoad(() => load(value), [value])
-    ), { initialProps: { value: 'first' } });
+    const { result, rerender } = renderHook(({ value }) => {
+      const loadValue = useCallback(() => load(value), [value]);
+      return useAsyncLoad(loadValue);
+    }, { initialProps: { value: 'first' } });
 
     rerender({ value: 'second' });
     await waitFor(() => expect(result.current.result).toBe('second'));

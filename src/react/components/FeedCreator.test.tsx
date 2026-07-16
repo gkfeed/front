@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createFeed, createFeedFromUrl } from '../services/feeds';
-import { AuthProvider } from '../state/AuthContext';
+import { AuthProvider } from '../state/AuthProvider';
 import { getControlValue } from '../testUtils';
 import { FeedCreator } from './FeedCreator';
 

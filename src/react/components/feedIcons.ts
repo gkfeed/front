@@ -22,8 +22,12 @@ const FEED_TYPE_ALIASES: Record<string, string> = {
 };
 
 export function getFeedIcon(feed: Feed): FeedTypeIcon {
-  const type = feed.type.trim().toLowerCase();
-  const url = feed.url.toLowerCase();
+  return getFeedTypeIcon(feed.type, feed.url);
+}
+
+export function getFeedTypeIcon(feedType: string, feedUrl = ''): FeedTypeIcon {
+  const type = feedType.trim().toLowerCase();
+  const url = feedUrl.toLowerCase();
   const icon = FEED_TYPE_ICONS[FEED_TYPE_ALIASES[type] ?? type];
 
   if (icon) return icon;

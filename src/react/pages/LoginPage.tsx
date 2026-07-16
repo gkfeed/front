@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LockIcon, UserIcon } from '../components/Icons';
 import { ApiError } from '../services/feeds';
-import { useAuth } from '../state/AuthContext';
+import { useAuth } from '../state/useAuth';
 import { getRedirectTarget } from '../state/routes';
 
 const EMPTY_FORM = { username: '', password: '' };

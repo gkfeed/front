@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedById, getFeedById } from '../services/feeds';
-import { AuthProvider } from '../state/AuthContext';
+import { AuthProvider } from '../state/AuthProvider';
 import { FeedPage } from './FeedPage';
 
 vi.mock('../services/feeds');

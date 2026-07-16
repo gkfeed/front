@@ -1,7 +1,7 @@
 import { useState, useTransition } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
-import { useFeedSearch } from '../state/FeedSearchContext';
+import { useFeedSearch } from '../state/useFeedSearch';
 
 export function Navbar() {
   const location = useLocation();

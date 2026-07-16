@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedById, getFeedById } from '../services/feeds';
-import { AuthProvider } from '../state/AuthContext';
+import { AuthProvider } from '../state/AuthProvider';
 import { useFeed } from './useFeed';
 
 vi.mock('../services/feeds');

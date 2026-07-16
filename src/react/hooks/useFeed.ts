@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useAsyncLoad } from './useAsyncLoad';
 import { deleteFeedById, getFeedById } from '../services/feeds';
-import { useAuth } from '../state/AuthContext';
+import { useAuth } from '../state/useAuth';
 import type { Credentials, Feed } from '../types';
 
 interface LoadResult {
@@ -21,10 +21,8 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
   const { credentials } = useAuth();
   const [deleteState, setDeleteState] = useState<DeleteState>('idle');
   const feedId = parseFeedId(feedIdParam);
-  const { result: loadResult, isLoading, retry: retryLoad } = useAsyncLoad(
-    () => loadFeed(feedId, credentials),
-    [credentials, feedId],
-  );
+  const load = useCallback(() => loadFeed(feedId, credentials), [credentials, feedId]);
+  const { result: loadResult, isLoading, retry: retryLoad } = useAsyncLoad(load);
   const { feed, loadError = '' } = loadResult ?? {};
   const isDeleting = deleteState === 'deleting';
   const isConfirmingDelete = deleteState !== 'idle';
