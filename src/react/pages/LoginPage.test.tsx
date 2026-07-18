@@ -30,18 +30,27 @@ describe('LoginPage', () => {
     validateLogin.mockResolvedValue();
     render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(screen.getByLabelText('Username').getAttribute('aria-invalid')).toBe('true');
-    expect(screen.getByLabelText('Password').getAttribute('aria-invalid')).toBe('true');
+    const signInButton = screen.getByRole('button', { name: 'Sign in' }) as HTMLButtonElement;
+    expect(signInButton.disabled).toBe(true);
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: '  alice  ' } });
+    expect(signInButton.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(signInButton.disabled).toBe(false);
+    fireEvent.click(signInButton);
     expect((await screen.findByText(/Logged in as/)).textContent).toContain('alice');
     expect(validateLogin).toHaveBeenCalledWith({ username: 'alice', password: 'secret' });
     expect(storage.get('gkfeed.credentials')).toBe(JSON.stringify({ username: 'alice', password: 'secret' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+    expect(storage.has('gkfeed.credentials')).toBe(true);
+    expect(screen.getByText('Are you sure you want to log out?')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(storage.has('gkfeed.credentials')).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, log out' }));
     expect(storage.has('gkfeed.credentials')).toBe(false);
     expect(screen.getByRole('heading', { name: 'Sign in to GKFEED' })).toBeTruthy();
     expect(document.activeElement).toBe(screen.getByLabelText('Username'));

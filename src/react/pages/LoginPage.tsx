@@ -74,6 +74,8 @@ export function LoginPage() {
 }
 
 function SavedLogin({ username, onLogout }: { username: string; onLogout: () => void }) {
+  const [isConfirmingLogout, setIsConfirmingLogout] = useState(false);
+
   return (
     <div className="login__form login__form--saved">
       <h1 id="login-title" className="page-title">Signed in to GKFEED</h1>
@@ -83,9 +85,19 @@ function SavedLogin({ username, onLogout }: { username: string; onLogout: () => 
           Logged in as <strong>{username}</strong>
         </span>
       </div>
-      <div className="login__actions">
-        <button type="button" className="danger" onClick={onLogout}>Log out</button>
-      </div>
+      {isConfirmingLogout ? (
+        <div className="login__logout-confirmation" role="group" aria-labelledby="logout-confirmation">
+          <p id="logout-confirmation">Are you sure you want to log out?</p>
+          <div className="login__actions">
+            <button type="button" className="login__cancel" autoFocus onClick={() => setIsConfirmingLogout(false)}>Cancel</button>
+            <button type="button" className="danger" onClick={onLogout}>Yes, log out</button>
+          </div>
+        </div>
+      ) : (
+        <div className="login__actions">
+          <button type="button" className="danger" onClick={() => setIsConfirmingLogout(true)}>Log out</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -123,8 +135,7 @@ function LoginForm({
       </div>
       {errorMessage ? <p className="field__error" role="alert">{errorMessage}</p> : null}
       <div className="login__actions">
-        <span className="login__status" aria-live="polite">{isSubmitting ? 'Signing in…' : isValid ? 'Ready to sign in' : 'Enter credentials'}</span>
-        <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'}</button>
+        <button type="submit" disabled={!isValid || isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'}</button>
       </div>
     </form>
   );

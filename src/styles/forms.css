@@ -360,8 +360,7 @@
 }
 
 .field__hint,
-.field__error,
-.login__status {
+.field__error {
   font-size: 0.86rem;
 }
 
@@ -426,13 +425,18 @@
   justify-content: end;
 }
 
-.creator__status,
-.login__status {
-  color: var(--color-muted);
+.login__logout-confirmation {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in oklch, var(--color-danger) 52%, var(--color-page));
+  border-radius: 12px;
+  background: color-mix(in oklch, var(--color-danger) 12%, var(--color-page));
 }
 
-.login__status {
-  color: color-mix(in oklch, var(--color-ink-inverse) 64%, var(--color-page));
+.login__logout-confirmation p {
+  margin: 0;
+  color: var(--color-ink-inverse);
   font-weight: 650;
 }
 
@@ -481,7 +485,7 @@
   transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease), transform var(--ease);
 }
 
-.login button:not(:disabled):hover {
+.login button[type="submit"]:not(:disabled):hover {
   background: color-mix(in oklch, var(--color-accent) 88%, var(--color-focus-light));
   transform: translateY(-1px);
 }
@@ -523,6 +527,16 @@
   border-color: var(--color-danger-border);
   background: color-mix(in oklch, var(--color-danger) 90%, var(--color-focus-light));
   box-shadow: 0 10px 24px oklch(10% 0.018 28 / 0.18);
+}
+
+.login .login__cancel {
+  border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 76%, var(--color-page));
+  color: var(--color-ink-strong);
+}
+
+.login .login__cancel:hover {
+  background: var(--color-field-focus);
 }
 
 .creator__submit {
