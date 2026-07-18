@@ -3,9 +3,9 @@ import { createRoot } from 'react-dom/client';
 
 import './styles.css';
 import { App } from './App';
-import { applyTheme, getInitialTheme } from './react/theme';
+import { applyThemePreference, getInitialThemePreference } from './react/theme';
 
-applyTheme(getInitialTheme());
+applyThemePreference(getInitialThemePreference());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

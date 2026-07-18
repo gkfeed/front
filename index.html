@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-theme-preference="system">
 <head>
   <meta charset="utf-8">
   <title>GKFEED</title>
@@ -7,16 +7,18 @@
   <meta name="theme-color" content="#211c1b">
   <script>
     (() => {
-      try {
-        const saved = localStorage.getItem('gkfeed.theme');
-        const themes = ['light', 'dark', 'latte', 'mocha'];
-        const theme = themes.includes(saved)
-          ? saved
-          : matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        document.documentElement.dataset.theme = theme;
-      } catch {
-        document.documentElement.dataset.theme = 'dark';
-      }
+      let saved = null;
+      try { saved = localStorage.getItem('gkfeed.theme'); } catch { /* Use system theme. */ }
+      const preferences = ['system', 'system-catppuccin', 'light', 'dark', 'latte', 'mocha'];
+      const preference = preferences.includes(saved) ? saved : 'system';
+      const prefersLight = matchMedia('(prefers-color-scheme: light)').matches;
+      const theme = preference === 'system'
+        ? prefersLight ? 'light' : 'dark'
+        : preference === 'system-catppuccin'
+          ? prefersLight ? 'latte' : 'mocha'
+          : preference;
+      document.documentElement.dataset.themePreference = preference;
+      document.documentElement.dataset.theme = theme;
     })();
   </script>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">

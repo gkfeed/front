@@ -1,15 +1,26 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
-import { getInitialTheme, saveTheme, themes, type Theme } from '../theme';
+import {
+  applyTheme,
+  getInitialThemePreference,
+  isSystemPreference,
+  saveTheme,
+  themePreferences,
+  type ThemePreference,
+} from '../theme';
 
-const shortLabels: Record<Theme, string> = {
+const shortLabels: Record<ThemePreference, string> = {
+  system: 'System',
+  'system-catppuccin': 'Catppuccin',
   light: 'Light',
   dark: 'Dark',
   latte: 'Latte',
   mocha: 'Mocha',
 };
 
-const descriptions: Record<Theme, string> = {
+const descriptions: Record<ThemePreference, string> = {
+  system: 'Light / Dark',
+  'system-catppuccin': 'Latte / Mocha',
   light: 'Clean neutral',
   dark: 'GKFEED original',
   latte: 'Warm pastel',
@@ -17,10 +28,27 @@ const descriptions: Record<Theme, string> = {
 };
 
 export function ThemePicker() {
-  const [theme, setTheme] = useState(getInitialTheme);
+  const [theme, setTheme] = useState(getInitialThemePreference);
   const [isOpen, setIsOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
+
+  useEffect(() => {
+    if (!isSystemPreference(theme)) return;
+
+    const systemTheme = window.matchMedia?.('(prefers-color-scheme: light)');
+    if (!systemTheme) return;
+    const syncTheme = () => {
+      if (theme === 'system-catppuccin') {
+        applyTheme(systemTheme.matches ? 'latte' : 'mocha');
+      } else {
+        applyTheme(systemTheme.matches ? 'light' : 'dark');
+      }
+    };
+    syncTheme();
+    systemTheme.addEventListener('change', syncTheme);
+    return () => systemTheme.removeEventListener('change', syncTheme);
+  }, [theme]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -66,11 +94,12 @@ export function ThemePicker() {
             <span>Choose your palette</span>
           </div>
           <div className="theme-picker__options">
-            {themes.map((option) => {
+            {themePreferences.map((option) => {
               const selected = option.value === theme;
               return (
                 <button
                   className="theme-picker__option"
+                  data-theme-option={option.value}
                   data-selected={selected || undefined}
                   key={option.value}
                   type="button"
@@ -99,6 +128,6 @@ export function ThemePicker() {
   );
 }
 
-function ThemeSwatch({ theme }: { theme: Theme }) {
+function ThemeSwatch({ theme }: { theme: ThemePreference }) {
   return <span className="theme-swatch" data-theme-swatch={theme} aria-hidden="true"><span /></span>;
 }
