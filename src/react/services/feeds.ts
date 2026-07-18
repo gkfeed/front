@@ -1,4 +1,4 @@
-import type { Credentials, Feed, FeedInput, FeedLazyInput } from '../types';
+import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../types';
 import { getObjectProperty } from '../unknownObject';
 
 const DEFAULT_API_ROOT = import.meta.env.DEV
@@ -35,6 +35,37 @@ function parseFeed(value: unknown): Feed {
 function parseFeeds(value: unknown): Feed[] {
   if (Array.isArray(value) && value.every(isFeed)) return value;
   throw new Error('Invalid API response');
+}
+
+function isFeedItem(value: unknown): value is Record<string, unknown> {
+  const id = getObjectProperty(value, 'id');
+  const feedId = getObjectProperty(value, 'feed_id');
+  const link = getObjectProperty(value, 'link');
+  const title = getObjectProperty(value, 'title');
+  const itemText = getObjectProperty(value, 'text');
+
+  return typeof id === 'number'
+    && Number.isSafeInteger(id)
+    && id > 0
+    && typeof feedId === 'number'
+    && Number.isSafeInteger(feedId)
+    && feedId > 0
+    && [link, title, itemText].every((field) => typeof field === 'string');
+}
+
+function parseFeedItems(value: unknown): FeedItem[] {
+  const items = getObjectProperty(value, 'items');
+  if (!Array.isArray(items) || !items.every(isFeedItem)) throw new Error('Invalid API response');
+
+  return items
+    .filter((item) => Boolean(item.link))
+    .map((item) => ({
+      id: item.id as number,
+      feedId: item.feed_id as number,
+      link: item.link as string,
+      title: item.title as string,
+      text: item.text as string,
+    }));
 }
 
 function authorization(credentials: Credentials): Record<string, string> {
@@ -86,6 +117,24 @@ export async function validateCredentials(credentials: Credentials): Promise<voi
 
 export async function getFeedById(id: number, credentials: Credentials | null): Promise<Feed | undefined> {
   return (await getAllFeeds(credentials)).find((feed) => feed.id === id);
+}
+
+export async function getFeedItems(credentials: Credentials | null, limit = 1000): Promise<FeedItem[]> {
+  const response = await requestJson(endpoint(`get_items?limit=${limit}`), {
+    headers: authorization(requireCredentials(credentials)),
+  });
+  return parseFeedItems(response);
+}
+
+export async function deleteFeedItemById(id: number, credentials: Credentials | null): Promise<void> {
+  await request(endpoint('add_deleted_items'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authorization(requireCredentials(credentials)),
+    },
+    body: JSON.stringify({ itemIds: [id] }),
+  });
 }
 
 export async function deleteFeedById(id: number, credentials: Credentials | null): Promise<Feed> {

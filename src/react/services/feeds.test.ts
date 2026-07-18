@@ -1,6 +1,15 @@
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createFeed, createFeedFromUrl, deleteFeedById, getAllFeeds, getFeedById, validateCredentials } from './feeds';
+import {
+  createFeed,
+  createFeedFromUrl,
+  deleteFeedById,
+  deleteFeedItemById,
+  getAllFeeds,
+  getFeedById,
+  getFeedItems,
+  validateCredentials,
+} from './feeds';
 import type { Feed } from '../types';
 
 vi.hoisted(() => {
@@ -89,6 +98,35 @@ describe('feed service', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Basic w7xzZXI6cMOkc3M=' },
       body: JSON.stringify(input),
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('loads and normalizes feed reader items', async () => {
+    respondWith({
+      items: [
+        { id: 10, feed_id: 2, link: 'https://example.com/story', title: 'Story', text: 'Summary' },
+        { id: 11, feed_id: 2, link: '', title: 'Missing link', text: '' },
+      ],
+    });
+
+    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([
+      { id: 10, feedId: 2, link: 'https://example.com/story', title: 'Story', text: 'Summary' },
+    ]);
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/get_items?limit=1000', {
+      headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('deletes a feed reader item using the API batch shape', async () => {
+    respondWithoutBody();
+
+    await expect(deleteFeedItemById(10, CREDENTIALS)).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/add_deleted_items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Basic w7xzZXI6cMOkc3M=' },
+      body: JSON.stringify({ itemIds: [10] }),
       signal: expect.any(AbortSignal),
     });
   });
