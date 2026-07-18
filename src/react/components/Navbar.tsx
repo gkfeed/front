@@ -2,6 +2,7 @@ import { useState, useTransition } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { useFeedSearch } from '../state/useFeedSearch';
+import { ThemePicker } from './ThemePicker';
 
 export function Navbar() {
   const location = useLocation();
@@ -35,6 +36,7 @@ export function Navbar() {
           }}
         />
       ) : null}
+      <ThemePicker />
     </nav>
   );
 }

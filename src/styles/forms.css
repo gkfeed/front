@@ -76,8 +76,8 @@
 
 .creator .field__control {
   display: block;
-  border-color: color-mix(in oklch, var(--color-field) 34%, var(--color-page));
-  background: color-mix(in oklch, var(--color-field) 82%, var(--color-page));
+  border-color: var(--color-input-border);
+  background: var(--color-input-surface);
   transition: background-color var(--ease), border-color var(--ease);
 }
 
@@ -87,8 +87,8 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  border-color: color-mix(in oklch, var(--color-field) 34%, var(--color-page));
-  background: color-mix(in oklch, var(--color-field) 82%, var(--color-page));
+  border-color: var(--color-input-border);
+  background: var(--color-input-surface);
   color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
   transition: background-color var(--ease), border-color var(--ease);
 }
@@ -96,7 +96,7 @@
 .login__account {
   min-height: 64px;
   padding: 10px 14px;
-  border: 1px solid color-mix(in oklch, var(--color-field) 26%, var(--color-page));
+  border: 1px solid var(--color-control-border);
   border-radius: 12px;
   background: var(--color-control-well);
 }
@@ -168,9 +168,9 @@
   min-width: 0;
   min-height: 48px;
   padding: 5px 12px 5px 7px;
-  border: 1px solid color-mix(in oklch, var(--color-field) 34%, var(--color-page));
+  border: 1px solid var(--color-input-border);
   border-radius: 12px;
-  background: color-mix(in oklch, var(--color-field) 82%, var(--color-page));
+  background: var(--color-input-surface);
   color: color-mix(in oklch, var(--color-ink-strong) 88%, var(--color-page));
   font-weight: 720;
   text-align: left;
@@ -398,7 +398,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
   padding: 4px;
-  border: 1px solid color-mix(in oklch, var(--color-field) 26%, var(--color-page));
+  border: 1px solid var(--color-control-border);
   border-radius: 12px;
   background: var(--color-control-well);
 }
@@ -481,7 +481,7 @@
   min-width: 128px;
   border: 1px solid var(--color-accent-border);
   background: var(--color-accent);
-  color: var(--color-focus-light);
+  color: var(--color-on-accent);
   transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease), transform var(--ease);
 }
 
@@ -521,6 +521,7 @@
   min-height: 44px;
   border-color: color-mix(in oklch, var(--color-danger) 66%, var(--color-page));
   background: color-mix(in oklch, var(--color-danger) 88%, var(--color-page));
+  color: var(--color-on-login-danger);
 }
 
 .login .danger:hover {
