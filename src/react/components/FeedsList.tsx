@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState, useTransition } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
@@ -19,7 +19,9 @@ interface FeedLoadResult {
 
 export function FeedsList() {
   const { credentials } = useAuth();
-  const { searchTerm } = useFeedSearch();
+  const { searchTerm, setSearchTerm } = useFeedSearch();
+  const [draftSearchTerm, setDraftSearchTerm] = useState(searchTerm);
+  const [, startSearchTransition] = useTransition();
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const settledSearchTerm = useDebouncedValue(deferredSearchTerm, SEARCH_DEBOUNCE_MS);
   const { feeds, errorMessage, isLoading, retry } = useFeeds(credentials);
@@ -30,6 +32,24 @@ export function FeedsList() {
 
   return (
     <div className="container">
+      <label className="feed-search">
+        <span className="sr-only">Search feeds</span>
+        <svg className="feed-search__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="m20 20-4.3-4.3m2.3-5.2a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
+        </svg>
+        <input
+          className="feed-search__input"
+          type="search"
+          placeholder="Search feeds"
+          aria-label="Search feeds"
+          value={draftSearchTerm}
+          onChange={(event) => {
+            const nextSearchTerm = event.target.value;
+            setDraftSearchTerm(nextSearchTerm);
+            startSearchTransition(() => setSearchTerm(nextSearchTerm));
+          }}
+        />
+      </label>
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {resultsAnnouncement}
       </p>
