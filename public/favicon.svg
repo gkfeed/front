@@ -1,5 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#211c1b"/>
-  <path d="M9 10l7 6 7-6M9 16l7 6 7-6" fill="none" stroke="#eee4ca" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="16" cy="8" r="3" fill="#3f8a55"/>
+  <style>
+    :root { --bg: #f5f5f4; --ink: #292524; --accent: #16a34a; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #211c1b; --ink: #eee4ca; --accent: #3f8a55; } }
+  </style>
+  <rect width="32" height="32" rx="8" fill="var(--bg)"/>
+  <g fill="none" stroke="var(--ink)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(1 2) scale(.9)">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+  </g>
+  <path d="M25 20.5v9M20.5 25h9" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
 </svg>

@@ -205,6 +205,11 @@
   width: 32px;
   height: 32px;
   flex: 0 0 auto;
+  color: var(--color-ink-inverse);
+}
+
+.nav__brand-mark-accent {
+  stroke: var(--color-accent);
 }
 
 .nav__links {

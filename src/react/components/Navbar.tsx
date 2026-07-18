@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom';
 
+import { BrandMark } from './Icons';
 import { ThemePicker } from './ThemePicker';
 
 export function Navbar() {
   return (
     <nav className="nav" aria-label="Primary navigation">
       <NavLink className="nav__brand" to="/" aria-label="GKFEED home">
-        <img className="nav__brand-mark" src="/gkfeed-mark.svg" alt="" width="32" height="32" />
+        <BrandMark />
         <span>GKFEED</span>
       </NavLink>
       <span className="nav__links" aria-label="Feed sections">
