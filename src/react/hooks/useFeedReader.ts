@@ -38,6 +38,7 @@ export function useFeedReader() {
   }, [retry]);
 
   return {
+    items: items ?? [],
     currentItem,
     isLoading,
     isDeleting: actionState === 'deleting',

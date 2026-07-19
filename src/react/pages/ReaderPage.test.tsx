@@ -35,6 +35,19 @@ describe('ReaderPage', () => {
     expect(screen.getByText('1 remaining')).toBeTruthy();
   });
 
+  it('switches to a continuous view of all feed items', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    render(<ReaderPage />);
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Scroll' }));
+
+    expect(screen.getByText('First story')).toBeTruthy();
+    expect(screen.getByText('Second story')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /keep/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /delete/i })).toBeNull();
+  });
+
   it('deletes an item on the server before advancing', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     vi.mocked(deleteFeedItemById).mockResolvedValue();

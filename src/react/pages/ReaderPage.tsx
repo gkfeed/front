@@ -1,8 +1,14 @@
+import { useState } from 'react';
+
 import { FeedItemCard } from '../components/FeedItemCard';
 import { useFeedReader } from '../hooks/useFeedReader';
 
+type ReaderMode = 'review' | 'scroll';
+
 export function ReaderPage() {
+  const [mode, setMode] = useState<ReaderMode>('review');
   const {
+    items,
     currentItem,
     isLoading,
     isDeleting,
@@ -18,6 +24,11 @@ export function ReaderPage() {
     <section className="reader" aria-labelledby="reader-page-title">
       <h1 id="reader-page-title" className="sr-only">Reader</h1>
 
+      <div className="reader__tabs" role="tablist" aria-label="Reader view">
+        <ReaderModeTab mode="review" currentMode={mode} onSelect={setMode}>Review</ReaderModeTab>
+        <ReaderModeTab mode="scroll" currentMode={mode} onSelect={setMode}>Scroll</ReaderModeTab>
+      </div>
+
       {isLoading ? <ReaderLoading /> : null}
 
       {loadFailed ? (
@@ -27,7 +38,7 @@ export function ReaderPage() {
         </div>
       ) : null}
 
-      {!isLoading && !loadFailed && !currentItem ? (
+      {!isLoading && !loadFailed && items.length === 0 ? (
         <div className="reader__state">
           <span className="reader__done-mark" aria-hidden="true">✓</span>
           <h2>You’re all caught up</h2>
@@ -36,8 +47,13 @@ export function ReaderPage() {
         </div>
       ) : null}
 
-      {currentItem ? (
-        <div className="reader__item">
+      {mode === 'review' && currentItem ? (
+        <div
+          id="reader-review-panel"
+          className="reader__item"
+          role="tabpanel"
+          aria-labelledby="reader-review-tab"
+        >
           <FeedItemCard key={currentItem.id} item={currentItem} />
           <div className="reader__actions" aria-label="Feed item actions">
             <button type="button" className="reader__keep" onClick={keepItem} disabled={isDeleting}>
@@ -57,7 +73,57 @@ export function ReaderPage() {
           </div>
         </div>
       ) : null}
+
+      {mode === 'review' && !isLoading && !loadFailed && items.length > 0 && !currentItem ? (
+        <div
+          id="reader-review-panel"
+          className="reader__state"
+          role="tabpanel"
+          aria-labelledby="reader-review-tab"
+        >
+          <span className="reader__done-mark" aria-hidden="true">✓</span>
+          <h2>You’ve reviewed everything</h2>
+          <p>Switch to Scroll to browse all items again.</p>
+        </div>
+      ) : null}
+
+      {mode === 'scroll' && !isLoading && !loadFailed && items.length > 0 ? (
+        <div
+          id="reader-scroll-panel"
+          className="reader__scroll-panel"
+          role="tabpanel"
+          aria-labelledby="reader-scroll-tab"
+        >
+          <div className="reader__stream">
+            {items.map((item) => <FeedItemCard key={item.id} item={item} />)}
+          </div>
+        </div>
+      ) : null}
     </section>
+  );
+}
+
+type ReaderModeTabProps = {
+  children: string;
+  mode: ReaderMode;
+  currentMode: ReaderMode;
+  onSelect: (mode: ReaderMode) => void;
+};
+
+function ReaderModeTab({ children, mode, currentMode, onSelect }: ReaderModeTabProps) {
+  const selected = mode === currentMode;
+
+  return (
+    <button
+      id={`reader-${mode}-tab`}
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      aria-controls={`reader-${mode}-panel`}
+      onClick={() => onSelect(mode)}
+    >
+      {children}
+    </button>
   );
 }
 
