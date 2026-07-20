@@ -21,17 +21,12 @@ describe('development API root', () => {
   });
 
   it('deletes feeds through the same-origin API root', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({
-      id: 7,
-      title: 'News',
-      type: 'rss',
-      url: 'https://example.com/feed.xml',
-    })));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
     const { deleteFeedById } = await import('./feeds');
 
     await deleteFeedById(7, CREDENTIALS);
 
-    expect(fetch).toHaveBeenCalledWith('/api/v1/feeds/7', expect.objectContaining({
+    expect(fetch).toHaveBeenCalledWith('/api/v1/delete?id=7', expect.objectContaining({
       method: 'DELETE',
     }));
   });

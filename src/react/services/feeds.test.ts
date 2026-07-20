@@ -131,6 +131,16 @@ describe('feed service', () => {
     });
   });
 
+  it('deletes a feed using the API delete route', async () => {
+    respondWithoutBody(200);
+
+    await expect(deleteFeedById(7, CREDENTIALS)).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/delete?id=7', {
+      method: 'DELETE',
+      headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
+      signal: expect.any(AbortSignal),
+    });
+  });
 
   it('exposes the status of failed requests', async () => {
     respondWith(null, 401);
@@ -139,7 +149,7 @@ describe('feed service', () => {
       message: 'Request failed with 401',
       status: 401,
     });
-    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/feeds/7', {
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/delete?id=7', {
       method: 'DELETE',
       headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
       signal: expect.any(AbortSignal),

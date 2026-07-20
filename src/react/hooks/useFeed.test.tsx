@@ -30,7 +30,7 @@ describe('useFeed', () => {
   it('loads, confirms, and deletes a feed', async () => {
     const onDeleted = vi.fn();
     getFeed.mockResolvedValue(feed);
-    deleteFeed.mockResolvedValue(feed);
+    deleteFeed.mockResolvedValue(undefined);
     const { result } = renderHook(() => useFeed('1', onDeleted), { wrapper });
 
     await waitFor(() => expect(result.current.feed).toEqual(feed));

@@ -27,11 +27,6 @@ function isFeed(value: unknown): value is Feed {
     && [title, type, url].every((field) => typeof field === 'string');
 }
 
-function parseFeed(value: unknown): Feed {
-  if (isFeed(value)) return value;
-  throw new Error('Invalid API response');
-}
-
 function parseFeeds(value: unknown): Feed[] {
   if (Array.isArray(value) && value.every(isFeed)) return value;
   throw new Error('Invalid API response');
@@ -137,12 +132,11 @@ export async function deleteFeedItemById(id: number, credentials: Credentials | 
   });
 }
 
-export async function deleteFeedById(id: number, credentials: Credentials | null): Promise<Feed> {
-  const response = await requestJson(endpoint(`feeds/${id}`), {
+export async function deleteFeedById(id: number, credentials: Credentials | null): Promise<void> {
+  await request(endpoint(`delete?id=${id}`), {
     method: 'DELETE',
     headers: authorization(requireCredentials(credentials)),
   });
-  return parseFeed(response);
 }
 
 export async function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<void> {
