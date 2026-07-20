@@ -175,18 +175,6 @@
   overflow-wrap: anywhere;
 }
 
-.reader-card__text {
-  display: -webkit-box;
-  max-width: 65ch;
-  margin: 0;
-  overflow: hidden;
-  font-size: 1rem;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 7;
-}
-
 .reader-card__link {
   justify-self: start;
   padding-bottom: 2px;

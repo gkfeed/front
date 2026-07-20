@@ -39,7 +39,6 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
             <span>Feed #{item.feedId}</span>
           </div>
           <h2 className="reader-card__title">{item.title || hostname}</h2>
-          {item.text ? <p className="reader-card__text">{item.text}</p> : null}
           <a className="reader-card__link" href={item.link} target="_blank" rel="noreferrer">
             Read original <span aria-hidden="true">↗</span>
           </a>
