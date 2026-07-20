@@ -290,6 +290,22 @@
   outline-offset: 3px;
 }
 
+@media (min-width: 1024px) {
+  .reader {
+    max-width: 736px;
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .reader__tabs,
+  .reader__item,
+  .reader__scroll-panel,
+  .reader__loading,
+  .reader__state {
+    max-width: 688px;
+  }
+}
+
 @media (max-width: 640px) {
   .reader {
     gap: 18px;
