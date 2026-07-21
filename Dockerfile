@@ -10,11 +10,14 @@ COPY . .
 
 RUN npm run build
 
-FROM nginx:alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa
+FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
 
-COPY --from=build /usr/src/app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /usr/src/app
 
-EXPOSE 80
+COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/dist-server ./dist-server
 
-CMD ["nginx", "-g", "daemon off;"]
+ENV PORT=3000
+EXPOSE 3000
+
+CMD ["node", "dist-server/index.js"]

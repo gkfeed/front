@@ -1,13 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import { getOpenGraphPreview } from '../services/openGraph';
 import type { FeedItem } from '../types';
 import { getFeedItemPreview, isYoutubeFeedItem } from './feedItemPreview';
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
   const hostname = getHostname(item.link);
-  const preview = getFeedItemPreview(item);
+  const localPreview = getFeedItemPreview(item);
+  const localPreviewSource = localPreview?.src;
+  const [openGraphImage, setOpenGraphImage] = useState<string | null>(null);
+  const preview = localPreview ?? (openGraphImage
+    ? { src: openGraphImage, alt: item.title ? `Preview for ${item.title}` : 'Feed item preview' }
+    : null);
   const isYoutube = isYoutubeFeedItem(item);
   const [previewFailed, setPreviewFailed] = useState(false);
+
+  useEffect(() => {
+    setOpenGraphImage(null);
+    setPreviewFailed(false);
+    if (localPreviewSource) return;
+
+    const controller = new AbortController();
+    getOpenGraphPreview(item.link, controller.signal)
+      .then((openGraph) => setOpenGraphImage(openGraph.image))
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, [item.link, localPreviewSource]);
 
   return (
     <article className={`reader-card${isYoutube ? ' reader-card--youtube' : ''}`}>

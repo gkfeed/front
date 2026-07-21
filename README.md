@@ -6,6 +6,9 @@ React + Vite frontend for managing GKFEED feed sources.
 
 Run `npm run dev` and open `http://localhost:4200/`. The application reloads when source files change.
 
+Run `npm run dev:bff` in a second terminal to start the TypeScript BFF on
+`http://localhost:3000`. Vite proxies BFF requests to it during development.
+
 The dev server listens on `0.0.0.0`, so it is also reachable from your local network at `http://<your-lan-ip>:4200/`. In development, API requests use `/api/v1` and are proxied by Vite to `https://feed.gws.freemyip.com` so browsers do not block them with CORS.
 
 Set `VITE_API_ROOT` at build time to override the API URL. The default is the
@@ -14,6 +17,21 @@ same-origin `/api/v1` proxy in development and the hosted API URL in production.
 ## Build
 
 Run `npm run build` to create a production build in `dist/`.
+
+Run `npm start` after building to serve both the frontend and BFF on port 3000.
+Set `PORT` to use a different port.
+
+## Open Graph preview
+
+The BFF currently exposes one route:
+
+```text
+GET /api/bff/open-graph?url=https%3A%2F%2Fexample.com%2Farticle
+```
+
+It returns the final page URL plus its title, description, image, site name, and
+Open Graph type. Only public HTTP(S) pages are fetched; private/local addresses,
+non-HTML responses, large pages, and slow responses are rejected.
 
 Run `npm test` to execute the automated tests.
 

@@ -10,6 +10,7 @@ export default tseslint.config(
       '.agents',
       '.codex',
       'dist',
+      'dist-server',
       'node_modules',
       'playwright-report',
       'test-results',
@@ -39,7 +40,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['vite.config.ts', 'playwright.config.ts'],
+    files: ['vite.config.ts', 'playwright.config.ts', 'server/**/*.ts'],
     languageOptions: {
       globals: globals.node,
     },

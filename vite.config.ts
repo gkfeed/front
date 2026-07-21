@@ -5,6 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/api/bff': {
+        target: process.env.BFF_TARGET ?? 'http://localhost:3000',
+      },
       '/api/v1': {
         target: 'https://feed.gws.freemyip.com',
         changeOrigin: true,
@@ -12,6 +15,6 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'server/**/*.test.ts'],
   },
 });
