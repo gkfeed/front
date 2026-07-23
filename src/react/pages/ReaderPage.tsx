@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { FeedItemCard } from '../components/FeedItemCard';
 import { useFeedReader } from '../hooks/useFeedReader';
@@ -19,6 +19,36 @@ export function ReaderPage() {
     deleteItem,
     retryLoad,
   } = useFeedReader();
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        mode !== 'review'
+        || !currentItem
+        || isDeleting
+        || event.repeat
+        || event.altKey
+        || event.ctrlKey
+        || event.metaKey
+        || event.shiftKey
+        || isTextEntryTarget(event.target)
+        || (event.target instanceof Element && event.target.closest('[role="tab"]'))
+      ) {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        keepItem();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        void deleteItem();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentItem, deleteItem, isDeleting, keepItem, mode]);
 
   return (
     <section className="reader" aria-labelledby="reader-page-title">
@@ -100,6 +130,15 @@ export function ReaderPage() {
         </div>
       ) : null}
     </section>
+  );
+}
+
+function isTextEntryTarget(target: EventTarget | null) {
+  return target instanceof HTMLElement && (
+    target.isContentEditable
+    || target instanceof HTMLInputElement
+    || target instanceof HTMLTextAreaElement
+    || target instanceof HTMLSelectElement
   );
 }
 

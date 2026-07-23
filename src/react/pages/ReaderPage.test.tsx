@@ -35,6 +35,29 @@ describe('ReaderPage', () => {
     expect(screen.getByText('1 remaining')).toBeTruthy();
   });
 
+  it('keeps the current item with ArrowLeft', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    render(<ReaderPage />);
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(deleteFeedItemById).not.toHaveBeenCalled();
+  });
+
+  it('deletes the current item with ArrowRight', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    vi.mocked(deleteFeedItemById).mockResolvedValue();
+    render(<ReaderPage />);
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(deleteFeedItemById).toHaveBeenCalledWith(10, { username: 'reader', password: 'secret' });
+  });
+
   it('switches to a continuous view of all feed items', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     render(<ReaderPage />);
