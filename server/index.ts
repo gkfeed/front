@@ -4,7 +4,12 @@ import { createServer, type ServerResponse } from 'node:http';
 import { extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { fetchOpenGraph, fetchRedditPreviewImage, PreviewError } from './opengraph.js';
+import {
+  fetchLiquipediaMatch,
+  fetchOpenGraph,
+  fetchRedditPreviewImage,
+  PreviewError,
+} from './opengraph.js';
 
 const port = Number(process.env.PORT ?? 3000);
 const staticRoot = resolve(fileURLToPath(new URL('../dist', import.meta.url)));
@@ -17,6 +22,13 @@ const server = createServer(async (request, response) => {
       const targetUrl = requestUrl.searchParams.get('url');
       if (!targetUrl) throw new PreviewError('The url query parameter is required', 400, 'missing_url');
       sendJson(response, 200, await fetchOpenGraph(targetUrl));
+      return;
+    }
+
+    if (request.method === 'GET' && requestUrl.pathname === '/api/bff/liquipedia-match') {
+      const targetUrl = requestUrl.searchParams.get('url');
+      if (!targetUrl) throw new PreviewError('The url query parameter is required', 400, 'missing_url');
+      sendJson(response, 200, await fetchLiquipediaMatch(targetUrl));
       return;
     }
 

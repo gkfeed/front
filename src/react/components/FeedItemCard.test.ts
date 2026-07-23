@@ -3,7 +3,12 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FeedItem } from '../types';
-import { getFeedItemPreview, isTikTokFeedItem, isVkFeedItem } from './feedItemPreview';
+import {
+  getFeedItemPreview,
+  isLiquipediaFeedItem,
+  isTikTokFeedItem,
+  isVkFeedItem,
+} from './feedItemPreview';
 
 function item(overrides: Partial<FeedItem>): FeedItem {
   return {
@@ -73,5 +78,19 @@ describe('isVkFeedItem', () => {
     expect(isVkFeedItem(item({ link: 'https://vk.com/wall-1_2' }))).toBe(true);
     expect(isVkFeedItem(item({ link: 'https://m.vk.com/wall-1_2' }))).toBe(true);
     expect(isVkFeedItem(item({ link: 'https://vk.com.example.org/wall-1_2' }))).toBe(false);
+  });
+});
+
+describe('isLiquipediaFeedItem', () => {
+  it('only recognizes Liquipedia match pages', () => {
+    expect(isLiquipediaFeedItem(item({
+      link: 'https://liquipedia.net/dota2/Match%3AID_example',
+    }))).toBe(true);
+    expect(isLiquipediaFeedItem(item({
+      link: 'https://liquipedia.net/dota2/The_International/2026',
+    }))).toBe(false);
+    expect(isLiquipediaFeedItem(item({
+      link: 'https://liquipedia.net.example.org/dota2/Match:ID_example',
+    }))).toBe(false);
   });
 });

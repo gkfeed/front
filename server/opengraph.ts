@@ -22,6 +22,21 @@ export interface PreviewImage {
   contentType: string;
 }
 
+export interface LiquipediaMatchTeam {
+  name: string;
+  shortName: string;
+  logo: string | null;
+  results: Array<'win' | 'loss' | 'default'>;
+}
+
+export interface LiquipediaMatchPreview {
+  date: string;
+  status: string;
+  score: [string, string];
+  teams: [LiquipediaMatchTeam, LiquipediaMatchTeam];
+  tournament: string;
+}
+
 export class PreviewError extends Error {
   constructor(
     message: string,
@@ -36,6 +51,22 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
   const url = parsePublicHttpUrl(input);
   const page = await fetchHtml(url);
   return parseOpenGraph(page.html, page.url);
+}
+
+export async function fetchLiquipediaMatch(input: string): Promise<LiquipediaMatchPreview> {
+  const url = parsePublicHttpUrl(input);
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+  const pathname = safeDecodeURIComponent(url.pathname);
+  if (hostname !== 'liquipedia.net' || !/\/Match:/i.test(pathname)) {
+    throw new PreviewError('Only Liquipedia match pages can be previewed', 400, 'invalid_liquipedia_match');
+  }
+
+  const page = await fetchHtml(url);
+  const match = parseLiquipediaMatch(page.html, page.url);
+  if (!match) {
+    throw new PreviewError('The Liquipedia page has no supported match summary', 422, 'match_not_found');
+  }
+  return match;
 }
 
 export async function fetchRedditPreviewImage(input: string): Promise<PreviewImage> {
@@ -174,6 +205,55 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
   };
 }
 
+export function parseLiquipediaMatch(
+  html: string,
+  pageUrl: URL,
+): LiquipediaMatchPreview | null {
+  const headerStart = html.indexOf('<div class="match-bm">');
+  if (headerStart < 0) return null;
+
+  const headerEnd = html.indexOf('<div class="toggle-area', headerStart);
+  const header = html.slice(headerStart, headerEnd < 0 ? undefined : headerEnd);
+  const dateMarkup = header.match(/match-bm-match-header-date"[^>]*>([\s\S]*?)<div class="match-bm-match-header-overview"/i)?.[1];
+  const resultMatch = header.match(/match-bm-match-header-result"[^>]*>\s*([^<]+)<div class="match-bm-match-header-result-text"[^>]*>([\s\S]*?)<\/div>/i);
+  const tournamentMarkup = header.match(/match-bm-match-header-tournament"[^>]*>([\s\S]*?)<\/div>/i)?.[1];
+  const teamNamePattern = /match-bm-match-header-team-long"[^>]*>\s*<a\b[^>]*>([\s\S]*?)<\/a>/gi;
+  const teamNameMatches = [...header.matchAll(teamNamePattern)].slice(0, 2);
+
+  if (!dateMarkup || !resultMatch || !tournamentMarkup || teamNameMatches.length !== 2) return null;
+
+  const teams = teamNameMatches.map((match, index) => {
+    const matchIndex = match.index ?? 0;
+    const nextIndex = teamNameMatches[index + 1]?.index ?? header.length;
+    const opponentStart = header.lastIndexOf('match-bm-match-header-opponent ', matchIndex);
+    const segment = header.slice(Math.max(opponentStart, 0), nextIndex);
+    const name = htmlText(match[1] ?? '');
+    const shortNameMarkup = segment.match(/match-bm-match-header-team-short"[^>]*>\s*<a\b[^>]*>([\s\S]*?)<\/a>/i)?.[1];
+    const imageSources = [...segment.matchAll(/<img\b[^>]*\bsrc=(?:"([^"]+)"|'([^']+)')[^>]*>/gi)]
+      .map((image) => image[1] ?? image[2] ?? '');
+    const preferredImage = imageSources.find((source) => /darkmode/i.test(source)) ?? imageSources[0];
+    const results = [...segment.matchAll(/data-label-type=(?:"result-(win|loss|default)"|'result-(win|loss|default)')/gi)]
+      .map((label) => (label[1] ?? label[2])!.toLowerCase() as 'win' | 'loss' | 'default');
+
+    return {
+      name,
+      shortName: htmlText(shortNameMarkup ?? name),
+      logo: preferredImage ? resolveHttpUrl(decodeHtml(preferredImage), pageUrl) : null,
+      results,
+    };
+  });
+  const score = htmlText(resultMatch[1] ?? '').split(':').map((part) => part.trim());
+  if (score.length !== 2 || teams.some((team) => !team.name)) return null;
+
+  return {
+    date: htmlText(dateMarkup),
+    status: htmlText(resultMatch[2] ?? ''),
+    score: [score[0]!, score[1]!],
+    teams: [teams[0]!, teams[1]!],
+    tournament: htmlText(tournamentMarkup),
+  };
+}
+
 function firstMetadata(metadata: Map<string, string>, keys: string[]): string | null {
   for (const key of keys) {
     const value = metadata.get(key);
@@ -207,6 +287,10 @@ function stripTags(value: string): string {
   return value.replace(/<[^>]*>/g, '');
 }
 
+function htmlText(value: string): string {
+  return decodeHtml(stripTags(value)).replace(/\s+/g, ' ').trim();
+}
+
 function resolveHttpUrl(value: string | null | undefined, base: URL): string | null {
   if (!value) return null;
   try {
@@ -229,6 +313,14 @@ function parsePublicHttpUrl(value: string): URL {
     throw new PreviewError('Only public HTTP and HTTPS URLs are allowed', 400, 'invalid_url');
   }
   return url;
+}
+
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 async function assertPublicHost(url: URL): Promise<void> {

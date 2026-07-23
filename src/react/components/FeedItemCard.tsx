@@ -1,9 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 
+import {
+  getLiquipediaMatchPreview,
+  type LiquipediaMatchPreview,
+  type LiquipediaMatchTeam,
+} from '../services/liquipedia';
 import { getOpenGraphPreview } from '../services/openGraph';
 import type { FeedItem } from '../types';
 import {
   getFeedItemPreview,
+  isLiquipediaFeedItem,
   isTikTokFeedItem,
   isVkFeedItem,
   isYoutubeFeedItem,
@@ -17,6 +23,8 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const isYoutube = isYoutubeFeedItem(item);
   const isTikTok = isTikTokFeedItem(item);
   const isVk = isVkFeedItem(item);
+  const isLiquipedia = isLiquipediaFeedItem(item);
+  const [liquipediaMatch, setLiquipediaMatch] = useState<LiquipediaMatchPreview | null>(null);
   const remotePreview = getRemotePreview(openGraphPreview, item.title);
   const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
   const description = isVk
@@ -28,30 +36,48 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     ? tiktokEmbedPreview ?? localPreview
     : localPreview ?? remotePreview;
   const [previewFailures, setPreviewFailures] = useState(0);
-  const visiblePreview = previewFailures === 1 && preview?.type === 'video'
+  const visiblePreview = liquipediaMatch ? null : previewFailures === 1 && preview?.type === 'video'
     ? tiktokEmbedPreview ?? (preview.poster ? { src: preview.poster, alt: preview.alt } : null)
     : previewFailures > 0 ? null : preview;
+  const isRedditPreviewOnly = Boolean(
+    visiblePreview &&
+    visiblePreview.type === undefined &&
+    visiblePreview.src.startsWith('/api/bff/reddit-preview-image?'),
+  );
 
   useEffect(() => {
     setOpenGraphPreview(null);
+    setLiquipediaMatch(null);
     setPreviewFailures(0);
     if (isTikTok || (localPreviewSource && (!isVk || feedDescription))) return;
 
     const controller = new AbortController();
-    getOpenGraphPreview(item.link, controller.signal)
-      .then(setOpenGraphPreview)
-      .catch(() => undefined);
+    if (isLiquipedia) {
+      getLiquipediaMatchPreview(item.link, controller.signal)
+        .then(setLiquipediaMatch)
+        .catch(() => getOpenGraphPreview(item.link, controller.signal)
+          .then(setOpenGraphPreview)
+          .catch(() => undefined));
+    } else {
+      getOpenGraphPreview(item.link, controller.signal)
+        .then(setOpenGraphPreview)
+        .catch(() => undefined);
+    }
 
     return () => controller.abort();
-  }, [feedDescription, isTikTok, isVk, item.link, localPreviewSource]);
+  }, [feedDescription, isLiquipedia, isTikTok, isVk, item.link, localPreviewSource]);
 
   return (
     <article className={[
       'reader-card',
+      isLiquipedia ? 'reader-card--liquipedia' : '',
       isYoutube ? 'reader-card--youtube' : '',
       isTikTok ? 'reader-card--tiktok' : '',
+      isRedditPreviewOnly ? 'reader-card--reddit-preview' : '',
     ].filter(Boolean).join(' ')}>
-      {visiblePreview ? visiblePreview.type === 'video' ? (
+      {liquipediaMatch ? (
+        <LiquipediaMatch match={liquipediaMatch} />
+      ) : visiblePreview ? visiblePreview.type === 'video' ? (
         <div className={[
           'reader-card__preview',
           'reader-card__preview--video',
@@ -91,7 +117,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           />
         </a>
       ) : null}
-      {isYoutube ? (
+      {isRedditPreviewOnly ? null : isYoutube ? (
         <div className="reader-card__youtube-copy">
           <h2 className="reader-card__title">{item.text || item.title}</h2>
           <p className="reader-card__channel">{getYoutubeChannelName(item.title)}</p>
@@ -110,6 +136,63 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         </>
       )}
     </article>
+  );
+}
+
+function LiquipediaMatch({ match }: { match: LiquipediaMatchPreview }) {
+  const [firstTeam, secondTeam] = match.teams;
+  const [firstScore, secondScore] = match.score;
+
+  return (
+    <section
+      className="liquipedia-match"
+      aria-label={`${firstTeam.name} ${firstScore} to ${secondScore} ${secondTeam.name}`}
+    >
+      <time className="liquipedia-match__date">{match.date}</time>
+      <div className="liquipedia-match__overview">
+        <LiquipediaTeam team={firstTeam} />
+        <div className="liquipedia-match__result">
+          <strong>
+            <span>{firstScore}</span>
+            <span aria-hidden="true">:</span>
+            <span>{secondScore}</span>
+          </strong>
+          <span>{match.status}</span>
+        </div>
+        <LiquipediaTeam team={secondTeam} reverse />
+      </div>
+      <p className="liquipedia-match__tournament">{match.tournament}</p>
+    </section>
+  );
+}
+
+function LiquipediaTeam({ team, reverse = false }: { team: LiquipediaMatchTeam; reverse?: boolean }) {
+  return (
+    <div className={reverse ? 'liquipedia-team liquipedia-team--reverse' : 'liquipedia-team'}>
+      <div className="liquipedia-team__identity">
+        <strong title={team.name}>{team.name}</strong>
+        {team.logo ? (
+          <img src={team.logo} alt="" referrerPolicy="no-referrer" />
+        ) : (
+          <span className="liquipedia-team__monogram" aria-hidden="true">
+            {team.shortName.slice(0, 2)}
+          </span>
+        )}
+      </div>
+      {team.results.length > 0 ? (
+        <div className="liquipedia-team__form" aria-label={`${team.name} game results`}>
+          {team.results.map((result, index) => (
+            <span
+              key={`${result}-${index}`}
+              className={`liquipedia-team__form-result liquipedia-team__form-result--${result}`}
+              aria-label={result === 'default' ? 'No result' : result}
+            >
+              {result === 'win' ? 'W' : result === 'loss' ? 'L' : '–'}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

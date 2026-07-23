@@ -3,13 +3,16 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { getLiquipediaMatchPreview } from '../services/liquipedia';
 import { getOpenGraphPreview } from '../services/openGraph';
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
 
 vi.mock('../services/openGraph');
+vi.mock('../services/liquipedia');
 
 const getPreview = vi.mocked(getOpenGraphPreview);
+const getLiquipediaPreview = vi.mocked(getLiquipediaMatchPreview);
 const item: FeedItem = {
   id: 1,
   feedId: 2,
@@ -40,6 +43,31 @@ describe('FeedItemCard Open Graph preview', () => {
     const image = await screen.findByAltText('Preview for Story');
     expect(image.getAttribute('src')).toBe('https://example.com/cover.jpg');
     expect(getPreview).toHaveBeenCalledWith(item.link, expect.any(AbortSignal));
+  });
+
+  it('shows generated Reddit cards without duplicating their content', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.reddit.com/r/neovim/comments/abc123/post/',
+      title: 'Reddit post',
+      description: null,
+      image: '/api/bff/reddit-preview-image?url=encoded',
+      video: null,
+      siteName: 'Reddit',
+      type: 'website',
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.reddit.com/r/neovim/comments/abc123/post/',
+      title: 'Duplicated Reddit title',
+    }} />);
+
+    const image = await screen.findByAltText('Preview for Reddit post');
+    expect(image.closest('.reader-card--reddit-preview')).toBeTruthy();
+    expect(screen.queryByText('reddit.com')).toBeNull();
+    expect(screen.queryByText('Feed #2')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Duplicated Reddit title' })).toBeNull();
+    expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
   it('does not call the BFF when the feed content contains an image', () => {
@@ -150,5 +178,40 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(player.getAttribute('src')).toContain('/player/v1/456?');
     expect(player.getAttribute('src')).toContain('autoplay=1');
     expect(player.getAttribute('src')).toContain('muted=0');
+  });
+
+  it('renders a Liquipedia match summary instead of the generic hero image', async () => {
+    getLiquipediaPreview.mockResolvedValue({
+      date: 'June 21, 2026 - 10:00 CEST',
+      status: 'finished',
+      score: ['2', '0'],
+      teams: [
+        {
+          name: 'Team Spirit',
+          shortName: 'TSpirit',
+          logo: 'https://liquipedia.net/commons/spirit.png',
+          results: ['win', 'win', 'default'],
+        },
+        {
+          name: 'VP.Prodigy',
+          shortName: 'VP.P',
+          logo: 'https://liquipedia.net/commons/vpp.png',
+          results: ['loss', 'loss', 'default'],
+        },
+      ],
+      tournament: 'The International 2026: Europe Regional Qualifier',
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://liquipedia.net/dota2/Match%3AID_example',
+      title: 'Team Spirit vs VP.P',
+    }} />);
+
+    expect(await screen.findByLabelText('Team Spirit 2 to 0 VP.Prodigy')).toBeTruthy();
+    expect(screen.getByText('The International 2026: Europe Regional Qualifier')).toBeTruthy();
+    expect(screen.getAllByLabelText('win')).toHaveLength(2);
+    expect(screen.getAllByLabelText('loss')).toHaveLength(2);
+    expect(getPreview).not.toHaveBeenCalled();
   });
 });
