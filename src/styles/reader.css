@@ -142,7 +142,7 @@
 
 .reader-card.reader-card--tiktok {
   gap: 0;
-  width: min(100%, 560px);
+  width: min(100%, 640px);
   min-height: 0;
   justify-self: center;
   overflow: hidden;

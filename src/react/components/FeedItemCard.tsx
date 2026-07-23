@@ -11,13 +11,10 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const [openGraphPreview, setOpenGraphPreview] = useState<Awaited<ReturnType<typeof getOpenGraphPreview>> | null>(null);
   const isYoutube = isYoutubeFeedItem(item);
   const isTikTok = isTikTokFeedItem(item);
-  const remotePreview = getRemotePreview(openGraphPreview, item.title, isTikTok, localPreview);
+  const remotePreview = getRemotePreview(openGraphPreview, item.title);
   const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item) : null;
   const preview = isTikTok
-    ? (remotePreview?.type === 'video' ? remotePreview : null)
-      ?? tiktokEmbedPreview
-      ?? remotePreview
-      ?? localPreview
+    ? tiktokEmbedPreview ?? localPreview
     : localPreview ?? remotePreview;
   const [previewFailures, setPreviewFailures] = useState(0);
   const visiblePreview = previewFailures === 1 && preview?.type === 'video'
@@ -27,7 +24,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   useEffect(() => {
     setOpenGraphPreview(null);
     setPreviewFailures(0);
-    if (localPreviewSource && !isTikTok) return;
+    if (isTikTok || localPreviewSource) return;
 
     const controller = new AbortController();
     getOpenGraphPreview(item.link, controller.signal)
@@ -173,20 +170,16 @@ function getTikTokEmbedPreview(item: FeedItem): CardPreview | null {
 function getRemotePreview(
   preview: Awaited<ReturnType<typeof getOpenGraphPreview>> | null,
   title: string,
-  allowStreamVideo = false,
-  fallbackPreview?: CardPreview | null,
 ): CardPreview | null {
   if (!preview) return null;
   const altTitle = preview.title || title;
 
-  if (preview.video && (allowStreamVideo || isDirectVideo(preview.video))) {
+  if (preview.video && isDirectVideo(preview.video)) {
     return {
       src: preview.video,
       alt: altTitle ? `Video preview for ${altTitle}` : 'Feed item video preview',
       type: 'video',
-      ...(preview.image || fallbackPreview?.src
-        ? { poster: preview.image || fallbackPreview?.src }
-        : {}),
+      ...(preview.image ? { poster: preview.image } : {}),
     };
   }
 
