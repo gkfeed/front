@@ -10,6 +10,7 @@ export interface OpenGraphPreview {
   title: string | null;
   description: string | null;
   image: string | null;
+  video: string | null;
   siteName: string | null;
   type: string | null;
 }
@@ -35,7 +36,9 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
       response = await fetch(url, {
         headers: {
           accept: 'text/html,application/xhtml+xml',
-          'user-agent': 'GKFeed-Preview/1.0',
+          // This is the request profile gkbot uses for feed previews. A number
+          // of social sites only include their media metadata for crawler UAs.
+          'user-agent': 'Mozilla/5.0 (compatible; Twitterbot/1.0)',
         },
         redirect: 'manual',
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -76,21 +79,43 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
   for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
     const attributes = parseAttributes(tag);
     const key = (attributes.property ?? attributes.name)?.toLowerCase();
-    const value = attributes.content?.trim();
+    const value = (attributes.content ?? attributes.value)?.trim();
     if (key && value && !metadata.has(key)) metadata.set(key, decodeHtml(value));
   }
 
   const documentTitle = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
-  const image = metadata.get('og:image') ?? metadata.get('og:image:url');
+  const image = firstMetadata(metadata, [
+    'og:image',
+    'og:image:secure_url',
+    'og:image:url',
+    'twitter:image',
+    'twitter:image:src',
+  ]);
+  const video = firstMetadata(metadata, [
+    'og:video:secure_url',
+    'og:video',
+    'og:video:url',
+    'twitter:player:stream',
+  ]);
 
   return {
     url: pageUrl.href,
-    title: metadata.get('og:title') ?? (documentTitle ? decodeHtml(stripTags(documentTitle).trim()) : null),
-    description: metadata.get('og:description') ?? metadata.get('description') ?? null,
+    title: firstMetadata(metadata, ['og:title', 'twitter:title']) ??
+      (documentTitle ? decodeHtml(stripTags(documentTitle).trim()) : null),
+    description: firstMetadata(metadata, ['og:description', 'twitter:description', 'description']),
     image: resolveHttpUrl(image, pageUrl),
+    video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
     type: metadata.get('og:type') ?? null,
   };
+}
+
+function firstMetadata(metadata: Map<string, string>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = metadata.get(key);
+    if (value) return value;
+  }
+  return null;
 }
 
 function parseAttributes(tag: string): Record<string, string> {
@@ -118,7 +143,7 @@ function stripTags(value: string): string {
   return value.replace(/<[^>]*>/g, '');
 }
 
-function resolveHttpUrl(value: string | undefined, base: URL): string | null {
+function resolveHttpUrl(value: string | null | undefined, base: URL): string | null {
   if (!value) return null;
   try {
     const url = new URL(value, base);

@@ -11,6 +11,7 @@ describe('getOpenGraphPreview', () => {
       title: 'Story',
       description: null,
       image: 'https://example.com/cover.jpg',
+      video: null,
       siteName: 'Example',
       type: 'article',
     };

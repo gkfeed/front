@@ -5,6 +5,7 @@ export interface OpenGraphPreview {
   title: string | null;
   description: string | null;
   image: string | null;
+  video: string | null;
   siteName: string | null;
   type: string | null;
 }
@@ -23,11 +24,12 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   const title = getObjectProperty(value, 'title');
   const description = getObjectProperty(value, 'description');
   const image = getObjectProperty(value, 'image');
+  const video = getObjectProperty(value, 'video');
   const siteName = getObjectProperty(value, 'siteName');
   const type = getObjectProperty(value, 'type');
 
   return typeof url === 'string'
-    && [title, description, image, siteName, type].every(isNullableString);
+    && [title, description, image, video, siteName, type].every(isNullableString);
 }
 
 function isNullableString(value: unknown): value is string | null {

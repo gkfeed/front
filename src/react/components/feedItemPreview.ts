@@ -3,6 +3,8 @@ import type { FeedItem } from '../types';
 interface FeedItemPreview {
   src: string;
   alt: string;
+  type?: 'video';
+  poster?: string;
 }
 
 export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
@@ -13,13 +15,21 @@ export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
     return { src: url.href, alt: item.title ? `Preview for ${item.title}` : 'Feed item preview' };
   }
 
+  if (isDirectVideo(url)) {
+    return {
+      src: url.href,
+      alt: item.title ? `Video preview for ${item.title}` : 'Feed item video preview',
+      type: 'video',
+    };
+  }
+
   const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
 
   if (hostname === 'twitch.tv') {
     const channel = url.pathname.split('/').filter(Boolean)[0];
     if (channel) {
       return {
-        src: `https://static-cdn.jtvnw.net/previews-ttv/live_user_${encodeURIComponent(channel)}-1280x720.jpg`,
+        src: `https://static-cdn.jtvnw.net/previews-ttv/live_user_${encodeURIComponent(channel)}-1920x1080.jpg`,
         alt: `${channel} Twitch preview`,
       };
     }
@@ -44,13 +54,32 @@ export function isYoutubeFeedItem(item: FeedItem): boolean {
 function getEmbeddedImage(html: string, title: string): FeedItemPreview | null {
   if (!html || typeof DOMParser === 'undefined') return null;
 
-  const source = new DOMParser().parseFromString(html, 'text/html').querySelector('img')?.getAttribute('src');
+  const document = new DOMParser().parseFromString(html, 'text/html');
+  const video = document.querySelector('video');
+  const videoSource = video?.getAttribute('src') ??
+    video?.querySelector('source')?.getAttribute('src');
+  if (videoSource && isSafeMediaSource(videoSource)) {
+    const poster = video?.getAttribute('poster');
+    return {
+      src: videoSource,
+      alt: title ? `Video preview for ${title}` : 'Feed item video preview',
+      type: 'video',
+      ...(poster && isSafeImageSource(poster) ? { poster } : {}),
+    };
+  }
+
+  const source = document.querySelector('img')?.getAttribute('src');
   if (!source || !isSafeImageSource(source)) return null;
 
   return {
     src: source,
     alt: title ? `Preview for ${title}` : 'Feed item preview',
   };
+}
+
+function isSafeMediaSource(source: string): boolean {
+  const url = parseUrl(source);
+  return Boolean(url && ['http:', 'https:'].includes(url.protocol));
 }
 
 function isSafeImageSource(source: string): boolean {
@@ -61,6 +90,10 @@ function isSafeImageSource(source: string): boolean {
 
 function isDirectImage(url: URL): boolean {
   return /\.(?:avif|gif|jpe?g|png|webp)$/i.test(url.pathname);
+}
+
+function isDirectVideo(url: URL): boolean {
+  return /\.(?:m4v|mov|mp4|webm)$/i.test(url.pathname);
 }
 
 function getYoutubeVideoId(url: URL): string | null {

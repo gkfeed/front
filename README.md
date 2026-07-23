@@ -29,9 +29,11 @@ The BFF currently exposes one route:
 GET /api/bff/open-graph?url=https%3A%2F%2Fexample.com%2Farticle
 ```
 
-It returns the final page URL plus its title, description, image, site name, and
-Open Graph type. Only public HTTP(S) pages are fetched; private/local addresses,
-non-HTML responses, large pages, and slow responses are rejected.
+It returns the final page URL plus its title, description, image, video, site
+name, and Open Graph type. The parser uses the same crawler request profile and
+Open Graph/Twitter metadata fallbacks as gkbot. Only public HTTP(S) pages are
+fetched; private/local addresses, non-HTML responses, large pages, and slow
+responses are rejected.
 
 Run `npm test` to execute the automated tests.
 

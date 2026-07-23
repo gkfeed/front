@@ -8,21 +8,19 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const hostname = getHostname(item.link);
   const localPreview = getFeedItemPreview(item);
   const localPreviewSource = localPreview?.src;
-  const [openGraphImage, setOpenGraphImage] = useState<string | null>(null);
-  const preview = localPreview ?? (openGraphImage
-    ? { src: openGraphImage, alt: item.title ? `Preview for ${item.title}` : 'Feed item preview' }
-    : null);
+  const [openGraphPreview, setOpenGraphPreview] = useState<Awaited<ReturnType<typeof getOpenGraphPreview>> | null>(null);
+  const preview = localPreview ?? getRemotePreview(openGraphPreview, item.title);
   const isYoutube = isYoutubeFeedItem(item);
   const [previewFailed, setPreviewFailed] = useState(false);
 
   useEffect(() => {
-    setOpenGraphImage(null);
+    setOpenGraphPreview(null);
     setPreviewFailed(false);
     if (localPreviewSource) return;
 
     const controller = new AbortController();
     getOpenGraphPreview(item.link, controller.signal)
-      .then((openGraph) => setOpenGraphImage(openGraph.image))
+      .then(setOpenGraphPreview)
       .catch(() => undefined);
 
     return () => controller.abort();
@@ -30,7 +28,19 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
 
   return (
     <article className={`reader-card${isYoutube ? ' reader-card--youtube' : ''}`}>
-      {preview && !previewFailed ? (
+      {preview && !previewFailed ? preview.type === 'video' ? (
+        <div className="reader-card__preview reader-card__preview--video">
+          <video
+            src={preview.src}
+            poster={preview.poster}
+            aria-label={preview.alt}
+            controls
+            playsInline
+            preload="metadata"
+            onError={() => setPreviewFailed(true)}
+          />
+        </div>
+      ) : (
         <a
           className="reader-card__preview"
           href={item.link}
@@ -65,6 +75,39 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       )}
     </article>
   );
+}
+
+type CardPreview = {
+  src: string;
+  alt: string;
+  type?: 'video';
+  poster?: string;
+};
+
+function getRemotePreview(
+  preview: Awaited<ReturnType<typeof getOpenGraphPreview>> | null,
+  title: string,
+): CardPreview | null {
+  if (!preview) return null;
+  const altTitle = preview.title || title;
+
+  if (preview.video && isDirectVideo(preview.video)) {
+    return {
+      src: preview.video,
+      alt: altTitle ? `Video preview for ${altTitle}` : 'Feed item video preview',
+      type: 'video',
+      ...(preview.image ? { poster: preview.image } : {}),
+    };
+  }
+
+  return preview.image ? {
+    src: preview.image,
+    alt: altTitle ? `Preview for ${altTitle}` : 'Feed item preview',
+  } : null;
+}
+
+function isDirectVideo(value: string): boolean {
+  return /\.(?:m4v|mov|mp4|webm)(?:$|[?#])/i.test(value);
 }
 
 function getYoutubeChannelName(title: string): string {

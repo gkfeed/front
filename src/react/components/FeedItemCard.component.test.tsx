@@ -30,6 +30,7 @@ describe('FeedItemCard Open Graph preview', () => {
       title: item.title,
       description: null,
       image: 'https://example.com/cover.jpg',
+      video: null,
       siteName: 'Example',
       type: 'article',
     });
@@ -47,5 +48,23 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.getByAltText('Preview for Story').getAttribute('src'))
       .toBe('https://example.com/feed-cover.jpg');
     expect(getPreview).not.toHaveBeenCalled();
+  });
+
+  it('renders direct Open Graph video with its image as a poster', async () => {
+    getPreview.mockResolvedValue({
+      url: item.link,
+      title: item.title,
+      description: null,
+      image: 'https://example.com/poster.jpg',
+      video: 'https://example.com/video.mp4',
+      siteName: 'Example',
+      type: 'video',
+    });
+
+    render(<FeedItemCard item={item} />);
+
+    const video = await screen.findByLabelText('Video preview for Story');
+    expect(video.getAttribute('src')).toBe('https://example.com/video.mp4');
+    expect(video.getAttribute('poster')).toBe('https://example.com/poster.jpg');
   });
 });

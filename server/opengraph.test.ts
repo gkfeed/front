@@ -18,6 +18,7 @@ describe('parseOpenGraph', () => {
       title: 'Example & Sons',
       description: 'A useful preview',
       image: 'https://example.com/cover.jpg',
+      video: null,
       siteName: 'Example',
       type: 'article',
     });
@@ -33,5 +34,21 @@ describe('parseOpenGraph', () => {
   it('rejects non-http image URLs', () => {
     const html = '<meta property="og:image" content="javascript:alert(1)">';
     expect(parseOpenGraph(html, new URL('https://example.com')).image).toBeNull();
+  });
+
+  it('uses the Twitter metadata fallbacks supported by gkbot', () => {
+    const html = `
+      <meta name="twitter:title" content="Social title">
+      <meta name="twitter:description" content="Social description">
+      <meta name="twitter:image" value="/social.jpg">
+      <meta name="twitter:player:stream" content="/clip.mp4">
+    `;
+
+    expect(parseOpenGraph(html, new URL('https://example.com/post'))).toMatchObject({
+      title: 'Social title',
+      description: 'Social description',
+      image: 'https://example.com/social.jpg',
+      video: 'https://example.com/clip.mp4',
+    });
   });
 });
