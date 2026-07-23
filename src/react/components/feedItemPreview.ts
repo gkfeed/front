@@ -128,7 +128,7 @@ function isDirectVideo(url: URL): boolean {
   return /\.(?:m4v|mov|mp4|webm)$/i.test(url.pathname);
 }
 
-function getYoutubeVideoId(url: URL): string | null {
+export function getYoutubeVideoId(url: URL): string | null {
   const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
   let videoId: string | null = null;
 

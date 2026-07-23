@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getLiquipediaMatchPreview } from '../services/liquipedia';
@@ -27,6 +27,34 @@ afterEach(() => {
 });
 
 describe('FeedItemCard Open Graph preview', () => {
+  it('creates a YouTube player when the card is clicked', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+      text: 'Example video',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Example video' }));
+
+    const player = screen.getByTitle('Example video');
+    expect(player.tagName).toBe('IFRAME');
+    expect(player.getAttribute('src'))
+      .toBe('https://www.youtube-nocookie.com/embed/abc123xyz?autoplay=1&rel=0');
+    expect(player.getAttribute('allow')).toContain('autoplay');
+    expect(screen.queryByAltText('Preview for Story')).toBeNull();
+  });
+
+  it('exposes the card action as a native button', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://youtu.be/abc123xyz',
+    }} />);
+
+    const trigger = screen.getByRole('button', { name: 'Play video Story' });
+    expect(trigger.tagName).toBe('BUTTON');
+    expect(trigger.getAttribute('type')).toBe('button');
+  });
+
   it('uses the BFF image when no local preview is available', async () => {
     getPreview.mockResolvedValue({
       url: item.link,

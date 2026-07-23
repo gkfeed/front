@@ -9,6 +9,7 @@ import { getOpenGraphPreview } from '../services/openGraph';
 import type { FeedItem } from '../types';
 import {
   getFeedItemPreview,
+  getYoutubeVideoId,
   isHltvFeedItem,
   isLiquipediaFeedItem,
   isTikTokFeedItem,
@@ -18,6 +19,8 @@ import {
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
   const hostname = getHostname(item.link);
+  const itemUrl = parseUrl(item.link);
+  const youtubeVideoId = itemUrl ? getYoutubeVideoId(itemUrl) : null;
   const localPreview = getFeedItemPreview(item);
   const localPreviewSource = localPreview?.src;
   const [openGraphPreview, setOpenGraphPreview] = useState<Awaited<ReturnType<typeof getOpenGraphPreview>> | null>(null);
@@ -38,6 +41,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     ? tiktokEmbedPreview ?? localPreview
     : localPreview ?? remotePreview;
   const [previewFailures, setPreviewFailures] = useState(0);
+  const [isYoutubePlayerOpen, setIsYoutubePlayerOpen] = useState(false);
   const visiblePreview = liquipediaMatch ? null : previewFailures === 1 && preview?.type === 'video'
     ? tiktokEmbedPreview ?? (preview.poster ? { src: preview.poster, alt: preview.alt } : null)
     : previewFailures > 0 ? null : preview;
@@ -54,6 +58,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     setOpenGraphPreview(null);
     setLiquipediaMatch(null);
     setPreviewFailures(0);
+    setIsYoutubePlayerOpen(false);
     if (isTikTok || (localPreviewSource && (!isVk || feedDescription))) return;
 
     const controller = new AbortController();
@@ -73,14 +78,26 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   }, [feedDescription, isLiquipedia, isTikTok, isVk, item.link, localPreviewSource]);
 
   return (
-    <article className={[
-      'reader-card',
-      isLiquipedia ? 'reader-card--liquipedia' : '',
-      isYoutube ? 'reader-card--youtube' : '',
-      isTikTok ? 'reader-card--tiktok' : '',
-      isImagePreviewOnly ? 'reader-card--image-preview' : '',
-    ].filter(Boolean).join(' ')}>
-      {liquipediaMatch ? (
+    <article
+      className={[
+        'reader-card',
+        isLiquipedia ? 'reader-card--liquipedia' : '',
+        isYoutube ? 'reader-card--youtube' : '',
+        isTikTok ? 'reader-card--tiktok' : '',
+        isImagePreviewOnly ? 'reader-card--image-preview' : '',
+      ].filter(Boolean).join(' ')}
+    >
+      {isYoutube && !isYoutubePlayerOpen ? (
+        <button
+          type="button"
+          className="reader-card__youtube-trigger"
+          aria-label={`Play video ${item.text || item.title}`}
+          onClick={() => setIsYoutubePlayerOpen(true)}
+        />
+      ) : null}
+      {isYoutubePlayerOpen && youtubeVideoId ? (
+        <YoutubePlayer videoId={youtubeVideoId} title={item.text || item.title} />
+      ) : liquipediaMatch ? (
         <LiquipediaMatch match={liquipediaMatch} />
       ) : visiblePreview ? visiblePreview.type === 'video' ? (
         <div className={[
@@ -104,7 +121,16 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       ) : visiblePreview.type === 'embed' ? (
         <TikTokEmbed src={visiblePreview.src} title={visiblePreview.alt} />
       ) : (
-        <a
+        isYoutube ? (
+          <div className="reader-card__preview">
+            <img
+              src={visiblePreview.src}
+              alt={visiblePreview.alt}
+              referrerPolicy="no-referrer"
+              onError={() => setPreviewFailures((failures) => failures + 1)}
+            />
+          </div>
+        ) : <a
           className={[
             'reader-card__preview',
             isTikTok ? 'reader-card__preview--tiktok' : '',
@@ -141,6 +167,22 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         </>
       )}
     </article>
+  );
+}
+
+function YoutubePlayer({ videoId, title }: { videoId: string; title: string }) {
+  const parameters = new URLSearchParams({ autoplay: '1', rel: '0' });
+
+  return (
+    <div className="reader-card__preview reader-card__preview--youtube-player">
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
+        title={title || 'YouTube video player'}
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
+    </div>
   );
 }
 
