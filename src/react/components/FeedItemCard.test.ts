@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FeedItem } from '../types';
-import { getFeedItemPreview } from './feedItemPreview';
+import { getFeedItemPreview, isTikTokFeedItem } from './feedItemPreview';
 
 function item(overrides: Partial<FeedItem>): FeedItem {
   return {
@@ -57,5 +57,13 @@ describe('getFeedItemPreview', () => {
   it('rejects unsafe embedded image sources', () => {
     expect(getFeedItemPreview(item({ text: '<img src="javascript:alert(1)">' }))).toBeNull();
     expect(getFeedItemPreview(item({ text: '<img src="data:text/html;base64,PHNjcmlwdD4=">' }))).toBeNull();
+  });
+});
+
+describe('isTikTokFeedItem', () => {
+  it('recognizes TikTok links without matching lookalike domains', () => {
+    expect(isTikTokFeedItem(item({ link: 'https://www.tiktok.com/@creator/video/123' }))).toBe(true);
+    expect(isTikTokFeedItem(item({ link: 'https://m.tiktok.com/v/123' }))).toBe(true);
+    expect(isTikTokFeedItem(item({ link: 'https://tiktok.com.example.org/video/123' }))).toBe(false);
   });
 });

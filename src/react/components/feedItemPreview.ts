@@ -51,6 +51,14 @@ export function isYoutubeFeedItem(item: FeedItem): boolean {
   return Boolean(url && getYoutubeVideoId(url));
 }
 
+export function isTikTokFeedItem(item: FeedItem): boolean {
+  const url = parseUrl(item.link);
+  if (!url) return false;
+
+  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+  return hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com');
+}
+
 function getEmbeddedImage(html: string, title: string): FeedItemPreview | null {
   if (!html || typeof DOMParser === 'undefined') return null;
 
