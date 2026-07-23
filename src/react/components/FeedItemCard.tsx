@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import { getOpenGraphPreview } from '../services/openGraph';
 import type { FeedItem } from '../types';
-import { getFeedItemPreview, isTikTokFeedItem, isYoutubeFeedItem } from './feedItemPreview';
+import {
+  getFeedItemPreview,
+  isTikTokFeedItem,
+  isVkFeedItem,
+  isYoutubeFeedItem,
+} from './feedItemPreview';
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
   const hostname = getHostname(item.link);
@@ -11,7 +16,13 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const [openGraphPreview, setOpenGraphPreview] = useState<Awaited<ReturnType<typeof getOpenGraphPreview>> | null>(null);
   const isYoutube = isYoutubeFeedItem(item);
   const isTikTok = isTikTokFeedItem(item);
+  const isVk = isVkFeedItem(item);
   const remotePreview = getRemotePreview(openGraphPreview, item.title);
+  const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
+  const description = isVk
+    ? feedDescription ??
+      getFeedItemDescription(openGraphPreview?.description ?? '', item.title)
+    : null;
   const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item) : null;
   const preview = isTikTok
     ? tiktokEmbedPreview ?? localPreview
@@ -24,7 +35,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   useEffect(() => {
     setOpenGraphPreview(null);
     setPreviewFailures(0);
-    if (isTikTok || localPreviewSource) return;
+    if (isTikTok || (localPreviewSource && (!isVk || feedDescription))) return;
 
     const controller = new AbortController();
     getOpenGraphPreview(item.link, controller.signal)
@@ -32,7 +43,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       .catch(() => undefined);
 
     return () => controller.abort();
-  }, [isTikTok, item.link, localPreviewSource]);
+  }, [feedDescription, isTikTok, isVk, item.link, localPreviewSource]);
 
   return (
     <article className={[
@@ -92,6 +103,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
             <span>Feed #{item.feedId}</span>
           </div>
           <h2 className="reader-card__title">{item.title || hostname}</h2>
+          {description ? <p className="reader-card__description">{description}</p> : null}
           <a className="reader-card__link" href={item.link} target="_blank" rel="noreferrer">
             Read original <span aria-hidden="true">↗</span>
           </a>
@@ -99,6 +111,16 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       )}
     </article>
   );
+}
+
+function getFeedItemDescription(content: string, title: string): string | null {
+  if (!content) return null;
+
+  const document = new DOMParser().parseFromString(content, 'text/html');
+  document.querySelectorAll('script, style, noscript').forEach((element) => element.remove());
+  const description = document.body.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  if (!description || description.toLocaleLowerCase() === title.trim().toLocaleLowerCase()) return null;
+  return description;
 }
 
 type CardPreview = {

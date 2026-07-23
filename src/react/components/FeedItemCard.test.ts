@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FeedItem } from '../types';
-import { getFeedItemPreview, isTikTokFeedItem } from './feedItemPreview';
+import { getFeedItemPreview, isTikTokFeedItem, isVkFeedItem } from './feedItemPreview';
 
 function item(overrides: Partial<FeedItem>): FeedItem {
   return {
@@ -65,5 +65,13 @@ describe('isTikTokFeedItem', () => {
     expect(isTikTokFeedItem(item({ link: 'https://www.tiktok.com/@creator/video/123' }))).toBe(true);
     expect(isTikTokFeedItem(item({ link: 'https://m.tiktok.com/v/123' }))).toBe(true);
     expect(isTikTokFeedItem(item({ link: 'https://tiktok.com.example.org/video/123' }))).toBe(false);
+  });
+});
+
+describe('isVkFeedItem', () => {
+  it('recognizes VK links without matching lookalike domains', () => {
+    expect(isVkFeedItem(item({ link: 'https://vk.com/wall-1_2' }))).toBe(true);
+    expect(isVkFeedItem(item({ link: 'https://m.vk.com/wall-1_2' }))).toBe(true);
+    expect(isVkFeedItem(item({ link: 'https://vk.com.example.org/wall-1_2' }))).toBe(false);
   });
 });

@@ -59,6 +59,14 @@ export function isTikTokFeedItem(item: FeedItem): boolean {
   return hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com');
 }
 
+export function isVkFeedItem(item: FeedItem): boolean {
+  const url = parseUrl(item.link);
+  if (!url) return false;
+
+  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+  return hostname === 'vk.com' || hostname.endsWith('.vk.com');
+}
+
 function getEmbeddedImage(html: string, title: string): FeedItemPreview | null {
   if (!html || typeof DOMParser === 'undefined') return null;
 

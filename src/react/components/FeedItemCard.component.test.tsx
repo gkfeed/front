@@ -50,6 +50,39 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(getPreview).not.toHaveBeenCalled();
   });
 
+  it('shows readable feed text as the description for VK items', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/wall-123_456',
+      title: 'Рифмы и Панчи',
+      text: '<p>Новый пост сообщества</p><img src="https://example.com/vk-cover.jpg">',
+    }} />);
+
+    expect(screen.getByText('Новый пост сообщества')).toBeTruthy();
+  });
+
+  it('loads a VK description when local feed content only contains media', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.com/wall-123_456',
+      title: 'Рифмы и Панчи',
+      description: 'Описание публикации',
+      image: 'https://example.com/og-cover.jpg',
+      video: null,
+      siteName: 'VK',
+      type: 'article',
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/wall-123_456',
+      title: 'Рифмы и Панчи',
+      text: '<img src="https://example.com/feed-cover.jpg">',
+    }} />);
+
+    expect(await screen.findByText('Описание публикации')).toBeTruthy();
+    expect(getPreview).toHaveBeenCalled();
+  });
+
   it('renders direct Open Graph video with its image as a poster', async () => {
     getPreview.mockResolvedValue({
       url: item.link,
