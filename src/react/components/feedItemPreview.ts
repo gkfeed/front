@@ -67,6 +67,14 @@ export function isVkFeedItem(item: FeedItem): boolean {
   return hostname === 'vk.com' || hostname.endsWith('.vk.com');
 }
 
+export function isHltvFeedItem(item: FeedItem): boolean {
+  const url = parseUrl(item.link);
+  if (!url) return false;
+
+  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+  return hostname === 'hltv.org' && /^\/matches\/\d+(?:\/|$)/.test(url.pathname);
+}
+
 export function isLiquipediaFeedItem(item: FeedItem): boolean {
   const url = parseUrl(item.link);
   if (!url) return false;

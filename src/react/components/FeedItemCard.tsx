@@ -9,6 +9,7 @@ import { getOpenGraphPreview } from '../services/openGraph';
 import type { FeedItem } from '../types';
 import {
   getFeedItemPreview,
+  isHltvFeedItem,
   isLiquipediaFeedItem,
   isTikTokFeedItem,
   isVkFeedItem,
@@ -23,6 +24,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const isYoutube = isYoutubeFeedItem(item);
   const isTikTok = isTikTokFeedItem(item);
   const isVk = isVkFeedItem(item);
+  const isHltv = isHltvFeedItem(item);
   const isLiquipedia = isLiquipediaFeedItem(item);
   const [liquipediaMatch, setLiquipediaMatch] = useState<LiquipediaMatchPreview | null>(null);
   const remotePreview = getRemotePreview(openGraphPreview, item.title);
@@ -39,10 +41,13 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const visiblePreview = liquipediaMatch ? null : previewFailures === 1 && preview?.type === 'video'
     ? tiktokEmbedPreview ?? (preview.poster ? { src: preview.poster, alt: preview.alt } : null)
     : previewFailures > 0 ? null : preview;
-  const isRedditPreviewOnly = Boolean(
+  const isImagePreviewOnly = Boolean(
     visiblePreview &&
     visiblePreview.type === undefined &&
-    visiblePreview.src.startsWith('/api/bff/reddit-preview-image?'),
+    (
+      visiblePreview.src.startsWith('/api/bff/reddit-preview-image?') ||
+      (isHltv && visiblePreview.src === remotePreview?.src)
+    ),
   );
 
   useEffect(() => {
@@ -73,7 +78,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       isLiquipedia ? 'reader-card--liquipedia' : '',
       isYoutube ? 'reader-card--youtube' : '',
       isTikTok ? 'reader-card--tiktok' : '',
-      isRedditPreviewOnly ? 'reader-card--reddit-preview' : '',
+      isImagePreviewOnly ? 'reader-card--image-preview' : '',
     ].filter(Boolean).join(' ')}>
       {liquipediaMatch ? (
         <LiquipediaMatch match={liquipediaMatch} />
@@ -117,7 +122,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           />
         </a>
       ) : null}
-      {isRedditPreviewOnly ? null : isYoutube ? (
+      {isImagePreviewOnly ? null : isYoutube ? (
         <div className="reader-card__youtube-copy">
           <h2 className="reader-card__title">{item.text || item.title}</h2>
           <p className="reader-card__channel">{getYoutubeChannelName(item.title)}</p>

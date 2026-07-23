@@ -38,6 +38,9 @@ responses are rejected.
 Generated Reddit cards from `share.redd.it` are loaded through
 `/api/bff/reddit-preview-image`, which applies the same crawler request headers
 as gkbot. That image proxy only accepts Reddit's generated preview URLs.
+HLTV match cards use the site's generated Open Graph image as an image-only
+preview. Like gkbot, the BFF uses `aria2c` with the crawler request headers for
+HLTV pages. URL2PNG image URLs are upgraded to HTTPS before being rendered.
 
 Run `npm test` to execute the automated tests.
 

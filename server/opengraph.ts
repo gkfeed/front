@@ -1,11 +1,18 @@
+import { execFile } from 'node:child_process';
 import { isIP } from 'node:net';
 import { lookup } from 'node:dns/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 
 const MAX_RESPONSE_BYTES = 1_000_000;
+const MAX_HLTV_RESPONSE_BYTES = 2_000_000;
 const MAX_IMAGE_RESPONSE_BYTES = 10_000_000;
 const MAX_REDIRECTS = 5;
 const REQUEST_TIMEOUT_MS = 8_000;
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
+const execFileAsync = promisify(execFile);
 
 export interface OpenGraphPreview {
   url: string;
@@ -49,7 +56,9 @@ export class PreviewError extends Error {
 
 export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
   const url = parsePublicHttpUrl(input);
-  const page = await fetchHtml(url);
+  const page = isHltvMatchUrl(url)
+    ? await fetchHltvHtml(url)
+    : await fetchHtml(url);
   return parseOpenGraph(page.html, page.url);
 }
 
@@ -167,6 +176,43 @@ async function fetchHtml(input: URL): Promise<{ html: string; url: URL }> {
   }
 
   throw new PreviewError('The remote page redirected too many times', 502, 'too_many_redirects');
+}
+
+async function fetchHltvHtml(url: URL): Promise<{ html: string; url: URL }> {
+  await assertPublicHost(url);
+  const directory = await mkdtemp(join(tmpdir(), 'gkfeed-hltv-'));
+  const output = join(directory, 'response');
+  try {
+    await execFileAsync('aria2c', [
+      '--quiet=true',
+      '--allow-overwrite=true',
+      '--auto-file-renaming=false',
+      '--max-tries=1',
+      '--connect-timeout=8',
+      '--timeout=8',
+      '--header',
+      `User-Agent: ${TWITTERBOT_USER_AGENT}`,
+      '--dir',
+      directory,
+      '--out',
+      'response',
+      url.href,
+    ], { timeout: REQUEST_TIMEOUT_MS });
+
+    const body = await readFile(output);
+    if (body.byteLength > MAX_HLTV_RESPONSE_BYTES) throw responseTooLarge();
+    return { html: body.toString('utf8'), url };
+  } catch (error) {
+    if (error instanceof PreviewError) throw error;
+    throw new PreviewError('The HLTV page could not be fetched', 502, 'fetch_failed');
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
+
+function isHltvMatchUrl(url: URL): boolean {
+  return url.hostname.toLowerCase().replace(/^www\./, '') === 'hltv.org' &&
+    /^\/matches\/\d+(?:\/|$)/.test(url.pathname);
 }
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {

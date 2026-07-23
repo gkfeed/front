@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { FeedItem } from '../types';
 import {
   getFeedItemPreview,
+  isHltvFeedItem,
   isLiquipediaFeedItem,
   isTikTokFeedItem,
   isVkFeedItem,
@@ -78,6 +79,18 @@ describe('isVkFeedItem', () => {
     expect(isVkFeedItem(item({ link: 'https://vk.com/wall-1_2' }))).toBe(true);
     expect(isVkFeedItem(item({ link: 'https://m.vk.com/wall-1_2' }))).toBe(true);
     expect(isVkFeedItem(item({ link: 'https://vk.com.example.org/wall-1_2' }))).toBe(false);
+  });
+});
+
+describe('isHltvFeedItem', () => {
+  it('recognizes HLTV match pages only', () => {
+    expect(isHltvFeedItem(item({
+      link: 'https://www.hltv.org/matches/2396006/og-vs-spirit-event',
+    }))).toBe(true);
+    expect(isHltvFeedItem(item({ link: 'https://www.hltv.org/team/7020/spirit' }))).toBe(false);
+    expect(isHltvFeedItem(item({
+      link: 'https://example.com/matches/2396006/og-vs-spirit-event',
+    }))).toBe(false);
   });
 });
 

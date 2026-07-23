@@ -45,4 +45,21 @@ describe('getOpenGraphPreview', () => {
       image: '/api/bff/reddit-preview-image?url=https%3A%2F%2Fshare.redd.it%2Fpreview%2Fpost%2Fabc123',
     });
   });
+
+  it('upgrades HLTV URL2PNG images to HTTPS', async () => {
+    const preview = {
+      url: 'https://www.hltv.org/matches/2396006/og-vs-spirit-event',
+      title: 'OG vs Spirit',
+      description: null,
+      image: 'http://api.url2png.com/v6/account/signature/png/?url=match',
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+    };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
+
+    await expect(getOpenGraphPreview(preview.url)).resolves.toMatchObject({
+      image: 'https://api.url2png.com/v6/account/signature/png/?url=match',
+    });
+  });
 });

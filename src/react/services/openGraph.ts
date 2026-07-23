@@ -28,6 +28,10 @@ function getBrowserImageUrl(imageUrl: string): string {
     if (url.hostname.toLowerCase() === 'share.redd.it' && url.pathname.startsWith('/preview/post/')) {
       return `/api/bff/reddit-preview-image?url=${encodeURIComponent(url.href)}`;
     }
+    if (url.protocol === 'http:' && url.hostname.toLowerCase() === 'api.url2png.com') {
+      url.protocol = 'https:';
+      return url.href;
+    }
   } catch {
     return imageUrl;
   }

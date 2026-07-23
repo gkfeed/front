@@ -63,10 +63,37 @@ describe('FeedItemCard Open Graph preview', () => {
     }} />);
 
     const image = await screen.findByAltText('Preview for Reddit post');
-    expect(image.closest('.reader-card--reddit-preview')).toBeTruthy();
+    expect(image.closest('.reader-card--image-preview')).toBeTruthy();
     expect(screen.queryByText('reddit.com')).toBeNull();
     expect(screen.queryByText('Feed #2')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Duplicated Reddit title' })).toBeNull();
+    expect(screen.queryByText(/read original/i)).toBeNull();
+  });
+
+  it('shows an HLTV Open Graph match image without duplicating its content', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/og-vs-spirit-blast-bounty-2026-season-2',
+      title: 'OG vs Spirit at BLAST Bounty 2026 Season 2',
+      description: 'Complete overview of the OG vs. Spirit matchup',
+      image: 'https://api.url2png.com/v6/account/signature/png/?url=match',
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/og-vs-spirit-blast-bounty-2026-season-2',
+      title: 'OG vs Spirit',
+      text: 'Upcoming match: OG vs Spirit',
+    }} />);
+
+    const image = await screen.findByAltText('Preview for OG vs Spirit at BLAST Bounty 2026 Season 2');
+    expect(image.getAttribute('src')).toBe('https://api.url2png.com/v6/account/signature/png/?url=match');
+    expect(image.closest('.reader-card--image-preview')).toBeTruthy();
+    expect(screen.queryByText('hltv.org')).toBeNull();
+    expect(screen.queryByText('Feed #2')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'OG vs Spirit' })).toBeNull();
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
