@@ -71,6 +71,7 @@
 .reader__item {
   display: grid;
   gap: 14px;
+  container-type: inline-size;
 }
 
 .reader__stream {
@@ -147,6 +148,16 @@
   justify-self: center;
   overflow: hidden;
   padding: 0;
+}
+
+.reader__item .reader-card--tiktok {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.reader__item .reader-card__preview--tiktok {
+  width: auto;
+  height: min(calc(100dvh - 340px), 177.778cqw);
 }
 
 .reader-card--tiktok .reader-card__preview {
@@ -352,5 +363,9 @@
 
   .reader__actions {
     grid-template-columns: 1fr;
+  }
+
+  .reader__item .reader-card__preview--tiktok {
+    height: min(calc(100dvh - 400px), 177.778cqw);
   }
 }
