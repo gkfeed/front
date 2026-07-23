@@ -16,7 +16,22 @@ export async function getOpenGraphPreview(url: string, signal?: AbortSignal): Pr
 
   const value: unknown = await response.json();
   if (!isOpenGraphPreview(value)) throw new Error('Invalid preview response');
-  return value;
+  return {
+    ...value,
+    image: value.image ? getBrowserImageUrl(value.image) : null,
+  };
+}
+
+function getBrowserImageUrl(imageUrl: string): string {
+  try {
+    const url = new URL(imageUrl);
+    if (url.hostname.toLowerCase() === 'share.redd.it' && url.pathname.startsWith('/preview/post/')) {
+      return `/api/bff/reddit-preview-image?url=${encodeURIComponent(url.href)}`;
+    }
+  } catch {
+    return imageUrl;
+  }
+  return imageUrl;
 }
 
 function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {

@@ -28,4 +28,21 @@ describe('getOpenGraphPreview', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ image: 42 })));
     await expect(getOpenGraphPreview('https://example.com')).rejects.toThrow('Invalid preview response');
   });
+
+  it('loads generated Reddit cards through the crawler-aware image proxy', async () => {
+    const preview = {
+      url: 'https://www.reddit.com/r/example/comments/abc123/post/',
+      title: 'Reddit post',
+      description: null,
+      image: 'https://share.redd.it/preview/post/abc123',
+      video: null,
+      siteName: 'Reddit',
+      type: 'article',
+    };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
+
+    await expect(getOpenGraphPreview(preview.url)).resolves.toMatchObject({
+      image: '/api/bff/reddit-preview-image?url=https%3A%2F%2Fshare.redd.it%2Fpreview%2Fpost%2Fabc123',
+    });
+  });
 });

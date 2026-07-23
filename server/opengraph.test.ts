@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseOpenGraph } from './opengraph.js';
+import { fetchRedditPreviewImage, parseOpenGraph } from './opengraph.js';
 
 describe('parseOpenGraph', () => {
   it('extracts Open Graph metadata regardless of attribute order', () => {
@@ -50,5 +50,12 @@ describe('parseOpenGraph', () => {
       image: 'https://example.com/social.jpg',
       video: 'https://example.com/clip.mp4',
     });
+  });
+});
+
+describe('fetchRedditPreviewImage', () => {
+  it('only accepts generated Reddit preview image URLs', async () => {
+    await expect(fetchRedditPreviewImage('https://example.com/preview/post/abc123'))
+      .rejects.toMatchObject({ status: 400, code: 'invalid_reddit_preview' });
   });
 });

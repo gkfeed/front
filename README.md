@@ -23,7 +23,7 @@ Set `PORT` to use a different port.
 
 ## Open Graph preview
 
-The BFF currently exposes one route:
+The BFF exposes the Open Graph metadata route:
 
 ```text
 GET /api/bff/open-graph?url=https%3A%2F%2Fexample.com%2Farticle
@@ -34,6 +34,10 @@ name, and Open Graph type. The parser uses the same crawler request profile and
 Open Graph/Twitter metadata fallbacks as gkbot. Only public HTTP(S) pages are
 fetched; private/local addresses, non-HTML responses, large pages, and slow
 responses are rejected.
+
+Generated Reddit cards from `share.redd.it` are loaded through
+`/api/bff/reddit-preview-image`, which applies the same crawler request headers
+as gkbot. That image proxy only accepts Reddit's generated preview URLs.
 
 Run `npm test` to execute the automated tests.
 

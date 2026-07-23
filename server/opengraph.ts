@@ -2,8 +2,10 @@ import { isIP } from 'node:net';
 import { lookup } from 'node:dns/promises';
 
 const MAX_RESPONSE_BYTES = 1_000_000;
+const MAX_IMAGE_RESPONSE_BYTES = 10_000_000;
 const MAX_REDIRECTS = 5;
 const REQUEST_TIMEOUT_MS = 8_000;
+const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
 
 export interface OpenGraphPreview {
   url: string;
@@ -13,6 +15,11 @@ export interface OpenGraphPreview {
   video: string | null;
   siteName: string | null;
   type: string | null;
+}
+
+export interface PreviewImage {
+  body: Uint8Array;
+  contentType: string;
 }
 
 export class PreviewError extends Error {
@@ -26,8 +33,65 @@ export class PreviewError extends Error {
 }
 
 export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
-  let url = parsePublicHttpUrl(input);
+  const url = parsePublicHttpUrl(input);
+  const page = await fetchHtml(url);
+  return parseOpenGraph(page.html, page.url);
+}
 
+export async function fetchRedditPreviewImage(input: string): Promise<PreviewImage> {
+  let url = parsePublicHttpUrl(input);
+  if (url.hostname.toLowerCase() !== 'share.redd.it' || !url.pathname.startsWith('/preview/post/')) {
+    throw new PreviewError('Only Reddit preview images can be proxied', 400, 'invalid_reddit_preview');
+  }
+
+  for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
+    await assertPublicHost(url);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: {
+          accept: 'image/avif,image/webp,image/jpeg,image/png,image/*',
+          'user-agent': TWITTERBOT_USER_AGENT,
+        },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch (error) {
+      const message = error instanceof Error && error.name === 'TimeoutError'
+        ? 'The Reddit preview image took too long to respond'
+        : 'The Reddit preview image could not be fetched';
+      throw new PreviewError(message, 502, 'image_fetch_failed');
+    }
+
+    if (isRedirect(response.status)) {
+      const location = response.headers.get('location');
+      if (!location) throw new PreviewError('Reddit returned an invalid image redirect', 502, 'invalid_redirect');
+      if (redirects === MAX_REDIRECTS) throw new PreviewError('Reddit redirected the image too many times', 502, 'too_many_redirects');
+      url = parsePublicHttpUrl(new URL(location, url).href);
+      continue;
+    }
+
+    if (!response.ok) {
+      throw new PreviewError(`Reddit returned HTTP ${response.status} for the preview image`, 502, 'image_upstream_error');
+    }
+
+    const contentType = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
+    if (!contentType.startsWith('image/')) {
+      throw new PreviewError('Reddit did not return an image', 502, 'invalid_image');
+    }
+
+    return {
+      body: await readLimitedBytes(response, MAX_IMAGE_RESPONSE_BYTES),
+      contentType,
+    };
+  }
+
+  throw new PreviewError('Reddit redirected the image too many times', 502, 'too_many_redirects');
+}
+
+async function fetchHtml(input: URL): Promise<{ html: string; url: URL }> {
+  let url = input;
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
     await assertPublicHost(url);
 
@@ -38,7 +102,7 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
           accept: 'text/html,application/xhtml+xml',
           // This is the request profile gkbot uses for feed previews. A number
           // of social sites only include their media metadata for crawler UAs.
-          'user-agent': 'Mozilla/5.0 (compatible; Twitterbot/1.0)',
+          'user-agent': TWITTERBOT_USER_AGENT,
         },
         redirect: 'manual',
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -68,7 +132,7 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
     }
 
     const html = await readLimitedBody(response);
-    return parseOpenGraph(html, url);
+    return { html, url };
   }
 
   throw new PreviewError('The remote page redirected too many times', 502, 'too_many_redirects');
@@ -227,6 +291,39 @@ async function readLimitedBody(response: Response): Promise<string> {
   return result + decoder.decode();
 }
 
+async function readLimitedBytes(response: Response, maximumBytes: number): Promise<Uint8Array> {
+  const declaredLength = Number(response.headers.get('content-length'));
+  if (declaredLength > maximumBytes) throw imageTooLarge();
+  if (!response.body) return new Uint8Array();
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maximumBytes) {
+      await reader.cancel();
+      throw imageTooLarge();
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
 function responseTooLarge(): PreviewError {
   return new PreviewError('The remote page is too large to preview', 422, 'response_too_large');
+}
+
+function imageTooLarge(): PreviewError {
+  return new PreviewError('The Reddit preview image is too large', 422, 'image_too_large');
 }
