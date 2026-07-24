@@ -44,6 +44,29 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.queryByAltText('Preview for Story')).toBeNull();
   });
 
+  it('toggles theater mode without reloading the YouTube player', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+      text: 'Example video',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Example video' }));
+    const player = screen.getByTitle('Example video');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enter theater mode' }));
+
+    expect(screen.getByTitle('Example video')).toBe(player);
+    expect(screen.getByRole('button', { name: 'Exit theater mode' }).getAttribute('aria-pressed')).toBe('true');
+    expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    expect(screen.getByTitle('Example video')).toBe(player);
+    expect(screen.getByRole('button', { name: 'Enter theater mode' })).toBeTruthy();
+    expect(document.documentElement.classList.contains('reader-theater-open')).toBe(false);
+  });
+
   it('exposes the card action as a native button', () => {
     render(<FeedItemCard item={{
       ...item,
