@@ -37,10 +37,10 @@ export function ReaderPage() {
         return;
       }
 
-      if (event.key === 'ArrowLeft') {
+      if (event.key === 'a') {
         event.preventDefault();
         keepItem();
-      } else if (event.key === 'ArrowRight') {
+      } else if (event.key === 'd') {
         event.preventDefault();
         void deleteItem();
       }
