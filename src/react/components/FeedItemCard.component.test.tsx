@@ -27,6 +27,21 @@ afterEach(() => {
 });
 
 describe('FeedItemCard Open Graph preview', () => {
+  it('uses a max-resolution YouTube thumbnail with a reliable fallback', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    const image = screen.getByAltText('Preview for Story');
+    expect(image.getAttribute('src')).toBe('https://i.ytimg.com/vi/abc123xyz/maxresdefault.jpg');
+
+    fireEvent.error(image);
+
+    expect(screen.getByAltText('Preview for Story').getAttribute('src'))
+      .toBe('https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg');
+  });
+
   it('creates a YouTube player when the card is clicked', () => {
     render(<FeedItemCard item={{
       ...item,

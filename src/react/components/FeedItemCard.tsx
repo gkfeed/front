@@ -43,8 +43,16 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const [previewFailures, setPreviewFailures] = useState(0);
   const [isYoutubePlayerOpen, setIsYoutubePlayerOpen] = useState(false);
   const [isYoutubeTheaterOpen, setIsYoutubeTheaterOpen] = useState(false);
+  const fallbackSource = preview && 'fallbackSrc' in preview && typeof preview.fallbackSrc === 'string'
+    ? preview.fallbackSrc
+    : null;
+  const fallbackPreview: CardPreview | null = preview && fallbackSource
+    ? { src: fallbackSource, alt: preview.alt }
+    : null;
   const visiblePreview = liquipediaMatch ? null : previewFailures === 1 && preview?.type === 'video'
     ? tiktokEmbedPreview ?? (preview.poster ? { src: preview.poster, alt: preview.alt } : null)
+    : previewFailures === 1 && fallbackPreview
+      ? fallbackPreview
     : previewFailures > 0 ? null : preview;
   const isImagePreviewOnly = Boolean(
     visiblePreview &&

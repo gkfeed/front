@@ -4,10 +4,13 @@ React + Vite frontend for managing GKFEED feed sources.
 
 ## Development server
 
-Run `npm run dev` and open `http://localhost:4200/`. The application reloads when source files change.
+Run `make dev` and open `http://localhost:4200/`. This starts both the Vite
+frontend and the TypeScript BFF, and both reload when their source files change.
+The BFF listens on `http://localhost:3100` by default.
 
-Run `npm run dev:bff` in a second terminal to start the TypeScript BFF on
-`http://localhost:3000`. Vite proxies BFF requests to it during development.
+Use `make dev BFF_PORT=<port>` to select a different BFF port. You can also run
+`npm run dev` and `npm run dev:bff` separately; the standalone BFF defaults to
+`http://localhost:3000`.
 
 The dev server listens on `0.0.0.0`, so it is also reachable from your local network at `http://<your-lan-ip>:4200/`. In development, API requests use `/api/v1` and are proxied by Vite to `https://feed.gws.freemyip.com` so browsers do not block them with CORS.
 

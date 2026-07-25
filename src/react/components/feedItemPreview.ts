@@ -5,6 +5,7 @@ interface FeedItemPreview {
   alt: string;
   type?: 'video';
   poster?: string;
+  fallbackSrc?: string;
 }
 
 export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
@@ -38,7 +39,8 @@ export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
   const youtubeId = getYoutubeVideoId(url);
   if (youtubeId) {
     return {
-      src: `https://i.ytimg.com/vi/${encodeURIComponent(youtubeId)}/hqdefault.jpg`,
+      src: `https://i.ytimg.com/vi/${encodeURIComponent(youtubeId)}/maxresdefault.jpg`,
+      fallbackSrc: `https://i.ytimg.com/vi/${encodeURIComponent(youtubeId)}/hqdefault.jpg`,
       alt: item.title ? `Preview for ${item.title}` : 'YouTube video preview',
     };
   }
