@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getLiquipediaMatchPreview } from '../services/liquipedia';
 import { getOpenGraphPreview } from '../services/openGraph';
+import { clearPreviewCache } from '../services/previewQueue';
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
 
@@ -23,7 +24,9 @@ const item: FeedItem = {
 
 afterEach(() => {
   cleanup();
+  clearPreviewCache();
   vi.resetAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('FeedItemCard Open Graph preview', () => {
@@ -109,6 +112,38 @@ describe('FeedItemCard Open Graph preview', () => {
     const image = await screen.findByAltText('Preview for Story');
     expect(image.getAttribute('src')).toBe('https://example.com/cover.jpg');
     expect(getPreview).toHaveBeenCalledWith(item.link, expect.any(AbortSignal));
+  });
+
+  it('defers remote previews until the card approaches the viewport', async () => {
+    let reveal: () => void = () => undefined;
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(callback: IntersectionObserverCallback) {
+        reveal = () => callback(
+          [{ isIntersecting: true } as IntersectionObserverEntry],
+          {} as IntersectionObserver,
+        );
+      }
+
+      observe() {}
+      disconnect() {}
+    });
+    getPreview.mockResolvedValue({
+      url: item.link,
+      title: item.title,
+      description: null,
+      image: 'https://example.com/lazy.jpg',
+      video: null,
+      siteName: 'Example',
+      type: 'article',
+    });
+
+    render(<FeedItemCard item={item} />);
+    expect(getPreview).not.toHaveBeenCalled();
+
+    act(reveal);
+
+    expect(await screen.findByAltText('Preview for Story')).toBeTruthy();
+    expect(getPreview).toHaveBeenCalledTimes(1);
   });
 
   it('shows generated Reddit cards without duplicating their content', async () => {

@@ -1,21 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import {
-  getLiquipediaMatchPreview,
-  type LiquipediaMatchPreview,
-  type LiquipediaMatchTeam,
-} from '../services/liquipedia';
-import { getOpenGraphPreview } from '../services/openGraph';
+import type { OpenGraphPreview } from '../services/openGraph';
+import { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
 import type { FeedItem } from '../types';
 import {
   getFeedItemPreview,
+  getFeedItemProvider,
   getYoutubeVideoId,
-  isHltvFeedItem,
-  isLiquipediaFeedItem,
-  isTikTokFeedItem,
-  isVkFeedItem,
-  isYoutubeFeedItem,
+  type FeedItemPreview,
 } from './feedItemPreview';
+import { LiquipediaMatch } from './previews/LiquipediaMatch';
+import { TikTokEmbed } from './previews/TikTokEmbed';
+import { YoutubePreview } from './previews/YoutubePreview';
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
   const hostname = getHostname(item.link);
@@ -23,15 +19,20 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const youtubeVideoId = itemUrl ? getYoutubeVideoId(itemUrl) : null;
   const localPreview = getFeedItemPreview(item);
   const localPreviewSource = localPreview?.src;
-  const [openGraphPreview, setOpenGraphPreview] = useState<Awaited<ReturnType<typeof getOpenGraphPreview>> | null>(null);
-  const isYoutube = isYoutubeFeedItem(item);
-  const isTikTok = isTikTokFeedItem(item);
-  const isVk = isVkFeedItem(item);
-  const isHltv = isHltvFeedItem(item);
-  const isLiquipedia = isLiquipediaFeedItem(item);
-  const [liquipediaMatch, setLiquipediaMatch] = useState<LiquipediaMatchPreview | null>(null);
-  const remotePreview = getRemotePreview(openGraphPreview, item.title);
+  const provider = getFeedItemProvider(item);
+  const isYoutube = provider === 'youtube';
+  const isTikTok = provider === 'tiktok';
+  const isVk = provider === 'vk';
+  const isHltv = provider === 'hltv';
+  const isLiquipedia = provider === 'liquipedia';
   const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
+  const shouldLoadRemotePreview = !isTikTok && !(localPreviewSource && (!isVk || feedDescription));
+  const { cardRef, openGraphPreview, liquipediaMatch } = useFeedItemRemotePreview(
+    item.link,
+    shouldLoadRemotePreview,
+    isLiquipedia,
+  );
+  const remotePreview = getRemotePreview(openGraphPreview, item.title);
   const description = isVk
     ? feedDescription ??
       getFeedItemDescription(openGraphPreview?.description ?? '', item.title)
@@ -41,12 +42,10 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     ? tiktokEmbedPreview ?? localPreview
     : localPreview ?? remotePreview;
   const [previewFailures, setPreviewFailures] = useState(0);
-  const [isYoutubePlayerOpen, setIsYoutubePlayerOpen] = useState(false);
-  const [isYoutubeTheaterOpen, setIsYoutubeTheaterOpen] = useState(false);
   const fallbackSource = preview && 'fallbackSrc' in preview && typeof preview.fallbackSrc === 'string'
     ? preview.fallbackSrc
     : null;
-  const fallbackPreview: CardPreview | null = preview && fallbackSource
+  const fallbackPreview: FeedItemPreview | null = preview && fallbackSource
     ? { src: fallbackSource, alt: preview.alt }
     : null;
   const visiblePreview = liquipediaMatch ? null : previewFailures === 1 && preview?.type === 'video'
@@ -64,49 +63,12 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   );
 
   useEffect(() => {
-    setOpenGraphPreview(null);
-    setLiquipediaMatch(null);
     setPreviewFailures(0);
-    setIsYoutubePlayerOpen(false);
-    setIsYoutubeTheaterOpen(false);
-    if (isTikTok || (localPreviewSource && (!isVk || feedDescription))) return;
-
-    const controller = new AbortController();
-    if (isLiquipedia) {
-      getLiquipediaMatchPreview(item.link, controller.signal)
-        .then(setLiquipediaMatch)
-        .catch(() => getOpenGraphPreview(item.link, controller.signal)
-          .then(setOpenGraphPreview)
-          .catch(() => undefined));
-    } else {
-      getOpenGraphPreview(item.link, controller.signal)
-        .then(setOpenGraphPreview)
-        .catch(() => undefined);
-    }
-
-    return () => controller.abort();
-  }, [feedDescription, isLiquipedia, isTikTok, isVk, item.link, localPreviewSource]);
-
-  useEffect(() => {
-    if (!isYoutubeTheaterOpen) return;
-
-    document.documentElement.classList.add('reader-theater-open');
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsYoutubeTheaterOpen(false);
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.documentElement.classList.remove('reader-theater-open');
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isYoutubeTheaterOpen]);
+  }, [item.link]);
 
   return (
     <article
+      ref={cardRef}
       className={[
         'reader-card',
         isLiquipedia ? 'reader-card--liquipedia' : '',
@@ -115,20 +77,12 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         isImagePreviewOnly ? 'reader-card--image-preview' : '',
       ].filter(Boolean).join(' ')}
     >
-      {isYoutube && !isYoutubePlayerOpen ? (
-        <button
-          type="button"
-          className="reader-card__youtube-trigger"
-          aria-label={`Play video ${item.text || item.title}`}
-          onClick={() => setIsYoutubePlayerOpen(true)}
-        />
-      ) : null}
-      {isYoutubePlayerOpen && youtubeVideoId ? (
-        <YoutubePlayer
+      {isYoutube && youtubeVideoId ? (
+        <YoutubePreview
           videoId={youtubeVideoId}
           title={item.text || item.title}
-          isTheaterOpen={isYoutubeTheaterOpen}
-          onToggleTheater={() => setIsYoutubeTheaterOpen((isOpen) => !isOpen)}
+          preview={visiblePreview}
+          onPreviewError={() => setPreviewFailures((failures) => failures + 1)}
         />
       ) : liquipediaMatch ? (
         <LiquipediaMatch match={liquipediaMatch} />
@@ -154,16 +108,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       ) : visiblePreview.type === 'embed' ? (
         <TikTokEmbed src={visiblePreview.src} title={visiblePreview.alt} />
       ) : (
-        isYoutube ? (
-          <div className="reader-card__preview">
-            <img
-              src={visiblePreview.src}
-              alt={visiblePreview.alt}
-              referrerPolicy="no-referrer"
-              onError={() => setPreviewFailures((failures) => failures + 1)}
-            />
-          </div>
-        ) : <a
+        <a
           className={[
             'reader-card__preview',
             isTikTok ? 'reader-card__preview--tiktok' : '',
@@ -171,7 +116,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           href={item.link}
           target="_blank"
           rel="noreferrer"
-          aria-label={isYoutube ? `Open video ${item.text || item.title}` : `Open ${item.title || hostname}`}
+          aria-label={`Open ${item.title || hostname}`}
         >
           <img
             src={visiblePreview.src}
@@ -203,105 +148,6 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   );
 }
 
-type YoutubePlayerProps = {
-  videoId: string;
-  title: string;
-  isTheaterOpen: boolean;
-  onToggleTheater: () => void;
-};
-
-function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater }: YoutubePlayerProps) {
-  const parameters = new URLSearchParams({ autoplay: '1', rel: '0' });
-
-  return (
-    <div className={[
-      'reader-card__youtube-player-shell',
-      isTheaterOpen ? 'reader-card__youtube-player-shell--theater' : '',
-    ].filter(Boolean).join(' ')}>
-      <div className="reader-card__youtube-player-stage">
-        <div className="reader-card__youtube-player-toolbar">
-          <button
-            type="button"
-            className="reader-card__theater-toggle"
-            aria-label={isTheaterOpen ? 'Exit theater mode' : 'Enter theater mode'}
-            aria-pressed={isTheaterOpen}
-            onClick={onToggleTheater}
-          >
-            <span aria-hidden="true">{isTheaterOpen ? '↙' : '↗'}</span>
-            {isTheaterOpen ? 'Exit theater' : 'Theater mode'}
-          </button>
-        </div>
-        <div className="reader-card__preview reader-card__preview--youtube-player">
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
-            title={title || 'YouTube video player'}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LiquipediaMatch({ match }: { match: LiquipediaMatchPreview }) {
-  const [firstTeam, secondTeam] = match.teams;
-  const [firstScore, secondScore] = match.score;
-
-  return (
-    <section
-      className="liquipedia-match"
-      aria-label={`${firstTeam.name} ${firstScore} to ${secondScore} ${secondTeam.name}`}
-    >
-      <time className="liquipedia-match__date">{match.date}</time>
-      <div className="liquipedia-match__overview">
-        <LiquipediaTeam team={firstTeam} />
-        <div className="liquipedia-match__result">
-          <strong>
-            <span>{firstScore}</span>
-            <span aria-hidden="true">:</span>
-            <span>{secondScore}</span>
-          </strong>
-          <span>{match.status}</span>
-        </div>
-        <LiquipediaTeam team={secondTeam} reverse />
-      </div>
-      <p className="liquipedia-match__tournament">{match.tournament}</p>
-    </section>
-  );
-}
-
-function LiquipediaTeam({ team, reverse = false }: { team: LiquipediaMatchTeam; reverse?: boolean }) {
-  return (
-    <div className={reverse ? 'liquipedia-team liquipedia-team--reverse' : 'liquipedia-team'}>
-      <div className="liquipedia-team__identity">
-        <strong title={team.name}>{team.name}</strong>
-        {team.logo ? (
-          <img src={team.logo} alt="" referrerPolicy="no-referrer" />
-        ) : (
-          <span className="liquipedia-team__monogram" aria-hidden="true">
-            {team.shortName.slice(0, 2)}
-          </span>
-        )}
-      </div>
-      {team.results.length > 0 ? (
-        <div className="liquipedia-team__form" aria-label={`${team.name} game results`}>
-          {team.results.map((result, index) => (
-            <span
-              key={`${result}-${index}`}
-              className={`liquipedia-team__form-result liquipedia-team__form-result--${result}`}
-              aria-label={result === 'default' ? 'No result' : result}
-            >
-              {result === 'win' ? 'W' : result === 'loss' ? 'L' : '–'}
-            </span>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function getFeedItemDescription(content: string, title: string): string | null {
   if (!content) return null;
 
@@ -312,52 +158,7 @@ function getFeedItemDescription(content: string, title: string): string | null {
   return description;
 }
 
-type CardPreview = {
-  src: string;
-  alt: string;
-  type?: 'video' | 'embed';
-  poster?: string;
-};
-
-function TikTokEmbed({ src, title }: { src: string; title: string }) {
-  const frameRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    const playWhenReady = (event: MessageEvent) => {
-      const playerWindow = frameRef.current?.contentWindow;
-      if (event.origin !== 'https://www.tiktok.com' ||
-        !playerWindow ||
-        event.source !== playerWindow ||
-        !isTikTokPlayerReadyMessage(event.data)) return;
-
-      playerWindow.postMessage({ type: 'unMute', 'x-tiktok-player': true }, event.origin);
-      playerWindow.postMessage({ type: 'play', 'x-tiktok-player': true }, event.origin);
-    };
-    window.addEventListener('message', playWhenReady);
-    return () => window.removeEventListener('message', playWhenReady);
-  }, []);
-
-  return (
-    <div className="reader-card__preview reader-card__preview--tiktok">
-      <iframe
-        ref={frameRef}
-        src={src}
-        title={title}
-        allow="autoplay; fullscreen"
-        allowFullScreen
-        referrerPolicy="strict-origin-when-cross-origin"
-      />
-    </div>
-  );
-}
-
-function isTikTokPlayerReadyMessage(value: unknown): boolean {
-  if (!value || typeof value !== 'object') return false;
-  const message = value as Record<string, unknown>;
-  return message['x-tiktok-player'] === true && message.type === 'onPlayerReady';
-}
-
-function getTikTokEmbedPreview(item: FeedItem): CardPreview | null {
+function getTikTokEmbedPreview(item: FeedItem): FeedItemPreview | null {
   const url = parseUrl(item.link);
   const videoId = url?.pathname.match(/\/video\/(\d+)/)?.[1];
   if (!videoId) return null;
@@ -379,9 +180,9 @@ function getTikTokEmbedPreview(item: FeedItem): CardPreview | null {
 }
 
 function getRemotePreview(
-  preview: Awaited<ReturnType<typeof getOpenGraphPreview>> | null,
+  preview: OpenGraphPreview | null,
   title: string,
-): CardPreview | null {
+): FeedItemPreview | null {
   if (!preview) return null;
   const altTitle = preview.title || title;
 

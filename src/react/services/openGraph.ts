@@ -1,14 +1,7 @@
 import { getObjectProperty } from '../unknownObject';
+import type { OpenGraphPreview } from '../../../server/previewContracts';
 
-export interface OpenGraphPreview {
-  url: string;
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  video: string | null;
-  siteName: string | null;
-  type: string | null;
-}
+export type { OpenGraphPreview } from '../../../server/previewContracts';
 
 export async function getOpenGraphPreview(url: string, signal?: AbortSignal): Promise<OpenGraphPreview> {
   const response = await fetch(`/api/bff/open-graph?url=${encodeURIComponent(url)}`, { signal });

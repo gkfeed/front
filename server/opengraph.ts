@@ -1,10 +1,14 @@
 import { execFile } from 'node:child_process';
-import { isIP } from 'node:net';
-import { lookup } from 'node:dns/promises';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+
+import type {
+  LiquipediaMatchPreview,
+  OpenGraphPreview,
+} from './previewContracts.js';
+import { PublicHttpError, requestPublicHttp } from './publicHttp.js';
 
 const MAX_RESPONSE_BYTES = 1_000_000;
 const MAX_HLTV_RESPONSE_BYTES = 2_000_000;
@@ -14,34 +18,9 @@ const REQUEST_TIMEOUT_MS = 8_000;
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
 const execFileAsync = promisify(execFile);
 
-export interface OpenGraphPreview {
-  url: string;
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  video: string | null;
-  siteName: string | null;
-  type: string | null;
-}
-
 export interface PreviewImage {
   body: Uint8Array;
   contentType: string;
-}
-
-export interface LiquipediaMatchTeam {
-  name: string;
-  shortName: string;
-  logo: string | null;
-  results: Array<'win' | 'loss' | 'default'>;
-}
-
-export interface LiquipediaMatchPreview {
-  date: string;
-  status: string;
-  score: [string, string];
-  teams: [LiquipediaMatchTeam, LiquipediaMatchTeam];
-  tournament: string;
 }
 
 export class PreviewError extends Error {
@@ -85,46 +64,52 @@ export async function fetchRedditPreviewImage(input: string): Promise<PreviewIma
   }
 
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
-    await assertPublicHost(url);
-
-    let response: Response;
+    let response: Awaited<ReturnType<typeof requestPublicHttp>>;
     try {
-      response = await fetch(url, {
-        headers: {
-          accept: 'image/avif,image/webp,image/jpeg,image/png,image/*',
-          'user-agent': TWITTERBOT_USER_AGENT,
-        },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      response = await requestPublicHttp(url, {
+        accept: 'image/avif,image/webp,image/jpeg,image/png,image/*',
+        'user-agent': TWITTERBOT_USER_AGENT,
       });
     } catch (error) {
-      const message = error instanceof Error && error.name === 'TimeoutError'
+      throwPublicUrlError(error);
+      const message = error instanceof PublicHttpError && error.reason === 'timeout'
         ? 'The Reddit preview image took too long to respond'
         : 'The Reddit preview image could not be fetched';
       throw new PreviewError(message, 502, 'image_fetch_failed');
     }
 
     if (isRedirect(response.status)) {
-      const location = response.headers.get('location');
+      response.body.resume();
+      const location = firstHeader(response.headers.location);
       if (!location) throw new PreviewError('Reddit returned an invalid image redirect', 502, 'invalid_redirect');
       if (redirects === MAX_REDIRECTS) throw new PreviewError('Reddit redirected the image too many times', 502, 'too_many_redirects');
       url = parsePublicHttpUrl(new URL(location, url).href);
       continue;
     }
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
+      response.body.resume();
       throw new PreviewError(`Reddit returned HTTP ${response.status} for the preview image`, 502, 'image_upstream_error');
     }
 
-    const contentType = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? '';
+    const contentType = firstHeader(response.headers['content-type'])?.split(';')[0]?.trim().toLowerCase() ?? '';
     if (!contentType.startsWith('image/')) {
+      response.body.resume();
       throw new PreviewError('Reddit did not return an image', 502, 'invalid_image');
     }
 
-    return {
-      body: await readLimitedBytes(response, MAX_IMAGE_RESPONSE_BYTES),
-      contentType,
-    };
+    try {
+      return {
+        body: await readLimitedBytes(response, MAX_IMAGE_RESPONSE_BYTES),
+        contentType,
+      };
+    } catch (error) {
+      if (error instanceof PreviewError) throw error;
+      const message = error instanceof PublicHttpError && error.reason === 'timeout'
+        ? 'The Reddit preview image took too long to respond'
+        : 'The Reddit preview image could not be fetched';
+      throw new PreviewError(message, 502, 'image_fetch_failed');
+    }
   }
 
   throw new PreviewError('Reddit redirected the image too many times', 502, 'too_many_redirects');
@@ -133,53 +118,58 @@ export async function fetchRedditPreviewImage(input: string): Promise<PreviewIma
 async function fetchHtml(input: URL): Promise<{ html: string; url: URL }> {
   let url = input;
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
-    await assertPublicHost(url);
-
-    let response: Response;
+    let response: Awaited<ReturnType<typeof requestPublicHttp>>;
     try {
-      response = await fetch(url, {
-        headers: {
-          accept: 'text/html,application/xhtml+xml',
-          // This is the request profile gkbot uses for feed previews. A number
-          // of social sites only include their media metadata for crawler UAs.
-          'user-agent': TWITTERBOT_USER_AGENT,
-        },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      response = await requestPublicHttp(url, {
+        accept: 'text/html,application/xhtml+xml',
+        // This is the request profile gkbot uses for feed previews. A number
+        // of social sites only include their media metadata for crawler UAs.
+        'user-agent': TWITTERBOT_USER_AGENT,
       });
     } catch (error) {
-      const message = error instanceof Error && error.name === 'TimeoutError'
+      throwPublicUrlError(error);
+      const message = error instanceof PublicHttpError && error.reason === 'timeout'
         ? 'The remote page took too long to respond'
         : 'The remote page could not be fetched';
       throw new PreviewError(message, 502, 'fetch_failed');
     }
 
     if (isRedirect(response.status)) {
-      const location = response.headers.get('location');
+      response.body.resume();
+      const location = firstHeader(response.headers.location);
       if (!location) throw new PreviewError('The remote page returned an invalid redirect', 502, 'invalid_redirect');
       if (redirects === MAX_REDIRECTS) throw new PreviewError('The remote page redirected too many times', 502, 'too_many_redirects');
       url = parsePublicHttpUrl(new URL(location, url).href);
       continue;
     }
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
+      response.body.resume();
       throw new PreviewError(`The remote page returned HTTP ${response.status}`, 502, 'upstream_error');
     }
 
-    const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+    const contentType = firstHeader(response.headers['content-type'])?.toLowerCase() ?? '';
     if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
+      response.body.resume();
       throw new PreviewError('The URL does not point to an HTML page', 422, 'not_html');
     }
 
-    const html = await readLimitedBody(response);
-    return { html, url };
+    try {
+      const html = await readLimitedBody(response);
+      return { html, url };
+    } catch (error) {
+      if (error instanceof PreviewError) throw error;
+      const message = error instanceof PublicHttpError && error.reason === 'timeout'
+        ? 'The remote page took too long to respond'
+        : 'The remote page could not be fetched';
+      throw new PreviewError(message, 502, 'fetch_failed');
+    }
   }
 
   throw new PreviewError('The remote page redirected too many times', 502, 'too_many_redirects');
 }
 
 async function fetchHltvHtml(url: URL): Promise<{ html: string; url: URL }> {
-  await assertPublicHost(url);
   const directory = await mkdtemp(join(tmpdir(), 'gkfeed-hltv-'));
   const output = join(directory, 'response');
   try {
@@ -369,59 +359,25 @@ function safeDecodeURIComponent(value: string): string {
   }
 }
 
-async function assertPublicHost(url: URL): Promise<void> {
-  let addresses: Array<{ address: string; family: number }>;
-  const hostname = url.hostname.replace(/^\[|\]$/g, '');
-  const literalFamily = isIP(hostname);
-  if (literalFamily) {
-    addresses = [{ address: hostname, family: literalFamily }];
-  } else {
-    try {
-      addresses = await lookup(hostname, { all: true, verbatim: true });
-    } catch {
-      throw new PreviewError('The URL hostname could not be resolved', 422, 'unresolvable_host');
-    }
-  }
-
-  if (addresses.length === 0 || addresses.some(({ address }) => isPrivateAddress(address))) {
-    throw new PreviewError('Private or local network URLs are not allowed', 403, 'private_url');
-  }
-}
-
-function isPrivateAddress(address: string): boolean {
-  if (isIP(address) === 4) {
-    const [a = 0, b = 0] = address.split('.').map(Number);
-    return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) ||
-      (a === 169 && b === 254) ||
-      (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a >= 224;
-  }
-
-  const normalized = address.toLowerCase().split('%')[0] ?? '';
-  if (normalized.startsWith('::ffff:')) return isPrivateAddress(normalized.slice(7));
-  return normalized === '::' || normalized === '::1' || normalized.startsWith('fc') ||
-    normalized.startsWith('fd') || normalized.startsWith('ff') || /^fe[89ab]/.test(normalized);
-}
-
 function isRedirect(status: number): boolean {
   return [301, 302, 303, 307, 308].includes(status);
 }
 
-async function readLimitedBody(response: Response): Promise<string> {
-  const declaredLength = Number(response.headers.get('content-length'));
-  if (declaredLength > MAX_RESPONSE_BYTES) throw responseTooLarge();
-  if (!response.body) return '';
-
-  const reader = response.body.getReader();
+async function readLimitedBody(response: Awaited<ReturnType<typeof requestPublicHttp>>): Promise<string> {
+  const declaredLength = Number(firstHeader(response.headers['content-length']));
+  if (declaredLength > MAX_RESPONSE_BYTES) {
+    response.body.destroy();
+    throw responseTooLarge();
+  }
   const decoder = new TextDecoder();
   let size = 0;
   let result = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  for await (const chunk of response.body) {
+    const value = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
     size += value.byteLength;
     if (size > MAX_RESPONSE_BYTES) {
-      await reader.cancel();
+      response.body.destroy();
       throw responseTooLarge();
     }
     result += decoder.decode(value, { stream: true });
@@ -429,21 +385,23 @@ async function readLimitedBody(response: Response): Promise<string> {
   return result + decoder.decode();
 }
 
-async function readLimitedBytes(response: Response, maximumBytes: number): Promise<Uint8Array> {
-  const declaredLength = Number(response.headers.get('content-length'));
-  if (declaredLength > maximumBytes) throw imageTooLarge();
-  if (!response.body) return new Uint8Array();
-
-  const reader = response.body.getReader();
+async function readLimitedBytes(
+  response: Awaited<ReturnType<typeof requestPublicHttp>>,
+  maximumBytes: number,
+): Promise<Uint8Array> {
+  const declaredLength = Number(firstHeader(response.headers['content-length']));
+  if (declaredLength > maximumBytes) {
+    response.body.destroy();
+    throw imageTooLarge();
+  }
   const chunks: Uint8Array[] = [];
   let size = 0;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  for await (const chunk of response.body) {
+    const value = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
     size += value.byteLength;
     if (size > maximumBytes) {
-      await reader.cancel();
+      response.body.destroy();
       throw imageTooLarge();
     }
     chunks.push(value);
@@ -456,6 +414,20 @@ async function readLimitedBytes(response: Response, maximumBytes: number): Promi
     offset += chunk.byteLength;
   }
   return body;
+}
+
+function firstHeader(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function throwPublicUrlError(error: unknown): void {
+  if (!(error instanceof PublicHttpError)) return;
+  if (error.reason === 'private') {
+    throw new PreviewError('Private or local network URLs are not allowed', 403, 'private_url');
+  }
+  if (error.reason === 'unresolvable') {
+    throw new PreviewError('The URL hostname could not be resolved', 422, 'unresolvable_host');
+  }
 }
 
 function responseTooLarge(): PreviewError {

@@ -1,21 +1,14 @@
 import { getObjectProperty } from '../unknownObject';
+import type {
+  LiquipediaMatchPreview,
+  LiquipediaMatchTeam,
+} from '../../../server/previewContracts';
 
-export type LiquipediaMatchResult = 'win' | 'loss' | 'default';
-
-export interface LiquipediaMatchTeam {
-  name: string;
-  shortName: string;
-  logo: string | null;
-  results: LiquipediaMatchResult[];
-}
-
-export interface LiquipediaMatchPreview {
-  date: string;
-  status: string;
-  score: [string, string];
-  teams: [LiquipediaMatchTeam, LiquipediaMatchTeam];
-  tournament: string;
-}
+export type {
+  LiquipediaMatchPreview,
+  LiquipediaMatchResult,
+  LiquipediaMatchTeam,
+} from '../../../server/previewContracts';
 
 export async function getLiquipediaMatchPreview(
   url: string,

@@ -1,12 +1,20 @@
 import type { FeedItem } from '../types';
 
-interface FeedItemPreview {
+export interface FeedItemPreview {
   src: string;
   alt: string;
-  type?: 'video';
+  type?: 'video' | 'embed';
   poster?: string;
   fallbackSrc?: string;
 }
+
+export type FeedItemProvider =
+  | 'generic'
+  | 'hltv'
+  | 'liquipedia'
+  | 'tiktok'
+  | 'vk'
+  | 'youtube';
 
 export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
   const url = parseUrl(item.link);
@@ -49,40 +57,36 @@ export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
 }
 
 export function isYoutubeFeedItem(item: FeedItem): boolean {
-  const url = parseUrl(item.link);
-  return Boolean(url && getYoutubeVideoId(url));
+  return getFeedItemProvider(item) === 'youtube';
 }
 
 export function isTikTokFeedItem(item: FeedItem): boolean {
-  const url = parseUrl(item.link);
-  if (!url) return false;
-
-  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
-  return hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com');
+  return getFeedItemProvider(item) === 'tiktok';
 }
 
 export function isVkFeedItem(item: FeedItem): boolean {
-  const url = parseUrl(item.link);
-  if (!url) return false;
-
-  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
-  return hostname === 'vk.com' || hostname.endsWith('.vk.com');
+  return getFeedItemProvider(item) === 'vk';
 }
 
 export function isHltvFeedItem(item: FeedItem): boolean {
-  const url = parseUrl(item.link);
-  if (!url) return false;
-
-  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
-  return hostname === 'hltv.org' && /^\/matches\/\d+(?:\/|$)/.test(url.pathname);
+  return getFeedItemProvider(item) === 'hltv';
 }
 
 export function isLiquipediaFeedItem(item: FeedItem): boolean {
+  return getFeedItemProvider(item) === 'liquipedia';
+}
+
+export function getFeedItemProvider(item: FeedItem): FeedItemProvider {
   const url = parseUrl(item.link);
-  if (!url) return false;
+  if (!url) return 'generic';
 
   const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
-  return hostname === 'liquipedia.net' && /\/Match(?::|%3A)/i.test(url.pathname);
+  if (getYoutubeVideoId(url)) return 'youtube';
+  if (hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com')) return 'tiktok';
+  if (hostname === 'vk.com' || hostname.endsWith('.vk.com')) return 'vk';
+  if (hostname === 'hltv.org' && /^\/matches\/\d+(?:\/|$)/.test(url.pathname)) return 'hltv';
+  if (hostname === 'liquipedia.net' && /\/Match(?::|%3A)/i.test(url.pathname)) return 'liquipedia';
+  return 'generic';
 }
 
 function getEmbeddedImage(html: string, title: string): FeedItemPreview | null {
