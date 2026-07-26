@@ -3,6 +3,7 @@ import { request as requestHttp } from 'node:http';
 import type { IncomingHttpHeaders, IncomingMessage, RequestOptions } from 'node:http';
 import { request as requestHttps } from 'node:https';
 import { isIP } from 'node:net';
+import type { LookupFunction } from 'node:net';
 
 export interface PublicHttpResponse {
   body: IncomingMessage;
@@ -33,7 +34,7 @@ export async function requestPublicHttp(
       headers,
       // Pin the connection to the address that passed validation. This prevents
       // a second DNS lookup from changing the destination between check and use.
-      lookup: (_hostname, _options, callback) => callback(null, address.address, address.family),
+      lookup: createPinnedLookup(address),
     } satisfies RequestOptions, (response) => {
       response.setTimeout(8_000, () => {
         response.destroy(new PublicHttpError('timeout'));
@@ -54,6 +55,16 @@ export async function requestPublicHttp(
     });
     request.end();
   });
+}
+
+export function createPinnedLookup(address: { address: string; family: 4 | 6 }): LookupFunction {
+  return (_hostname, options, callback) => {
+    if (options.all) {
+      callback(null, [address]);
+      return;
+    }
+    callback(null, address.address, address.family);
+  };
 }
 
 async function resolvePublicAddress(url: URL): Promise<{ address: string; family: 4 | 6 }> {

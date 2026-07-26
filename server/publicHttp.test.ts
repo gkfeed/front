@@ -1,6 +1,32 @@
 import { describe, expect, it } from 'vitest';
 
-import { isPrivateAddress } from './publicHttp.js';
+import { createPinnedLookup, isPrivateAddress } from './publicHttp.js';
+
+describe('createPinnedLookup', () => {
+  it('returns an address array when Node enables network family auto-selection', async () => {
+    const address = { address: '93.184.216.34', family: 4 as const };
+    const lookup = createPinnedLookup(address);
+
+    await expect(new Promise((resolve, reject) => {
+      lookup('example.com', { all: true }, (error, addresses) => {
+        if (error) reject(error);
+        else resolve(addresses);
+      });
+    })).resolves.toEqual([address]);
+  });
+
+  it('returns the address and family in single-address mode', async () => {
+    const address = { address: '2606:2800:220:1:248:1893:25c8:1946', family: 6 as const };
+    const lookup = createPinnedLookup(address);
+
+    await expect(new Promise((resolve, reject) => {
+      lookup('example.com', { all: false }, (error, resolvedAddress, family) => {
+        if (error) reject(error);
+        else resolve({ address: resolvedAddress, family });
+      });
+    })).resolves.toEqual(address);
+  });
+});
 
 describe('isPrivateAddress', () => {
   it('rejects local, private, mapped, and reserved addresses', () => {
