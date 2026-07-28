@@ -80,6 +80,27 @@
   gap: 18px;
 }
 
+.reader__scroll-item {
+  position: relative;
+  display: grid;
+  gap: 10px;
+}
+
+.reader__scroll-delete {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  width: 38px;
+  min-height: 38px;
+  padding: 0;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+  box-shadow: var(--shadow-card);
+}
+
 .reader__scroll-panel {
   display: block;
 }

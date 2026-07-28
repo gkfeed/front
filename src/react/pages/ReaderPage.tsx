@@ -15,6 +15,8 @@ export function ReaderPage() {
     isDeleting,
     loadFailed,
     deleteFailed,
+    isItemDeleting,
+    didItemDeleteFail,
     remainingCount,
     keepItem,
     deleteItem,
@@ -94,7 +96,7 @@ export function ReaderPage() {
             <button type="button" className="reader__keep" onClick={keepItem} disabled={isDeleting}>
               <span aria-hidden="true">✓</span> Keep
             </button>
-            <button type="button" className="delete" onClick={deleteItem} disabled={isDeleting}>
+            <button type="button" className="delete" onClick={() => void deleteItem()} disabled={isDeleting}>
               <span aria-hidden="true">×</span> {isDeleting ? 'Deleting…' : 'Delete'}
             </button>
           </div>
@@ -130,7 +132,30 @@ export function ReaderPage() {
           aria-labelledby="reader-scroll-tab"
         >
           <div className="reader__stream">
-            {items.map((item) => <FeedItemCard key={item.id} item={item} />)}
+            {items.map((item) => {
+              const itemIsDeleting = isItemDeleting(item.id);
+              const itemDeleteFailed = didItemDeleteFail(item.id);
+
+              return (
+                <div className="reader__scroll-item" key={item.id}>
+                  <FeedItemCard item={item} />
+                  <button
+                    type="button"
+                    className="delete reader__scroll-delete"
+                    aria-label={`${itemIsDeleting ? 'Deleting' : 'Delete'} ${item.title || 'feed item'}`}
+                    onClick={() => void deleteItem(item.id)}
+                    disabled={isDeleting}
+                  >
+                    <span aria-hidden="true">{itemIsDeleting ? '…' : '×'}</span>
+                  </button>
+                  {itemDeleteFailed ? (
+                    <p className="status status--error reader__error" role="alert">
+                      Could not delete this item. It is still in your feed; try again.
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : null}
