@@ -113,10 +113,42 @@ describe('feed service', () => {
     await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([
       { id: 10, feedId: 2, link: 'https://example.com/story', title: 'Story', text: 'Summary' },
     ]);
-    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/get_items?limit=1000', {
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/get_items?limit=100', {
       headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
       signal: expect.any(AbortSignal),
     });
+  });
+
+  it('follows item cursors using bounded pages', async () => {
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(Response.json({
+        items: [{ id: 10, feed_id: 2, link: 'https://example.com/10', title: 'Ten', text: '' }],
+        next_cursor: 10,
+      }))
+      .mockResolvedValueOnce(Response.json({
+        items: [{ id: 9, feed_id: 2, link: 'https://example.com/9', title: 'Nine', text: '' }],
+      })));
+
+    await expect(getFeedItems(CREDENTIALS, 150)).resolves.toEqual([
+      { id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' },
+      { id: 9, feedId: 2, link: 'https://example.com/9', title: 'Nine', text: '' },
+    ]);
+    expect(fetch).toHaveBeenNthCalledWith(
+      1,
+      'https://feed.gws.freemyip.com/api/v1/get_items?limit=100',
+      expect.any(Object),
+    );
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      'https://feed.gws.freemyip.com/api/v1/get_items?limit=100&cursor=10',
+      expect.any(Object),
+    );
+  });
+
+  it('treats a nil Go item slice as an empty page', async () => {
+    respondWith({ items: null });
+
+    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([]);
   });
 
   it('deletes a feed reader item using the API batch shape', async () => {

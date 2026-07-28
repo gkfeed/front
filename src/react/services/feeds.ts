@@ -5,6 +5,7 @@ const DEFAULT_API_ROOT = import.meta.env.DEV
   ? '/api/v1'
   : 'https://feed.gws.freemyip.com/api/v1';
 const API_ROOT = `${(import.meta.env.VITE_API_ROOT || DEFAULT_API_ROOT).replace(/\/+$/, '')}/`;
+const ITEMS_PAGE_SIZE = 100;
 
 const endpoint = (path: string) => `${API_ROOT}${path}`;
 
@@ -48,19 +49,40 @@ function isFeedItem(value: unknown): value is Record<string, unknown> {
     && [link, title, itemText].every((field) => typeof field === 'string');
 }
 
-function parseFeedItems(value: unknown): FeedItem[] {
-  const items = getObjectProperty(value, 'items');
-  if (!Array.isArray(items) || !items.every(isFeedItem)) throw new Error('Invalid API response');
+type FeedItemsPage = {
+  items: FeedItem[];
+  nextCursor?: number;
+};
 
-  return items
-    .filter((item) => Boolean(item.link))
-    .map((item) => ({
-      id: item.id as number,
-      feedId: item.feed_id as number,
-      link: item.link as string,
-      title: item.title as string,
-      text: item.text as string,
-    }));
+function parseFeedItemsPage(value: unknown): FeedItemsPage {
+  const rawItems = getObjectProperty(value, 'items');
+  const rawNextCursor = getObjectProperty(value, 'next_cursor');
+  const items = rawItems === null ? [] : rawItems;
+  if (!Array.isArray(items) || !items.every(isFeedItem)) throw new Error('Invalid API response');
+  if (
+    rawNextCursor !== undefined
+    && rawNextCursor !== null
+    && (
+      typeof rawNextCursor !== 'number'
+      || !Number.isSafeInteger(rawNextCursor)
+      || rawNextCursor <= 0
+    )
+  ) {
+    throw new Error('Invalid API response');
+  }
+
+  return {
+    items: items
+      .filter((item) => Boolean(item.link))
+      .map((item) => ({
+        id: item.id as number,
+        feedId: item.feed_id as number,
+        link: item.link as string,
+        title: item.title as string,
+        text: item.text as string,
+      })),
+    nextCursor: typeof rawNextCursor === 'number' ? rawNextCursor : undefined,
+  };
 }
 
 function authorization(credentials: Credentials): Record<string, string> {
@@ -115,10 +137,29 @@ export async function getFeedById(id: number, credentials: Credentials | null): 
 }
 
 export async function getFeedItems(credentials: Credentials | null, limit = 1000): Promise<FeedItem[]> {
-  const response = await requestJson(endpoint(`get_items?limit=${limit}`), {
-    headers: authorization(requireCredentials(credentials)),
-  });
-  return parseFeedItems(response);
+  if (!Number.isSafeInteger(limit) || limit <= 0) return [];
+
+  const headers = authorization(requireCredentials(credentials));
+  const items: FeedItem[] = [];
+  const seenCursors = new Set<number>();
+  let cursor: number | undefined;
+
+  while (items.length < limit) {
+    const pageLimit = Math.min(ITEMS_PAGE_SIZE, limit - items.length);
+    const query = new URLSearchParams({ limit: String(pageLimit) });
+    if (cursor !== undefined) query.set('cursor', String(cursor));
+
+    const response = await requestJson(endpoint(`get_items?${query}`), { headers });
+    const page = parseFeedItemsPage(response);
+    items.push(...page.items);
+
+    if (page.nextCursor === undefined) break;
+    if (seenCursors.has(page.nextCursor)) throw new Error('Invalid API response');
+    seenCursors.add(page.nextCursor);
+    cursor = page.nextCursor;
+  }
+
+  return items.slice(0, limit);
 }
 
 export async function deleteFeedItemById(id: number, credentials: Credentials | null): Promise<void> {
