@@ -7,6 +7,7 @@ import { Navbar } from './react/components/Navbar';
 import { RequireAuth } from './react/components/RequireAuth';
 import { FeedPage } from './react/pages/FeedPage';
 import { LoginPage } from './react/pages/LoginPage';
+import { LivePage } from './react/pages/LivePage';
 import { ReaderPage } from './react/pages/ReaderPage';
 import { AuthProvider } from './react/state/AuthProvider';
 import { FeedSearchProvider } from './react/state/FeedSearchProvider';
@@ -45,6 +46,7 @@ export function App() {
               <Route path="/" element={<RequireAuth><FeedListPage /></RequireAuth>} />
               <Route path="/create" element={<RequireAuth><FeedCreator /></RequireAuth>} />
               <Route path="/reader" element={<RequireAuth><ReaderPage /></RequireAuth>} />
+              <Route path="/live" element={<RequireAuth><LivePage /></RequireAuth>} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/feed/:id" element={<RequireAuth><FeedPage /></RequireAuth>} />
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,0 +1,203 @@
+.live {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 44px 24px 56px;
+}
+
+.live__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.15fr) minmax(250px, 0.95fr);
+  align-items: start;
+  gap: clamp(24px, 4vw, 52px);
+}
+
+.live__preview {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  border: 1px solid var(--color-card-border);
+  border-radius: clamp(16px, 2.5vw, 28px);
+  background: #09090b;
+  box-shadow: var(--shadow-card);
+}
+
+.live__preview-trigger {
+  cursor: pointer;
+}
+
+.live__preview img,
+.live__preview iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: cover;
+}
+
+.live__preview-trigger::after {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 8%);
+  content: "";
+  transition: background-color var(--ease);
+}
+
+.live__preview-trigger:hover::after {
+  background: rgb(0 0 0 / 22%);
+}
+
+.live__preview-trigger:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+.live__play {
+  position: absolute;
+  z-index: 1;
+  inset: 50% auto auto 50%;
+  display: grid;
+  width: 66px;
+  height: 66px;
+  place-items: center;
+  padding-left: 4px;
+  border: 1px solid rgb(255 255 255 / 42%);
+  border-radius: 50%;
+  background: rgb(9 9 11 / 72%);
+  color: white;
+  font-size: 1.35rem;
+  transform: translate(-50%, -50%);
+  transition: background-color var(--ease), transform var(--ease);
+}
+
+.live__preview-trigger:hover .live__play {
+  background: #9147ff;
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.live__channels {
+  min-width: 0;
+  max-height: min(62vh, 650px);
+  overflow-y: auto;
+}
+
+.live__channels ul {
+  display: grid;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.live__channels button {
+  display: flex;
+  width: 100%;
+  min-height: 86px;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 14px 22px;
+  border: 1px solid var(--color-card-border);
+  border-radius: 18px;
+  background: color-mix(in oklch, var(--color-card) 82%, var(--color-page));
+  color: var(--color-ink);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  box-shadow: 0 8px 22px color-mix(in oklch, var(--color-page) 25%, transparent);
+  transition: border-color var(--ease), background-color var(--ease), color var(--ease), transform var(--ease);
+}
+
+.live__channels button:hover {
+  background: var(--color-card-hover);
+  transform: translateY(-1px);
+}
+
+.live__channels button[aria-pressed="true"] {
+  border-color: color-mix(in oklch, #9147ff 72%, var(--color-card-border));
+  background: color-mix(in oklch, #9147ff 13%, var(--color-card));
+  color: var(--color-ink-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, #9147ff 35%, transparent);
+}
+
+.live__channels button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.live__channel-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-danger);
+}
+
+.live__status,
+.live__state {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  min-height: 220px;
+  place-content: center;
+  color: var(--color-ink-inverse);
+  text-align: center;
+}
+
+.live__status {
+  grid-auto-flow: column;
+}
+
+.live__state h2,
+.live__state p {
+  margin: 0;
+}
+
+.live__state .secondary {
+  justify-self: center;
+  margin-top: 8px;
+}
+
+.live__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid color-mix(in oklch, var(--color-ink) 28%, transparent);
+  border-top-color: var(--color-ink);
+  border-radius: 50%;
+  animation: live-spin 700ms linear infinite;
+}
+
+@keyframes live-spin {
+  to { transform: rotate(1turn); }
+}
+
+@media (max-width: 780px) {
+  .live {
+    padding: 28px 12px 40px;
+  }
+
+  .live__layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .live__preview {
+    aspect-ratio: 16 / 9;
+  }
+
+  .live__channels {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .live__channels ul {
+    gap: 12px;
+  }
+
+  .live__channels button {
+    min-height: 64px;
+  }
+}
