@@ -55,7 +55,10 @@ export function YoutubePreview({
         type="button"
         className="reader-card__youtube-trigger"
         aria-label={`Play video ${title}`}
-        onClick={() => setIsPlayerOpen(true)}
+        onClick={() => {
+          setIsPlayerOpen(true);
+          setIsTheaterOpen(true);
+        }}
       />
       {preview ? (
         <div className="reader-card__preview">

@@ -45,7 +45,7 @@ describe('FeedItemCard Open Graph preview', () => {
       .toBe('https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg');
   });
 
-  it('creates a YouTube player when the card is clicked', () => {
+  it('opens a YouTube player in theater mode when the card is clicked', () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://www.youtube.com/watch?v=abc123xyz',
@@ -60,6 +60,8 @@ describe('FeedItemCard Open Graph preview', () => {
       .toBe('https://www.youtube-nocookie.com/embed/abc123xyz?autoplay=1&rel=0');
     expect(player.getAttribute('allow')).toContain('autoplay');
     expect(screen.queryByAltText('Preview for Story')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Exit theater mode' }).getAttribute('aria-pressed')).toBe('true');
+    expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
   });
 
   it('toggles theater mode without reloading the YouTube player', () => {
@@ -72,10 +74,16 @@ describe('FeedItemCard Open Graph preview', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Play video Example video' }));
     const player = screen.getByTitle('Example video');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Exit theater mode' }));
+
+    expect(screen.getByTitle('Example video')).toBe(player);
+    expect(screen.getByRole('button', { name: 'Enter theater mode' }).getAttribute('aria-pressed')).toBe('false');
+    expect(document.documentElement.classList.contains('reader-theater-open')).toBe(false);
+
     fireEvent.click(screen.getByRole('button', { name: 'Enter theater mode' }));
 
     expect(screen.getByTitle('Example video')).toBe(player);
-    expect(screen.getByRole('button', { name: 'Exit theater mode' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Exit theater mode' })).toBeTruthy();
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
 
     fireEvent.keyDown(window, { key: 'Escape' });
