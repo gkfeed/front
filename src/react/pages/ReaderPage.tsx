@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { FeedItemCard } from '../components/FeedItemCard';
+import { isTikTokFeedItem } from '../components/feedItemPreview';
 import { useFeedReader } from '../hooks/useFeedReader';
 
 type ReaderMode = 'review' | 'scroll';
@@ -80,7 +81,10 @@ export function ReaderPage() {
       {mode === 'review' && currentItem ? (
         <div
           id="reader-review-panel"
-          className="reader__item"
+          className={[
+            'reader__item',
+            isTikTokFeedItem(currentItem) ? 'reader__item--tiktok' : '',
+          ].filter(Boolean).join(' ')}
           role="tabpanel"
           aria-labelledby="reader-review-tab"
         >

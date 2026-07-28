@@ -10,6 +10,7 @@ import {
   type FeedItemPreview,
 } from './feedItemPreview';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
+import { TikTokComments } from './previews/TikTokComments';
 import { TikTokEmbed } from './previews/TikTokEmbed';
 import { YoutubePreview } from './previews/YoutubePreview';
 
@@ -126,6 +127,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           />
         </a>
       ) : null}
+      {isTikTok ? <TikTokComments item={item} /> : null}
       {isImagePreviewOnly ? null : isYoutube ? (
         <div className="reader-card__youtube-copy">
           <h2 className="reader-card__title">{item.text || item.title}</h2>

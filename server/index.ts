@@ -10,6 +10,7 @@ import {
   fetchRedditPreviewImage,
   PreviewError,
 } from './opengraph.js';
+import { fetchTikTokComments } from './tiktok.js';
 
 const port = Number(process.env.PORT ?? 3000);
 const staticRoot = resolve(fileURLToPath(new URL('../dist', import.meta.url)));
@@ -43,6 +44,13 @@ const server = createServer(async (request, response) => {
         'x-content-type-options': 'nosniff',
       });
       response.end(image.body);
+      return;
+    }
+
+    if (request.method === 'GET' && requestUrl.pathname === '/api/bff/tiktok-comments') {
+      const targetUrl = requestUrl.searchParams.get('url');
+      if (!targetUrl) throw new PreviewError('The url query parameter is required', 400, 'missing_url');
+      sendJson(response, 200, await fetchTikTokComments(targetUrl));
       return;
     }
 
