@@ -81,7 +81,34 @@ describe('ReaderPage', () => {
     expect(screen.getByText('First story')).toBeTruthy();
     expect(screen.getByText('Second story')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /keep/i })).toBeNull();
-    expect(screen.queryByRole('button', { name: /delete/i })).toBeNull();
+    expect(screen.getAllByRole('button', { name: /delete/i })).toHaveLength(2);
+  });
+
+  it('deletes a selected item from the scroll view', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    vi.mocked(deleteFeedItemById).mockResolvedValue();
+    render(<ReaderPage />);
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Scroll' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete First story' }));
+
+    await waitFor(() => expect(screen.queryByText('First story')).toBeNull());
+    expect(screen.getByText('Second story')).toBeTruthy();
+    expect(deleteFeedItemById).toHaveBeenCalledWith(10, { username: 'reader', password: 'secret' });
+  });
+
+  it('keeps a scroll item visible when deletion fails', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    vi.mocked(deleteFeedItemById).mockRejectedValue(new Error('offline'));
+    render(<ReaderPage />);
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Scroll' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete First story' }));
+
+    expect((await screen.findByRole('alert')).textContent).toContain('Could not delete this item');
+    expect(screen.getByText('First story')).toBeTruthy();
   });
 
   it('deletes an item on the server before advancing', async () => {
