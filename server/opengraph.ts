@@ -3,6 +3,11 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import {
+  createBrotliDecompress,
+  createGunzip,
+  createInflate,
+} from 'node:zlib';
 
 import type {
   LiquipediaMatchPreview,
@@ -16,6 +21,7 @@ const MAX_IMAGE_RESPONSE_BYTES = 10_000_000;
 const MAX_REDIRECTS = 5;
 const REQUEST_TIMEOUT_MS = 8_000;
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
+const REZKA_USER_AGENT = 'TelegramBot (like TwitterBot)';
 const execFileAsync = promisify(execFile);
 
 export interface PreviewImage {
@@ -34,10 +40,11 @@ export class PreviewError extends Error {
 }
 
 export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
-  const url = parsePublicHttpUrl(input);
+  const requestedUrl = parsePublicHttpUrl(input);
+  const url = getPreviewUrl(requestedUrl);
   const page = isHltvMatchUrl(url)
     ? await fetchHltvHtml(url)
-    : await fetchHtml(url);
+    : await fetchHtml(url, isRezkaUrl(requestedUrl) ? REZKA_USER_AGENT : TWITTERBOT_USER_AGENT);
   return parseOpenGraph(page.html, page.url);
 }
 
@@ -115,7 +122,10 @@ export async function fetchRedditPreviewImage(input: string): Promise<PreviewIma
   throw new PreviewError('Reddit redirected the image too many times', 502, 'too_many_redirects');
 }
 
-async function fetchHtml(input: URL): Promise<{ html: string; url: URL }> {
+async function fetchHtml(
+  input: URL,
+  userAgent = TWITTERBOT_USER_AGENT,
+): Promise<{ html: string; url: URL }> {
   let url = input;
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
     let response: Awaited<ReturnType<typeof requestPublicHttp>>;
@@ -124,7 +134,7 @@ async function fetchHtml(input: URL): Promise<{ html: string; url: URL }> {
         accept: 'text/html,application/xhtml+xml',
         // This is the request profile gkbot uses for feed previews. A number
         // of social sites only include their media metadata for crawler UAs.
-        'user-agent': TWITTERBOT_USER_AGENT,
+        'user-agent': userAgent,
       });
     } catch (error) {
       throwPublicUrlError(error);
@@ -203,6 +213,20 @@ async function fetchHltvHtml(url: URL): Promise<{ html: string; url: URL }> {
 function isHltvMatchUrl(url: URL): boolean {
   return url.hostname.toLowerCase().replace(/^www\./, '') === 'hltv.org' &&
     /^\/matches\/\d+(?:\/|$)/.test(url.pathname);
+}
+
+function getPreviewUrl(url: URL): URL {
+  if (!isRezkaUrl(url)) return url;
+
+  // hdrezka.me does not expose the preview metadata consistently. gkbot gets
+  // the same page from Rezka's preview host instead.
+  const previewUrl = new URL(url.href);
+  previewUrl.host = 'rezka.ag';
+  return previewUrl;
+}
+
+function isRezkaUrl(url: URL): boolean {
+  return url.hostname.toLowerCase().replace(/^www\./, '') === 'hdrezka.me';
 }
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
@@ -369,20 +393,29 @@ async function readLimitedBody(response: Awaited<ReturnType<typeof requestPublic
     response.body.destroy();
     throw responseTooLarge();
   }
+  const body = getDecodedBody(response);
   const decoder = new TextDecoder();
   let size = 0;
   let result = '';
 
-  for await (const chunk of response.body) {
+  for await (const chunk of body) {
     const value = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
     size += value.byteLength;
     if (size > MAX_RESPONSE_BYTES) {
-      response.body.destroy();
+      body.destroy();
       throw responseTooLarge();
     }
     result += decoder.decode(value, { stream: true });
   }
   return result + decoder.decode();
+}
+
+function getDecodedBody(response: Awaited<ReturnType<typeof requestPublicHttp>>) {
+  const encoding = firstHeader(response.headers['content-encoding'])?.trim().toLowerCase();
+  if (encoding === 'gzip' || encoding === 'x-gzip') return response.body.pipe(createGunzip());
+  if (encoding === 'deflate') return response.body.pipe(createInflate());
+  if (encoding === 'br') return response.body.pipe(createBrotliDecompress());
+  return response.body;
 }
 
 async function readLimitedBytes(

@@ -1,10 +1,25 @@
-import { describe, expect, it } from 'vitest';
+import { Readable } from 'node:stream';
+import { gzipSync } from 'node:zlib';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const requestPublicHttp = vi.hoisted(() => vi.fn());
+
+vi.mock('./publicHttp.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./publicHttp.js')>(),
+  requestPublicHttp,
+}));
 
 import {
+  fetchOpenGraph,
   fetchRedditPreviewImage,
   parseLiquipediaMatch,
   parseOpenGraph,
 } from './opengraph.js';
+
+beforeEach(() => {
+  requestPublicHttp.mockReset();
+});
 
 describe('parseOpenGraph', () => {
   it('extracts Open Graph metadata regardless of attribute order', () => {
@@ -54,6 +69,35 @@ describe('parseOpenGraph', () => {
       image: 'https://example.com/social.jpg',
       video: 'https://example.com/clip.mp4',
     });
+  });
+});
+
+describe('fetchOpenGraph', () => {
+  it('uses the Rezka preview host and crawler profile used by gkbot', async () => {
+    requestPublicHttp.mockImplementation(async (url: URL) => ({
+      body: Readable.from([
+        gzipSync('<meta property="og:image" content="/covers/story.jpg">'),
+      ]),
+      headers: {
+        'content-encoding': 'gzip',
+        'content-type': 'text/html; charset=utf-8',
+      },
+      status: 200,
+      url,
+    }));
+
+    await expect(fetchOpenGraph('https://hdrezka.me/films/drama/123-story.html'))
+      .resolves.toMatchObject({
+        image: 'https://rezka.ag/covers/story.jpg',
+        url: 'https://rezka.ag/films/drama/123-story.html',
+      });
+    expect(requestPublicHttp).toHaveBeenCalledWith(
+      new URL('https://rezka.ag/films/drama/123-story.html'),
+      {
+        accept: 'text/html,application/xhtml+xml',
+        'user-agent': 'TelegramBot (like TwitterBot)',
+      },
+    );
   });
 });
 
