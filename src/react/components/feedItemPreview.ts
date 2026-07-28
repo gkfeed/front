@@ -11,6 +11,7 @@ export interface FeedItemPreview {
 export type FeedItemProvider =
   | 'generic'
   | 'hltv'
+  | 'instagram'
   | 'liquipedia'
   | 'tiktok'
   | 'vk'
@@ -64,6 +65,15 @@ export function isTikTokFeedItem(item: FeedItem): boolean {
   return getFeedItemProvider(item) === 'tiktok';
 }
 
+export function isInstagramFeedItem(item: FeedItem): boolean {
+  return getFeedItemProvider(item) === 'instagram';
+}
+
+export function isShortVideoFeedItem(item: FeedItem): boolean {
+  const provider = getFeedItemProvider(item);
+  return provider === 'instagram' || provider === 'tiktok';
+}
+
 export function isVkFeedItem(item: FeedItem): boolean {
   return getFeedItemProvider(item) === 'vk';
 }
@@ -77,6 +87,8 @@ export function isLiquipediaFeedItem(item: FeedItem): boolean {
 }
 
 export function getFeedItemProvider(item: FeedItem): FeedItemProvider {
+  if (/^inst:\s*/i.test(item.title)) return 'instagram';
+
   const url = parseUrl(item.link);
   if (!url) return 'generic';
 

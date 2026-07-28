@@ -260,9 +260,58 @@ describe('FeedItemCard Open Graph preview', () => {
 
     render(<FeedItemCard item={item} />);
 
-    const video = await screen.findByLabelText('Video preview for Story');
+    const video = await screen.findByLabelText('Video preview for Story') as HTMLVideoElement;
     expect(video.getAttribute('src')).toBe('https://example.com/video.mp4');
     expect(video.getAttribute('poster')).toBe('https://example.com/poster.jpg');
+    expect(video.autoplay).toBe(true);
+    expect(video.loop).toBe(true);
+    expect(video.muted).toBe(true);
+    expect(video.playsInline).toBe(true);
+  });
+
+  it('sizes a direct video from its intrinsic aspect ratio', async () => {
+    getPreview.mockResolvedValue({
+      url: item.link,
+      title: item.title,
+      description: null,
+      image: null,
+      video: 'https://example.com/portrait.mp4',
+      siteName: 'Example',
+      type: 'video',
+    });
+
+    render(<FeedItemCard item={item} />);
+
+    const video = await screen.findByLabelText('Video preview for Story');
+    Object.defineProperties(video, {
+      videoWidth: { configurable: true, value: 720 },
+      videoHeight: { configurable: true, value: 1280 },
+    });
+    fireEvent.loadedMetadata(video);
+
+    const preview = video.closest('.reader-card__preview');
+    expect(preview?.classList.contains('reader-card__preview--video-adaptive')).toBe(true);
+    expect(preview?.getAttribute('style')).toContain('aspect-ratio: 0.5625');
+  });
+
+  it('renders Instagram media as an identified short-video card', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://files.catbox.moe/story.mp4',
+      title: 'inst: marcian0chka',
+    }} />);
+
+    const video = screen.getByLabelText('Video preview for inst: marcian0chka');
+    const card = video.closest('.reader-card');
+    expect(card?.classList.contains('reader-card--short-video')).toBe(true);
+    expect(card?.classList.contains('reader-card--instagram')).toBe(true);
+    expect(video.closest('.reader-card__preview--short-video')).toBeTruthy();
+    const identity = screen.getByText('marcian0chka').closest('.reader-card__short-video-identity');
+    expect(identity).toBeTruthy();
+    expect(identity?.parentElement).toBe(card);
+    expect(screen.queryByText('files.catbox.moe')).toBeNull();
+    expect(screen.queryByText('Feed #2')).toBeNull();
+    expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
   it('renders TikTok’s static player without calling the Open Graph BFF', () => {

@@ -6,7 +6,9 @@ import type { FeedItem } from '../types';
 import {
   getFeedItemPreview,
   isHltvFeedItem,
+  isInstagramFeedItem,
   isLiquipediaFeedItem,
+  isShortVideoFeedItem,
   isTikTokFeedItem,
   isVkFeedItem,
 } from './feedItemPreview';
@@ -73,6 +75,19 @@ describe('isTikTokFeedItem', () => {
     expect(isTikTokFeedItem(item({ link: 'https://www.tiktok.com/@creator/video/123' }))).toBe(true);
     expect(isTikTokFeedItem(item({ link: 'https://m.tiktok.com/v/123' }))).toBe(true);
     expect(isTikTokFeedItem(item({ link: 'https://tiktok.com.example.org/video/123' }))).toBe(false);
+  });
+});
+
+describe('Instagram feed items', () => {
+  it('recognizes the feed title marker even when media is hosted elsewhere', () => {
+    const instagramItem = item({
+      link: 'https://files.catbox.moe/story.mp4',
+      title: 'inst: marcian0chka',
+    });
+
+    expect(isInstagramFeedItem(instagramItem)).toBe(true);
+    expect(isShortVideoFeedItem(instagramItem)).toBe(true);
+    expect(isInstagramFeedItem(item({ title: 'Instagram news' }))).toBe(false);
   });
 });
 

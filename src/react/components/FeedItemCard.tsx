@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 
 import type { OpenGraphPreview } from '../services/openGraph';
 import { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
@@ -9,6 +9,7 @@ import {
   getYoutubeVideoId,
   type FeedItemPreview,
 } from './feedItemPreview';
+import { InstagramIcon } from './Icons';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
 import { TikTokComments } from './previews/TikTokComments';
 import { TikTokEmbed } from './previews/TikTokEmbed';
@@ -23,6 +24,8 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const provider = getFeedItemProvider(item);
   const isYoutube = provider === 'youtube';
   const isTikTok = provider === 'tiktok';
+  const isInstagram = provider === 'instagram';
+  const isShortVideo = isTikTok || isInstagram;
   const isVk = provider === 'vk';
   const isHltv = provider === 'hltv';
   const isLiquipedia = provider === 'liquipedia';
@@ -43,6 +46,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     ? tiktokEmbedPreview ?? localPreview
     : localPreview ?? remotePreview;
   const [previewFailures, setPreviewFailures] = useState(0);
+  const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
   const fallbackSource = preview && 'fallbackSrc' in preview && typeof preview.fallbackSrc === 'string'
     ? preview.fallbackSrc
     : null;
@@ -65,6 +69,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
 
   useEffect(() => {
     setPreviewFailures(0);
+    setVideoAspectRatio(null);
   }, [item.link]);
 
   return (
@@ -74,10 +79,18 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         'reader-card',
         isLiquipedia ? 'reader-card--liquipedia' : '',
         isYoutube ? 'reader-card--youtube' : '',
+        isShortVideo ? 'reader-card--short-video' : '',
         isTikTok ? 'reader-card--tiktok' : '',
+        isInstagram ? 'reader-card--instagram' : '',
         isImagePreviewOnly ? 'reader-card--image-preview' : '',
       ].filter(Boolean).join(' ')}
     >
+      {isInstagram ? (
+        <div className="reader-card__short-video-identity">
+          <span className="reader-card__short-video-logo"><InstagramIcon /></span>
+          <span>{getInstagramUsername(item.title)}</span>
+        </div>
+      ) : null}
       {isYoutube && youtubeVideoId ? (
         <YoutubePreview
           videoId={youtubeVideoId}
@@ -91,18 +104,32 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         <div className={[
           'reader-card__preview',
           'reader-card__preview--video',
+          videoAspectRatio ? 'reader-card__preview--video-adaptive' : '',
+          isShortVideo ? 'reader-card__preview--short-video' : '',
           isTikTok ? 'reader-card__preview--tiktok' : '',
-        ].filter(Boolean).join(' ')}>
+        ].filter(Boolean).join(' ')}
+          style={videoAspectRatio ? {
+            '--reader-video-aspect-ratio': videoAspectRatio,
+            aspectRatio: videoAspectRatio,
+          } as CSSProperties : undefined}
+        >
           <video
             key={visiblePreview.src}
             src={visiblePreview.src}
             poster={visiblePreview.poster}
             aria-label={visiblePreview.alt}
-            autoPlay={isTikTok}
+            autoPlay
             controls
-            loop={isTikTok}
+            loop
+            muted
             playsInline
-            preload={isTikTok ? 'auto' : 'metadata'}
+            preload="auto"
+            onLoadedMetadata={(event) => {
+              const { videoHeight, videoWidth } = event.currentTarget;
+              if (videoHeight > 0 && videoWidth > 0) {
+                setVideoAspectRatio(videoWidth / videoHeight);
+              }
+            }}
             onError={() => setPreviewFailures((failures) => failures + 1)}
           />
         </div>
@@ -112,6 +139,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         <a
           className={[
             'reader-card__preview',
+            isShortVideo ? 'reader-card__preview--short-video' : '',
             isTikTok ? 'reader-card__preview--tiktok' : '',
           ].filter(Boolean).join(' ')}
           href={item.link}
@@ -133,7 +161,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           <h2 className="reader-card__title">{item.text || item.title}</h2>
           <p className="reader-card__channel">{getYoutubeChannelName(item.title)}</p>
         </div>
-      ) : isTikTok ? null : (
+      ) : isShortVideo ? null : (
         <>
           <div className="reader-card__meta">
             <span>{hostname}</span>
@@ -209,6 +237,10 @@ function isDirectVideo(value: string): boolean {
 
 function getYoutubeChannelName(title: string): string {
   return title.replace(/^YT:\s*/i, '').trim() || 'YouTube';
+}
+
+function getInstagramUsername(title: string): string {
+  return title.replace(/^inst:\s*/i, '').trim() || 'Instagram';
 }
 
 function parseUrl(value: string): URL | null {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { FeedItemCard } from '../components/FeedItemCard';
-import { isTikTokFeedItem } from '../components/feedItemPreview';
+import { isShortVideoFeedItem, isTikTokFeedItem } from '../components/feedItemPreview';
 import { useFeedReader } from '../hooks/useFeedReader';
 
 type ReaderMode = 'review' | 'scroll';
@@ -83,6 +83,7 @@ export function ReaderPage() {
           id="reader-review-panel"
           className={[
             'reader__item',
+            isShortVideoFeedItem(currentItem) ? 'reader__item--short-video' : '',
             isTikTokFeedItem(currentItem) ? 'reader__item--tiktok' : '',
           ].filter(Boolean).join(' ')}
           role="tabpanel"

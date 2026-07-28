@@ -21,7 +21,7 @@ export function TikTokEmbed({ src, title }: { src: string; title: string }) {
   }, []);
 
   return (
-    <div className="reader-card__preview reader-card__preview--tiktok">
+    <div className="reader-card__preview reader-card__preview--short-video reader-card__preview--tiktok">
       <iframe
         ref={frameRef}
         src={src}
