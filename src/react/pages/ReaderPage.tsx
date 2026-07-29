@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { FeedItemCard } from '../components/FeedItemCard';
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../components/feedItemPreview';
 import { useFeedReader } from '../hooks/useFeedReader';
+import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
+import type { FeedItem } from '../types';
 
 type ReaderMode = 'review' | 'scroll';
 
@@ -90,6 +92,16 @@ export function ReaderPage() {
           aria-labelledby="reader-review-tab"
         >
           <FeedItemCard key={currentItem.id} item={currentItem} />
+          {isShortVideoFeedItem(currentItem) ? (
+            <MobileReviewRail
+              item={currentItem}
+              remainingCount={remainingCount}
+              isDeleting={isDeleting}
+              onKeep={keepItem}
+              onDelete={deleteItem}
+              onShowScroll={() => setMode('scroll')}
+            />
+          ) : null}
           <div className="reader__actions" aria-label="Feed item actions">
             <button type="button" className="reader__keep" onClick={keepItem} disabled={isDeleting}>
               <span aria-hidden="true">✓</span> Keep
@@ -135,6 +147,92 @@ export function ReaderPage() {
         </div>
       ) : null}
     </section>
+  );
+}
+
+type MobileReviewRailProps = {
+  item: FeedItem;
+  remainingCount: number;
+  isDeleting: boolean;
+  onKeep: () => void;
+  onDelete: () => void;
+  onShowScroll: () => void;
+};
+
+function MobileReviewRail({
+  item,
+  remainingCount,
+  isDeleting,
+  onKeep,
+  onDelete,
+  onShowScroll,
+}: MobileReviewRailProps) {
+  const menuRef = useRef<HTMLDetailsElement>(null);
+  const [commentsExpanded, setCommentsExpanded] = useTikTokCommentsPreference();
+  const isTikTok = isTikTokFeedItem(item);
+
+  function closeMenu() {
+    menuRef.current?.removeAttribute('open');
+  }
+
+  return (
+    <aside className="reader__mobile-rail" aria-label="Review controls">
+      <details ref={menuRef} className="reader__mobile-menu">
+        <summary aria-label="More review actions">
+          <span aria-hidden="true">≡</span>
+        </summary>
+        <div className="reader__mobile-menu-panel">
+          <strong>More actions</strong>
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              onShowScroll();
+            }}
+          >
+            Scroll view
+          </button>
+          {isTikTok ? (
+            <button
+              type="button"
+              aria-expanded={commentsExpanded}
+              aria-controls={`tiktok-comments-list-${item.id}`}
+              onClick={() => {
+                closeMenu();
+                setCommentsExpanded(!commentsExpanded);
+              }}
+            >
+              {commentsExpanded ? 'Hide comments' : 'Show comments'}
+            </button>
+          ) : null}
+          <a href={item.link} target="_blank" rel="noreferrer">
+            Open original <span aria-hidden="true">↗</span>
+          </a>
+          <span className="reader__mobile-remaining">{remainingCount} remaining</span>
+        </div>
+      </details>
+
+      <div className="reader__mobile-decisions">
+        <button
+          type="button"
+          className="reader__mobile-keep"
+          aria-label="Keep item"
+          onClick={onKeep}
+          disabled={isDeleting}
+        >
+          <span aria-hidden="true">✓</span>
+        </button>
+        <button
+          type="button"
+          className="reader__mobile-delete"
+          aria-label={isDeleting ? 'Deleting item' : 'Delete item'}
+          onClick={onDelete}
+          disabled={isDeleting}
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+    </aside>
   );
 }
 

@@ -173,6 +173,7 @@ describe('FeedItemCard Open Graph preview', () => {
 
     const image = await screen.findByAltText('Preview for Reddit post');
     expect(image.closest('.reader-card--image-preview')).toBeTruthy();
+    expect(image.closest('.reader-card--reddit-preview')).toBeTruthy();
     expect(screen.queryByText('reddit.com')).toBeNull();
     expect(screen.queryByText('Feed #2')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Duplicated Reddit title' })).toBeNull();
@@ -200,6 +201,7 @@ describe('FeedItemCard Open Graph preview', () => {
     const image = await screen.findByAltText('Preview for OG vs Spirit at BLAST Bounty 2026 Season 2');
     expect(image.getAttribute('src')).toBe('https://api.url2png.com/v6/account/signature/png/?url=match');
     expect(image.closest('.reader-card--image-preview')).toBeTruthy();
+    expect(image.closest('.reader-card--reddit-preview')).toBeNull();
     expect(screen.queryByText('hltv.org')).toBeNull();
     expect(screen.queryByText('Feed #2')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'OG vs Spirit' })).toBeNull();
@@ -265,7 +267,7 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(video.getAttribute('poster')).toBe('https://example.com/poster.jpg');
     expect(video.autoplay).toBe(true);
     expect(video.loop).toBe(true);
-    expect(video.muted).toBe(true);
+    expect(video.muted).toBe(false);
     expect(video.playsInline).toBe(true);
   });
 
@@ -292,6 +294,25 @@ describe('FeedItemCard Open Graph preview', () => {
     const preview = video.closest('.reader-card__preview');
     expect(preview?.classList.contains('reader-card__preview--video-adaptive')).toBe(true);
     expect(preview?.getAttribute('style')).toContain('aspect-ratio: 0.5625');
+  });
+
+  it('autoplays muted on iPhone and offers a user gesture to enable sound', () => {
+    vi.stubGlobal('navigator', {
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+      platform: 'iPhone',
+      maxTouchPoints: 5,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://files.example.com/story.mp4',
+      title: 'inst: creator',
+    }} />);
+
+    const video = screen.getByLabelText('Video preview for inst: creator') as HTMLVideoElement;
+    expect(video.autoplay).toBe(true);
+    expect(video.muted).toBe(true);
+    expect(screen.getByRole('button', { name: 'Tap for sound' })).toBeTruthy();
   });
 
   it('renders Instagram media as an identified short-video card', () => {
@@ -376,6 +397,22 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(player.getAttribute('src')).toContain('/player/v1/456?');
     expect(player.getAttribute('src')).toContain('autoplay=1');
     expect(player.getAttribute('src')).toContain('muted=0');
+  });
+
+  it('autoplays TikTok on iPhone and offers a user gesture to enable sound', () => {
+    vi.stubGlobal('navigator', {
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+      platform: 'iPhone',
+      maxTouchPoints: 5,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.tiktok.com/@creator/video/789',
+    }} />);
+
+    expect(screen.getByTitle('Video preview for Story').getAttribute('src')).toContain('autoplay=1');
+    expect(screen.getByRole('button', { name: 'Tap for sound' })).toBeTruthy();
   });
 
   it('renders a Liquipedia match summary instead of the generic hero image', async () => {

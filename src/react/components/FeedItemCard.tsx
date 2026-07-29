@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 import type { OpenGraphPreview } from '../services/openGraph';
 import { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
@@ -26,6 +26,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const isTikTok = provider === 'tiktok';
   const isInstagram = provider === 'instagram';
   const isShortVideo = isTikTok || isInstagram;
+  const isReddit = isRedditUrl(itemUrl);
   const isVk = provider === 'vk';
   const isHltv = provider === 'hltv';
   const isLiquipedia = provider === 'liquipedia';
@@ -41,12 +42,15 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     ? feedDescription ??
       getFeedItemDescription(openGraphPreview?.description ?? '', item.title)
     : null;
+  const requiresSoundGesture = isAppleMobileDevice();
   const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item) : null;
   const preview = isTikTok
     ? tiktokEmbedPreview ?? localPreview
     : localPreview ?? remotePreview;
   const [previewFailures, setPreviewFailures] = useState(0);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
+  const [showSoundPrompt, setShowSoundPrompt] = useState(requiresSoundGesture);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const fallbackSource = preview && 'fallbackSrc' in preview && typeof preview.fallbackSrc === 'string'
     ? preview.fallbackSrc
     : null;
@@ -71,7 +75,8 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   useEffect(() => {
     setPreviewFailures(0);
     setVideoAspectRatio(null);
-  }, [item.link]);
+    setShowSoundPrompt(requiresSoundGesture);
+  }, [item.link, requiresSoundGesture]);
 
   return (
     <article
@@ -85,6 +90,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         isInstagram ? 'reader-card--instagram' : '',
         isInstagramPhoto ? 'reader-card--instagram-photo' : '',
         isImagePreviewOnly ? 'reader-card--image-preview' : '',
+        isImagePreviewOnly && isReddit ? 'reader-card--reddit-preview' : '',
       ].filter(Boolean).join(' ')}
     >
       {isInstagram ? (
@@ -116,6 +122,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           } as CSSProperties : undefined}
         >
           <video
+            ref={videoRef}
             key={visiblePreview.src}
             src={visiblePreview.src}
             poster={visiblePreview.poster}
@@ -123,7 +130,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
             autoPlay
             controls
             loop
-            muted
+            muted={requiresSoundGesture}
             playsInline
             preload="auto"
             onLoadedMetadata={(event) => {
@@ -134,9 +141,28 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
             }}
             onError={() => setPreviewFailures((failures) => failures + 1)}
           />
+          {showSoundPrompt ? (
+            <button
+              type="button"
+              className="reader-card__sound-toggle"
+              onClick={() => {
+                if (videoRef.current) {
+                  videoRef.current.muted = false;
+                  void videoRef.current.play();
+                }
+                setShowSoundPrompt(false);
+              }}
+            >
+              Tap for sound
+            </button>
+          ) : null}
         </div>
       ) : visiblePreview.type === 'embed' ? (
-        <TikTokEmbed src={visiblePreview.src} title={visiblePreview.alt} />
+        <TikTokEmbed
+          src={visiblePreview.src}
+          title={visiblePreview.alt}
+          requiresSoundGesture={requiresSoundGesture}
+        />
       ) : (
         <a
           className={[
@@ -211,6 +237,12 @@ function getTikTokEmbedPreview(item: FeedItem): FeedItemPreview | null {
   };
 }
 
+function isAppleMobileDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /iP(?:hone|ad|od)/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
 function getRemotePreview(
   preview: OpenGraphPreview | null,
   title: string,
@@ -255,4 +287,10 @@ function parseUrl(value: string): URL | null {
 
 function getHostname(link: string): string {
   return parseUrl(link)?.hostname.replace(/^www\./, '') || 'Feed item';
+}
+
+function isRedditUrl(url: URL | null): boolean {
+  if (!url) return false;
+  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+  return hostname === 'reddit.com' || hostname.endsWith('.reddit.com');
 }

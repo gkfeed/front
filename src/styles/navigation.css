@@ -274,6 +274,8 @@ a.feed:focus-visible,
 @media (max-width: 760px) {
   .nav {
     grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 8px 12px 7px;
   }
 
   .theme-picker {
@@ -283,13 +285,42 @@ a.feed:focus-visible,
 
   .theme-picker__trigger {
     min-width: 112px;
+    min-height: 40px;
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
 
   .nav__links {
     grid-column: 1 / -1;
+    width: 100%;
+    gap: clamp(12px, 4.5vw, 20px);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
   }
 
-  .nav__links {
-    flex-wrap: wrap;
+  .nav__links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav__brand,
+  .nav__link {
+    min-height: 40px;
+  }
+
+  .nav__brand {
+    gap: 7px;
+    font-size: 1.16rem;
+  }
+
+  .nav__brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .nav__link {
+    min-width: auto;
+    flex: 0 0 auto;
+    font-size: 1rem;
   }
 }

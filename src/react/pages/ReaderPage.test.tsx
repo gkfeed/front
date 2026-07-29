@@ -84,6 +84,28 @@ describe('ReaderPage', () => {
     expect(screen.queryByRole('button', { name: /delete/i })).toBeNull();
   });
 
+  it('offers focused mobile controls for short videos', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue([{
+      id: 20,
+      feedId: 4,
+      link: 'https://www.tiktok.com/@creator/video/123',
+      title: 'Short video',
+      text: '',
+    }]);
+    render(<ReaderPage />);
+
+    expect(await screen.findByLabelText('Review controls')).toBeTruthy();
+    expect(screen.getByLabelText('More review actions')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Keep item' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete item' })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scroll view' }));
+
+    expect(screen.queryByLabelText('Review controls')).toBeNull();
+    expect(screen.getByTitle('Video preview for Short video')).toBeTruthy();
+  });
+
   it('deletes an item on the server before advancing', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     vi.mocked(deleteFeedItemById).mockResolvedValue();
