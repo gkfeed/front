@@ -314,6 +314,19 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
+  it('identifies an Instagram base64 description image as a photo post', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.instagram.com/p/example/',
+      title: 'inst: photographer',
+      text: '<img src="data:image/png;base64,iVBORw0KGgo=">',
+    }} />);
+
+    const image = screen.getByAltText('Preview for inst: photographer');
+    expect(image.closest('.reader-card--instagram-photo')).toBeTruthy();
+    expect(image.closest('.reader-card--short-video')).toBeTruthy();
+  });
+
   it('renders TikTok’s static player without calling the Open Graph BFF', () => {
     getPreview.mockResolvedValue({
       url: 'https://www.tiktok.com/@creator/video/123',

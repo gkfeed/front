@@ -58,6 +58,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     : previewFailures === 1 && fallbackPreview
       ? fallbackPreview
     : previewFailures > 0 ? null : preview;
+  const isInstagramPhoto = isInstagram && visiblePreview?.type === undefined;
   const isImagePreviewOnly = Boolean(
     visiblePreview &&
     visiblePreview.type === undefined &&
@@ -82,6 +83,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         isShortVideo ? 'reader-card--short-video' : '',
         isTikTok ? 'reader-card--tiktok' : '',
         isInstagram ? 'reader-card--instagram' : '',
+        isInstagramPhoto ? 'reader-card--instagram-photo' : '',
         isImagePreviewOnly ? 'reader-card--image-preview' : '',
       ].filter(Boolean).join(' ')}
     >
