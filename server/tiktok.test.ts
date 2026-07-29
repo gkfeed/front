@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseTikTokComments } from './tiktok.js';
+import { parseTikTokComments, parseTikTokDescription, parseTikTokDetails } from './tiktok.js';
 
 describe('parseTikTokComments', () => {
   it('maps multiple comments with names, usernames, and avatars', () => {
@@ -40,5 +40,37 @@ describe('parseTikTokComments', () => {
         avatarUrl: null,
       },
     ]);
+  });
+});
+
+describe('parseTikTokDescription', () => {
+  it('reads and normalizes the caption from TikTok oEmbed data', () => {
+    expect(parseTikTokDescription({
+      title: 'A video caption\nwith spacing #one #два',
+    })).toBe('A video caption with spacing #one #два');
+  });
+
+  it('returns null when the caption is unavailable', () => {
+    expect(parseTikTokDescription({ title: '' })).toBeNull();
+    expect(parseTikTokDescription({})).toBeNull();
+  });
+});
+
+describe('parseTikTokDetails', () => {
+  it('maps the video caption and creator identity', () => {
+    expect(parseTikTokDetails({
+      code: 0,
+      data: {
+        title: 'Creator caption #video',
+        author: {
+          nickname: 'Video Creator',
+          avatar: 'https://cdn.example.com/creator.jpg',
+        },
+      },
+    })).toEqual({
+      description: 'Creator caption #video',
+      creatorName: 'Video Creator',
+      creatorAvatarUrl: 'https://cdn.example.com/creator.jpg',
+    });
   });
 });

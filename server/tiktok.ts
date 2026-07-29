@@ -12,8 +12,17 @@ export type TikTokComment = {
   avatarUrl: string | null;
 };
 
-export async function fetchTikTokComments(input: string): Promise<{ comments: TikTokComment[] }> {
+type TikTokDetails = {
+  description: string | null;
+  creatorName: string | null;
+  creatorAvatarUrl: string | null;
+};
+
+export async function fetchTikTokComments(
+  input: string,
+): Promise<{ comments: TikTokComment[] } & TikTokDetails> {
   const videoUrl = parseTikTokVideoUrl(input);
+  const detailsPromise = fetchTikTokDetails(videoUrl);
   const upstream = new URL('https://www.tikwm.com/api/comment/list');
   upstream.searchParams.set('url', videoUrl.href);
   upstream.searchParams.set('count', String(COMMENT_LIMIT));
@@ -38,7 +47,10 @@ export async function fetchTikTokComments(input: string): Promise<{ comments: Ti
   }
 
   const body = await readLimitedJson(response);
-  return { comments: parseTikTokComments(body) };
+  return {
+    comments: parseTikTokComments(body),
+    ...await detailsPromise,
+  };
 }
 
 export function parseTikTokComments(value: unknown): TikTokComment[] {
@@ -65,6 +77,77 @@ export function parseTikTokComments(value: unknown): TikTokComment[] {
       avatarUrl,
     }] : [];
   });
+}
+
+export function parseTikTokDescription(value: unknown): string | null {
+  if (!isRecord(value) || typeof value.title !== 'string') return null;
+  return value.title.replace(/\s+/g, ' ').trim() || null;
+}
+
+export function parseTikTokDetails(value: unknown): TikTokDetails | null {
+  if (!isRecord(value) || value.code !== 0 || !isRecord(value.data)) return null;
+  const author = isRecord(value.data.author) ? value.data.author : {};
+  return {
+    description: typeof value.data.title === 'string'
+      ? value.data.title.replace(/\s+/g, ' ').trim() || null
+      : null,
+    creatorName: typeof author.nickname === 'string'
+      ? author.nickname.replace(/\s+/g, ' ').trim() || null
+      : null,
+    creatorAvatarUrl: typeof author.avatar === 'string' ? safeHttpUrl(author.avatar) : null,
+  };
+}
+
+async function fetchTikTokDetails(videoUrl: URL): Promise<TikTokDetails> {
+  const upstream = new URL('https://www.tikwm.com/api/');
+  upstream.searchParams.set('url', videoUrl.href);
+
+  try {
+    const response = await requestPublicHttp(upstream, {
+      accept: 'application/json',
+      'user-agent': 'GKFeed/1.0',
+    });
+    if (response.status >= 200 && response.status < 300) {
+      const details = parseTikTokDetails(await readLimitedJson(response));
+      if (details) return details;
+    } else {
+      response.body.resume();
+    }
+  } catch {
+    // Fall through to TikTok's official oEmbed metadata.
+  }
+
+  return fetchTikTokOEmbedDetails(videoUrl);
+}
+
+async function fetchTikTokOEmbedDetails(videoUrl: URL): Promise<TikTokDetails> {
+  const upstream = new URL('https://www.tiktok.com/oembed');
+  upstream.searchParams.set('url', videoUrl.href);
+
+  try {
+    const response = await requestPublicHttp(upstream, {
+      accept: 'application/json',
+      'user-agent': 'GKFeed/1.0',
+    });
+    if (response.status < 200 || response.status >= 300) {
+      response.body.resume();
+      return emptyTikTokDetails();
+    }
+    const value = await readLimitedJson(response);
+    return {
+      description: parseTikTokDescription(value),
+      creatorName: isRecord(value) && typeof value.author_name === 'string'
+        ? value.author_name.replace(/\s+/g, ' ').trim() || null
+        : null,
+      creatorAvatarUrl: null,
+    };
+  } catch {
+    return emptyTikTokDetails();
+  }
+}
+
+function emptyTikTokDetails(): TikTokDetails {
+  return { description: null, creatorName: null, creatorAvatarUrl: null };
 }
 
 function parseTikTokVideoUrl(value: string): URL {

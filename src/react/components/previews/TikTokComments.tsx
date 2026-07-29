@@ -11,10 +11,13 @@ import { UserIcon } from '../Icons';
 export function TikTokComments({ item }: { item: FeedItem }) {
   const [isExpanded, setIsExpanded] = useTikTokCommentsPreference();
   const [comments, setComments] = useState<TikTokComment[] | null>(null);
+  const [remoteDescription, setRemoteDescription] = useState<string | null>(null);
+  const [creator, setCreator] = useState<{ name: string; avatarUrl: string | null } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const commentsId = `tiktok-comments-list-${item.id}`;
+  const description = getVideoDescription(item.text, item.title) ?? remoteDescription;
 
   useEffect(() => {
     if (!isExpanded || comments !== null || loadFailed) return;
@@ -22,7 +25,14 @@ export function TikTokComments({ item }: { item: FeedItem }) {
     const controller = new AbortController();
     setIsLoading(true);
     fetchTikTokComments(item.link, controller.signal)
-      .then(setComments)
+      .then((result) => {
+        setComments(result.comments);
+        setRemoteDescription(result.description);
+        setCreator(result.creatorName ? {
+          name: result.creatorName,
+          avatarUrl: result.creatorAvatarUrl,
+        } : null);
+      })
       .catch((error: unknown) => {
         if (!(error instanceof DOMException && error.name === 'AbortError')) setLoadFailed(true);
       })
@@ -33,6 +43,8 @@ export function TikTokComments({ item }: { item: FeedItem }) {
   function retry() {
     setLoadFailed(false);
     setComments(null);
+    setRemoteDescription(null);
+    setCreator(null);
     setLoadAttempt((attempt) => attempt + 1);
   }
 
@@ -56,8 +68,25 @@ export function TikTokComments({ item }: { item: FeedItem }) {
         <div id={commentsId} className="tiktok-comments__empty" role="status">
           <p>Loading comments…</p>
         </div>
-      ) : isExpanded && comments && comments.length > 0 ? (
+      ) : isExpanded && comments && (comments.length > 0 || description) ? (
         <ol id={commentsId} className="tiktok-comments__list">
+          {description ? (
+            <li className="tiktok-comments__comment tiktok-comments__description">
+              {creator ? (
+                <div className="tiktok-comments__creator">
+                  <span className="tiktok-comments__creator-avatar">
+                    {creator.avatarUrl ? (
+                      <img src={creator.avatarUrl} alt="" referrerPolicy="no-referrer" />
+                    ) : (
+                      <UserIcon />
+                    )}
+                  </span>
+                  <strong>{creator.name}</strong>
+                </div>
+              ) : null}
+              <p>{renderDescription(description)}</p>
+            </li>
+          ) : null}
           {comments.map((comment, index) => (
             <li className="tiktok-comments__comment" key={`${index}-${comment.text}`}>
               <div className="tiktok-comments__identity">
@@ -76,6 +105,14 @@ export function TikTokComments({ item }: { item: FeedItem }) {
               <p>{comment.text}</p>
             </li>
           ))}
+          {comments.length === 0 ? (
+            <li className="tiktok-comments__empty">
+              <p>No comments are available for this video.</p>
+              <a href={item.link} target="_blank" rel="noreferrer">
+                View comments on TikTok <span aria-hidden="true">↗</span>
+              </a>
+            </li>
+          ) : null}
         </ol>
       ) : isExpanded && loadFailed ? (
         <div id={commentsId} className="tiktok-comments__empty" role="alert">
@@ -92,4 +129,22 @@ export function TikTokComments({ item }: { item: FeedItem }) {
       ) : null}
     </aside>
   );
+}
+
+function getVideoDescription(content: string, title: string): string | null {
+  if (!content || typeof DOMParser === 'undefined') return null;
+
+  const document = new DOMParser().parseFromString(content, 'text/html');
+  document.querySelectorAll('script, style, noscript').forEach((element) => element.remove());
+  const description = document.body.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  if (!description || description.toLocaleLowerCase() === title.trim().toLocaleLowerCase()) return null;
+  return description;
+}
+
+function renderDescription(description: string) {
+  return description.split(/(#[\p{L}\p{N}_]+)/gu).map((part, index) => (
+    part.startsWith('#')
+      ? <strong className="tiktok-comments__hashtag" key={`${index}-${part}`}>{part}</strong>
+      : part
+  ));
 }
