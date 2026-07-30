@@ -12,6 +12,7 @@ import { ReaderPage } from './react/pages/ReaderPage';
 import { AuthProvider } from './react/state/AuthProvider';
 import { FeedSearchProvider } from './react/state/FeedSearchProvider';
 import { NsfwPreferencesProvider } from './react/state/NsfwPreferencesProvider';
+import { useAuth } from './react/state/useAuth';
 
 function FeedListPage() {
   return (
@@ -24,12 +25,13 @@ function FeedListPage() {
 
 function RouteEffects() {
   const { pathname } = useLocation();
+  const { status } = useAuth();
 
   useEffect(() => {
     const main = document.querySelector<HTMLElement>('main');
     main?.focus();
     document.title = `${main?.querySelector('h1')?.textContent ?? 'GKFEED'} | GKFEED`;
-  }, [pathname]);
+  }, [pathname, status]);
 
   return null;
 }
