@@ -1,5 +1,6 @@
 import { PublicHttpError, requestPublicHttp } from './publicHttp.js';
 import { PreviewError } from './preview/errors.js';
+import { readLimitedJson } from './preview/remoteHttp.js';
 
 const MAX_RESPONSE_BYTES = 1_000_000;
 const COMMENT_LIMIT = 10;
@@ -46,7 +47,7 @@ export async function fetchTikTokComments(
     throw new PreviewError('The comments provider returned an error', 502, 'comments_upstream_error');
   }
 
-  const body = await readLimitedJson(response);
+  const body = await readTikTokJson(response);
   return {
     comments: parseTikTokComments(body),
     ...await detailsPromise,
@@ -108,7 +109,7 @@ async function fetchTikTokDetails(videoUrl: URL): Promise<TikTokDetails> {
       'user-agent': 'GKFeed/1.0',
     });
     if (response.status >= 200 && response.status < 300) {
-      const details = parseTikTokDetails(await readLimitedJson(response));
+      const details = parseTikTokDetails(await readTikTokJson(response));
       if (details) return details;
     } else {
       response.body.resume();
@@ -133,7 +134,7 @@ async function fetchTikTokOEmbedDetails(videoUrl: URL): Promise<TikTokDetails> {
       response.body.resume();
       return emptyTikTokDetails();
     }
-    const value = await readLimitedJson(response);
+    const value = await readTikTokJson(response);
     return {
       description: parseTikTokDescription(value),
       creatorName: isRecord(value) && typeof value.author_name === 'string'
@@ -169,26 +170,22 @@ function parseTikTokVideoUrl(value: string): URL {
   return url;
 }
 
-async function readLimitedJson(
+async function readTikTokJson(
   response: Awaited<ReturnType<typeof requestPublicHttp>>,
 ): Promise<unknown> {
-  let size = 0;
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of response.body) {
-    const bytes = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
-    size += bytes.byteLength;
-    if (size > MAX_RESPONSE_BYTES) {
-      response.body.destroy();
-      throw new PreviewError('The comments response was too large', 502, 'comments_too_large');
-    }
-    chunks.push(bytes);
-  }
-
-  try {
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-  } catch {
-    throw new PreviewError('The comments provider returned invalid data', 502, 'invalid_comments');
-  }
+  return readLimitedJson(response, {
+    maximumBytes: MAX_RESPONSE_BYTES,
+    tooLarge: () => new PreviewError(
+      'The comments response was too large',
+      502,
+      'comments_too_large',
+    ),
+    invalidJson: () => new PreviewError(
+      'The comments provider returned invalid data',
+      502,
+      'invalid_comments',
+    ),
+  });
 }
 
 function safeHttpUrl(value: string): string | null {

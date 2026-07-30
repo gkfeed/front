@@ -25,7 +25,11 @@ export function requireCredentials<T extends { username: string; password: strin
 }
 
 export async function request(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  const response = await fetch(input, { signal: AbortSignal.timeout(10_000), ...init });
+  const timeoutSignal = AbortSignal.timeout(10_000);
+  const signal = init.signal
+    ? AbortSignal.any([init.signal, timeoutSignal])
+    : timeoutSignal;
+  const response = await fetch(input, { ...init, signal });
   if (!response.ok) {
     throw new ApiError(`Request failed with ${response.status}`, response.status);
   }

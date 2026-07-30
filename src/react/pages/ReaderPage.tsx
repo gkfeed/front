@@ -1,14 +1,11 @@
-import { useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
 
-import { FeedItemCard } from '../components/FeedItemCard';
-import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemPreview';
+import { ReaderReview } from '../components/ReaderReview';
+import { ReaderScroll } from '../components/ReaderScroll';
 import { useFeedReader } from '../hooks/useFeedReader';
 import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
-import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
-import type { FeedItem } from '../types';
 
 export function ReaderPage() {
   const { search } = useLocation();
@@ -51,16 +48,13 @@ export function ReaderPage() {
   return (
     <section className="reader" aria-labelledby="reader-page-title">
       <h1 id="reader-page-title" className="sr-only">Reader</h1>
-
       {isLoading ? <ReaderLoading /> : null}
-
       {loadFailed ? (
         <div className="reader__state" role="alert">
           <p>Could not load your feed items.</p>
           <button type="button" className="secondary" onClick={retryLoad}>Try again</button>
         </div>
       ) : null}
-
       {!isLoading && !loadFailed && items.length === 0 ? (
         <div className="reader__state">
           <span className="reader__done-mark" aria-hidden="true">✓</span>
@@ -69,209 +63,30 @@ export function ReaderPage() {
           <button type="button" className="secondary" onClick={retryLoad}>Check again</button>
         </div>
       ) : null}
-
       {mode === 'review' && currentItem ? (
-        <div
-          ref={reviewPanelRef}
-          id="reader-review-panel"
-          className={[
-            'reader__item',
-            useCompactActions ? 'reader__item--compact-actions' : '',
-            isShortVideoFeedItem(currentItem) ? 'reader__item--short-video' : '',
-            isTikTokFeedItem(currentItem) ? 'reader__item--tiktok' : '',
-          ].filter(Boolean).join(' ')}
-          role="region"
-          aria-label="Review view"
-        >
-          <FeedItemCard key={currentItem.id} item={currentItem} />
-          {isShortVideoFeedItem(currentItem) ? (
-            <MobileReviewRail
-              item={currentItem}
-              remainingCount={remainingCount}
-              isDeleting={isDeleting}
-              onKeep={keepItem}
-              onDelete={deleteItem}
-              onShowScroll={() => setMode('scroll')}
-            />
-          ) : null}
-          {useCompactActions ? (
-            <CompactReviewActions
-              isDeleting={isDeleting}
-              onKeep={keepItem}
-              onDelete={deleteItem}
-            />
-          ) : null}
-          <div
-            ref={reviewActionsRef}
-            className="reader__actions"
-            aria-label="Feed item actions"
-            hidden={useCompactActions}
-          >
-            <button type="button" className="reader__keep" onClick={keepItem} disabled={isDeleting}>
-              <span aria-hidden="true">✓</span> Keep
-            </button>
-            <button type="button" className="delete" onClick={deleteItem} disabled={isDeleting}>
-              <span aria-hidden="true">×</span> {isDeleting ? 'Deleting…' : 'Delete'}
-            </button>
-          </div>
-          {deleteFailed ? (
-            <p className="status status--error reader__error" role="alert">
-              Could not delete this item. It is still in your feed; try again.
-            </p>
-          ) : null}
-          <div className="reader__count-row">
-            <span className="reader__count">{remainingCount} remaining</span>
-          </div>
-        </div>
+        <ReaderReview
+          key={currentItem.id}
+          item={currentItem}
+          remainingCount={remainingCount}
+          isDeleting={isDeleting}
+          deleteFailed={deleteFailed}
+          useCompactActions={useCompactActions}
+          reviewPanelRef={reviewPanelRef}
+          reviewActionsRef={reviewActionsRef}
+          onKeep={keepItem}
+          onDelete={deleteItem}
+          onShowScroll={() => setMode('scroll')}
+        />
       ) : null}
-
       {mode === 'review' && !isLoading && !loadFailed && items.length > 0 && !currentItem ? (
-        <div
-          id="reader-review-panel"
-          className="reader__state"
-          role="region"
-          aria-label="Review view"
-        >
+        <div id="reader-review-panel" className="reader__state" role="region" aria-label="Review view">
           <span className="reader__done-mark" aria-hidden="true">✓</span>
           <h2>You’ve reviewed everything</h2>
           <p>Switch to Scroll to browse all items again.</p>
         </div>
       ) : null}
-
-      {mode === 'scroll' && !isLoading && !loadFailed && items.length > 0 ? (
-        <div
-          id="reader-scroll-panel"
-          className="reader__scroll-panel"
-          role="region"
-          aria-label="Scroll view"
-        >
-          <div className="reader__stream">
-            {items.map((item) => <FeedItemCard key={item.id} item={item} />)}
-          </div>
-        </div>
-      ) : null}
+      {mode === 'scroll' && !isLoading && !loadFailed && items.length > 0 ? <ReaderScroll items={items} /> : null}
     </section>
-  );
-}
-
-type CompactReviewActionsProps = {
-  isDeleting: boolean;
-  onKeep: () => void;
-  onDelete: () => void;
-};
-
-function CompactReviewActions({
-  isDeleting,
-  onKeep,
-  onDelete,
-}: CompactReviewActionsProps) {
-  return (
-    <aside className="reader__compact-actions" aria-label="Feed item actions">
-      <button
-        type="button"
-        className="reader__mobile-keep"
-        aria-label="Keep item"
-        onClick={onKeep}
-        disabled={isDeleting}
-      >
-        <span aria-hidden="true">✓</span>
-      </button>
-      <button
-        type="button"
-        className="reader__mobile-delete"
-        aria-label={isDeleting ? 'Deleting item' : 'Delete item'}
-        onClick={onDelete}
-        disabled={isDeleting}
-      >
-        <span aria-hidden="true">×</span>
-      </button>
-    </aside>
-  );
-}
-
-type MobileReviewRailProps = {
-  item: FeedItem;
-  remainingCount: number;
-  isDeleting: boolean;
-  onKeep: () => void;
-  onDelete: () => void;
-  onShowScroll: () => void;
-};
-
-function MobileReviewRail({
-  item,
-  remainingCount,
-  isDeleting,
-  onKeep,
-  onDelete,
-  onShowScroll,
-}: MobileReviewRailProps) {
-  const menuRef = useRef<HTMLDetailsElement>(null);
-  const [commentsExpanded, setCommentsExpanded] = useTikTokCommentsPreference();
-  const isTikTok = isTikTokFeedItem(item);
-
-  function closeMenu() {
-    menuRef.current?.removeAttribute('open');
-  }
-
-  return (
-    <aside className="reader__mobile-rail" aria-label="Review controls">
-      <details ref={menuRef} className="reader__mobile-menu">
-        <summary aria-label="More review actions">
-          <span aria-hidden="true">≡</span>
-        </summary>
-        <div className="reader__mobile-menu-panel">
-          <strong>More actions</strong>
-          <button
-            type="button"
-            onClick={() => {
-              closeMenu();
-              onShowScroll();
-            }}
-          >
-            Scroll view
-          </button>
-          {isTikTok ? (
-            <button
-              type="button"
-              aria-expanded={commentsExpanded}
-              aria-controls={`tiktok-comments-list-${item.id}`}
-              onClick={() => {
-                closeMenu();
-                setCommentsExpanded(!commentsExpanded);
-              }}
-            >
-              {commentsExpanded ? 'Hide comments' : 'Show comments'}
-            </button>
-          ) : null}
-          <a href={item.link} target="_blank" rel="noreferrer">
-            Open original <span aria-hidden="true">↗</span>
-          </a>
-          <span className="reader__mobile-remaining">{remainingCount} remaining</span>
-        </div>
-      </details>
-
-      <div className="reader__mobile-decisions">
-        <button
-          type="button"
-          className="reader__mobile-keep"
-          aria-label="Keep item"
-          onClick={onKeep}
-          disabled={isDeleting}
-        >
-          <span aria-hidden="true">✓</span>
-        </button>
-        <button
-          type="button"
-          className="reader__mobile-delete"
-          aria-label={isDeleting ? 'Deleting item' : 'Delete item'}
-          onClick={onDelete}
-          disabled={isDeleting}
-        >
-          <span aria-hidden="true">×</span>
-        </button>
-      </div>
-    </aside>
   );
 }
 
