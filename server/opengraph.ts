@@ -24,7 +24,9 @@ const MAX_HLTV_RESPONSE_BYTES = 2_000_000;
 const MAX_IMAGE_RESPONSE_BYTES = 10_000_000;
 const MAX_REDIRECTS = 5;
 const REQUEST_TIMEOUT_MS = 8_000;
-const SCOREBOT_TIMEOUT_MS = 4_000;
+const SCOREBOT_TIMEOUT_MS = 2_500;
+const SCOREBOT_CACHE_TTL_MS = 5 * 60_000;
+const SCOREBOT_ATTEMPTS = 2;
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
 const REZKA_USER_AGENT = 'TelegramBot (like TwitterBot)';
 const execFileAsync = promisify(execFile);
@@ -38,6 +40,13 @@ interface HltvScorebotSnapshot {
   currentMap: HltvCurrentMapPreview;
   playerStats: HltvMatchPlayerStatsPreview;
 }
+
+interface HltvScorebotCacheEntry {
+  expiresAt: number;
+  snapshot: HltvScorebotSnapshot;
+}
+
+const hltvScorebotCache = new Map<string, HltvScorebotCacheEntry>();
 
 export class PreviewError extends Error {
   constructor(
@@ -287,13 +296,48 @@ async function fetchHltvScorebotSnapshot(
   }
   if (!cookieHeader) return null;
 
+  const headers = {
+    Cookie: cookieHeader,
+    Origin: 'https://www.hltv.org',
+    Referer: 'https://www.hltv.org/',
+    'User-Agent': TWITTERBOT_USER_AGENT,
+  };
+  for (let attempt = 0; attempt < SCOREBOT_ATTEMPTS; attempt += 1) {
+    const snapshot = await requestHltvScorebotSnapshot(
+      scorebotUrl,
+      scorebotId,
+      team1Id,
+      html,
+      headers,
+    );
+    if (snapshot) {
+      hltvScorebotCache.set(scorebotId, {
+        expiresAt: Date.now() + SCOREBOT_CACHE_TTL_MS,
+        snapshot,
+      });
+      return snapshot;
+    }
+  }
+
+  const cached = hltvScorebotCache.get(scorebotId);
+  if (!cached || cached.expiresAt <= Date.now()) {
+    hltvScorebotCache.delete(scorebotId);
+    return null;
+  }
+  const htmlCurrentMap = parseHltvCurrentMap(html);
+  return !htmlCurrentMap || htmlCurrentMap.name === cached.snapshot.currentMap.name
+    ? cached.snapshot
+    : null;
+}
+
+function requestHltvScorebotSnapshot(
+  scorebotUrl: URL,
+  scorebotId: string,
+  team1Id: string,
+  html: string,
+  headers: Record<string, string>,
+): Promise<HltvScorebotSnapshot | null> {
   return new Promise((resolve) => {
-    const headers = {
-      Cookie: cookieHeader,
-      Origin: 'https://www.hltv.org',
-      Referer: 'https://www.hltv.org/',
-      'User-Agent': TWITTERBOT_USER_AGENT,
-    };
     const socket = socketIo.connect(scorebotUrl.href, {
       reconnection: false,
       timeout: SCOREBOT_TIMEOUT_MS,
