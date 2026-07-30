@@ -412,9 +412,10 @@
 }
 
 .reader__item .reader-card__preview--short-video {
-  width: auto;
+  /* Resolve the 9:16 width first so Safari does not collapse the auto-sized grid track. */
+  width: calc(56.25dvh - 123.75px);
   max-width: 100%;
-  height: min(calc(100dvh - 340px), 177.778cqw);
+  height: auto;
 }
 
 .reader__scroll-item .reader-card__preview--short-video {
@@ -1249,7 +1250,7 @@ html.reader-theater-open {
   }
 
   .reader__item .reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]) {
-    height: min(calc(100dvh - 340px), 177.778cqw);
+    height: min(calc(100dvh - 220px), 177.778cqw);
   }
 
   .reader__item .reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"])
