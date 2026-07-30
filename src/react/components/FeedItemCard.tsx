@@ -91,6 +91,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         isInstagramPhoto ? 'reader-card--instagram-photo' : '',
         isImagePreviewOnly ? 'reader-card--image-preview' : '',
         isImagePreviewOnly && isReddit ? 'reader-card--reddit-preview' : '',
+        isImagePreviewOnly && isHltv ? 'reader-card--hltv-preview' : '',
       ].filter(Boolean).join(' ')}
     >
       {isInstagram ? (
@@ -183,6 +184,9 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           />
         </a>
       ) : null}
+      {isHltv && openGraphPreview?.matchStartsAt ? (
+        <HltvCountdown startsAt={openGraphPreview.matchStartsAt} />
+      ) : null}
       {isTikTok ? <TikTokComments item={item} /> : null}
       {isImagePreviewOnly ? null : isYoutube ? (
         <div className="reader-card__youtube-copy">
@@ -204,6 +208,43 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       )}
     </article>
   );
+}
+
+function HltvCountdown({ startsAt }: { startsAt: string }) {
+  const startTimestamp = Date.parse(startsAt);
+  const [now, setNow] = useState(Date.now);
+
+  useEffect(() => {
+    if (!Number.isFinite(startTimestamp) || startTimestamp <= Date.now()) return;
+    const interval = window.setInterval(() => setNow(Date.now()), 1_000);
+    return () => window.clearInterval(interval);
+  }, [startTimestamp]);
+
+  const remainingMilliseconds = startTimestamp - now;
+  if (!Number.isFinite(startTimestamp) || remainingMilliseconds <= 0) return null;
+
+  return (
+    <time
+      className="reader-card__hltv-countdown"
+      dateTime={startsAt}
+      title={new Date(startTimestamp).toLocaleString()}
+      aria-live="polite"
+    >
+      Starts in {formatCountdown(remainingMilliseconds)}
+    </time>
+  );
+}
+
+function formatCountdown(milliseconds: number): string {
+  const totalSeconds = Math.ceil(milliseconds / 1_000);
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor(totalSeconds % 86_400 / 3_600);
+  const minutes = Math.floor(totalSeconds % 3_600 / 60);
+  const seconds = totalSeconds % 60;
+  const clock = [hours, minutes, seconds]
+    .map((value) => value.toString().padStart(2, '0'))
+    .join(':');
+  return days > 0 ? `${days}d ${clock}` : clock;
 }
 
 function getFeedItemDescription(content: string, title: string): string | null {

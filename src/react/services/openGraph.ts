@@ -39,9 +39,11 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   const video = getObjectProperty(value, 'video');
   const siteName = getObjectProperty(value, 'siteName');
   const type = getObjectProperty(value, 'type');
+  const matchStartsAt = getObjectProperty(value, 'matchStartsAt');
 
   return typeof url === 'string'
-    && [title, description, image, video, siteName, type].every(isNullableString);
+    && [title, description, image, video, siteName, type].every(isNullableString)
+    && (matchStartsAt === undefined || isNullableString(matchStartsAt));
 }
 
 function isNullableString(value: unknown): value is string | null {

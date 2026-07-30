@@ -40,7 +40,23 @@ describe('parseOpenGraph', () => {
       video: null,
       siteName: 'Example',
       type: 'article',
+      matchStartsAt: null,
     });
+  });
+
+  it('extracts the scheduled start from an HLTV match page', () => {
+    const html = `
+      <meta property="og:title" content="Liquid vs Spirit">
+      <div class="timeAndEvent">
+        <div class="time" data-time-format="HH:mm" data-unix="1784829900000">20:05</div>
+        <div class="date" data-unix="1784829900000">23rd of July 2026</div>
+      </div>
+    `;
+
+    expect(parseOpenGraph(
+      html,
+      new URL('https://www.hltv.org/matches/2396006/liquid-vs-spirit'),
+    ).matchStartsAt).toBe('2026-07-23T18:05:00.000Z');
   });
 
   it('falls back to standard title and description metadata', () => {

@@ -262,7 +262,22 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
     type: metadata.get('og:type') ?? null,
+    matchStartsAt: isHltvMatchUrl(pageUrl) ? parseHltvMatchStartsAt(html) : null,
   };
+}
+
+function parseHltvMatchStartsAt(html: string): string | null {
+  const sectionMatch = /<div\b[^>]*class=(?:"[^"]*\btimeAndEvent\b[^"]*"|'[^']*\btimeAndEvent\b[^']*')[^>]*>/i.exec(html);
+  if (!sectionMatch || sectionMatch.index === undefined) return null;
+
+  const section = html.slice(sectionMatch.index, sectionMatch.index + 2_000);
+  const unixValue = section.match(/\bdata-unix=(?:"(\d{10,13})"|'(\d{10,13})')/i);
+  const rawTimestamp = unixValue?.[1] ?? unixValue?.[2];
+  if (!rawTimestamp) return null;
+
+  const timestamp = Number(rawTimestamp) * (rawTimestamp.length === 10 ? 1_000 : 1);
+  if (!Number.isFinite(timestamp)) return null;
+  return new Date(timestamp).toISOString();
 }
 
 export function parseLiquipediaMatch(

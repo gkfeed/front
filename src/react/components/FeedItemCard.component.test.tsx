@@ -189,6 +189,7 @@ describe('FeedItemCard Open Graph preview', () => {
       video: null,
       siteName: 'HLTV.org',
       type: 'website',
+      matchStartsAt: '2999-07-23T18:05:00.000Z',
     });
 
     render(<FeedItemCard item={{
@@ -206,6 +207,28 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.queryByText('Feed #2')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'OG vs Spirit' })).toBeNull();
     expect(screen.queryByText(/read original/i)).toBeNull();
+    expect(screen.getByText(/^Starts in /)).toBeTruthy();
+  });
+
+  it('does not show an HLTV countdown after the match start', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/og-vs-spirit-event',
+      title: 'OG vs Spirit',
+      description: null,
+      image: 'https://api.url2png.com/v6/account/signature/png/?url=match',
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      matchStartsAt: '2000-01-01T00:00:00.000Z',
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/og-vs-spirit-event',
+    }} />);
+
+    expect(await screen.findByAltText('Preview for OG vs Spirit')).toBeTruthy();
+    expect(screen.queryByText(/^Starts in /)).toBeNull();
   });
 
   it('does not call the BFF when the feed content contains an image', () => {

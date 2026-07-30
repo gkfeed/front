@@ -6,6 +6,7 @@ export interface OpenGraphPreview {
   video: string | null;
   siteName: string | null;
   type: string | null;
+  matchStartsAt?: string | null;
 }
 
 export type LiquipediaMatchResult = 'win' | 'loss' | 'default';
