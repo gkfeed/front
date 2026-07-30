@@ -855,16 +855,20 @@ html.reader-theater-open {
   }
 }
 
-.reader-card--image-preview {
+.reader-card.reader-card--image-preview {
   gap: 0;
   min-height: 0;
   overflow: hidden;
   padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .reader-card--image-preview .reader-card__preview {
   border: 0;
-  border-radius: 0;
+  border-radius: 22px;
 }
 
 .reader-card--image-preview.reader-card--reddit-preview {
