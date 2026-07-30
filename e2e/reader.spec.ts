@@ -44,10 +44,17 @@ test.describe('TikTok player on iPad-sized readers', () => {
     const box = await player.boundingBox();
 
     expect(box).not.toBeNull();
-    expect(box!.width).toBeGreaterThan(600);
-    expect(box!.height).toBeGreaterThan(1_100);
+    expect(box!.width).toBeGreaterThan(550);
+    expect(box!.width).toBeLessThan(600);
+    expect(box!.height).toBeGreaterThan(1_000);
+    expect(box!.height).toBeLessThan(1_050);
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(1024);
+
+    const commentsButtonBox = await page.getByRole('button', { name: 'Show comments' }).boundingBox();
+    expect(commentsButtonBox).not.toBeNull();
+    expect(commentsButtonBox!.y).toBeGreaterThanOrEqual(box!.y + box!.height);
+    expect(commentsButtonBox!.x + commentsButtonBox!.width).toBeLessThanOrEqual(1024);
   });
 
   test('uses the available height in landscape', async ({ page }) => {
@@ -81,5 +88,23 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(expandedBox).not.toBeNull();
     expect(expandedBox!.width).toBeGreaterThanOrEqual(collapsedBox!.width - 1);
     expect(expandedBox!.height).toBeGreaterThanOrEqual(collapsedBox!.height - 1);
+  });
+
+  test('reflows controls after rotating from landscape to portrait', async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 1024 });
+    await page.goto('/reader');
+
+    const player = page.locator('.reader-card__preview--tiktok');
+    await expect(player).toBeVisible();
+    await page.setViewportSize({ width: 1024, height: 1366 });
+
+    await expect.poll(async () => (await player.boundingBox())?.width).toBeLessThan(600);
+    const playerBox = await player.boundingBox();
+    const commentsButtonBox = await page.getByRole('button', { name: 'Show comments' }).boundingBox();
+
+    expect(playerBox).not.toBeNull();
+    expect(commentsButtonBox).not.toBeNull();
+    expect(commentsButtonBox!.y).toBeGreaterThanOrEqual(playerBox!.y + playerBox!.height);
+    expect(commentsButtonBox!.x + commentsButtonBox!.width).toBeLessThanOrEqual(1024);
   });
 });
