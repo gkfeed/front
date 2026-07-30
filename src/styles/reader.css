@@ -868,9 +868,12 @@ html.reader-theater-open {
 }
 
 .reader-card--image-preview.reader-card--reddit-preview {
-  min-height: 330px;
-  align-content: center;
-  padding: clamp(18px, 4vw, 28px);
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .reader-card--reddit-preview .reader-card__preview {
@@ -1132,11 +1135,6 @@ html.reader-theater-open {
 
   .reader-card {
     min-height: 0;
-    padding: 16px;
-  }
-
-  .reader-card--image-preview.reader-card--reddit-preview {
-    min-height: 300px;
     padding: 16px;
   }
 
