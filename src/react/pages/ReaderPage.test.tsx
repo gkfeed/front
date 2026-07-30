@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
 import { NsfwPreferencesContext, type NsfwMode } from '../state/nsfwPreferencesContext';
+import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { ReaderPage } from './ReaderPage';
 
 vi.mock('../services/feeds');
@@ -31,6 +32,7 @@ function renderReader(initialEntry = '/reader', nsfwMode: NsfwMode = 'blur') {
 
 afterEach(() => {
   cleanup();
+  restoreLocalStorage();
   vi.restoreAllMocks();
   vi.resetAllMocks();
 });
@@ -46,6 +48,44 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('Second story')).toBeTruthy();
     expect(deleteFeedItemById).not.toHaveBeenCalled();
     expect(screen.getByText('1 remaining')).toBeTruthy();
+  });
+
+  it('revisits kept items after all other items have been reviewed', async () => {
+    const items = [
+      ...ITEMS,
+      { id: 12, feedId: 4, link: 'https://example.net/three', title: 'Third story', text: 'Third summary' },
+    ];
+    vi.mocked(getFeedItems).mockResolvedValue(items);
+    renderReader();
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    expect(screen.getByText('3 remaining')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+
+    expect(await screen.findByText('You’ve reviewed everything')).toBeTruthy();
+  });
+
+  it('restores the review queue after the page is reloaded', async () => {
+    stubLocalStorage();
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    const firstRender = renderReader();
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    firstRender.unmount();
+
+    renderReader();
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(screen.queryByText('First story')).toBeNull();
   });
 
   it('keeps the current item with a', async () => {

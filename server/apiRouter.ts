@@ -5,27 +5,27 @@ import { PreviewError } from './preview/errors.js';
 import { fetchLiquipediaMatch } from './preview/liquipedia.js';
 import { fetchOpenGraph } from './preview/openGraph.js';
 import { fetchRedditPreviewImage } from './preview/reddit.js';
+import { withPreviewLimit } from './preview/previewLimiter.js';
 import { fetchTikTokComments } from './tiktok.js';
 
-const MAX_ACTIVE_PREVIEWS = 32;
-let activePreviews = 0;
+const JSON_PREVIEW_ROUTES: Record<string, (input: string) => Promise<unknown>> = {
+  '/api/bff/open-graph': fetchOpenGraph,
+  '/api/bff/liquipedia-match': fetchLiquipediaMatch,
+  '/api/bff/tiktok-comments': fetchTikTokComments,
+};
 
 export async function handleBffRequest(
   requestUrl: URL,
   response: ServerResponse,
 ): Promise<boolean> {
-  if (requestUrl.pathname === '/api/bff/open-graph') {
-    await handleJsonPreview(requestUrl, response, fetchOpenGraph);
-    return true;
-  }
-
-  if (requestUrl.pathname === '/api/bff/liquipedia-match') {
-    await handleJsonPreview(requestUrl, response, fetchLiquipediaMatch);
+  const jsonLoader = JSON_PREVIEW_ROUTES[requestUrl.pathname];
+  if (jsonLoader) {
+    await handleJsonPreview(requestUrl, response, jsonLoader);
     return true;
   }
 
   if (requestUrl.pathname === '/api/bff/reddit-preview-image') {
-    const image = await withPreviewLimit(() => getPreviewInput(requestUrl).then(fetchRedditPreviewImage));
+    const image = await withPreviewLimit(() => fetchRedditPreviewImage(getPreviewInput(requestUrl)));
     response.writeHead(200, {
       'cache-control': 'public, max-age=3600',
       'content-length': image.body.byteLength,
@@ -33,11 +33,6 @@ export async function handleBffRequest(
       'x-content-type-options': 'nosniff',
     });
     response.end(image.body);
-    return true;
-  }
-
-  if (requestUrl.pathname === '/api/bff/tiktok-comments') {
-    await handleJsonPreview(requestUrl, response, fetchTikTokComments);
     return true;
   }
 
@@ -49,29 +44,14 @@ async function handleJsonPreview<T>(
   response: ServerResponse,
   load: (input: string) => Promise<T>,
 ): Promise<void> {
-  const result = await withPreviewLimit(() => getPreviewInput(requestUrl).then(load));
+  const result = await withPreviewLimit(() => load(getPreviewInput(requestUrl)));
   sendJson(response, 200, result);
 }
 
-function getPreviewInput(requestUrl: URL): Promise<string> {
+function getPreviewInput(requestUrl: URL): string {
   const targetUrl = requestUrl.searchParams.get('url');
-  if (!targetUrl) return Promise.reject(new PreviewError(
-    'The url query parameter is required',
-    400,
-    'missing_url',
-  ));
-  return Promise.resolve(targetUrl);
-}
-
-async function withPreviewLimit<T>(load: () => Promise<T>): Promise<T> {
-  if (activePreviews >= MAX_ACTIVE_PREVIEWS) {
-    throw new PreviewError('Too many preview requests are in progress', 429, 'preview_busy');
+  if (!targetUrl) {
+    throw new PreviewError('The url query parameter is required', 400, 'missing_url');
   }
-
-  activePreviews += 1;
-  try {
-    return await load();
-  } finally {
-    activePreviews -= 1;
-  }
+  return targetUrl;
 }

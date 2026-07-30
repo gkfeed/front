@@ -4,9 +4,11 @@ import {
   MAX_METADATA_RESPONSE_BYTES,
   MAX_RESPONSE_BYTES,
   fetchPublicResponse,
+} from './remoteHttp.js';
+import {
   firstHeader,
   readLimitedBody,
-} from './remoteHttp.js';
+} from './bodyReaders.js';
 
 const MAX_REDIRECTS = 5;
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';

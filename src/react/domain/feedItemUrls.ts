@@ -1,3 +1,5 @@
+import { normalizeHostname } from '../../../shared/urlRules';
+
 export function parseUrl(value: string): URL | null {
   try {
     return new URL(value);
@@ -7,11 +9,11 @@ export function parseUrl(value: string): URL | null {
 }
 
 export function hostnameOf(url: URL): string {
-  return url.hostname.replace(/^www\./, '').toLowerCase();
+  return normalizeHostname(url.hostname);
 }
 
 export function isVkHost(hostname: string): boolean {
-  const normalized = hostname.replace(/^www\./, '').toLowerCase();
+  const normalized = normalizeHostname(hostname);
   return normalized === 'vk.com'
     || normalized.endsWith('.vk.com')
     || normalized === 'vk.ru'

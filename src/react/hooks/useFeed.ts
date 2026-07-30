@@ -5,12 +5,6 @@ import { deleteFeedById, getFeedById } from '../services/feeds';
 import { useAuth } from '../state/useAuth';
 import type { Credentials, Feed } from '../types';
 
-interface LoadResult {
-  feed?: Feed;
-  loadError?: string;
-  canRetryLoad?: boolean;
-}
-
 type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
 
 const FEED_NOT_FOUND_MESSAGE = 'Feed source not found.';
@@ -25,11 +19,14 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     (signal: AbortSignal) => loadFeed(feedId, credentials, signal),
     [credentials, feedId],
   );
-  const { result: loadResult, isLoading, retry: retryLoad } = useAsyncLoad(load);
-  const { feed, loadError = '' } = loadResult ?? {};
+  const { result: feed, error: loadErrorValue, isLoading, retry: retryLoad } = useAsyncLoad(load);
+  const isFeedNotFound = loadErrorValue instanceof FeedNotFoundError;
+  const loadError = loadErrorValue
+    ? isFeedNotFound ? FEED_NOT_FOUND_MESSAGE : LOAD_ERROR_MESSAGE
+    : '';
   const isDeleting = deleteState === 'deleting';
   const isConfirmingDelete = deleteState !== 'idle';
-  const canRetryLoad = loadResult?.canRetryLoad ?? false;
+  const canRetryLoad = Boolean(loadErrorValue) && !isFeedNotFound;
   const deleteError = deleteState === 'error' ? DELETE_ERROR_MESSAGE : '';
 
   async function deleteFeed() {
@@ -72,16 +69,15 @@ async function loadFeed(
   feedId: number | null,
   credentials: Credentials | null,
   signal?: AbortSignal,
-): Promise<LoadResult> {
-  if (feedId === null) return { loadError: FEED_NOT_FOUND_MESSAGE };
+): Promise<Feed> {
+  if (feedId === null) throw new FeedNotFoundError();
 
-  try {
-    const feed = await getFeedById(feedId, credentials, signal);
-    return feed ? { feed } : { loadError: FEED_NOT_FOUND_MESSAGE };
-  } catch {
-    return { loadError: LOAD_ERROR_MESSAGE, canRetryLoad: true };
-  }
+  const feed = await getFeedById(feedId, credentials, signal);
+  if (!feed) throw new FeedNotFoundError();
+  return feed;
 }
+
+class FeedNotFoundError extends Error {}
 
 function parseFeedId(feedIdParam: string | undefined): number | null {
   const feedId = Number(feedIdParam);

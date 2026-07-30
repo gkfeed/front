@@ -1,6 +1,6 @@
 import type { LiquipediaMatchPreview } from '../../shared/previewContracts.js';
 import { PreviewError } from './errors.js';
-import { parsePublicHttpUrl, safeDecodeURIComponent } from './remoteHttp.js';
+import { parsePublicHttpUrl, safeDecodeURIComponent } from './publicUrlPolicy.js';
 import { fetchHtml } from './pageFetcher.js';
 import { parseLiquipediaMatch } from './liquipediaParser.js';
 

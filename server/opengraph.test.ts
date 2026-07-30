@@ -17,7 +17,7 @@ import {
   parseHltvScoreboardUpdate,
   parseLiquipediaMatch,
   parseOpenGraph,
-} from './opengraph.js';
+} from './preview/openGraph.js';
 
 beforeEach(() => {
   requestPublicHttp.mockReset();

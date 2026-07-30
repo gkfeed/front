@@ -12,11 +12,6 @@ import { FeedCard } from './FeedCard';
 const SEARCH_DEBOUNCE_MS = 80;
 const SKELETON_ITEMS = [1, 2, 3] as const;
 
-interface FeedLoadResult {
-  feeds: Feed[];
-  errorMessage?: string;
-}
-
 export function FeedsList() {
   const { credentials } = useAuth();
   const { searchTerm, setSearchTerm } = useFeedSearch();
@@ -91,24 +86,15 @@ function getResultsAnnouncement(count: number, query = ''): string {
 }
 
 function useFeeds(credentials: Credentials | null) {
-  const load = useCallback((signal: AbortSignal) => loadFeeds(credentials, signal), [credentials]);
-  const { result, isLoading, retry } = useAsyncLoad(load);
-  const { feeds = [], errorMessage = '' } = result ?? {};
+  const load = useCallback((signal: AbortSignal) => getAllFeeds(credentials, signal), [credentials]);
+  const { result: feeds = [], error, isLoading, retry } = useAsyncLoad(load);
 
   return {
     feeds,
-    errorMessage,
+    errorMessage: error ? getLoadErrorMessage(error) : '',
     isLoading,
     retry,
   };
-}
-
-async function loadFeeds(credentials: Credentials | null, signal?: AbortSignal): Promise<FeedLoadResult> {
-  try {
-    return { feeds: await getAllFeeds(credentials, signal) };
-  } catch (error) {
-    return { feeds: [], errorMessage: getLoadErrorMessage(error) };
-  }
 }
 
 function filterFeeds(feeds: Feed[], normalizedQuery: string): Feed[] {

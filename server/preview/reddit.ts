@@ -3,10 +3,9 @@ import { PreviewError } from './errors.js';
 import {
   MAX_IMAGE_RESPONSE_BYTES,
   fetchPublicResponse,
-  firstHeader,
-  parsePublicHttpUrl,
-  readLimitedBytes,
 } from './remoteHttp.js';
+import { firstHeader, readLimitedBytes } from './bodyReaders.js';
+import { parsePublicHttpUrl } from './publicUrlPolicy.js';
 
 const MAX_REDIRECTS = 5;
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
