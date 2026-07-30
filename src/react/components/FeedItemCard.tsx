@@ -71,6 +71,12 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       (isHltv && visiblePreview.src === remotePreview?.src)
     ),
   );
+  const hltvMatchTeams = isHltv
+    && visiblePreview
+    && visiblePreview.type === undefined
+    && isGenericHltvPreview(visiblePreview.src)
+    ? openGraphPreview?.matchTeams
+    : null;
 
   useEffect(() => {
     setPreviewFailures(0);
@@ -100,7 +106,9 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           <span>{getInstagramUsername(item.title)}</span>
         </div>
       ) : null}
-      {isYoutube && youtubeVideoId ? (
+      {hltvMatchTeams ? (
+        <HltvMatchup teams={hltvMatchTeams} href={item.link} />
+      ) : isYoutube && youtubeVideoId ? (
         <YoutubePreview
           videoId={youtubeVideoId}
           title={item.text || item.title}
@@ -235,6 +243,47 @@ function HltvCountdown({ startsAt }: { startsAt: string }) {
   );
 }
 
+function HltvMatchup({
+  teams,
+  href,
+}: {
+  teams: NonNullable<OpenGraphPreview['matchTeams']>;
+  href: string;
+}) {
+  return (
+    <a
+      className="reader-card__hltv-matchup"
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`${teams[0].name} versus ${teams[1].name}`}
+    >
+      <HltvMatchupTeam team={teams[0]} />
+      <strong className="reader-card__hltv-versus">vs</strong>
+      <HltvMatchupTeam team={teams[1]} />
+    </a>
+  );
+}
+
+function HltvMatchupTeam({
+  team,
+}: {
+  team: NonNullable<OpenGraphPreview['matchTeams']>[number];
+}) {
+  return (
+    <span className="reader-card__hltv-team">
+      {team.logo ? (
+        <img src={team.logo} alt="" />
+      ) : (
+        <span className="reader-card__hltv-monogram" aria-hidden="true">
+          {team.name.slice(0, 2).toUpperCase()}
+        </span>
+      )}
+      <strong>{team.name}</strong>
+    </span>
+  );
+}
+
 function formatCountdown(milliseconds: number): string {
   const totalSeconds = Math.ceil(milliseconds / 1_000);
   const days = Math.floor(totalSeconds / 86_400);
@@ -245,6 +294,12 @@ function formatCountdown(milliseconds: number): string {
     .map((value) => value.toString().padStart(2, '0'))
     .join(':');
   return days > 0 ? `${days}d ${clock}` : clock;
+}
+
+function isGenericHltvPreview(source: string): boolean {
+  const url = parseUrl(source);
+  return url?.hostname.replace(/^www\./, '').toLowerCase() === 'hltv.org'
+    && url.pathname === '/img/static/openGraphHltvLogo.png';
 }
 
 function getFeedItemDescription(content: string, title: string): string | null {

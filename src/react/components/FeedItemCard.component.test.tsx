@@ -231,6 +231,33 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.queryByText(/^Starts in /)).toBeNull();
   });
 
+  it('replaces the generic HLTV image with a team matchup', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396281/ence-vs-bojong-event',
+      title: 'HLTV.org - The home of competitive Counter-Strike',
+      description: null,
+      image: 'https://www.hltv.org/img/static/openGraphHltvLogo.png',
+      video: null,
+      siteName: 'HLTV.org',
+      type: null,
+      matchStartsAt: null,
+      matchTeams: [
+        { name: 'ENCE', logo: 'https://img-cdn.hltv.org/teamlogo/ence.png' },
+        { name: 'BOJONG', logo: 'https://img-cdn.hltv.org/teamlogo/bojong.png' },
+      ],
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396281/ence-vs-bojong-event',
+    }} />);
+
+    expect(await screen.findByRole('link', { name: 'ENCE versus BOJONG' })).toBeTruthy();
+    expect(screen.getByText('ENCE')).toBeTruthy();
+    expect(screen.getByText('BOJONG')).toBeTruthy();
+    expect(screen.queryByAltText(/HLTV/)).toBeNull();
+  });
+
   it('does not call the BFF when the feed content contains an image', () => {
     render(<FeedItemCard item={{ ...item, text: '<img src="https://example.com/feed-cover.jpg">' }} />);
 

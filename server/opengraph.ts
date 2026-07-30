@@ -230,6 +230,7 @@ function isRezkaUrl(url: URL): boolean {
 }
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
+  const isHltvMatch = isHltvMatchUrl(pageUrl);
   const metadata = new Map<string, string>();
   for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
     const attributes = parseAttributes(tag);
@@ -262,7 +263,8 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
     type: metadata.get('og:type') ?? null,
-    matchStartsAt: isHltvMatchUrl(pageUrl) ? parseHltvMatchStartsAt(html) : null,
+    matchStartsAt: isHltvMatch ? parseHltvMatchStartsAt(html) : null,
+    matchTeams: isHltvMatch ? parseHltvMatchTeams(html, pageUrl) : null,
   };
 }
 
@@ -278,6 +280,40 @@ function parseHltvMatchStartsAt(html: string): string | null {
   const timestamp = Number(rawTimestamp) * (rawTimestamp.length === 10 ? 1_000 : 1);
   if (!Number.isFinite(timestamp)) return null;
   return new Date(timestamp).toISOString();
+}
+
+function parseHltvMatchTeams(
+  html: string,
+  pageUrl: URL,
+): OpenGraphPreview['matchTeams'] {
+  const teams = [1, 2].map((side) => {
+    const blockPattern = new RegExp(
+      `<div\\b[^>]*class=(?:"[^"]*\\bteam${side}-gradient\\b[^"]*"|'[^']*\\bteam${side}-gradient\\b[^']*')[^>]*>`,
+      'i',
+    );
+    const block = blockPattern.exec(html);
+    if (!block || block.index === undefined) return null;
+
+    const section = html.slice(block.index, block.index + 4_000);
+    const nameMarkup = section.match(
+      /<div\b[^>]*class=(?:"[^"]*\bteamName\b[^"]*"|'[^']*\bteamName\b[^']*')[^>]*>([\s\S]*?)<\/div>/i,
+    )?.[1];
+    const name = htmlText(nameMarkup ?? '');
+    if (!name) return null;
+
+    const logoTags = section.match(/<img\b[^>]*>/gi) ?? [];
+    const preferredLogo = logoTags.map(parseAttributes).find((attributes) => {
+      const classes = attributes.class?.split(/\s+/) ?? [];
+      return classes.includes('logo') && !classes.includes('night-only') && attributes.src;
+    });
+
+    return {
+      name,
+      logo: resolveHttpUrl(decodeHtml(preferredLogo?.src ?? ''), pageUrl),
+    };
+  });
+
+  return teams[0] && teams[1] ? [teams[0], teams[1]] : null;
 }
 
 export function parseLiquipediaMatch(

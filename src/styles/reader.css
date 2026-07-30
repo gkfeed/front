@@ -895,6 +895,70 @@ html.reader-theater-open {
   overflow: visible;
 }
 
+.reader-card__hltv-matchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  min-height: clamp(220px, 52cqw, 360px);
+  align-items: center;
+  gap: clamp(14px, 4cqw, 32px);
+  padding: clamp(22px, 7cqw, 52px);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 110%, rgb(255 255 255 / 15%), transparent 48%),
+    linear-gradient(145deg, #345f87, #173852);
+  color: #fff;
+  text-decoration: none;
+  box-shadow: var(--shadow-card);
+}
+
+.reader-card__hltv-team {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.reader-card__hltv-team > img,
+.reader-card__hltv-monogram {
+  width: clamp(74px, 18cqw, 128px);
+  height: clamp(74px, 18cqw, 128px);
+}
+
+.reader-card__hltv-team > img {
+  object-fit: contain;
+}
+
+.reader-card__hltv-monogram {
+  display: grid;
+  place-items: center;
+  border: 2px solid rgb(255 255 255 / 65%);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 12%);
+  font-size: clamp(1.25rem, 5cqw, 2rem);
+  font-weight: 900;
+}
+
+.reader-card__hltv-team > strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(1rem, 4cqw, 1.5rem);
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-card__hltv-versus {
+  color: rgb(255 255 255 / 72%);
+  font-size: clamp(1rem, 4cqw, 1.45rem);
+  text-transform: uppercase;
+}
+
+.reader-card__hltv-matchup:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
 .reader-card__hltv-countdown {
   justify-self: center;
   padding: 7px 12px;

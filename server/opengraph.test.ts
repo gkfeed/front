@@ -41,6 +41,7 @@ describe('parseOpenGraph', () => {
       siteName: 'Example',
       type: 'article',
       matchStartsAt: null,
+      matchTeams: null,
     });
   });
 
@@ -51,12 +52,27 @@ describe('parseOpenGraph', () => {
         <div class="time" data-time-format="HH:mm" data-unix="1784829900000">20:05</div>
         <div class="date" data-unix="1784829900000">23rd of July 2026</div>
       </div>
+      <div class="team1-gradient">
+        <img alt="Liquid" src="/teamlogo/liquid.png" class="logo">
+        <div class="teamName">Liquid</div>
+      </div>
+      <div class="team2-gradient">
+        <img alt="Spirit" src="https://cdn.example/spirit.png" class="logo day-only">
+        <img alt="Spirit" src="https://cdn.example/spirit-dark.png" class="logo night-only">
+        <div class="teamName">Spirit</div>
+      </div>
     `;
 
     expect(parseOpenGraph(
       html,
       new URL('https://www.hltv.org/matches/2396006/liquid-vs-spirit'),
-    ).matchStartsAt).toBe('2026-07-23T18:05:00.000Z');
+    )).toMatchObject({
+      matchStartsAt: '2026-07-23T18:05:00.000Z',
+      matchTeams: [
+        { name: 'Liquid', logo: 'https://www.hltv.org/teamlogo/liquid.png' },
+        { name: 'Spirit', logo: 'https://cdn.example/spirit.png' },
+      ],
+    });
   });
 
   it('falls back to standard title and description metadata', () => {

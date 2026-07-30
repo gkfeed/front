@@ -40,10 +40,26 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   const siteName = getObjectProperty(value, 'siteName');
   const type = getObjectProperty(value, 'type');
   const matchStartsAt = getObjectProperty(value, 'matchStartsAt');
+  const matchTeams = getObjectProperty(value, 'matchTeams');
 
   return typeof url === 'string'
     && [title, description, image, video, siteName, type].every(isNullableString)
-    && (matchStartsAt === undefined || isNullableString(matchStartsAt));
+    && (matchStartsAt === undefined || isNullableString(matchStartsAt))
+    && (
+      matchTeams === undefined
+      || matchTeams === null
+      || (
+        Array.isArray(matchTeams)
+        && matchTeams.length === 2
+        && matchTeams.every(isHltvMatchTeam)
+      )
+    );
+}
+
+function isHltvMatchTeam(value: unknown): boolean {
+  const name = getObjectProperty(value, 'name');
+  const logo = getObjectProperty(value, 'logo');
+  return typeof name === 'string' && isNullableString(logo);
 }
 
 function isNullableString(value: unknown): value is string | null {
