@@ -21,7 +21,10 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
   const { credentials } = useAuth();
   const [deleteState, setDeleteState] = useState<DeleteState>('idle');
   const feedId = parseFeedId(feedIdParam);
-  const load = useCallback(() => loadFeed(feedId, credentials), [credentials, feedId]);
+  const load = useCallback(
+    (signal: AbortSignal) => loadFeed(feedId, credentials, signal),
+    [credentials, feedId],
+  );
   const { result: loadResult, isLoading, retry: retryLoad } = useAsyncLoad(load);
   const { feed, loadError = '' } = loadResult ?? {};
   const isDeleting = deleteState === 'deleting';
@@ -65,11 +68,15 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
   };
 }
 
-async function loadFeed(feedId: number | null, credentials: Credentials | null): Promise<LoadResult> {
+async function loadFeed(
+  feedId: number | null,
+  credentials: Credentials | null,
+  signal?: AbortSignal,
+): Promise<LoadResult> {
   if (feedId === null) return { loadError: FEED_NOT_FOUND_MESSAGE };
 
   try {
-    const feed = await getFeedById(feedId, credentials);
+    const feed = await getFeedById(feedId, credentials, signal);
     return feed ? { feed } : { loadError: FEED_NOT_FOUND_MESSAGE };
   } catch {
     return { loadError: LOAD_ERROR_MESSAGE, canRetryLoad: true };

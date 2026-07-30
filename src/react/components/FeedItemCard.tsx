@@ -1,35 +1,33 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 
-import type { OpenGraphPreview } from '../services/openGraph';
 import { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
 import {
-  getFeedItemPreview,
-  getFeedItemProvider,
-  getVkVideoPreview,
-  getYoutubeVideoId,
+  analyzeFeedItem,
+  getRemoteFeedItemPreview,
+  getTikTokEmbedPreview,
+  isGenericHltvPreview,
+  isRedditUrl,
+  isRezkaUrl,
   type FeedItemPreview,
-} from './feedItemPreview';
+} from '../domain/feedItemPreview';
 import { InstagramIcon } from './Icons';
 import { isNsfwLink } from './nsfw';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
+import { HltvCountdown, HltvMatchup } from './previews/HltvMatch';
+import { FeedItemMedia } from './previews/FeedItemMedia';
 import { TikTokComments } from './previews/TikTokComments';
-import { TikTokEmbed } from './previews/TikTokEmbed';
-import { VideoEmbed } from './previews/VideoEmbed';
 import { YoutubePreview } from './previews/YoutubePreview';
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
   const { nsfwMode } = useNsfwPreferences();
-  const hostname = getHostname(item.link);
-  const itemUrl = parseUrl(item.link);
+  const analysis = analyzeFeedItem(item);
+  const { hostname, url: itemUrl, provider, localPreview, youtubeVideoId } = analysis;
   const isNsfw = isNsfwLink(item.link);
   const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
   const shouldHideNsfw = isNsfw && nsfwMode === 'hide';
-  const youtubeVideoId = itemUrl ? getYoutubeVideoId(itemUrl) : null;
-  const localPreview = getFeedItemPreview(item);
   const localPreviewSource = localPreview?.src;
-  const provider = getFeedItemProvider(item);
   const isYoutube = provider === 'youtube';
   const isTikTok = provider === 'tiktok';
   const isInstagram = provider === 'instagram';
@@ -54,7 +52,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     isLiquipedia,
     isHltv,
   );
-  const loadedRemotePreview = getRemotePreview(openGraphPreview, item.title);
+  const loadedRemotePreview = getRemoteFeedItemPreview(openGraphPreview, item.title);
   const remotePreview = isRezka && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
@@ -62,7 +60,6 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     ? feedDescription ??
       getFeedItemDescription(openGraphPreview?.description ?? '', item.title)
     : null;
-  const requiresSoundGesture = isAppleMobileDevice();
   const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item) : null;
   const preview = isTikTok
     ? tiktokEmbedPreview ?? localPreview
@@ -70,9 +67,6 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       ? remotePreview ?? localPreview
       : localPreview ?? remotePreview;
   const [previewFailures, setPreviewFailures] = useState(0);
-  const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
-  const [showSoundPrompt, setShowSoundPrompt] = useState(requiresSoundGesture);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const fallbackSource = preview && 'fallbackSrc' in preview && typeof preview.fallbackSrc === 'string'
     ? preview.fallbackSrc
     : null;
@@ -107,7 +101,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const hltvImageScore = isHltv
     && !hltvMatchTeams
     && openGraphPreview?.matchStatus === 'over'
-    ? openGraphPreview.matchScore
+    ? openGraphPreview.matchScore ?? null
     : null;
   const isPreviewPending = shouldLoadRemotePreview
     && !localPreview
@@ -115,9 +109,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
 
   useEffect(() => {
     setPreviewFailures(0);
-    setVideoAspectRatio(null);
-    setShowSoundPrompt(requiresSoundGesture);
-  }, [item.link, requiresSoundGesture]);
+  }, [item.link]);
 
   if (shouldHideNsfw) return null;
 
@@ -175,87 +167,16 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         />
       ) : liquipediaMatch ? (
         <LiquipediaMatch match={liquipediaMatch} />
-      ) : visiblePreview ? visiblePreview.type === 'video' ? (
-        <div className={[
-          'reader-card__preview',
-          'reader-card__preview--video',
-          videoAspectRatio ? 'reader-card__preview--video-adaptive' : '',
-          isShortVideo ? 'reader-card__preview--short-video' : '',
-          isTikTok ? 'reader-card__preview--tiktok' : '',
-        ].filter(Boolean).join(' ')}
-          style={videoAspectRatio ? {
-            '--reader-video-aspect-ratio': videoAspectRatio,
-            aspectRatio: videoAspectRatio,
-          } as CSSProperties : undefined}
-        >
-          <video
-            ref={videoRef}
-            key={visiblePreview.src}
-            src={visiblePreview.src}
-            poster={visiblePreview.poster}
-            aria-label={visiblePreview.alt}
-            autoPlay
-            controls
-            loop
-            muted={requiresSoundGesture}
-            playsInline
-            preload="auto"
-            onLoadedMetadata={(event) => {
-              const { videoHeight, videoWidth } = event.currentTarget;
-              if (videoHeight > 0 && videoWidth > 0) {
-                setVideoAspectRatio(videoWidth / videoHeight);
-              }
-            }}
-            onError={() => setPreviewFailures((failures) => failures + 1)}
-          />
-          {showSoundPrompt ? (
-            <button
-              type="button"
-              className="reader-card__sound-toggle"
-              onClick={() => {
-                if (videoRef.current) {
-                  videoRef.current.muted = false;
-                  void videoRef.current.play();
-                }
-                setShowSoundPrompt(false);
-              }}
-            >
-              Tap for sound
-            </button>
-          ) : null}
-        </div>
-      ) : visiblePreview.type === 'embed' ? (
-        isTikTok ? (
-          <TikTokEmbed
-            src={visiblePreview.src}
-            title={visiblePreview.alt}
-            requiresSoundGesture={requiresSoundGesture}
-          />
-        ) : (
-          <VideoEmbed src={visiblePreview.src} title={visiblePreview.alt} />
-        )
-      ) : (
-        <a
-          className={[
-            'reader-card__preview',
-            isShortVideo ? 'reader-card__preview--short-video' : '',
-            isTikTok ? 'reader-card__preview--tiktok' : '',
-          ].filter(Boolean).join(' ')}
+      ) : visiblePreview ? (
+        <FeedItemMedia
           href={item.link}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={hltvImageScore
-            ? `Open ${item.title || hostname}, final score ${hltvImageScore[0]} to ${hltvImageScore[1]}`
-            : `Open ${item.title || hostname}`}
-        >
-          <img
-            src={visiblePreview.src}
-            alt={visiblePreview.alt}
-            referrerPolicy="no-referrer"
-            onError={() => setPreviewFailures((failures) => failures + 1)}
-          />
-          {hltvImageScore ? <HltvImageScore score={hltvImageScore} /> : null}
-        </a>
+          hostname={item.title || hostname}
+          preview={visiblePreview}
+          isShortVideo={isShortVideo}
+          isTikTok={isTikTok}
+          hltvImageScore={hltvImageScore}
+          onPreviewError={() => setPreviewFailures((failures) => failures + 1)}
+        />
       ) : null}
       {!isPreviewPending && isHltv && openGraphPreview?.matchStartsAt ? (
         <HltvCountdown startsAt={openGraphPreview.matchStartsAt} />
@@ -285,263 +206,6 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   );
 }
 
-function HltvImageScore({
-  score,
-}: {
-  score: NonNullable<OpenGraphPreview['matchScore']>;
-}) {
-  return (
-    <span className="reader-card__hltv-image-score" aria-hidden="true">
-      {score[0]} : {score[1]}
-    </span>
-  );
-}
-
-function HltvCountdown({ startsAt }: { startsAt: string }) {
-  const startTimestamp = Date.parse(startsAt);
-  const [now, setNow] = useState(Date.now);
-
-  useEffect(() => {
-    if (!Number.isFinite(startTimestamp) || startTimestamp <= Date.now()) return;
-    const interval = window.setInterval(() => setNow(Date.now()), 1_000);
-    return () => window.clearInterval(interval);
-  }, [startTimestamp]);
-
-  const remainingMilliseconds = startTimestamp - now;
-  if (!Number.isFinite(startTimestamp) || remainingMilliseconds <= 0) return null;
-
-  return (
-    <time
-      className="reader-card__hltv-countdown"
-      dateTime={startsAt}
-      title={new Date(startTimestamp).toLocaleString()}
-      aria-live="polite"
-    >
-      Starts in {formatCountdown(remainingMilliseconds)}
-    </time>
-  );
-}
-
-function HltvMatchup({
-  teams,
-  href,
-  score,
-  isLive,
-  currentMap,
-  completedMaps,
-  playerStats,
-  teamSides,
-}: {
-  teams: NonNullable<OpenGraphPreview['matchTeams']>;
-  href: string;
-  score: OpenGraphPreview['matchScore'];
-  isLive: boolean;
-  currentMap: OpenGraphPreview['matchCurrentMap'];
-  completedMaps: OpenGraphPreview['matchCompletedMaps'];
-  playerStats: OpenGraphPreview['matchPlayerStats'];
-  teamSides: OpenGraphPreview['matchTeamSides'];
-}) {
-  const accessibleScore = score
-    ? `, ${isLive ? 'live' : 'final'} score ${score[0]} to ${score[1]}`
-    : '';
-  const accessibleMap = isLive && currentMap
-    ? `, current map ${currentMap.name} ${currentMap.score[0]} to ${currentMap.score[1]}`
-    : '';
-  const visibleCompletedMaps = completedMaps?.filter(
-    (map) => !currentMap || map.name !== currentMap.name,
-  );
-  const accessibleCompletedMaps = visibleCompletedMaps?.length
-    ? `, completed maps ${visibleCompletedMaps
-      .map((map) => `${map.name} ${map.score[0]} to ${map.score[1]}`)
-      .join(', ')}`
-    : '';
-  const isCurrentMapFinished = currentMap
-    ? isCompletedHltvMapScore(currentMap.score)
-    : false;
-  const accessibleSides = isLive && teamSides && !isCurrentMapFinished
-    ? `, ${teams[0].name} ${teamSides[0].toUpperCase()}, ${teams[1].name} ${teamSides[1].toUpperCase()}`
-    : '';
-  return (
-    <div className="reader-card__hltv-live-card">
-      <a
-        className="reader-card__hltv-matchup"
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        aria-label={`${teams[0].name} versus ${teams[1].name}${accessibleScore}${accessibleMap}${accessibleCompletedMaps}${accessibleSides}`}
-      >
-        <HltvMatchupTeam team={teams[0]} />
-        {score ? (
-          <span
-            className={[
-              'reader-card__hltv-score',
-              isLive ? 'reader-card__hltv-score--live' : '',
-            ].filter(Boolean).join(' ')}
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {isLive ? (
-              <span className="reader-card__hltv-live-label">
-                <i aria-hidden="true" /> Live
-              </span>
-            ) : null}
-            <strong>{score[0]} : {score[1]}</strong>
-            {visibleCompletedMaps?.map((map) => (
-              <span className="reader-card__hltv-completed-map" key={map.name}>
-                <b>{map.name}</b>
-                <HltvMapScore score={map.score} teamSides={null} />
-              </span>
-            ))}
-            {isLive && currentMap ? (
-              <span className="reader-card__hltv-current-map">
-                <b>{currentMap.name}</b>
-                <HltvMapScore score={currentMap.score} teamSides={teamSides} />
-              </span>
-            ) : null}
-          </span>
-        ) : (
-          <strong className="reader-card__hltv-versus">vs</strong>
-        )}
-        <HltvMatchupTeam team={teams[1]} />
-      </a>
-      {isLive ? (
-        <HltvPlayerStats teams={teams} playerStats={playerStats} />
-      ) : null}
-    </div>
-  );
-}
-
-function HltvMapScore({
-  score,
-  teamSides,
-}: {
-  score: [string, string];
-  teamSides: OpenGraphPreview['matchTeamSides'];
-}) {
-  return (
-    <span className="reader-card__hltv-current-map-score">
-      <span className={getHltvMapScoreClass(score, 0, teamSides)}>
-        {score[0]}
-      </span>
-      <i aria-hidden="true">:</i>
-      <span className={getHltvMapScoreClass(score, 1, teamSides)}>
-        {score[1]}
-      </span>
-    </span>
-  );
-}
-
-function getHltvMapScoreClass(
-  score: [string, string],
-  teamIndex: 0 | 1,
-  teamSides: OpenGraphPreview['matchTeamSides'],
-): string | undefined {
-  if (!isCompletedHltvMapScore(score)) {
-    return teamSides
-      ? `reader-card__hltv-current-map-score--${teamSides[teamIndex]}`
-      : undefined;
-  }
-  const winnerIndex = Number(score[0]) > Number(score[1]) ? 0 : 1;
-  return winnerIndex === teamIndex
-    ? 'reader-card__hltv-current-map-score--winner'
-    : 'reader-card__hltv-current-map-score--loser';
-}
-
-function isCompletedHltvMapScore(score: [string, string]): boolean {
-  const first = Number(score[0]);
-  const second = Number(score[1]);
-  return Number.isFinite(first)
-    && Number.isFinite(second)
-    && Math.max(first, second) >= 13
-    && Math.abs(first - second) >= 2;
-}
-
-function HltvPlayerStats({
-  teams,
-  playerStats,
-}: {
-  teams: NonNullable<OpenGraphPreview['matchTeams']>;
-  playerStats: OpenGraphPreview['matchPlayerStats'];
-}) {
-  const hasPlayerStats = playerStats?.some((team) => team.length > 0);
-  return (
-    <details className="reader-card__hltv-player-stats">
-      <summary>
-        <span>Player stats</span>
-        <span aria-hidden="true">⌄</span>
-      </summary>
-      {hasPlayerStats && playerStats ? (
-        <div className="reader-card__hltv-player-tables">
-          {teams.map((team, teamIndex) => (
-            <table key={team.name}>
-              <caption>{team.name}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Player</th>
-                  <th scope="col">K–D</th>
-                  <th scope="col"><abbr title="Assists">A</abbr></th>
-                  <th scope="col"><abbr title="Average damage per round">ADR</abbr></th>
-                </tr>
-              </thead>
-              <tbody>
-                {playerStats[teamIndex]!.map((player) => (
-                  <tr key={player.nickname}>
-                    <th scope="row">{player.nickname}</th>
-                    <td>{player.kills}–{player.deaths}</td>
-                    <td>{player.assists}</td>
-                    <td>{player.adr.toFixed(1)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ))}
-        </div>
-      ) : (
-        <p className="reader-card__hltv-player-stats-pending" role="status">
-          Waiting for player stats…
-        </p>
-      )}
-    </details>
-  );
-}
-
-function HltvMatchupTeam({
-  team,
-}: {
-  team: NonNullable<OpenGraphPreview['matchTeams']>[number];
-}) {
-  return (
-    <span className="reader-card__hltv-team">
-      {team.logo ? (
-        <img src={team.logo} alt="" />
-      ) : (
-        <span className="reader-card__hltv-monogram" aria-hidden="true">
-          {team.name.slice(0, 2).toUpperCase()}
-        </span>
-      )}
-      <strong>{team.name}</strong>
-    </span>
-  );
-}
-
-function formatCountdown(milliseconds: number): string {
-  const totalSeconds = Math.ceil(milliseconds / 1_000);
-  const days = Math.floor(totalSeconds / 86_400);
-  const hours = Math.floor(totalSeconds % 86_400 / 3_600);
-  const minutes = Math.floor(totalSeconds % 3_600 / 60);
-  const seconds = totalSeconds % 60;
-  const clock = [hours, minutes, seconds]
-    .map((value) => value.toString().padStart(2, '0'))
-    .join(':');
-  return days > 0 ? `${days}d ${clock}` : clock;
-}
-
-function isGenericHltvPreview(source: string): boolean {
-  const url = parseUrl(source);
-  return url?.hostname.replace(/^www\./, '').toLowerCase() === 'hltv.org'
-    && url.pathname === '/img/static/openGraphHltvLogo.png';
-}
-
 function getFeedItemDescription(content: string, title: string): string | null {
   if (!content) return null;
 
@@ -552,93 +216,10 @@ function getFeedItemDescription(content: string, title: string): string | null {
   return description;
 }
 
-function getTikTokEmbedPreview(item: FeedItem): FeedItemPreview | null {
-  const url = parseUrl(item.link);
-  const videoId = url?.pathname.match(/\/video\/(\d+)/)?.[1];
-  if (!videoId) return null;
-
-  const parameters = new URLSearchParams({
-    autoplay: '1',
-    muted: '0',
-    loop: '1',
-    controls: '1',
-    music_info: '0',
-    description: '0',
-    rel: '0',
-  });
-  return {
-    src: `https://www.tiktok.com/player/v1/${videoId}?${parameters}`,
-    alt: item.title ? `Video preview for ${item.title}` : 'TikTok video preview',
-    type: 'embed',
-  };
-}
-
-function isAppleMobileDevice(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  return /iP(?:hone|ad|od)/.test(navigator.userAgent)
-    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
-function getRemotePreview(
-  preview: OpenGraphPreview | null,
-  title: string,
-): FeedItemPreview | null {
-  if (!preview) return null;
-  const altTitle = preview.title || title;
-
-  if (preview.video) {
-    const videoUrl = parseUrl(preview.video);
-    const vkVideoPreview = videoUrl ? getVkVideoPreview(videoUrl, altTitle) : null;
-    if (vkVideoPreview) return vkVideoPreview;
-  }
-
-  if (preview.video && isDirectVideo(preview.video)) {
-    return {
-      src: preview.video,
-      alt: altTitle ? `Video preview for ${altTitle}` : 'Feed item video preview',
-      type: 'video',
-      ...(preview.image ? { poster: preview.image } : {}),
-    };
-  }
-
-  return preview.image ? {
-    src: preview.image,
-    alt: altTitle ? `Preview for ${altTitle}` : 'Feed item preview',
-  } : null;
-}
-
-function isDirectVideo(value: string): boolean {
-  return /\.(?:m4v|mov|mp4|webm)(?:$|[?#])/i.test(value);
-}
-
 function getYoutubeChannelName(title: string): string {
   return title.replace(/^YT:\s*/i, '').trim() || 'YouTube';
 }
 
 function getInstagramUsername(title: string): string {
   return title.replace(/^inst:\s*/i, '').trim() || 'Instagram';
-}
-
-function parseUrl(value: string): URL | null {
-  try {
-    return new URL(value);
-  } catch {
-    return null;
-  }
-}
-
-function getHostname(link: string): string {
-  return parseUrl(link)?.hostname.replace(/^www\./, '') || 'Feed item';
-}
-
-function isRedditUrl(url: URL | null): boolean {
-  if (!url) return false;
-  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
-  return hostname === 'reddit.com' || hostname.endsWith('.reddit.com');
-}
-
-function isRezkaUrl(url: URL | null): boolean {
-  if (!url) return false;
-  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
-  return hostname === 'hdrezka.me' || hostname === 'rezka.ag';
 }

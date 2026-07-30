@@ -15,8 +15,11 @@ export function useFeedReader() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [actionState, setActionState] = useState<ActionState>('idle');
   const [deletedItemIds, setDeletedItemIds] = useState<Set<number>>(() => new Set());
-  const load = useCallback(() => getFeedItems(credentials), [credentials]);
-  const { result: loadedItems, isLoading, retry } = useAsyncLoad(load);
+  const load = useCallback(
+    (signal: AbortSignal) => getFeedItems(credentials, 1000, signal),
+    [credentials],
+  );
+  const { result: loadedItems, status, isLoading, retry } = useAsyncLoad(load);
   const items = useMemo(
     () => loadedItems?.filter((item) => (
       !deletedItemIds.has(item.id)
@@ -62,7 +65,7 @@ export function useFeedReader() {
     currentItem,
     isLoading,
     isDeleting: actionState === 'deleting',
-    loadFailed: !isLoading && items === undefined,
+    loadFailed: status === 'error',
     deleteFailed: actionState === 'error',
     remainingCount: items ? Math.max(items.length - currentIndex, 0) : 0,
     keepItem: advance,

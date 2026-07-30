@@ -91,7 +91,7 @@ function getResultsAnnouncement(count: number, query = ''): string {
 }
 
 function useFeeds(credentials: Credentials | null) {
-  const load = useCallback(() => loadFeeds(credentials), [credentials]);
+  const load = useCallback((signal: AbortSignal) => loadFeeds(credentials, signal), [credentials]);
   const { result, isLoading, retry } = useAsyncLoad(load);
   const { feeds = [], errorMessage = '' } = result ?? {};
 
@@ -103,9 +103,9 @@ function useFeeds(credentials: Credentials | null) {
   };
 }
 
-async function loadFeeds(credentials: Credentials | null): Promise<FeedLoadResult> {
+async function loadFeeds(credentials: Credentials | null, signal?: AbortSignal): Promise<FeedLoadResult> {
   try {
-    return { feeds: await getAllFeeds(credentials) };
+    return { feeds: await getAllFeeds(credentials, signal) };
   } catch (error) {
     return { feeds: [], errorMessage: getLoadErrorMessage(error) };
   }

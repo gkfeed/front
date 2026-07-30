@@ -47,7 +47,7 @@ HLTV pages. URL2PNG image URLs are upgraded to HTTPS before being rendered.
 
 Run `npm test` to execute the automated tests.
 
-Run `npm run check` or `make check` to execute both the test suite and production build.
+Run `npm run check` or `make check` to execute the test suite, lint, browser automation, and production build.
 
 ## Browser automation
 

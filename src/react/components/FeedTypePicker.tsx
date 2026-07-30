@@ -1,8 +1,7 @@
 import { useState } from 'react';
 
 import { getFeedTypeIcon } from './feedIcons';
-import { FEED_TYPE_OPTIONS } from './feedTypes';
-import type { FeedTypeOption } from './feedTypes';
+import { FEED_TYPE_OPTIONS, type FeedTypeOption } from '../domain/feedTypes';
 
 interface FeedTypePickerProps {
   value: string;

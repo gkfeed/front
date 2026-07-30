@@ -1,5 +1,5 @@
-import { PreviewError } from './opengraph.js';
 import { PublicHttpError, requestPublicHttp } from './publicHttp.js';
+import { PreviewError } from './preview/errors.js';
 
 const MAX_RESPONSE_BYTES = 1_000_000;
 const COMMENT_LIMIT = 10;

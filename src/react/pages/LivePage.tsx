@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { getFeedItemPreview } from '../components/feedItemPreview';
+import { getFeedItemPreview } from '../domain/feedItemPreview';
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
 import { getLiveTwitchItems } from '../services/twitch';
 import { useAuth } from '../state/useAuth';
@@ -10,8 +10,8 @@ export function LivePage() {
   const { credentials } = useAuth();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
-  const load = useCallback(() => getLiveTwitchItems(credentials), [credentials]);
-  const { result: items, isLoading, retry } = useAsyncLoad(load);
+  const load = useCallback((signal: AbortSignal) => getLiveTwitchItems(credentials, signal), [credentials]);
+  const { result: items, status, isLoading, retry } = useAsyncLoad(load);
   const selectedItem = items?.find((item) => item.id === selectedId) ?? items?.[0];
 
   function selectChannel(id: number) {
@@ -30,7 +30,7 @@ export function LivePage() {
         </div>
       ) : null}
 
-      {!isLoading && items === undefined ? (
+      {status === 'error' ? (
         <div className="live__state" role="alert">
           <h2>Couldn’t check Twitch</h2>
           <p>The live status check failed. Try again in a moment.</p>

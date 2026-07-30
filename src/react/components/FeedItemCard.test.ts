@@ -11,7 +11,7 @@ import {
   isShortVideoFeedItem,
   isTikTokFeedItem,
   isVkFeedItem,
-} from './feedItemPreview';
+} from '../domain/feedItemPreview';
 
 function item(overrides: Partial<FeedItem>): FeedItem {
   return {

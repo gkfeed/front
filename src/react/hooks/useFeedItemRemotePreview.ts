@@ -49,7 +49,8 @@ export function useFeedItemRemotePreview(
     setStatus('pending');
     if (!isVisible) return;
 
-    loadRemotePreview(url, isLiquipedia).then((result) => {
+    const controller = new AbortController();
+    loadRemotePreview(url, isLiquipedia, controller.signal).then((result) => {
       if (active) {
         setPreview(result);
         setStatus('loaded');
@@ -60,6 +61,7 @@ export function useFeedItemRemotePreview(
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, [enabled, isLiquipedia, isVisible, url]);
 
@@ -137,15 +139,21 @@ function sameMatchScore(
   );
 }
 
-async function loadRemotePreview(url: string, isLiquipedia: boolean): Promise<RemotePreview> {
+async function loadRemotePreview(
+  url: string,
+  isLiquipedia: boolean,
+  signal: AbortSignal,
+): Promise<RemotePreview> {
   if (isLiquipedia) {
     try {
       const liquipediaMatch = await loadQueuedPreview(
         `liquipedia:${url}`,
         (signal) => getLiquipediaMatchPreview(url, signal),
+        signal,
       );
       return { liquipediaMatch, openGraphPreview: null };
-    } catch {
+    } catch (error) {
+      if (isAbortError(error)) throw error;
       // Unsupported or changed Liquipedia markup still gets a generic preview.
     }
   }
@@ -153,8 +161,13 @@ async function loadRemotePreview(url: string, isLiquipedia: boolean): Promise<Re
   const openGraphPreview = await loadQueuedPreview(
     `open-graph:${url}`,
     (signal) => getOpenGraphPreview(url, signal),
+    signal,
   );
   return { liquipediaMatch: null, openGraphPreview };
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
 }
 
 function usePreviewVisibility(ref: RefObject<HTMLElement | null>): boolean {

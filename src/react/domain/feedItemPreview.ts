@@ -1,4 +1,5 @@
 import type { FeedItem } from '../types';
+import type { OpenGraphPreview } from '../../../shared/previewContracts';
 
 export interface FeedItemPreview {
   src: string;
@@ -17,8 +18,98 @@ export type FeedItemProvider =
   | 'vk'
   | 'youtube';
 
+export interface FeedItemAnalysis {
+  url: URL | null;
+  hostname: string;
+  provider: FeedItemProvider;
+  localPreview: FeedItemPreview | null;
+  youtubeVideoId: string | null;
+}
+
+export function analyzeFeedItem(item: FeedItem): FeedItemAnalysis {
+  const url = parseUrl(item.link);
+  return {
+    url,
+    hostname: url?.hostname.replace(/^www\./, '').toLowerCase() || 'Feed item',
+    provider: getFeedItemProviderFromUrl(item, url),
+    localPreview: getFeedItemPreviewFromUrl(item, url),
+    youtubeVideoId: url ? getYoutubeVideoId(url) : null,
+  };
+}
+
 export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
   const url = parseUrl(item.link);
+  return getFeedItemPreviewFromUrl(item, url);
+}
+
+export function getTikTokEmbedPreview(item: FeedItem): FeedItemPreview | null {
+  const url = parseUrl(item.link);
+  const videoId = url?.pathname.match(/\/video\/(\d+)/)?.[1];
+  if (!videoId) return null;
+
+  const parameters = new URLSearchParams({
+    autoplay: '1',
+    muted: '0',
+    loop: '1',
+    controls: '1',
+    music_info: '0',
+    description: '0',
+    rel: '0',
+  });
+  return {
+    src: `https://www.tiktok.com/player/v1/${videoId}?${parameters}`,
+    alt: item.title ? `Video preview for ${item.title}` : 'TikTok video preview',
+    type: 'embed',
+  };
+}
+
+export function getRemoteFeedItemPreview(
+  preview: OpenGraphPreview | null,
+  title: string,
+): FeedItemPreview | null {
+  if (!preview) return null;
+  const altTitle = preview.title || title;
+
+  if (preview.video) {
+    const videoUrl = parseUrl(preview.video);
+    const vkVideoPreview = videoUrl ? getVkVideoPreview(videoUrl, altTitle) : null;
+    if (vkVideoPreview) return vkVideoPreview;
+  }
+
+  if (preview.video && isDirectVideoValue(preview.video)) {
+    return {
+      src: preview.video,
+      alt: altTitle ? `Video preview for ${altTitle}` : 'Feed item video preview',
+      type: 'video',
+      ...(preview.image ? { poster: preview.image } : {}),
+    };
+  }
+
+  return preview.image ? {
+    src: preview.image,
+    alt: altTitle ? `Preview for ${altTitle}` : 'Feed item preview',
+  } : null;
+}
+
+export function isGenericHltvPreview(source: string): boolean {
+  const url = parseUrl(source);
+  return url?.hostname.replace(/^www\./, '').toLowerCase() === 'hltv.org'
+    && url.pathname === '/img/static/openGraphHltvLogo.png';
+}
+
+export function isRedditUrl(url: URL | null): boolean {
+  if (!url) return false;
+  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+  return hostname === 'reddit.com' || hostname.endsWith('.reddit.com');
+}
+
+export function isRezkaUrl(url: URL | null): boolean {
+  if (!url) return false;
+  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+  return hostname === 'hdrezka.me' || hostname === 'rezka.ag';
+}
+
+function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPreview | null {
   if (!url) return getEmbeddedImage(item.text, item.title);
 
   const vkVideoEmbed = getVkVideoPreview(url, item.title);
@@ -90,9 +181,12 @@ export function isLiquipediaFeedItem(item: FeedItem): boolean {
 }
 
 export function getFeedItemProvider(item: FeedItem): FeedItemProvider {
+  return getFeedItemProviderFromUrl(item, parseUrl(item.link));
+}
+
+function getFeedItemProviderFromUrl(item: FeedItem, url: URL | null): FeedItemProvider {
   if (/^inst:\s*/i.test(item.title)) return 'instagram';
 
-  const url = parseUrl(item.link);
   if (!url) return 'generic';
 
   const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
@@ -197,7 +291,7 @@ function getVkMediaReference(url: URL): RegExpMatchArray | null {
 }
 
 function isVkMediaId(value: string | null, signed = true): value is string {
-  return Boolean(value && (signed ? /^-?\d+$/ : /^\d+$/).test(value));
+  return Boolean(value && (signed ? /^-?\d+$/.test(value) : /^\d+$/.test(value)));
 }
 
 function isSafeMediaSource(source: string): boolean {
@@ -236,6 +330,10 @@ function isDirectVideo(url: URL): boolean {
   return /\.(?:m4v|mov|mp4|webm)$/i.test(url.pathname);
 }
 
+function isDirectVideoValue(value: string): boolean {
+  return /\.(?:m4v|mov|mp4|webm)(?:$|[?#])/i.test(value);
+}
+
 export function getYoutubeVideoId(url: URL): string | null {
   const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
   let videoId: string | null = null;
@@ -250,7 +348,7 @@ export function getYoutubeVideoId(url: URL): string | null {
   return videoId && /^[\w-]{6,}$/.test(videoId) ? videoId : null;
 }
 
-function parseUrl(value: string): URL | null {
+export function parseUrl(value: string): URL | null {
   try {
     return new URL(value);
   } catch {

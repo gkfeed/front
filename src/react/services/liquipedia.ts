@@ -2,13 +2,13 @@ import { getObjectProperty } from '../unknownObject';
 import type {
   LiquipediaMatchPreview,
   LiquipediaMatchTeam,
-} from '../../../server/previewContracts';
+} from '../../../shared/previewContracts';
 
 export type {
   LiquipediaMatchPreview,
   LiquipediaMatchResult,
   LiquipediaMatchTeam,
-} from '../../../server/previewContracts';
+} from '../../../shared/previewContracts';
 
 export async function getLiquipediaMatchPreview(
   url: string,

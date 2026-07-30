@@ -1,9 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
 
 import { FeedItemCard } from '../components/FeedItemCard';
-import { isShortVideoFeedItem, isTikTokFeedItem } from '../components/feedItemPreview';
+import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemPreview';
 import { useFeedReader } from '../hooks/useFeedReader';
+import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
+import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
 import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
 import type { FeedItem } from '../types';
@@ -12,10 +14,6 @@ export function ReaderPage() {
   const { search } = useLocation();
   const [, setSearchParams] = useSearchParams();
   const mode = getReaderMode(search);
-  const [compactActionsItemId, setCompactActionsItemId] = useState<number | null>(null);
-  const reviewPanelRef = useRef<HTMLDivElement>(null);
-  const reviewActionsRef = useRef<HTMLDivElement>(null);
-  const reviewActionsHeightRef = useRef(52);
   const {
     items,
     currentItem,
@@ -28,8 +26,18 @@ export function ReaderPage() {
     deleteItem,
     retryLoad,
   } = useFeedReader();
-  const useCompactActions = mode === 'review'
-    && currentItem?.id === compactActionsItemId;
+  const {
+    panelRef: reviewPanelRef,
+    actionsRef: reviewActionsRef,
+    useCompactActions,
+  } = useReviewActionsLayout(mode, currentItem);
+  useReviewShortcuts({
+    mode,
+    currentItem,
+    isDeleting,
+    onKeep: keepItem,
+    onDelete: deleteItem,
+  });
 
   function setMode(nextMode: ReaderMode) {
     setSearchParams((currentParams) => {
@@ -39,76 +47,6 @@ export function ReaderPage() {
       return nextParams;
     });
   }
-
-  useLayoutEffect(() => {
-    if (mode !== 'review' || !currentItem) {
-      setCompactActionsItemId(null);
-      return;
-    }
-
-    const itemId = currentItem.id;
-    const panel = reviewPanelRef.current;
-    const card = panel?.querySelector<HTMLElement>(':scope > .reader-card');
-    if (!panel || !card) return;
-
-    function updateActionsLayout() {
-      const actions = reviewActionsRef.current;
-      if (actions && actions.offsetHeight > 0) {
-        reviewActionsHeightRef.current = actions.offsetHeight;
-      }
-
-      const cardBottom = card!.getBoundingClientRect().bottom + window.scrollY;
-      const panelGap = Number.parseFloat(window.getComputedStyle(panel!).rowGap) || 0;
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-      const actionsBottom = cardBottom + panelGap + reviewActionsHeightRef.current;
-      setCompactActionsItemId(actionsBottom > viewportHeight ? itemId : null);
-    }
-
-    updateActionsLayout();
-
-    const resizeObserver = typeof ResizeObserver === 'undefined'
-      ? null
-      : new ResizeObserver(updateActionsLayout);
-    resizeObserver?.observe(card);
-    window.addEventListener('resize', updateActionsLayout);
-    window.visualViewport?.addEventListener('resize', updateActionsLayout);
-
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener('resize', updateActionsLayout);
-      window.visualViewport?.removeEventListener('resize', updateActionsLayout);
-    };
-  }, [currentItem, mode]);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (
-        mode !== 'review'
-        || !currentItem
-        || isDeleting
-        || event.repeat
-        || event.altKey
-        || event.ctrlKey
-        || event.metaKey
-        || event.shiftKey
-        || isTextEntryTarget(event.target)
-        || (event.target instanceof Element && event.target.closest('[role="tab"]'))
-      ) {
-        return;
-      }
-
-      if (event.key === 'a') {
-        event.preventDefault();
-        keepItem();
-      } else if (event.key === 'd') {
-        event.preventDefault();
-        void deleteItem();
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentItem, deleteItem, isDeleting, keepItem, mode]);
 
   return (
     <section className="reader" aria-labelledby="reader-page-title">
@@ -334,15 +272,6 @@ function MobileReviewRail({
         </button>
       </div>
     </aside>
-  );
-}
-
-function isTextEntryTarget(target: EventTarget | null) {
-  return target instanceof HTMLElement && (
-    target.isContentEditable
-    || target instanceof HTMLInputElement
-    || target instanceof HTMLTextAreaElement
-    || target instanceof HTMLSelectElement
   );
 }
 

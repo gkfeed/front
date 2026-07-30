@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import type { FeedItemPreview } from '../feedItemPreview';
+import type { FeedItemPreview } from '../../domain/feedItemPreview';
 
 type YoutubePreviewProps = {
   onPreviewError: () => void;
