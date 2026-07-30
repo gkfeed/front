@@ -21,6 +21,7 @@ import type {
 import { PublicHttpError, requestPublicHttp } from './publicHttp.js';
 
 const MAX_RESPONSE_BYTES = 1_000_000;
+const MAX_METADATA_RESPONSE_BYTES = 256_000;
 const MAX_HLTV_RESPONSE_BYTES = 2_000_000;
 const MAX_IMAGE_RESPONSE_BYTES = 10_000_000;
 const MAX_REDIRECTS = 5;
@@ -71,7 +72,12 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
     teamSides?: HltvMatchTeamSidesPreview | null;
   } = isHltvMatchUrl(url)
     ? await fetchHltvHtml(url)
-    : await fetchHtml(url, isRezkaUrl(requestedUrl) ? REZKA_USER_AGENT : TWITTERBOT_USER_AGENT);
+    : await fetchHtml(
+      url,
+      isRezkaUrl(requestedUrl) ? REZKA_USER_AGENT : TWITTERBOT_USER_AGENT,
+      // Matreshka puts the OG tags first and appends a large inline Nuxt shell.
+      { metadataOnly: isMatreshkaVideoUrl(requestedUrl) },
+    );
   const preview = parseOpenGraph(page.html, page.url);
   if (page.currentMap) {
     preview.matchCurrentMap = page.currentMap;
@@ -162,6 +168,7 @@ export async function fetchRedditPreviewImage(input: string): Promise<PreviewIma
 async function fetchHtml(
   input: URL,
   userAgent = TWITTERBOT_USER_AGENT,
+  options: { metadataOnly?: boolean } = {},
 ): Promise<{ html: string; url: URL }> {
   let url = input;
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
@@ -202,7 +209,11 @@ async function fetchHtml(
     }
 
     try {
-      const html = await readLimitedBody(response);
+      const html = await readLimitedBody(response, {
+        maxBytes: options.metadataOnly ? MAX_METADATA_RESPONSE_BYTES : MAX_RESPONSE_BYTES,
+        stopAfterHead: options.metadataOnly === true,
+        truncateAtLimit: options.metadataOnly === true,
+      });
       return { html, url };
     } catch (error) {
       if (error instanceof PreviewError) throw error;
@@ -391,6 +402,11 @@ function getPreviewUrl(url: URL): URL {
 
 function isRezkaUrl(url: URL): boolean {
   return url.hostname.toLowerCase().replace(/^www\./, '') === 'hdrezka.me';
+}
+
+function isMatreshkaVideoUrl(url: URL): boolean {
+  return url.hostname.toLowerCase().replace(/^www\./, '') === 'matreshka.tv'
+    && /^\/video\/[^/]+(?:\/|$)/i.test(url.pathname);
 }
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
@@ -908,9 +924,17 @@ function isRedirect(status: number): boolean {
   return [301, 302, 303, 307, 308].includes(status);
 }
 
-async function readLimitedBody(response: Awaited<ReturnType<typeof requestPublicHttp>>): Promise<string> {
+async function readLimitedBody(
+  response: Awaited<ReturnType<typeof requestPublicHttp>>,
+  options: {
+    maxBytes?: number;
+    stopAfterHead?: boolean;
+    truncateAtLimit?: boolean;
+  } = {},
+): Promise<string> {
+  const maxBytes = options.maxBytes ?? MAX_RESPONSE_BYTES;
   const declaredLength = Number(firstHeader(response.headers['content-length']));
-  if (declaredLength > MAX_RESPONSE_BYTES) {
+  if (declaredLength > maxBytes && !options.truncateAtLimit) {
     response.body.destroy();
     throw responseTooLarge();
   }
@@ -921,12 +945,26 @@ async function readLimitedBody(response: Awaited<ReturnType<typeof requestPublic
 
   for await (const chunk of body) {
     const value = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
-    size += value.byteLength;
-    if (size > MAX_RESPONSE_BYTES) {
+    const remainingBytes = maxBytes - size;
+    if (value.byteLength > remainingBytes) {
+      if (!options.truncateAtLimit) {
+        body.destroy();
+        throw responseTooLarge();
+      }
+      result += decoder.decode(value.subarray(0, Math.max(0, remainingBytes)), { stream: true });
       body.destroy();
-      throw responseTooLarge();
+      return result + decoder.decode();
     }
+    size += value.byteLength;
     result += decoder.decode(value, { stream: true });
+    if (options.stopAfterHead) {
+      const headEnd = result.search(/<\/head\s*>/i);
+      if (headEnd !== -1) {
+        const endTagEnd = result.indexOf('>', headEnd) + 1;
+        body.destroy();
+        return result.slice(0, endTagEnd);
+      }
+    }
   }
   return result + decoder.decode();
 }

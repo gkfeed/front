@@ -296,6 +296,28 @@ describe('parseOpenGraph', () => {
 });
 
 describe('fetchOpenGraph', () => {
+  it('extracts Matreshka metadata before its oversized inline application shell', async () => {
+    const html = [
+      '<head>',
+      '<meta property="og:title" content="Matreshka video">',
+      '<meta property="og:image" content="https://c4-images.cmtv.ru/video/channel/video/1280x720_preview.png">',
+      `<style>${'x'.repeat(300_000)}</style>`,
+      '</head>',
+    ].join('');
+    requestPublicHttp.mockImplementation(async (url: URL) => ({
+      body: Readable.from([html]),
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+      status: 200,
+      url,
+    }));
+
+    await expect(fetchOpenGraph('https://matreshka.tv/video/video'))
+      .resolves.toMatchObject({
+        title: 'Matreshka video',
+        image: 'https://c4-images.cmtv.ru/video/channel/video/1280x720_preview.png',
+      });
+  });
+
   it('uses the Rezka preview host and crawler profile used by gkbot', async () => {
     requestPublicHttp.mockImplementation(async (url: URL) => ({
       body: Readable.from([
