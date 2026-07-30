@@ -1,15 +1,17 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { FeedItemCard } from '../components/FeedItemCard';
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../components/feedItemPreview';
 import { useFeedReader } from '../hooks/useFeedReader';
 import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
+import { getReaderMode, type ReaderMode } from '../state/readerMode';
 import type { FeedItem } from '../types';
 
-type ReaderMode = 'review' | 'scroll';
-
 export function ReaderPage() {
-  const [mode, setMode] = useState<ReaderMode>('review');
+  const { search } = useLocation();
+  const [, setSearchParams] = useSearchParams();
+  const mode = getReaderMode(search);
   const [compactActionsItemId, setCompactActionsItemId] = useState<number | null>(null);
   const reviewPanelRef = useRef<HTMLDivElement>(null);
   const reviewActionsRef = useRef<HTMLDivElement>(null);
@@ -28,6 +30,15 @@ export function ReaderPage() {
   } = useFeedReader();
   const useCompactActions = mode === 'review'
     && currentItem?.id === compactActionsItemId;
+
+  function setMode(nextMode: ReaderMode) {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      if (nextMode === 'review') nextParams.delete('view');
+      else nextParams.set('view', nextMode);
+      return nextParams;
+    });
+  }
 
   useLayoutEffect(() => {
     if (mode !== 'review' || !currentItem) {
@@ -103,11 +114,6 @@ export function ReaderPage() {
     <section className="reader" aria-labelledby="reader-page-title">
       <h1 id="reader-page-title" className="sr-only">Reader</h1>
 
-      <div className="reader__tabs" role="tablist" aria-label="Reader view">
-        <ReaderModeTab mode="review" currentMode={mode} onSelect={setMode}>Review</ReaderModeTab>
-        <ReaderModeTab mode="scroll" currentMode={mode} onSelect={setMode}>Scroll</ReaderModeTab>
-      </div>
-
       {isLoading ? <ReaderLoading /> : null}
 
       {loadFailed ? (
@@ -136,8 +142,8 @@ export function ReaderPage() {
             isShortVideoFeedItem(currentItem) ? 'reader__item--short-video' : '',
             isTikTokFeedItem(currentItem) ? 'reader__item--tiktok' : '',
           ].filter(Boolean).join(' ')}
-          role="tabpanel"
-          aria-labelledby="reader-review-tab"
+          role="region"
+          aria-label="Review view"
         >
           <FeedItemCard key={currentItem.id} item={currentItem} />
           {isShortVideoFeedItem(currentItem) ? (
@@ -185,8 +191,8 @@ export function ReaderPage() {
         <div
           id="reader-review-panel"
           className="reader__state"
-          role="tabpanel"
-          aria-labelledby="reader-review-tab"
+          role="region"
+          aria-label="Review view"
         >
           <span className="reader__done-mark" aria-hidden="true">✓</span>
           <h2>You’ve reviewed everything</h2>
@@ -198,8 +204,8 @@ export function ReaderPage() {
         <div
           id="reader-scroll-panel"
           className="reader__scroll-panel"
-          role="tabpanel"
-          aria-labelledby="reader-scroll-tab"
+          role="region"
+          aria-label="Scroll view"
         >
           <div className="reader__stream">
             {items.map((item) => <FeedItemCard key={item.id} item={item} />)}
@@ -337,30 +343,6 @@ function isTextEntryTarget(target: EventTarget | null) {
     || target instanceof HTMLInputElement
     || target instanceof HTMLTextAreaElement
     || target instanceof HTMLSelectElement
-  );
-}
-
-type ReaderModeTabProps = {
-  children: string;
-  mode: ReaderMode;
-  currentMode: ReaderMode;
-  onSelect: (mode: ReaderMode) => void;
-};
-
-function ReaderModeTab({ children, mode, currentMode, onSelect }: ReaderModeTabProps) {
-  const selected = mode === currentMode;
-
-  return (
-    <button
-      id={`reader-${mode}-tab`}
-      type="button"
-      role="tab"
-      aria-selected={selected}
-      aria-controls={`reader-${mode}-panel`}
-      onClick={() => onSelect(mode)}
-    >
-      {children}
-    </button>
   );
 }
 

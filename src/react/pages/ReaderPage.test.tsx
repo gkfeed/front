@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
@@ -17,6 +18,10 @@ const ITEMS = [
   { id: 11, feedId: 3, link: 'https://news.example.org/two', title: 'Second story', text: 'Second summary' },
 ];
 
+function renderReader(initialEntry = '/reader') {
+  return render(<MemoryRouter initialEntries={[initialEntry]}><ReaderPage /></MemoryRouter>);
+}
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -26,7 +31,7 @@ afterEach(() => {
 describe('ReaderPage', () => {
   it('keeps an item locally and advances without deleting it', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
@@ -38,7 +43,7 @@ describe('ReaderPage', () => {
 
   it('keeps the current item with a', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
     fireEvent.keyDown(window, { key: 'a' });
@@ -50,7 +55,7 @@ describe('ReaderPage', () => {
   it('deletes the current item with d', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     vi.mocked(deleteFeedItemById).mockResolvedValue();
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
     fireEvent.keyDown(window, { key: 'd' });
@@ -61,7 +66,7 @@ describe('ReaderPage', () => {
 
   it('does not act on the old arrow shortcuts', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
     fireEvent.keyDown(window, { key: 'ArrowLeft' });
@@ -74,10 +79,7 @@ describe('ReaderPage', () => {
 
   it('switches to a continuous view of all feed items', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
-    render(<ReaderPage />);
-
-    expect(await screen.findByText('First story')).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Scroll' }));
+    renderReader('/reader?view=scroll');
 
     expect(await screen.findByText('First story')).toBeTruthy();
     expect(await screen.findByText('Second story')).toBeTruthy();
@@ -93,7 +95,7 @@ describe('ReaderPage', () => {
       title: 'Short video',
       text: '',
     }]);
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByLabelText('Review controls')).toBeTruthy();
     expect(screen.getByLabelText('More review actions')).toBeTruthy();
@@ -125,7 +127,7 @@ describe('ReaderPage', () => {
       };
     });
     vi.mocked(getFeedItems).mockResolvedValue([ITEMS[0]]);
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByRole('complementary', { name: 'Feed item actions' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Keep item' })).toBeTruthy();
@@ -144,7 +146,7 @@ describe('ReaderPage', () => {
   it('deletes an item on the server before advancing', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     vi.mocked(deleteFeedItemById).mockResolvedValue();
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -156,7 +158,7 @@ describe('ReaderPage', () => {
   it('keeps a failed deletion visible for retry', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     vi.mocked(deleteFeedItemById).mockRejectedValue(new Error('offline'));
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -168,7 +170,7 @@ describe('ReaderPage', () => {
 
   it('can reload after reaching the end of the queue', async () => {
     vi.mocked(getFeedItems).mockResolvedValueOnce([]).mockResolvedValueOnce([ITEMS[0]]);
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByText('You’re all caught up')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
@@ -185,7 +187,7 @@ describe('ReaderPage', () => {
       title: 'YT: Example Channel',
       text: 'Example video title',
     }]);
-    render(<ReaderPage />);
+    renderReader();
 
     expect(await screen.findByRole('heading', { name: 'Example video title' })).toBeTruthy();
     expect(screen.getByText('Example Channel')).toBeTruthy();

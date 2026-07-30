@@ -17,11 +17,27 @@ afterEach(() => {
 });
 
 describe('ThemePicker', () => {
+  it('moves the Reader view switch into Settings', () => {
+    const onReaderModeChange = vi.fn();
+    document.documentElement.dataset.theme = 'light';
+    render(<ThemePicker readerMode="review" onReaderModeChange={onReaderModeChange} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+    expect(screen.getByRole('menuitemradio', { name: 'Review' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemradio', { name: 'Scroll' }).getAttribute('aria-checked')).toBe('false');
+
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Scroll' }));
+
+    expect(onReaderModeChange).toHaveBeenCalledWith('scroll');
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
   it('offers all four color themes in its appearance menu', () => {
     document.documentElement.dataset.theme = 'dark';
     render(<ThemePicker />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Color theme: Dark' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
     expect(screen.getAllByRole('menuitemradio').map((option) => option.getAttribute('aria-label')))
       .toEqual([
@@ -39,20 +55,20 @@ describe('ThemePicker', () => {
     document.documentElement.dataset.theme = 'dark';
     render(<ThemePicker />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Color theme: Dark' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Catppuccin Mocha theme' }));
 
     expect(document.documentElement.dataset.theme).toBe('mocha');
     expect(document.documentElement.style.colorScheme).toBe('dark');
     expect(storage.get(THEME_STORAGE_KEY)).toBe('mocha');
-    expect(screen.getByRole('button', { name: 'Color theme: Mocha' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
   });
 
   it('starts with a previously initialized theme', () => {
     document.documentElement.dataset.theme = 'latte';
     render(<ThemePicker />);
 
-    expect(screen.getByRole('button', { name: 'Color theme: Latte' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
   });
 
   it('follows live system color-scheme changes when System is selected', () => {
@@ -67,7 +83,7 @@ describe('ThemePicker', () => {
     document.documentElement.dataset.theme = 'dark';
     render(<ThemePicker />);
 
-    expect(screen.getByRole('button', { name: 'Color theme: System' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
     systemTheme.matches = true;
     systemThemeChanged?.();
 
@@ -86,7 +102,7 @@ describe('ThemePicker', () => {
     document.documentElement.dataset.theme = 'mocha';
     render(<ThemePicker />);
 
-    expect(screen.getByRole('button', { name: 'Color theme: Catppuccin' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
     systemTheme.matches = true;
     systemThemeChanged?.();
     expect(document.documentElement.dataset.theme).toBe('latte');
@@ -99,7 +115,7 @@ describe('ThemePicker', () => {
   it('closes the menu with Escape and returns focus to the trigger', () => {
     document.documentElement.dataset.theme = 'light';
     render(<ThemePicker />);
-    const trigger = screen.getByRole('button', { name: 'Color theme: Light' });
+    const trigger = screen.getByRole('button', { name: 'Settings' });
 
     fireEvent.click(trigger);
     fireEvent.keyDown(document, { key: 'Escape' });

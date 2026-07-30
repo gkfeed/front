@@ -8,6 +8,7 @@ import {
   themePreferences,
   type ThemePreference,
 } from '../theme';
+import type { ReaderMode } from '../state/readerMode';
 
 const shortLabels: Record<ThemePreference, string> = {
   system: 'System',
@@ -27,7 +28,12 @@ const descriptions: Record<ThemePreference, string> = {
   mocha: 'Deep pastel',
 };
 
-export function ThemePicker() {
+type ThemePickerProps = {
+  readerMode?: ReaderMode;
+  onReaderModeChange?: (mode: ReaderMode) => void;
+};
+
+export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps) {
   const [theme, setTheme] = useState(getInitialThemePreference);
   const [isOpen, setIsOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -76,23 +82,53 @@ export function ThemePicker() {
       <button
         className="theme-picker__trigger"
         type="button"
-        aria-label={`Color theme: ${shortLabels[theme]}`}
+        aria-label="Settings"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={() => setIsOpen((open) => !open)}
       >
-        <ThemeSwatch theme={theme} />
-        <span>{shortLabels[theme]}</span>
-        <span className="theme-picker__chevron" aria-hidden="true">⌄</span>
+        <svg className="theme-picker__gear" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9.7 2.8h4.6l.7 2.5c.5.2 1 .5 1.5.9l2.5-.7 2.3 4-1.9 1.8v1.8l1.9 1.8-2.3 4-2.5-.7c-.5.4-1 .7-1.5.9l-.7 2.5H9.7L9 19.1c-.5-.2-1-.5-1.5-.9l-2.5.7-2.3-4 1.9-1.8v-1.8L2.7 9.5l2.3-4 2.5.7c.5-.4 1-.7 1.5-.9l.7-2.5Z" />
+          <circle cx="12" cy="12.2" r="3.1" />
+        </svg>
       </button>
 
       {isOpen ? (
-        <div className="theme-picker__panel" id={panelId} role="menu" aria-label="Choose color theme">
+        <div className="theme-picker__panel" id={panelId} role="menu" aria-label="Settings menu">
           <div className="theme-picker__heading">
-            <strong>Appearance</strong>
-            <span>Choose your palette</span>
+            <strong>Settings</strong>
+            <span>Reader and appearance</span>
           </div>
+          {readerMode && onReaderModeChange ? (
+            <div className="theme-picker__section">
+              <span className="theme-picker__section-title">Reader view</span>
+              <div className="theme-picker__reader-options">
+                {(['review', 'scroll'] as const).map((mode) => {
+                  const selected = mode === readerMode;
+                  return (
+                    <button
+                      className="theme-picker__reader-option"
+                      data-selected={selected || undefined}
+                      key={mode}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      onClick={() => {
+                        onReaderModeChange(mode);
+                        setIsOpen(false);
+                      }}
+                    >
+                      <span aria-hidden="true">{mode === 'review' ? '✓' : '↕'}</span>
+                      {mode === 'review' ? 'Review' : 'Scroll'}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+          <div className="theme-picker__section">
+            <span className="theme-picker__section-title">Appearance</span>
           <div className="theme-picker__options">
             {themePreferences.map((option) => {
               const selected = option.value === theme;
@@ -121,6 +157,7 @@ export function ThemePicker() {
                 </button>
               );
             })}
+          </div>
           </div>
         </div>
       ) : null}

@@ -8,50 +8,12 @@
   padding: 32px 16px 48px;
 }
 
-.reader__tabs,
 .reader__item,
 .reader__scroll-panel,
 .reader__loading,
 .reader__state {
   width: 100%;
   max-width: 464px;
-}
-
-.reader__tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--color-control-border);
-  border-radius: 12px;
-  background: var(--color-control-well);
-}
-
-.reader__tabs button {
-  min-width: 0;
-  min-height: 34px;
-  padding: 6px 10px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--color-ink-inverse);
-  font-weight: 700;
-  transition: background-color var(--ease), border-color var(--ease), color var(--ease);
-}
-
-.reader__tabs button[aria-selected="true"] {
-  border-color: color-mix(in oklch, var(--color-field) 42%, var(--color-page));
-  background: color-mix(in oklch, var(--color-field) 86%, var(--color-page));
-  color: color-mix(in oklch, var(--color-ink-strong) 86%, var(--color-page));
-}
-
-.reader__tabs button:not([aria-selected="true"]):hover {
-  background: color-mix(in oklch, var(--color-field) 18%, transparent);
-}
-
-.reader__tabs button:focus-visible {
-  outline: 2px solid var(--color-focus-light);
-  outline-offset: 3px;
 }
 
 .reader__count-row {
@@ -1235,7 +1197,6 @@ html.reader-theater-open {
     padding-left: 24px;
   }
 
-  .reader__tabs,
   .reader__item,
   .reader__scroll-panel,
   .reader__loading,
@@ -1292,26 +1253,10 @@ html.reader-theater-open {
     padding: 14px 12px calc(24px + env(safe-area-inset-bottom));
   }
 
-  .reader__tabs {
-    gap: 3px;
-    padding: 3px;
-    border-radius: 11px;
-  }
-
-  .reader__tabs button {
-    min-height: 38px;
-    padding-block: 5px;
-    border-radius: 9px;
-  }
-
   .reader:has(.reader__item--short-video) {
     display: block;
     min-height: 100dvh;
     padding: 8px;
-  }
-
-  .reader:has(.reader__item--short-video) .reader__tabs {
-    display: none;
   }
 
   .reader-card {
