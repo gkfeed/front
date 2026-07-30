@@ -13,6 +13,7 @@ vi.mock('./publicHttp.js', async (importOriginal) => ({
 import {
   fetchOpenGraph,
   fetchRedditPreviewImage,
+  parseHltvScoreboardSnapshot,
   parseHltvScoreboardUpdate,
   parseLiquipediaMatch,
   parseOpenGraph,
@@ -46,6 +47,7 @@ describe('parseOpenGraph', () => {
       matchStatus: null,
       matchScore: null,
       matchCurrentMap: null,
+      matchPlayerStats: null,
     });
   });
 
@@ -155,6 +157,50 @@ describe('parseOpenGraph', () => {
     }, html, '5973')).toEqual({
       name: 'Dust2',
       score: ['7', '5'],
+    });
+  });
+
+  it('extracts live player statistics from a Scorebot update', () => {
+    const html = '<div class="mapholder"><div class="mapname">Dust2</div></div>';
+    const player = {
+      nick: 'NAF',
+      score: 7,
+      deaths: 3,
+      assists: 2,
+      damagePrRound: 91.26,
+    };
+
+    expect(parseHltvScoreboardSnapshot({
+      mapName: 'de_dust2',
+      ctTeamId: 5973,
+      tTeamId: 7020,
+      ctTeamScore: 4,
+      tTeamScore: 2,
+      CT: [player],
+      TERRORIST: [{
+        nick: 'donk',
+        score: 5,
+        deaths: 4,
+        assists: 1,
+        damagePrRound: 84,
+      }],
+    }, html, '5973')).toMatchObject({
+      playerStats: [
+        [{
+          nickname: 'NAF',
+          kills: 7,
+          deaths: 3,
+          assists: 2,
+          adr: 91.3,
+        }],
+        [{
+          nickname: 'donk',
+          kills: 5,
+          deaths: 4,
+          assists: 1,
+          adr: 84,
+        }],
+      ],
     });
   });
 

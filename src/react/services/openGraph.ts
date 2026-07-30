@@ -56,6 +56,7 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   const matchStatus = getObjectProperty(value, 'matchStatus');
   const matchScore = getObjectProperty(value, 'matchScore');
   const matchCurrentMap = getObjectProperty(value, 'matchCurrentMap');
+  const matchPlayerStats = getObjectProperty(value, 'matchPlayerStats');
 
   return typeof url === 'string'
     && [title, description, image, video, siteName, type].every(isNullableString)
@@ -80,6 +81,17 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
       || isHltvCurrentMap(matchCurrentMap)
     )
     && (
+      matchPlayerStats === undefined
+      || matchPlayerStats === null
+      || (
+        Array.isArray(matchPlayerStats)
+        && matchPlayerStats.length === 2
+        && matchPlayerStats.every(
+          (team) => Array.isArray(team) && team.every(isHltvPlayerStats),
+        )
+      )
+    )
+    && (
       matchTeams === undefined
       || matchTeams === null
       || (
@@ -87,6 +99,18 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
         && matchTeams.length === 2
         && matchTeams.every(isHltvMatchTeam)
       )
+    );
+}
+
+function isHltvPlayerStats(value: unknown): boolean {
+  const nickname = getObjectProperty(value, 'nickname');
+  const kills = getObjectProperty(value, 'kills');
+  const deaths = getObjectProperty(value, 'deaths');
+  const assists = getObjectProperty(value, 'assists');
+  const adr = getObjectProperty(value, 'adr');
+  return typeof nickname === 'string'
+    && [kills, deaths, assists, adr].every(
+      (number) => typeof number === 'number' && Number.isFinite(number),
     );
 }
 

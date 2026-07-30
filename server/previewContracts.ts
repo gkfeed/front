@@ -8,6 +8,19 @@ export interface HltvCurrentMapPreview {
   score: [string, string];
 }
 
+export interface HltvPlayerStatsPreview {
+  nickname: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  adr: number;
+}
+
+export type HltvMatchPlayerStatsPreview = [
+  HltvPlayerStatsPreview[],
+  HltvPlayerStatsPreview[],
+];
+
 export interface OpenGraphPreview {
   url: string;
   title: string | null;
@@ -21,6 +34,7 @@ export interface OpenGraphPreview {
   matchStatus?: 'scheduled' | 'live' | 'over' | 'postponed' | 'deleted' | null;
   matchScore?: [string, string] | null;
   matchCurrentMap?: HltvCurrentMapPreview | null;
+  matchPlayerStats?: HltvMatchPlayerStatsPreview | null;
 }
 
 export type LiquipediaMatchResult = 'win' | 'loss' | 'default';

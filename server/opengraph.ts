@@ -12,6 +12,8 @@ import * as socketIo from 'socket.io-client';
 
 import type {
   HltvCurrentMapPreview,
+  HltvMatchPlayerStatsPreview,
+  HltvPlayerStatsPreview,
   LiquipediaMatchPreview,
   OpenGraphPreview,
 } from './previewContracts.js';
@@ -32,6 +34,11 @@ export interface PreviewImage {
   contentType: string;
 }
 
+interface HltvScorebotSnapshot {
+  currentMap: HltvCurrentMapPreview;
+  playerStats: HltvMatchPlayerStatsPreview;
+}
+
 export class PreviewError extends Error {
   constructor(
     message: string,
@@ -49,12 +56,16 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
     html: string;
     url: URL;
     currentMap?: HltvCurrentMapPreview | null;
+    playerStats?: HltvMatchPlayerStatsPreview | null;
   } = isHltvMatchUrl(url)
     ? await fetchHltvHtml(url)
     : await fetchHtml(url, isRezkaUrl(requestedUrl) ? REZKA_USER_AGENT : TWITTERBOT_USER_AGENT);
   const preview = parseOpenGraph(page.html, page.url);
   if (page.currentMap) {
     preview.matchCurrentMap = page.currentMap;
+  }
+  if (page.playerStats) {
+    preview.matchPlayerStats = page.playerStats;
   }
   return preview;
 }
@@ -192,7 +203,12 @@ async function fetchHtml(
 
 async function fetchHltvHtml(
   url: URL,
-): Promise<{ html: string; url: URL; currentMap: HltvCurrentMapPreview | null }> {
+): Promise<{
+  html: string;
+  url: URL;
+  currentMap: HltvCurrentMapPreview | null;
+  playerStats: HltvMatchPlayerStatsPreview | null;
+}> {
   const directory = await mkdtemp(join(tmpdir(), 'gkfeed-hltv-'));
   const output = join(directory, 'response');
   const cookies = join(directory, 'cookies.txt');
@@ -218,10 +234,15 @@ async function fetchHltvHtml(
     const body = await readFile(output);
     if (body.byteLength > MAX_HLTV_RESPONSE_BYTES) throw responseTooLarge();
     const html = body.toString('utf8');
-    const currentMap = parseHltvMatchStatus(html) === 'live'
-      ? await fetchHltvScorebotCurrentMap(html, cookies)
+    const scorebot = parseHltvMatchStatus(html) === 'live'
+      ? await fetchHltvScorebotSnapshot(html, cookies)
       : null;
-    return { html, url, currentMap };
+    return {
+      html,
+      url,
+      currentMap: scorebot?.currentMap ?? null,
+      playerStats: scorebot?.playerStats ?? null,
+    };
   } catch (error) {
     if (error instanceof PreviewError) throw error;
     throw new PreviewError('The HLTV page could not be fetched', 502, 'fetch_failed');
@@ -230,10 +251,10 @@ async function fetchHltvHtml(
   }
 }
 
-async function fetchHltvScorebotCurrentMap(
+async function fetchHltvScorebotSnapshot(
   html: string,
   cookiesPath: string,
-): Promise<HltvCurrentMapPreview | null> {
+): Promise<HltvScorebotSnapshot | null> {
   const scoreboardTag = html.match(/<div\b[^>]*\bid=(?:"scoreboardElement"|'scoreboardElement')[^>]*>/i)?.[0];
   if (!scoreboardTag) return null;
   const attributes = parseAttributes(scoreboardTag);
@@ -282,12 +303,12 @@ async function fetchHltvScorebotCurrentMap(
       },
     });
     let settled = false;
-    const finish = (currentMap: HltvCurrentMapPreview | null) => {
+    const finish = (snapshot: HltvScorebotSnapshot | null) => {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
       socket.close();
-      resolve(currentMap);
+      resolve(snapshot);
     };
     const timeout = setTimeout(() => finish(null), SCOREBOT_TIMEOUT_MS);
 
@@ -295,7 +316,7 @@ async function fetchHltvScorebotCurrentMap(
       socket.emit('readyForMatch', JSON.stringify({ token: '', listId: scorebotId }));
     });
     socket.on('scoreboard', (data: unknown) => {
-      finish(parseHltvScoreboardUpdate(data, html, team1Id));
+      finish(parseHltvScoreboardSnapshot(data, html, team1Id));
     });
     socket.on('connect_error', () => finish(null));
   });
@@ -363,6 +384,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
       ? parseHltvMatchScore(html)
       : null,
     matchCurrentMap: matchStatus === 'live' ? parseHltvCurrentMap(html) : null,
+    matchPlayerStats: null,
   };
 }
 
@@ -515,6 +537,14 @@ export function parseHltvScoreboardUpdate(
   html: string,
   team1Id: string,
 ): HltvCurrentMapPreview | null {
+  return parseHltvScoreboardSnapshot(value, html, team1Id)?.currentMap ?? null;
+}
+
+export function parseHltvScoreboardSnapshot(
+  value: unknown,
+  html: string,
+  team1Id: string,
+): HltvScorebotSnapshot | null {
   if (!value || typeof value !== 'object') return null;
   const scoreboard = value as Record<string, unknown>;
   const mapName = typeof scoreboard.mapName === 'string' ? scoreboard.mapName : '';
@@ -540,7 +570,42 @@ export function parseHltvScoreboardUpdate(
     ? [String(ctScore), String(terroristScore)]
     : [String(terroristScore), String(ctScore)];
 
-  return { name: displayName, score };
+  const ctPlayers = parseHltvScoreboardPlayers(scoreboard.CT);
+  const terroristPlayers = parseHltvScoreboardPlayers(scoreboard.TERRORIST);
+  const playerStats: HltvMatchPlayerStatsPreview = firstTeamId === ctTeamId
+    ? [ctPlayers, terroristPlayers]
+    : [terroristPlayers, ctPlayers];
+
+  return {
+    currentMap: { name: displayName, score },
+    playerStats,
+  };
+}
+
+function parseHltvScoreboardPlayers(value: unknown): HltvPlayerStatsPreview[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') return [];
+    const player = entry as Record<string, unknown>;
+    const nickname = typeof player.nick === 'string' && player.nick.trim()
+      ? player.nick.trim()
+      : typeof player.name === 'string' ? player.name.trim() : '';
+    const kills = Number(player.score);
+    const deaths = Number(player.deaths);
+    const assists = Number(player.assists);
+    const adr = Number(player.damagePrRound);
+    if (
+      !nickname
+      || ![kills, deaths, assists, adr].every(Number.isFinite)
+    ) return [];
+    return [{
+      nickname,
+      kills,
+      deaths,
+      assists,
+      adr: Math.round(adr * 10) / 10,
+    }];
+  });
 }
 
 function getHltvMapSections(html: string): string[] {

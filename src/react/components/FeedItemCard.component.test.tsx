@@ -323,6 +323,22 @@ describe('FeedItemCard Open Graph preview', () => {
         name: 'Anubis',
         score: ['12', '10'],
       },
+      matchPlayerStats: [
+        [{
+          nickname: 'NAF',
+          kills: 18,
+          deaths: 12,
+          assists: 4,
+          adr: 91.3,
+        }],
+        [{
+          nickname: 'donk',
+          kills: 20,
+          deaths: 14,
+          assists: 3,
+          adr: 104.8,
+        }],
+      ],
     });
 
     render(<FeedItemCard item={{
@@ -338,6 +354,10 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.getByText('Live')).toBeTruthy();
     expect(screen.getByText('Anubis')).toBeTruthy();
     expect(screen.getByText('12 : 10')).toBeTruthy();
+    expect(screen.getByText('Player stats')).toBeTruthy();
+    expect(screen.getByText('NAF')).toBeTruthy();
+    expect(screen.getByText('18–12')).toBeTruthy();
+    expect(screen.getByText('104.8')).toBeTruthy();
   });
 
   it('replaces the generic HLTV image with a team matchup', async () => {
@@ -416,6 +436,8 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.getByRole('link', {
       name: 'WW versus TDK, live score 1 to 0, current map Anubis 12 to 10',
     })).toBeTruthy();
+    expect(screen.getByText('Player stats')).toBeTruthy();
+    expect(screen.getByText('Waiting for player stats…')).toBeTruthy();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);

@@ -79,7 +79,7 @@ export function useFeedItemRemotePreview(
       getOpenGraphPreview(url, controller.signal).then((openGraphPreview) => {
         setPreview((previous) => ({
           liquipediaMatch: null,
-          openGraphPreview: retainHltvCurrentMap(openGraphPreview, previous.openGraphPreview),
+          openGraphPreview: mergeHltvLiveData(openGraphPreview, previous.openGraphPreview),
         }));
       }).catch(() => {
         // Keep the last known score when a live refresh temporarily fails.
@@ -98,18 +98,21 @@ export function useFeedItemRemotePreview(
   return { cardRef, previewStatus: status, ...preview };
 }
 
-function retainHltvCurrentMap(
+function mergeHltvLiveData(
   next: OpenGraphPreview,
   previous: OpenGraphPreview | null,
 ): OpenGraphPreview {
   if (
     next.matchStatus !== 'live'
-    || next.matchCurrentMap
-    || !previous?.matchCurrentMap
+    || !previous
     || !sameMatchScore(next.matchScore, previous.matchScore)
   ) return next;
 
-  return { ...next, matchCurrentMap: previous.matchCurrentMap };
+  return {
+    ...next,
+    matchCurrentMap: next.matchCurrentMap ?? previous.matchCurrentMap,
+    matchPlayerStats: next.matchPlayerStats ?? previous.matchPlayerStats,
+  };
 }
 
 function sameMatchScore(
