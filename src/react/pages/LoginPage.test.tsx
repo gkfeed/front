@@ -25,6 +25,14 @@ afterEach(() => {
 });
 
 describe('LoginPage', () => {
+  it('shows an empty username field without a misleading example value', () => {
+    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+
+    const username = screen.getByLabelText('Username') as HTMLInputElement;
+    expect(username.value).toBe('');
+    expect(username.hasAttribute('placeholder')).toBe(false);
+  });
+
   it('validates with the server before saving and can clear credentials', async () => {
     const storage = stubLocalStorage();
     validateLogin.mockResolvedValue();

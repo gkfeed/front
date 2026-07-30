@@ -12,8 +12,8 @@ type LoginFormState = typeof EMPTY_FORM;
 type LoginFieldName = keyof LoginFormState;
 
 const FIELDS = [
-  { name: 'username', label: 'Username', type: 'text', autoComplete: 'username', placeholder: 'gakawarstone', Icon: UserIcon },
-  { name: 'password', label: 'Password', type: 'password', autoComplete: 'current-password', placeholder: undefined, Icon: LockIcon },
+  { name: 'username', label: 'Username', type: 'text', autoComplete: 'username', Icon: UserIcon },
+  { name: 'password', label: 'Password', type: 'password', autoComplete: 'current-password', Icon: LockIcon },
 ] as const;
 
 export function LoginPage() {
