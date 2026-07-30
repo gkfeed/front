@@ -393,6 +393,11 @@ describe('FeedItemCard Open Graph preview', () => {
       .mockResolvedValueOnce({
         ...basePreview,
         matchScore: ['1', '0'],
+        matchCurrentMap: null,
+      })
+      .mockResolvedValueOnce({
+        ...basePreview,
+        matchScore: ['1', '0'],
         matchCurrentMap: { name: 'Anubis', score: ['12', '11'] },
       })
       .mockResolvedValueOnce({
@@ -406,6 +411,14 @@ describe('FeedItemCard Open Graph preview', () => {
     await act(async () => {
       await Promise.resolve();
       await Promise.resolve();
+    });
+
+    expect(screen.getByRole('link', {
+      name: 'WW versus TDK, live score 1 to 0, current map Anubis 12 to 10',
+    })).toBeTruthy();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
     });
 
     expect(screen.getByRole('link', {
@@ -435,7 +448,7 @@ describe('FeedItemCard Open Graph preview', () => {
       await vi.advanceTimersByTimeAsync(60_000);
     });
 
-    expect(getPreview).toHaveBeenCalledTimes(3);
+    expect(getPreview).toHaveBeenCalledTimes(4);
   });
 
   it('does not call the BFF when the feed content contains an image', () => {

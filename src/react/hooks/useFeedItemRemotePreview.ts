@@ -77,7 +77,10 @@ export function useFeedItemRemotePreview(
       if (requestInProgress) return;
       requestInProgress = true;
       getOpenGraphPreview(url, controller.signal).then((openGraphPreview) => {
-        setPreview({ liquipediaMatch: null, openGraphPreview });
+        setPreview((previous) => ({
+          liquipediaMatch: null,
+          openGraphPreview: retainHltvCurrentMap(openGraphPreview, previous.openGraphPreview),
+        }));
       }).catch(() => {
         // Keep the last known score when a live refresh temporarily fails.
       }).finally(() => {
@@ -93,6 +96,32 @@ export function useFeedItemRemotePreview(
   }, [enabled, isHltv, isVisible, preview.openGraphPreview?.matchStatus, url]);
 
   return { cardRef, previewStatus: status, ...preview };
+}
+
+function retainHltvCurrentMap(
+  next: OpenGraphPreview,
+  previous: OpenGraphPreview | null,
+): OpenGraphPreview {
+  if (
+    next.matchStatus !== 'live'
+    || next.matchCurrentMap
+    || !previous?.matchCurrentMap
+    || !sameMatchScore(next.matchScore, previous.matchScore)
+  ) return next;
+
+  return { ...next, matchCurrentMap: previous.matchCurrentMap };
+}
+
+function sameMatchScore(
+  first: OpenGraphPreview['matchScore'],
+  second: OpenGraphPreview['matchScore'],
+): boolean {
+  return Boolean(
+    first
+    && second
+    && first[0] === second[0]
+    && first[1] === second[1],
+  );
 }
 
 async function loadRemotePreview(url: string, isLiquipedia: boolean): Promise<RemotePreview> {
