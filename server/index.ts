@@ -14,6 +14,8 @@ import { fetchTikTokComments } from './tiktok.js';
 
 const port = Number(process.env.PORT ?? 3000);
 const staticRoot = resolve(fileURLToPath(new URL('../dist', import.meta.url)));
+const MAX_ACTIVE_PREVIEWS = 32;
+let activePreviews = 0;
 
 const server = createServer(async (request, response) => {
   try {
@@ -22,21 +24,21 @@ const server = createServer(async (request, response) => {
     if (request.method === 'GET' && requestUrl.pathname === '/api/bff/open-graph') {
       const targetUrl = requestUrl.searchParams.get('url');
       if (!targetUrl) throw new PreviewError('The url query parameter is required', 400, 'missing_url');
-      sendJson(response, 200, await fetchOpenGraph(targetUrl));
+      sendJson(response, 200, await withPreviewLimit(() => fetchOpenGraph(targetUrl)));
       return;
     }
 
     if (request.method === 'GET' && requestUrl.pathname === '/api/bff/liquipedia-match') {
       const targetUrl = requestUrl.searchParams.get('url');
       if (!targetUrl) throw new PreviewError('The url query parameter is required', 400, 'missing_url');
-      sendJson(response, 200, await fetchLiquipediaMatch(targetUrl));
+      sendJson(response, 200, await withPreviewLimit(() => fetchLiquipediaMatch(targetUrl)));
       return;
     }
 
     if (request.method === 'GET' && requestUrl.pathname === '/api/bff/reddit-preview-image') {
       const targetUrl = requestUrl.searchParams.get('url');
       if (!targetUrl) throw new PreviewError('The url query parameter is required', 400, 'missing_url');
-      const image = await fetchRedditPreviewImage(targetUrl);
+      const image = await withPreviewLimit(() => fetchRedditPreviewImage(targetUrl));
       response.writeHead(200, {
         'cache-control': 'public, max-age=3600',
         'content-length': image.body.byteLength,
@@ -50,7 +52,7 @@ const server = createServer(async (request, response) => {
     if (request.method === 'GET' && requestUrl.pathname === '/api/bff/tiktok-comments') {
       const targetUrl = requestUrl.searchParams.get('url');
       if (!targetUrl) throw new PreviewError('The url query parameter is required', 400, 'missing_url');
-      sendJson(response, 200, await fetchTikTokComments(targetUrl));
+      sendJson(response, 200, await withPreviewLimit(() => fetchTikTokComments(targetUrl)));
       return;
     }
 
@@ -74,6 +76,19 @@ const server = createServer(async (request, response) => {
     });
   }
 });
+
+async function withPreviewLimit<T>(load: () => Promise<T>): Promise<T> {
+  if (activePreviews >= MAX_ACTIVE_PREVIEWS) {
+    throw new PreviewError('Too many preview requests are in progress', 429, 'preview_busy');
+  }
+
+  activePreviews += 1;
+  try {
+    return await load();
+  } finally {
+    activePreviews -= 1;
+  }
+}
 
 server.listen(port, '0.0.0.0', () => {
   console.log(`GKFeed BFF listening on http://0.0.0.0:${port}`);

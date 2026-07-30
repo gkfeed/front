@@ -39,6 +39,8 @@ describe('isPrivateAddress', () => {
       '::1',
       'fc00::1',
       '::ffff:127.0.0.1',
+      '::ffff:7f00:1',
+      '::ffff:a00:1',
     ].forEach((address) => expect(isPrivateAddress(address)).toBe(true));
   });
 
