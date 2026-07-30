@@ -56,11 +56,51 @@
 }
 
 .reader-card {
+  position: relative;
   display: grid;
   gap: 18px;
   min-height: 330px;
   padding: clamp(18px, 4vw, 28px);
   color: var(--color-ink);
+}
+
+.reader-card--nsfw-blurred {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.reader-card--nsfw-blurred > :not(.reader-card__nsfw-shield) {
+  filter: blur(20px);
+  opacity: 0.58;
+  transform: scale(1.05);
+}
+
+.reader-card__nsfw-shield {
+  position: absolute;
+  z-index: 10;
+  inset: 50% auto auto 50%;
+  display: grid;
+  min-width: 156px;
+  gap: 3px;
+  padding: 12px 18px;
+  border: 1px solid color-mix(in oklch, var(--color-input-border) 72%, transparent);
+  border-radius: 14px;
+  background: color-mix(in oklch, var(--color-input-surface) 92%, transparent);
+  color: var(--color-ink-strong);
+  text-align: center;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 24%);
+  backdrop-filter: blur(12px);
+  transform: translate(-50%, -50%);
+}
+
+.reader-card__nsfw-shield strong {
+  font-size: 0.92rem;
+  letter-spacing: 0.08em;
+}
+
+.reader-card__nsfw-shield span {
+  color: var(--color-muted);
+  font-size: 0.72rem;
 }
 
 .reader-card__preview {

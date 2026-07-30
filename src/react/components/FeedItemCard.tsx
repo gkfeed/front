@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 import type { OpenGraphPreview } from '../services/openGraph';
 import { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
+import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
 import {
   getFeedItemPreview,
@@ -10,14 +11,18 @@ import {
   type FeedItemPreview,
 } from './feedItemPreview';
 import { InstagramIcon } from './Icons';
+import { isNsfwLink } from './nsfw';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
 import { TikTokComments } from './previews/TikTokComments';
 import { TikTokEmbed } from './previews/TikTokEmbed';
 import { YoutubePreview } from './previews/YoutubePreview';
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
+  const { blurNsfw } = useNsfwPreferences();
   const hostname = getHostname(item.link);
   const itemUrl = parseUrl(item.link);
+  const isNsfw = isNsfwLink(item.link);
+  const shouldBlurNsfw = isNsfw && blurNsfw;
   const youtubeVideoId = itemUrl ? getYoutubeVideoId(itemUrl) : null;
   const localPreview = getFeedItemPreview(item);
   const localPreviewSource = localPreview?.src;
@@ -110,8 +115,16 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         isImagePreviewOnly ? 'reader-card--image-preview' : '',
         isImagePreviewOnly && isReddit ? 'reader-card--reddit-preview' : '',
         isImagePreviewOnly && isHltv ? 'reader-card--hltv-preview' : '',
+        shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
+      inert={shouldBlurNsfw}
     >
+      {shouldBlurNsfw ? (
+        <div className="reader-card__nsfw-shield" aria-hidden="true">
+          <strong>NSFW</strong>
+          <span>Hidden by settings</span>
+        </div>
+      ) : null}
       {isInstagram ? (
         <div className="reader-card__short-video-identity">
           <span className="reader-card__short-video-logo"><InstagramIcon /></span>

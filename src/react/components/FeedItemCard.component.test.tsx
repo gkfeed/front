@@ -30,6 +30,23 @@ afterEach(() => {
 });
 
 describe('FeedItemCard Open Graph preview', () => {
+  it('blurs supported NSFW sources by default', () => {
+    const { container, rerender } = render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.pornhub.com/view_video.php?viewkey=123',
+    }} />);
+
+    expect(container.querySelector('.reader-card--nsfw-blurred')).toBeTruthy();
+    expect(screen.getByText('Hidden by settings')).toBeTruthy();
+
+    rerender(<FeedItemCard item={{
+      ...item,
+      link: 'https://porno365.example/video/123',
+    }} />);
+
+    expect(container.querySelector('.reader-card--nsfw-blurred')).toBeTruthy();
+  });
+
   it('uses a max-resolution YouTube thumbnail with a reliable fallback', () => {
     render(<FeedItemCard item={{
       ...item,

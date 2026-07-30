@@ -5,6 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { THEME_STORAGE_KEY } from '../theme';
+import {
+  NSFW_BLUR_STORAGE_KEY,
+  NsfwPreferencesProvider,
+} from '../state/NsfwPreferencesProvider';
 import { ThemePicker } from './ThemePicker';
 
 afterEach(() => {
@@ -17,6 +21,25 @@ afterEach(() => {
 });
 
 describe('ThemePicker', () => {
+  it('enables NSFW blurring by default and persists changes', () => {
+    const storage = stubLocalStorage();
+    document.documentElement.dataset.theme = 'light';
+    render(
+      <NsfwPreferencesProvider>
+        <ThemePicker />
+      </NsfwPreferencesProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    const toggle = screen.getByRole('menuitemcheckbox', { name: /Blur NSFW/i });
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(toggle);
+
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(storage.get(NSFW_BLUR_STORAGE_KEY)).toBe('false');
+  });
+
   it('moves the Reader view switch into Settings', () => {
     const onReaderModeChange = vi.fn();
     document.documentElement.dataset.theme = 'light';

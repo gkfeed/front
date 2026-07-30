@@ -9,6 +9,7 @@ import {
   type ThemePreference,
 } from '../theme';
 import type { ReaderMode } from '../state/readerMode';
+import { useNsfwPreferences } from '../state/useNsfwPreferences';
 
 const shortLabels: Record<ThemePreference, string> = {
   system: 'System',
@@ -34,6 +35,7 @@ type ThemePickerProps = {
 };
 
 export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps) {
+  const { blurNsfw, setBlurNsfw } = useNsfwPreferences();
   const [theme, setTheme] = useState(getInitialThemePreference);
   const [isOpen, setIsOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -98,7 +100,7 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
         <div className="theme-picker__panel" id={panelId} role="menu" aria-label="Settings menu">
           <div className="theme-picker__heading">
             <strong>Settings</strong>
-            <span>Reader and appearance</span>
+            <span>Preferences and appearance</span>
           </div>
           {readerMode && onReaderModeChange ? (
             <div className="theme-picker__section">
@@ -127,6 +129,24 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
               </div>
             </div>
           ) : null}
+          <div className="theme-picker__section">
+            <span className="theme-picker__section-title">Content</span>
+            <button
+              className="theme-picker__toggle"
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={blurNsfw}
+              onClick={() => setBlurNsfw(!blurNsfw)}
+            >
+              <span className="theme-picker__toggle-copy">
+                <strong>Blur NSFW</strong>
+                <small>Porno365 and Pornhub items</small>
+              </span>
+              <span className="theme-picker__switch" aria-hidden="true">
+                <span />
+              </span>
+            </button>
+          </div>
           <div className="theme-picker__section">
             <span className="theme-picker__section-title">Appearance</span>
           <div className="theme-picker__options">
