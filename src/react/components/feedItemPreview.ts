@@ -136,10 +136,11 @@ function getEmbeddedImage(html: string, title: string): FeedItemPreview | null {
   }
 
   const source = document.querySelector('img')?.getAttribute('src');
-  if (!source || !isSafeImageSource(source)) return null;
+  const normalizedSource = source ? normalizeImageSource(source) : null;
+  if (!normalizedSource || !isSafeImageSource(normalizedSource)) return null;
 
   return {
-    src: source,
+    src: normalizedSource,
     alt: title ? `Preview for ${title}` : 'Feed item preview',
   };
 }
@@ -208,6 +209,23 @@ function isSafeImageSource(source: string): boolean {
   if (/^data:image\/(?:avif|gif|jpeg|png|webp);base64,/i.test(source)) return true;
   const url = parseUrl(source);
   return Boolean(url && ['http:', 'https:'].includes(url.protocol));
+}
+
+function normalizeImageSource(source: string): string {
+  const url = parseUrl(source);
+  if (url?.protocol === 'http:' && isVkImageHost(url.hostname)) {
+    url.protocol = 'https:';
+    return url.href;
+  }
+  return source;
+}
+
+function isVkImageHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase();
+  return normalized === 'vkuserphoto.ru'
+    || normalized.endsWith('.vkuserphoto.ru')
+    || normalized === 'userapi.com'
+    || normalized.endsWith('.userapi.com');
 }
 
 function isDirectImage(url: URL): boolean {

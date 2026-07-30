@@ -50,6 +50,16 @@ describe('getFeedItemPreview', () => {
     });
   });
 
+  it('upgrades embedded VK CDN images to HTTPS', () => {
+    expect(getFeedItemPreview(item({
+      link: 'https://vk.com/wall-118222154_8712',
+      text: '<p>Summary</p><img src="http://sun9-67.vkuserphoto.ru/impg/cover.jpg?size=1170x1560">',
+    }))).toEqual({
+      src: 'https://sun9-67.vkuserphoto.ru/impg/cover.jpg?size=1170x1560',
+      alt: 'Preview for Story',
+    });
+  });
+
   it('uses direct and embedded video media', () => {
     expect(getFeedItemPreview(item({ link: 'https://cdn.example.com/story.mp4' }))).toMatchObject({
       src: 'https://cdn.example.com/story.mp4',
