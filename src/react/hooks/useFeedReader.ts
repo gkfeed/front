@@ -187,7 +187,7 @@ function readReviewState(storageKey: string | null, availableIds: number[]): Rev
     const newIds = availableIds.filter((id) => !knownIds.has(id));
 
     return {
-      pendingIds: [...filteredPendingIds, ...newIds],
+      pendingIds: [...newIds, ...filteredPendingIds],
       revisitIds: filteredRevisitIds,
       keptItemIds,
     };

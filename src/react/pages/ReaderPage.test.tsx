@@ -75,7 +75,16 @@ describe('ReaderPage', () => {
 
   it('restores the review queue after the page is reloaded', async () => {
     stubLocalStorage();
-    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    const newItem = {
+      id: 12,
+      feedId: 4,
+      link: 'https://example.net/new',
+      title: 'New story',
+      text: 'New summary',
+    };
+    vi.mocked(getFeedItems)
+      .mockResolvedValueOnce(ITEMS)
+      .mockResolvedValueOnce([...ITEMS, newItem]);
     const firstRender = renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
@@ -84,8 +93,12 @@ describe('ReaderPage', () => {
 
     renderReader();
 
-    expect(await screen.findByText('Second story')).toBeTruthy();
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('New story')).toBeTruthy();
     expect(screen.queryByText('First story')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Second story')).toBeTruthy();
   });
 
   it('keeps the current item with a', async () => {
