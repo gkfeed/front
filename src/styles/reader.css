@@ -1189,6 +1189,10 @@ html.reader-theater-open {
     padding: 16px;
   }
 
+  .reader-card.reader-card--youtube {
+    padding: 0;
+  }
+
   .reader__actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
