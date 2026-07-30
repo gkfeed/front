@@ -16,9 +16,13 @@ WORKDIR /usr/src/app
 
 RUN apk add --no-cache aria2
 
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/dist-server ./dist-server
 
+ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000
 
