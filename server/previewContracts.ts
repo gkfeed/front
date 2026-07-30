@@ -21,6 +21,8 @@ export type HltvMatchPlayerStatsPreview = [
   HltvPlayerStatsPreview[],
 ];
 
+export type HltvMatchTeamSidesPreview = ['ct', 't'] | ['t', 'ct'];
+
 export interface OpenGraphPreview {
   url: string;
   title: string | null;
@@ -35,6 +37,7 @@ export interface OpenGraphPreview {
   matchScore?: [string, string] | null;
   matchCurrentMap?: HltvCurrentMapPreview | null;
   matchPlayerStats?: HltvMatchPlayerStatsPreview | null;
+  matchTeamSides?: HltvMatchTeamSidesPreview | null;
 }
 
 export type LiquipediaMatchResult = 'win' | 'loss' | 'default';

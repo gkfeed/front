@@ -48,6 +48,7 @@ describe('parseOpenGraph', () => {
       matchScore: null,
       matchCurrentMap: null,
       matchPlayerStats: null,
+      matchTeamSides: null,
     });
   });
 
@@ -185,6 +186,7 @@ describe('parseOpenGraph', () => {
         damagePrRound: 84,
       }],
     }, html, '5973')).toMatchObject({
+      teamSides: ['ct', 't'],
       playerStats: [
         [{
           nickname: 'NAF',

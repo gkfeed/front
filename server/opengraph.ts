@@ -13,6 +13,7 @@ import * as socketIo from 'socket.io-client';
 import type {
   HltvCurrentMapPreview,
   HltvMatchPlayerStatsPreview,
+  HltvMatchTeamSidesPreview,
   HltvPlayerStatsPreview,
   LiquipediaMatchPreview,
   OpenGraphPreview,
@@ -39,6 +40,7 @@ export interface PreviewImage {
 interface HltvScorebotSnapshot {
   currentMap: HltvCurrentMapPreview;
   playerStats: HltvMatchPlayerStatsPreview;
+  teamSides: HltvMatchTeamSidesPreview;
 }
 
 interface HltvScorebotCacheEntry {
@@ -66,6 +68,7 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
     url: URL;
     currentMap?: HltvCurrentMapPreview | null;
     playerStats?: HltvMatchPlayerStatsPreview | null;
+    teamSides?: HltvMatchTeamSidesPreview | null;
   } = isHltvMatchUrl(url)
     ? await fetchHltvHtml(url)
     : await fetchHtml(url, isRezkaUrl(requestedUrl) ? REZKA_USER_AGENT : TWITTERBOT_USER_AGENT);
@@ -75,6 +78,9 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
   }
   if (page.playerStats) {
     preview.matchPlayerStats = page.playerStats;
+  }
+  if (page.teamSides) {
+    preview.matchTeamSides = page.teamSides;
   }
   return preview;
 }
@@ -217,6 +223,7 @@ async function fetchHltvHtml(
   url: URL;
   currentMap: HltvCurrentMapPreview | null;
   playerStats: HltvMatchPlayerStatsPreview | null;
+  teamSides: HltvMatchTeamSidesPreview | null;
 }> {
   const directory = await mkdtemp(join(tmpdir(), 'gkfeed-hltv-'));
   const output = join(directory, 'response');
@@ -251,6 +258,7 @@ async function fetchHltvHtml(
       url,
       currentMap: scorebot?.currentMap ?? null,
       playerStats: scorebot?.playerStats ?? null,
+      teamSides: scorebot?.teamSides ?? null,
     };
   } catch (error) {
     if (error instanceof PreviewError) throw error;
@@ -429,6 +437,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
       : null,
     matchCurrentMap: matchStatus === 'live' ? parseHltvCurrentMap(html) : null,
     matchPlayerStats: null,
+    matchTeamSides: null,
   };
 }
 
@@ -623,6 +632,7 @@ export function parseHltvScoreboardSnapshot(
   return {
     currentMap: { name: displayName, score },
     playerStats,
+    teamSides: firstTeamId === ctTeamId ? ['ct', 't'] : ['t', 'ct'],
   };
 }
 

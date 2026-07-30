@@ -1062,10 +1062,36 @@ html.reader-theater-open {
   text-overflow: ellipsis;
 }
 
-.reader-card__hltv-current-map > span {
+.reader-card__hltv-current-map-score {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   font-size: clamp(1rem, 3.8cqw, 1.3rem);
   font-weight: 800;
   letter-spacing: 0.02em;
+}
+
+.reader-card__hltv-current-map-score i {
+  color: rgb(255 255 255 / 54%);
+  font-style: normal;
+}
+
+.reader-card__hltv-current-map-score--ct {
+  color: #9dceff;
+}
+
+.reader-card__hltv-current-map-score--t {
+  color: #ffd08a;
+}
+
+.reader-card__hltv-current-map-score--winner {
+  color: #fff;
+  font-weight: 950;
+}
+
+.reader-card__hltv-current-map-score--loser {
+  color: rgb(255 255 255 / 52%);
+  font-weight: 650;
 }
 
 .reader-card__hltv-player-stats {

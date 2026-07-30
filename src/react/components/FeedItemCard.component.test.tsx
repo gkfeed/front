@@ -339,6 +339,7 @@ describe('FeedItemCard Open Graph preview', () => {
           adr: 104.8,
         }],
       ],
+      matchTeamSides: ['ct', 't'],
     });
 
     render(<FeedItemCard item={{
@@ -348,16 +349,59 @@ describe('FeedItemCard Open Graph preview', () => {
     }} />);
 
     expect(await screen.findByRole('link', {
-      name: 'Liquid versus Spirit, live score 1 to 0, current map Anubis 12 to 10',
+      name: 'Liquid versus Spirit, live score 1 to 0, current map Anubis 12 to 10, Liquid CT, Spirit T',
     })).toBeTruthy();
     expect(screen.queryByAltText('Preview for Liquid vs Spirit')).toBeNull();
     expect(screen.getByText('Live')).toBeTruthy();
     expect(screen.getByText('Anubis')).toBeTruthy();
-    expect(screen.getByText('12 : 10')).toBeTruthy();
+    expect(screen.getByText('12').classList.contains(
+      'reader-card__hltv-current-map-score--ct',
+    )).toBe(true);
+    expect(screen.getByText('10').classList.contains(
+      'reader-card__hltv-current-map-score--t',
+    )).toBe(true);
     expect(screen.getByText('Player stats')).toBeTruthy();
     expect(screen.getByText('NAF')).toBeTruthy();
     expect(screen.getByText('18–12')).toBeTruthy();
     expect(screen.getByText('104.8')).toBeTruthy();
+  });
+
+  it('emphasizes the winner instead of the sides after a live map ends', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+      description: null,
+      image: 'https://www.hltv.org/img/static/openGraphHltvLogo.png',
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      matchTeams: [
+        { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
+        { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+      ],
+      matchStatus: 'live',
+      matchScore: ['0', '1'],
+      matchCurrentMap: { name: 'Dust2', score: ['7', '13'] },
+      matchTeamSides: ['t', 'ct'],
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+    }} />);
+
+    expect(await screen.findByRole('link', {
+      name: 'Liquid versus Spirit, live score 0 to 1, current map Dust2 7 to 13',
+    })).toBeTruthy();
+    const mapScore = screen.getByText('Dust2').parentElement
+      ?.querySelector('.reader-card__hltv-current-map-score');
+    expect(mapScore?.children[0]?.classList.contains(
+      'reader-card__hltv-current-map-score--loser',
+    )).toBe(true);
+    expect(mapScore?.children[2]?.classList.contains(
+      'reader-card__hltv-current-map-score--winner',
+    )).toBe(true);
+    expect(mapScore?.querySelector('[class$="--ct"], [class$="--t"]')).toBeNull();
   });
 
   it('replaces the generic HLTV image with a team matchup', async () => {
@@ -454,7 +498,9 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.getByRole('link', {
       name: 'WW versus TDK, live score 1 to 0, current map Anubis 12 to 11',
     })).toBeTruthy();
-    expect(screen.getByText('12 : 11')).toBeTruthy();
+    expect(screen.getByText('Anubis').parentElement
+      ?.querySelector('.reader-card__hltv-current-map-score')?.textContent)
+      .toBe('12:11');
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);

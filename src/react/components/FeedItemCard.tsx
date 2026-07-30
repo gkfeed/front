@@ -163,6 +163,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           isLive={openGraphPreview?.matchStatus === 'live'}
           currentMap={openGraphPreview?.matchCurrentMap}
           playerStats={openGraphPreview?.matchPlayerStats}
+          teamSides={openGraphPreview?.matchTeamSides}
         />
       ) : isYoutube && youtubeVideoId ? (
         <YoutubePreview
@@ -327,6 +328,7 @@ function HltvMatchup({
   isLive,
   currentMap,
   playerStats,
+  teamSides,
 }: {
   teams: NonNullable<OpenGraphPreview['matchTeams']>;
   href: string;
@@ -334,12 +336,19 @@ function HltvMatchup({
   isLive: boolean;
   currentMap: OpenGraphPreview['matchCurrentMap'];
   playerStats: OpenGraphPreview['matchPlayerStats'];
+  teamSides: OpenGraphPreview['matchTeamSides'];
 }) {
   const accessibleScore = score
     ? `, ${isLive ? 'live' : 'final'} score ${score[0]} to ${score[1]}`
     : '';
   const accessibleMap = isLive && currentMap
     ? `, current map ${currentMap.name} ${currentMap.score[0]} to ${currentMap.score[1]}`
+    : '';
+  const isCurrentMapFinished = currentMap
+    ? isCompletedHltvMapScore(currentMap.score)
+    : false;
+  const accessibleSides = isLive && teamSides && !isCurrentMapFinished
+    ? `, ${teams[0].name} ${teamSides[0].toUpperCase()}, ${teams[1].name} ${teamSides[1].toUpperCase()}`
     : '';
   return (
     <div className="reader-card__hltv-live-card">
@@ -348,7 +357,7 @@ function HltvMatchup({
         href={href}
         target="_blank"
         rel="noreferrer"
-        aria-label={`${teams[0].name} versus ${teams[1].name}${accessibleScore}${accessibleMap}`}
+        aria-label={`${teams[0].name} versus ${teams[1].name}${accessibleScore}${accessibleMap}${accessibleSides}`}
       >
         <HltvMatchupTeam team={teams[0]} />
         {score ? (
@@ -369,7 +378,25 @@ function HltvMatchup({
             {isLive && currentMap ? (
               <span className="reader-card__hltv-current-map">
                 <b>{currentMap.name}</b>
-                <span>{currentMap.score[0]} : {currentMap.score[1]}</span>
+                <span className="reader-card__hltv-current-map-score">
+                  <span className={getHltvMapScoreClass(
+                    currentMap.score,
+                    0,
+                    teamSides,
+                  )}
+                  >
+                    {currentMap.score[0]}
+                  </span>
+                  <i aria-hidden="true">:</i>
+                  <span className={getHltvMapScoreClass(
+                    currentMap.score,
+                    1,
+                    teamSides,
+                  )}
+                  >
+                    {currentMap.score[1]}
+                  </span>
+                </span>
               </span>
             ) : null}
           </span>
@@ -383,6 +410,31 @@ function HltvMatchup({
       ) : null}
     </div>
   );
+}
+
+function getHltvMapScoreClass(
+  score: [string, string],
+  teamIndex: 0 | 1,
+  teamSides: OpenGraphPreview['matchTeamSides'],
+): string | undefined {
+  if (!isCompletedHltvMapScore(score)) {
+    return teamSides
+      ? `reader-card__hltv-current-map-score--${teamSides[teamIndex]}`
+      : undefined;
+  }
+  const winnerIndex = Number(score[0]) > Number(score[1]) ? 0 : 1;
+  return winnerIndex === teamIndex
+    ? 'reader-card__hltv-current-map-score--winner'
+    : 'reader-card__hltv-current-map-score--loser';
+}
+
+function isCompletedHltvMapScore(score: [string, string]): boolean {
+  const first = Number(score[0]);
+  const second = Number(score[1]);
+  return Number.isFinite(first)
+    && Number.isFinite(second)
+    && Math.max(first, second) >= 13
+    && Math.abs(first - second) >= 2;
 }
 
 function HltvPlayerStats({
