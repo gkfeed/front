@@ -1,5 +1,5 @@
 import { useCallback, useDeferredValue, useMemo, useState, useTransition } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';

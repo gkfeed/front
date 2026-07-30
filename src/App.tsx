@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 
 import { FeedCreator } from './react/components/FeedCreator';
 import { FeedsList } from './react/components/FeedsList';

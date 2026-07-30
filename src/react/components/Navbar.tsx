@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useSearchParams } from 'react-router-dom';
+import { NavLink, useLocation, useSearchParams } from 'react-router';
 
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
 import { BrandMark } from './Icons';

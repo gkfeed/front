@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router';
 
 import { FeedItemCard } from '../components/FeedItemCard';
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../components/feedItemPreview';
