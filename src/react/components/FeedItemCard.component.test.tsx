@@ -291,6 +291,37 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(getPreview).not.toHaveBeenCalled();
   });
 
+  it('replaces a small Rezka feed image with the original remote cover', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://rezka.ag/films/drama/123-story.html',
+      title: 'Story',
+      description: null,
+      image: 'https://static.hdrezka.ac/covers/original.jpg',
+      video: null,
+      siteName: 'HDrezka',
+      type: 'video.movie',
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://hdrezka.me/films/drama/123-story.html',
+      text: '<img src="https://static.hdrezka.ac/covers/thumbnail.jpg">',
+    }} />);
+
+    expect(screen.getByAltText('Preview for Story').getAttribute('src'))
+      .toBe('https://static.hdrezka.ac/covers/thumbnail.jpg');
+    expect((await screen.findByAltText('Preview for Story')).getAttribute('src'))
+      .toBe('https://static.hdrezka.ac/covers/original.jpg');
+    expect(getPreview).toHaveBeenCalledWith(
+      'https://hdrezka.me/films/drama/123-story.html',
+      expect.any(AbortSignal),
+    );
+
+    fireEvent.error(screen.getByAltText('Preview for Story'));
+    expect(screen.getByAltText('Preview for Story').getAttribute('src'))
+      .toBe('https://static.hdrezka.ac/covers/thumbnail.jpg');
+  });
+
   it('shows readable feed text as the description for VK items', () => {
     render(<FeedItemCard item={{
       ...item,

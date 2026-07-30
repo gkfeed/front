@@ -32,11 +32,13 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const isInstagram = provider === 'instagram';
   const isShortVideo = isTikTok || isInstagram;
   const isReddit = isRedditUrl(itemUrl);
+  const isRezka = isRezkaUrl(itemUrl);
   const isVk = provider === 'vk';
   const isHltv = provider === 'hltv';
   const isLiquipedia = provider === 'liquipedia';
   const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
-  const shouldLoadRemotePreview = !isTikTok && !(localPreviewSource && (!isVk || feedDescription));
+  const shouldLoadRemotePreview = !isTikTok
+    && (isRezka || !(localPreviewSource && (!isVk || feedDescription)));
   const {
     cardRef,
     openGraphPreview,
@@ -47,7 +49,10 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     shouldLoadRemotePreview,
     isLiquipedia,
   );
-  const remotePreview = getRemotePreview(openGraphPreview, item.title);
+  const loadedRemotePreview = getRemotePreview(openGraphPreview, item.title);
+  const remotePreview = isRezka && loadedRemotePreview && localPreviewSource
+    ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
+    : loadedRemotePreview;
   const description = isVk
     ? feedDescription ??
       getFeedItemDescription(openGraphPreview?.description ?? '', item.title)
@@ -56,7 +61,9 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item) : null;
   const preview = isTikTok
     ? tiktokEmbedPreview ?? localPreview
-    : localPreview ?? remotePreview;
+    : isRezka
+      ? remotePreview ?? localPreview
+      : localPreview ?? remotePreview;
   const [previewFailures, setPreviewFailures] = useState(0);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
   const [showSoundPrompt, setShowSoundPrompt] = useState(requiresSoundGesture);
@@ -418,4 +425,10 @@ function isRedditUrl(url: URL | null): boolean {
   if (!url) return false;
   const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
   return hostname === 'reddit.com' || hostname.endsWith('.reddit.com');
+}
+
+function isRezkaUrl(url: URL | null): boolean {
+  if (!url) return false;
+  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+  return hostname === 'hdrezka.me' || hostname === 'rezka.ag';
 }

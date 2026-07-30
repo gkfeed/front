@@ -240,7 +240,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
   }
 
   const documentTitle = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
-  const image = firstMetadata(metadata, [
+  const image = parseRezkaOriginalCover(html, pageUrl) ?? firstMetadata(metadata, [
     'og:image',
     'og:image:secure_url',
     'og:image:url',
@@ -266,6 +266,20 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     matchStartsAt: isHltvMatch ? parseHltvMatchStartsAt(html) : null,
     matchTeams: isHltvMatch ? parseHltvMatchTeams(html, pageUrl) : null,
   };
+}
+
+function parseRezkaOriginalCover(html: string, pageUrl: URL): string | null {
+  if (pageUrl.hostname.toLowerCase().replace(/^www\./, '') !== 'rezka.ag') return null;
+
+  const coverStart = html.match(
+    /<div\b[^>]*class=(?:"[^"]*\bb-sidecover\b[^"]*"|'[^']*\bb-sidecover\b[^']*')[^>]*>/i,
+  );
+  if (!coverStart || coverStart.index === undefined) return null;
+
+  const coverMarkup = html.slice(coverStart.index, coverStart.index + 2_000);
+  const linkTag = coverMarkup.match(/<a\b[^>]*>/i)?.[0];
+  const href = linkTag ? parseAttributes(linkTag).href : null;
+  return resolveHttpUrl(href ? decodeHtml(href) : null, pageUrl);
 }
 
 function parseHltvMatchStartsAt(html: string): string | null {

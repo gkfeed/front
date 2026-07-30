@@ -102,6 +102,22 @@ describe('parseOpenGraph', () => {
       video: 'https://example.com/clip.mp4',
     });
   });
+
+  it('prefers the original Rezka cover over its small social preview', () => {
+    const html = `
+      <meta property="og:image" content="/covers/social.jpg">
+      <div class="b-sidecover">
+        <a data-imagelightbox="cover" href="/covers/original.jpg">
+          <img src="/covers/thumbnail.jpg" alt="Story">
+        </a>
+      </div>
+    `;
+
+    expect(parseOpenGraph(
+      html,
+      new URL('https://rezka.ag/films/drama/123-story.html'),
+    ).image).toBe('https://rezka.ag/covers/original.jpg');
+  });
 });
 
 describe('fetchOpenGraph', () => {
