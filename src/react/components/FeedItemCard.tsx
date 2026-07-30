@@ -32,7 +32,12 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const isLiquipedia = provider === 'liquipedia';
   const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
   const shouldLoadRemotePreview = !isTikTok && !(localPreviewSource && (!isVk || feedDescription));
-  const { cardRef, openGraphPreview, liquipediaMatch } = useFeedItemRemotePreview(
+  const {
+    cardRef,
+    openGraphPreview,
+    liquipediaMatch,
+    previewStatus,
+  } = useFeedItemRemotePreview(
     item.link,
     shouldLoadRemotePreview,
     isLiquipedia,
@@ -63,6 +68,8 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       ? fallbackPreview
     : previewFailures > 0 ? null : preview;
   const isInstagramPhoto = isInstagram && visiblePreview?.type === undefined;
+  const isSimpleImageCard = provider === 'generic'
+    && Boolean(visiblePreview && visiblePreview.type === undefined);
   const isImagePreviewOnly = Boolean(
     visiblePreview &&
     visiblePreview.type === undefined &&
@@ -77,6 +84,9 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     && isGenericHltvPreview(visiblePreview.src)
     ? openGraphPreview?.matchTeams
     : null;
+  const isPreviewPending = shouldLoadRemotePreview
+    && !localPreview
+    && previewStatus === 'pending';
 
   useEffect(() => {
     setPreviewFailures(0);
@@ -89,12 +99,14 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       ref={cardRef}
       className={[
         'reader-card',
+        isPreviewPending ? 'reader-card--preview-pending' : '',
         isLiquipedia ? 'reader-card--liquipedia' : '',
         isYoutube ? 'reader-card--youtube' : '',
         isShortVideo ? 'reader-card--short-video' : '',
         isTikTok ? 'reader-card--tiktok' : '',
         isInstagram ? 'reader-card--instagram' : '',
         isInstagramPhoto ? 'reader-card--instagram-photo' : '',
+        isSimpleImageCard ? 'reader-card--simple-image' : '',
         isImagePreviewOnly ? 'reader-card--image-preview' : '',
         isImagePreviewOnly && isReddit ? 'reader-card--reddit-preview' : '',
         isImagePreviewOnly && isHltv ? 'reader-card--hltv-preview' : '',
@@ -106,7 +118,9 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           <span>{getInstagramUsername(item.title)}</span>
         </div>
       ) : null}
-      {hltvMatchTeams ? (
+      {isPreviewPending ? (
+        <div className="reader-card__preview-placeholder" role="status" aria-label="Loading preview" />
+      ) : hltvMatchTeams ? (
         <HltvMatchup teams={hltvMatchTeams} href={item.link} />
       ) : isYoutube && youtubeVideoId ? (
         <YoutubePreview
@@ -192,16 +206,18 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           />
         </a>
       ) : null}
-      {isHltv && openGraphPreview?.matchStartsAt ? (
+      {!isPreviewPending && isHltv && openGraphPreview?.matchStartsAt ? (
         <HltvCountdown startsAt={openGraphPreview.matchStartsAt} />
       ) : null}
-      {isTikTok ? <TikTokComments item={item} /> : null}
-      {isImagePreviewOnly ? null : isYoutube ? (
+      {!isPreviewPending && isTikTok ? <TikTokComments item={item} /> : null}
+      {isPreviewPending || isImagePreviewOnly ? null : isYoutube ? (
         <div className="reader-card__youtube-copy">
           <h2 className="reader-card__title">{item.text || item.title}</h2>
           <p className="reader-card__channel">{getYoutubeChannelName(item.title)}</p>
         </div>
-      ) : isShortVideo ? null : (
+      ) : isShortVideo ? null : isSimpleImageCard ? (
+        <h2 className="reader-card__title">{item.title || hostname}</h2>
+      ) : (
         <>
           <div className="reader-card__meta">
             <span>{hostname}</span>

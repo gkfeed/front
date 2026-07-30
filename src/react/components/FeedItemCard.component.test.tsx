@@ -119,6 +119,11 @@ describe('FeedItemCard Open Graph preview', () => {
 
     const image = await screen.findByAltText('Preview for Story');
     expect(image.getAttribute('src')).toBe('https://example.com/cover.jpg');
+    expect(image.closest('a')?.getAttribute('href')).toBe(item.link);
+    expect(screen.getByRole('heading', { name: 'Story' })).toBeTruthy();
+    expect(screen.queryByText('example.com')).toBeNull();
+    expect(screen.queryByText('Feed #2')).toBeNull();
+    expect(screen.queryByText(/read original/i)).toBeNull();
     expect(getPreview).toHaveBeenCalledWith(item.link, expect.any(AbortSignal));
   });
 
@@ -147,10 +152,13 @@ describe('FeedItemCard Open Graph preview', () => {
 
     render(<FeedItemCard item={item} />);
     expect(getPreview).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Loading preview')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Story' })).toBeNull();
 
     act(reveal);
 
     expect(await screen.findByAltText('Preview for Story')).toBeTruthy();
+    expect(screen.queryByLabelText('Loading preview')).toBeNull();
     expect(getPreview).toHaveBeenCalledTimes(1);
   });
 

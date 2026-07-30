@@ -16,6 +16,8 @@ type RemotePreview = {
   openGraphPreview: OpenGraphPreview | null;
 };
 
+type RemotePreviewStatus = 'idle' | 'pending' | 'loaded' | 'failed';
+
 const EMPTY_PREVIEW: RemotePreview = {
   liquipediaMatch: null,
   openGraphPreview: null,
@@ -29,22 +31,36 @@ export function useFeedItemRemotePreview(
   const cardRef = useRef<HTMLElement>(null);
   const isVisible = usePreviewVisibility(cardRef);
   const [preview, setPreview] = useState<RemotePreview>(EMPTY_PREVIEW);
+  const [status, setStatus] = useState<RemotePreviewStatus>(
+    () => enabled ? 'pending' : 'idle',
+  );
 
   useEffect(() => {
     let active = true;
     setPreview(EMPTY_PREVIEW);
-    if (!enabled || !isVisible) return;
+    if (!enabled) {
+      setStatus('idle');
+      return;
+    }
+
+    setStatus('pending');
+    if (!isVisible) return;
 
     loadRemotePreview(url, isLiquipedia).then((result) => {
-      if (active) setPreview(result);
-    }).catch(() => undefined);
+      if (active) {
+        setPreview(result);
+        setStatus('loaded');
+      }
+    }).catch(() => {
+      if (active) setStatus('failed');
+    });
 
     return () => {
       active = false;
     };
   }, [enabled, isLiquipedia, isVisible, url]);
 
-  return { cardRef, ...preview };
+  return { cardRef, previewStatus: status, ...preview };
 }
 
 async function loadRemotePreview(url: string, isLiquipedia: boolean): Promise<RemotePreview> {
