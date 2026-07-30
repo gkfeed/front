@@ -98,8 +98,16 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const hltvMatchTeams = isHltv
     && visiblePreview
     && visiblePreview.type === undefined
-    && isGenericHltvPreview(visiblePreview.src)
+    && (
+      isGenericHltvPreview(visiblePreview.src)
+      || openGraphPreview?.matchStatus === 'live'
+    )
     ? openGraphPreview?.matchTeams
+    : null;
+  const hltvImageScore = isHltv
+    && !hltvMatchTeams
+    && openGraphPreview?.matchStatus === 'over'
+    ? openGraphPreview.matchScore
     : null;
   const isPreviewPending = shouldLoadRemotePreview
     && !localPreview
@@ -232,7 +240,9 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           href={item.link}
           target="_blank"
           rel="noreferrer"
-          aria-label={`Open ${item.title || hostname}`}
+          aria-label={hltvImageScore
+            ? `Open ${item.title || hostname}, final score ${hltvImageScore[0]} to ${hltvImageScore[1]}`
+            : `Open ${item.title || hostname}`}
         >
           <img
             src={visiblePreview.src}
@@ -240,6 +250,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
             referrerPolicy="no-referrer"
             onError={() => setPreviewFailures((failures) => failures + 1)}
           />
+          {hltvImageScore ? <HltvImageScore score={hltvImageScore} /> : null}
         </a>
       ) : null}
       {!isPreviewPending && isHltv && openGraphPreview?.matchStartsAt ? (
@@ -267,6 +278,18 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
         </>
       )}
     </article>
+  );
+}
+
+function HltvImageScore({
+  score,
+}: {
+  score: NonNullable<OpenGraphPreview['matchScore']>;
+}) {
+  return (
+    <span className="reader-card__hltv-image-score" aria-hidden="true">
+      {score[0]} : {score[1]}
+    </span>
   );
 }
 

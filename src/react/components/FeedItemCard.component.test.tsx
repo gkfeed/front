@@ -272,6 +272,68 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.queryByText(/^Starts in /)).toBeNull();
   });
 
+  it('overlays the final score on a generated HLTV match image', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+      description: null,
+      image: 'https://api.url2png.com/v6/account/signature/png/?url=match',
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      matchStartsAt: '2026-07-23T18:05:00.000Z',
+      matchTeams: [
+        { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
+        { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+      ],
+      matchStatus: 'over',
+      matchScore: ['1', '2'],
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+    }} />);
+
+    expect(await screen.findByAltText('Preview for Liquid vs Spirit')).toBeTruthy();
+    expect(screen.getByText('1 : 2')).toBeTruthy();
+    expect(screen.getByRole('link', {
+      name: 'Open Liquid vs Spirit, final score 1 to 2',
+    })).toBeTruthy();
+  });
+
+  it('converts a generated HLTV image into the live matchup format', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+      description: null,
+      image: 'https://api.url2png.com/v6/account/signature/png/?url=match',
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      matchStartsAt: '2026-07-23T18:05:00.000Z',
+      matchTeams: [
+        { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
+        { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+      ],
+      matchStatus: 'live',
+      matchScore: ['1', '0'],
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+    }} />);
+
+    expect(await screen.findByRole('link', {
+      name: 'Liquid versus Spirit, live score 1 to 0',
+    })).toBeTruthy();
+    expect(screen.queryByAltText('Preview for Liquid vs Spirit')).toBeNull();
+    expect(screen.getByText('Live')).toBeTruthy();
+  });
+
   it('replaces the generic HLTV image with a team matchup', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.hltv.org/matches/2396281/ence-vs-bojong-event',
