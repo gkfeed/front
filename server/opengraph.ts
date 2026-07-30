@@ -436,6 +436,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
       ? parseHltvMatchScore(html)
       : null,
     matchCurrentMap: matchStatus === 'live' ? parseHltvCurrentMap(html) : null,
+    matchCompletedMaps: isHltvMatch ? parseHltvCompletedMaps(html) : null,
     matchPlayerStats: null,
     matchTeamSides: null,
   };
@@ -583,6 +584,37 @@ function parseHltvCurrentMap(html: string): OpenGraphPreview['matchCurrentMap'] 
     if (map) return map;
   }
   return null;
+}
+
+function parseHltvCompletedMaps(html: string): NonNullable<OpenGraphPreview['matchCompletedMaps']> {
+  return getHltvMapSections(html).flatMap((map) => {
+    const parsed = parseHltvMapNameAndScore(map);
+    if (
+      !parsed
+      || (!hasHltvCompletedMap(map) && !isCompletedHltvMapScore(parsed.score))
+    ) return [];
+    return [parsed];
+  });
+}
+
+function parseHltvMapNameAndScore(html: string): HltvCurrentMapPreview | null {
+  const nameMarkup = html.match(
+    /<div\b[^>]*class=(?:"[^"]*\bmapname\b[^"]*"|'[^']*\bmapname\b[^']*')[^>]*>([\s\S]*?)<\/div>/i,
+  )?.[1];
+  const scores = [...html.matchAll(
+    /<div\b[^>]*class=(?:"[^"]*\bresults-team-score\b[^"]*"|'[^']*\bresults-team-score\b[^']*')[^>]*>([\s\S]*?)<\/div>/gi,
+  )].map((match) => htmlText(match[1] ?? ''));
+  const name = htmlText(nameMarkup ?? '');
+  if (!name || scores.length < 2 || !scores.slice(0, 2).every((score) => /^\d+$/.test(score))) {
+    return null;
+  }
+  return { name, score: [scores[0]!, scores[1]!] };
+}
+
+function isCompletedHltvMapScore(score: [string, string]): boolean {
+  const first = Number(score[0]);
+  const second = Number(score[1]);
+  return Math.max(first, second) >= 13 && Math.abs(first - second) >= 2;
 }
 
 export function parseHltvScoreboardUpdate(

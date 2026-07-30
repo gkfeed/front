@@ -404,6 +404,43 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(mapScore?.querySelector('[class$="--ct"], [class$="--t"]')).toBeNull();
   });
 
+  it('keeps completed maps visible after the next map starts', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+      description: null,
+      image: 'https://www.hltv.org/img/static/openGraphHltvLogo.png',
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      matchTeams: [
+        { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
+        { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+      ],
+      matchStatus: 'live',
+      matchScore: ['0', '1'],
+      matchCompletedMaps: [{ name: 'Dust2', score: ['7', '13'] }],
+      matchCurrentMap: { name: 'Anubis', score: ['0', '0'] },
+      matchTeamSides: ['ct', 't'],
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+    }} />);
+
+    expect(await screen.findByRole('link', {
+      name: 'Liquid versus Spirit, live score 0 to 1, current map Anubis 0 to 0, completed maps Dust2 7 to 13, Liquid CT, Spirit T',
+    })).toBeTruthy();
+    expect(screen.getByText('Dust2')).toBeTruthy();
+    expect(screen.getByText('Anubis')).toBeTruthy();
+    const completedScore = screen.getByText('Dust2').parentElement
+      ?.querySelector('.reader-card__hltv-current-map-score');
+    expect(completedScore?.children[2]?.classList.contains(
+      'reader-card__hltv-current-map-score--winner',
+    )).toBe(true);
+  });
+
   it('replaces the generic HLTV image with a team matchup', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.hltv.org/matches/2396281/ence-vs-bojong-event',

@@ -47,6 +47,7 @@ describe('parseOpenGraph', () => {
       matchStatus: null,
       matchScore: null,
       matchCurrentMap: null,
+      matchCompletedMaps: null,
       matchPlayerStats: null,
       matchTeamSides: null,
     });
@@ -89,6 +90,7 @@ describe('parseOpenGraph', () => {
       </div>
       <div class="mapholder">
         <div class="results played">
+          <div class="map-name-holder"><div class="mapname">Mirage</div></div>
           <div class="results-left won pick"><div class="results-team-score">13</div></div>
           <div class="results-center"><a class="results-stats" href="/stats/matches/mapstatsid/1">STATS</a></div>
           <span class="results-right lost"><div class="results-team-score">10</div></span>
@@ -119,6 +121,10 @@ describe('parseOpenGraph', () => {
         name: 'Anubis',
         score: ['12', '10'],
       },
+      matchCompletedMaps: [{
+        name: 'Mirage',
+        score: ['13', '10'],
+      }],
     });
 
     expect(parseOpenGraph(

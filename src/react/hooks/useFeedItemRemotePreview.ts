@@ -111,6 +111,9 @@ function mergeHltvLiveData(
   return {
     ...next,
     matchCurrentMap: next.matchCurrentMap ?? previous.matchCurrentMap,
+    matchCompletedMaps: next.matchCompletedMaps?.length
+      ? next.matchCompletedMaps
+      : previous.matchCompletedMaps,
     matchPlayerStats: next.matchPlayerStats ?? previous.matchPlayerStats,
     matchTeamSides: next.matchTeamSides ?? previous.matchTeamSides,
   };

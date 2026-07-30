@@ -56,6 +56,7 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   const matchStatus = getObjectProperty(value, 'matchStatus');
   const matchScore = getObjectProperty(value, 'matchScore');
   const matchCurrentMap = getObjectProperty(value, 'matchCurrentMap');
+  const matchCompletedMaps = getObjectProperty(value, 'matchCompletedMaps');
   const matchPlayerStats = getObjectProperty(value, 'matchPlayerStats');
   const matchTeamSides = getObjectProperty(value, 'matchTeamSides');
 
@@ -80,6 +81,14 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
       matchCurrentMap === undefined
       || matchCurrentMap === null
       || isHltvCurrentMap(matchCurrentMap)
+    )
+    && (
+      matchCompletedMaps === undefined
+      || matchCompletedMaps === null
+      || (
+        Array.isArray(matchCompletedMaps)
+        && matchCompletedMaps.every(isHltvCurrentMap)
+      )
     )
     && (
       matchPlayerStats === undefined

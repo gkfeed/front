@@ -8,6 +8,11 @@ export interface HltvCurrentMapPreview {
   score: [string, string];
 }
 
+export interface HltvMapResultPreview {
+  name: string;
+  score: [string, string];
+}
+
 export interface HltvPlayerStatsPreview {
   nickname: string;
   kills: number;
@@ -36,6 +41,7 @@ export interface OpenGraphPreview {
   matchStatus?: 'scheduled' | 'live' | 'over' | 'postponed' | 'deleted' | null;
   matchScore?: [string, string] | null;
   matchCurrentMap?: HltvCurrentMapPreview | null;
+  matchCompletedMaps?: HltvMapResultPreview[] | null;
   matchPlayerStats?: HltvMatchPlayerStatsPreview | null;
   matchTeamSides?: HltvMatchTeamSidesPreview | null;
 }
