@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getLiquipediaMatchPreview } from '../services/liquipedia';
 import { getOpenGraphPreview } from '../services/openGraph';
 import { clearPreviewCache } from '../services/previewQueue';
+import { NsfwPreferencesContext } from '../state/nsfwPreferencesContext';
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
 
@@ -25,6 +26,7 @@ const item: FeedItem = {
 afterEach(() => {
   cleanup();
   clearPreviewCache();
+  vi.useRealTimers();
   vi.resetAllMocks();
   vi.unstubAllGlobals();
 });
@@ -45,6 +47,20 @@ describe('FeedItemCard Open Graph preview', () => {
     }} />);
 
     expect(container.querySelector('.reader-card--nsfw-blurred')).toBeTruthy();
+  });
+
+  it('does not render NSFW cards in hide mode', () => {
+    const { container } = render(
+      <NsfwPreferencesContext value={{ nsfwMode: 'hide', setNsfwMode: vi.fn() }}>
+        <FeedItemCard item={{
+          ...item,
+          link: 'https://www.pornhub.com/view_video.php?viewkey=123',
+        }} />
+      </NsfwPreferencesContext>,
+    );
+
+    expect(container.querySelector('.reader-card')).toBeNull();
+    expect(getPreview).not.toHaveBeenCalled();
   });
 
   it('uses a max-resolution YouTube thumbnail with a reliable fallback', () => {
@@ -283,6 +299,57 @@ describe('FeedItemCard Open Graph preview', () => {
     expect(screen.queryByAltText(/HLTV/)).toBeNull();
   });
 
+  it('shows and refreshes the score while an HLTV match is live', async () => {
+    vi.useFakeTimers();
+    const basePreview = {
+      url: 'https://www.hltv.org/matches/2396277/ww-vs-tdk-event',
+      title: 'WW vs TDK',
+      description: null,
+      image: 'https://www.hltv.org/img/static/openGraphHltvLogo.png',
+      video: null,
+      siteName: 'HLTV.org',
+      type: null,
+      matchStartsAt: '2026-07-30T10:00:00.000Z',
+      matchTeams: [
+        { name: 'WW', logo: 'https://img-cdn.hltv.org/teamlogo/ww.png' },
+        { name: 'TDK', logo: 'https://img-cdn.hltv.org/teamlogo/tdk.png' },
+      ] as [{ name: string; logo: string }, { name: string; logo: string }],
+      matchStatus: 'live' as const,
+    };
+    getPreview
+      .mockResolvedValueOnce({ ...basePreview, matchScore: ['1', '0'] })
+      .mockResolvedValueOnce({
+        ...basePreview,
+        matchStatus: 'over',
+        matchScore: ['1', '2'],
+      });
+
+    render(<FeedItemCard item={{ ...item, link: basePreview.url }} />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('link', {
+      name: 'WW versus TDK, live score 1 to 0',
+    })).toBeTruthy();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+
+    expect(screen.getByRole('link', {
+      name: 'WW versus TDK, final score 1 to 2',
+    })).toBeTruthy();
+    expect(screen.queryByText('Live')).toBeNull();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
+
+    expect(getPreview).toHaveBeenCalledTimes(2);
+  });
+
   it('does not call the BFF when the feed content contains an image', () => {
     render(<FeedItemCard item={{ ...item, text: '<img src="https://example.com/feed-cover.jpg">' }} />);
 
@@ -353,6 +420,46 @@ describe('FeedItemCard Open Graph preview', () => {
 
     expect(await screen.findByText('Описание публикации')).toBeTruthy();
     expect(getPreview).toHaveBeenCalled();
+  });
+
+  it('renders VK video links in the embedded player', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/video-123_456',
+      title: 'VK clip',
+      text: 'Описание ролика',
+    }} />);
+
+    const player = screen.getByTitle('Video preview for VK clip');
+    expect(player.tagName).toBe('IFRAME');
+    expect(player.getAttribute('src'))
+      .toBe('https://vk.com/video_ext.php?oid=-123&id=456&hd=2&autoplay=1');
+    expect(player.getAttribute('allow')).toContain('fullscreen');
+  });
+
+  it('renders a VK wall video discovered by the remote preview', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.ru/wall-28905875_36129480',
+      title: 'Рифмы и Панчи',
+      description: 'Описание ролика',
+      image: 'https://iv.okcdn.ru/getVideoPreview?id=123',
+      video: 'https://vk.ru/video_ext.php?oid=-28905875&id=456404323&hash=secret',
+      siteName: 'VK',
+      type: 'article',
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/wall-28905875_36129480',
+      title: 'Рифмы и Панчи',
+      text: 'ФИДБЭК ПО СВИДАНИЮ',
+    }} />);
+
+    const player = await screen.findByTitle('Video preview for Рифмы и Панчи');
+    expect(player.tagName).toBe('IFRAME');
+    expect(player.getAttribute('src')).toBe(
+      'https://vk.com/video_ext.php?oid=-28905875&id=456404323&hash=secret&autoplay=1',
+    );
   });
 
   it('renders direct Open Graph video with its image as a poster', async () => {

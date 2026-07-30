@@ -64,6 +64,36 @@ describe('getFeedItemPreview', () => {
     });
   });
 
+  it('builds VK video embeds from video links and feed iframe markup', () => {
+    expect(getFeedItemPreview(item({
+      link: 'https://vk.com/video-123_456',
+    }))).toMatchObject({
+      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hd=2&autoplay=1',
+      type: 'embed',
+    });
+
+    expect(getFeedItemPreview(item({
+      link: 'https://vk.com/wall-123_789?z=clip-123_456',
+    }))).toMatchObject({
+      src: 'https://vk.com/clip_ext.php?oid=-123&id=456&hd=2&autoplay=1',
+      type: 'embed',
+    });
+
+    expect(getFeedItemPreview(item({
+      text: '<iframe src="https://vkvideo.ru/video_ext.php?oid=-123&amp;id=456&amp;hash=secret"></iframe>',
+    }))).toMatchObject({
+      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hash=secret&autoplay=1',
+      type: 'embed',
+    });
+
+    expect(getFeedItemPreview(item({
+      link: 'https://vk.ru/video_ext.php?oid=-123&id=456&hash=secret',
+    }))).toMatchObject({
+      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hash=secret&autoplay=1',
+      type: 'embed',
+    });
+  });
+
   it('rejects unsafe embedded image sources', () => {
     expect(getFeedItemPreview(item({ text: '<img src="javascript:alert(1)">' }))).toBeNull();
     expect(getFeedItemPreview(item({ text: '<img src="data:text/html;base64,PHNjcmlwdD4=">' }))).toBeNull();

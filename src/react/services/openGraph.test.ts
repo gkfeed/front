@@ -62,4 +62,22 @@ describe('getOpenGraphPreview', () => {
       image: 'https://api.url2png.com/v6/account/signature/png/?url=match',
     });
   });
+
+  it('upgrades cached VK image previews to HTTPS', async () => {
+    const preview = {
+      url: 'https://vk.ru/wall-118222154_8712',
+      title: 'VK post',
+      description: null,
+      image: 'http://sun9-67.vkuserphoto.ru/impg/photo.jpg?size=1170x1560',
+      video: null,
+      siteName: 'VK',
+      type: 'article',
+    };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
+
+    await expect(getOpenGraphPreview('https://vk.com/wall-118222154_8712'))
+      .resolves.toMatchObject({
+        image: 'https://sun9-67.vkuserphoto.ru/impg/photo.jpg?size=1170x1560',
+      });
+  });
 });

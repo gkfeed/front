@@ -42,6 +42,8 @@ describe('parseOpenGraph', () => {
       type: 'article',
       matchStartsAt: null,
       matchTeams: null,
+      matchStatus: null,
+      matchScore: null,
     });
   });
 
@@ -75,6 +77,49 @@ describe('parseOpenGraph', () => {
     });
   });
 
+  it('extracts and updates the series score only while an HLTV match is live', () => {
+    const html = `
+      <div class="timeAndEvent">
+        <div class="countdown" data-time-countdown="LIVE">LIVE</div>
+      </div>
+      <div class="mapholder">
+        <div class="results played">
+          <div class="results-left won pick"><div class="results-team-score">13</div></div>
+          <div class="results-center"><a class="results-stats" href="/stats/matches/mapstatsid/1">STATS</a></div>
+          <span class="results-right lost"><div class="results-team-score">10</div></span>
+        </div>
+      </div>
+      <div class="mapholder">
+        <div class="results played">
+          <div class="results-left won"><div class="results-team-score">12</div></div>
+          <span class="results-right lost pick"><div class="results-team-score">10</div></span>
+        </div>
+      </div>
+      <div class="mapholder">
+        <div class="results optional">
+          <div class="results-left tie"><div class="results-team-score">-</div></div>
+          <span class="results-right tie"><div class="results-team-score">-</div></span>
+        </div>
+      </div>
+    `;
+
+    expect(parseOpenGraph(
+      html,
+      new URL('https://www.hltv.org/matches/2396277/ww-vs-tdk-event'),
+    )).toMatchObject({
+      matchStatus: 'live',
+      matchScore: ['1', '0'],
+    });
+
+    expect(parseOpenGraph(
+      html.replace('LIVE</div>', 'Match over</div>'),
+      new URL('https://www.hltv.org/matches/2396277/ww-vs-tdk-event'),
+    )).toMatchObject({
+      matchStatus: 'over',
+      matchScore: ['1', '0'],
+    });
+  });
+
   it('falls back to standard title and description metadata', () => {
     const html = '<title>Fallback title</title><meta name="description" content="Fallback description">';
 
@@ -85,6 +130,44 @@ describe('parseOpenGraph', () => {
   it('rejects non-http image URLs', () => {
     const html = '<meta property="og:image" content="javascript:alert(1)">';
     expect(parseOpenGraph(html, new URL('https://example.com')).image).toBeNull();
+  });
+
+  it('upgrades VK image CDN URLs to HTTPS', () => {
+    const html = `
+      <meta property="og:image"
+        content="http://sun9-67.vkuserphoto.ru/impg/photo.jpg?size=1170x1560">
+    `;
+
+    expect(parseOpenGraph(
+      html,
+      new URL('https://vk.ru/wall-118222154_8712'),
+    ).image).toBe(
+      'https://sun9-67.vkuserphoto.ru/impg/photo.jpg?size=1170x1560',
+    );
+  });
+
+  it('extracts a VK video embed and thumbnail from structured data', () => {
+    const html = `
+      <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SocialMediaPosting",
+          "video": [{
+            "@type": "VideoObject",
+            "thumbnailUrl": "https://iv.okcdn.ru/getVideoPreview?id=123",
+            "embedUrl": "https://vk.ru/video_ext.php?oid=-28905875&id=456404323&hash=secret"
+          }]
+        }
+      </script>
+    `;
+
+    expect(parseOpenGraph(
+      html,
+      new URL('https://vk.ru/wall-28905875_36129480'),
+    )).toMatchObject({
+      image: 'https://iv.okcdn.ru/getVideoPreview?id=123',
+      video: 'https://vk.ru/video_ext.php?oid=-28905875&id=456404323&hash=secret',
+    });
   });
 
   it('uses the Twitter metadata fallbacks supported by gkbot', () => {

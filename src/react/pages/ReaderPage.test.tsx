@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
+import { NsfwPreferencesContext, type NsfwMode } from '../state/nsfwPreferencesContext';
 import { ReaderPage } from './ReaderPage';
 
 vi.mock('../services/feeds');
@@ -18,8 +19,14 @@ const ITEMS = [
   { id: 11, feedId: 3, link: 'https://news.example.org/two', title: 'Second story', text: 'Second summary' },
 ];
 
-function renderReader(initialEntry = '/reader') {
-  return render(<MemoryRouter initialEntries={[initialEntry]}><ReaderPage /></MemoryRouter>);
+function renderReader(initialEntry = '/reader', nsfwMode: NsfwMode = 'blur') {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <NsfwPreferencesContext value={{ nsfwMode, setNsfwMode: vi.fn() }}>
+        <ReaderPage />
+      </NsfwPreferencesContext>
+    </MemoryRouter>,
+  );
 }
 
 afterEach(() => {
@@ -85,6 +92,24 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('Second story')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /keep/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /delete/i })).toBeNull();
+  });
+
+  it('removes NSFW items from Review and the remaining count in hide mode', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue([
+      {
+        id: 9,
+        feedId: 2,
+        link: 'https://www.pornhub.com/view_video.php?viewkey=123',
+        title: 'Hidden story',
+        text: '',
+      },
+      ITEMS[1],
+    ]);
+    renderReader('/reader', 'hide');
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(screen.queryByText('Hidden story')).toBeNull();
+    expect(screen.getByText('1 remaining')).toBeTruthy();
   });
 
   it('offers focused mobile controls for short videos', async () => {

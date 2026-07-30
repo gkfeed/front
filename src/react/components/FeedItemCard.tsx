@@ -7,6 +7,7 @@ import type { FeedItem } from '../types';
 import {
   getFeedItemPreview,
   getFeedItemProvider,
+  getVkVideoPreview,
   getYoutubeVideoId,
   type FeedItemPreview,
 } from './feedItemPreview';
@@ -15,14 +16,16 @@ import { isNsfwLink } from './nsfw';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
 import { TikTokComments } from './previews/TikTokComments';
 import { TikTokEmbed } from './previews/TikTokEmbed';
+import { VideoEmbed } from './previews/VideoEmbed';
 import { YoutubePreview } from './previews/YoutubePreview';
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
-  const { blurNsfw } = useNsfwPreferences();
+  const { nsfwMode } = useNsfwPreferences();
   const hostname = getHostname(item.link);
   const itemUrl = parseUrl(item.link);
   const isNsfw = isNsfwLink(item.link);
-  const shouldBlurNsfw = isNsfw && blurNsfw;
+  const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
+  const shouldHideNsfw = isNsfw && nsfwMode === 'hide';
   const youtubeVideoId = itemUrl ? getYoutubeVideoId(itemUrl) : null;
   const localPreview = getFeedItemPreview(item);
   const localPreviewSource = localPreview?.src;
@@ -37,7 +40,8 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const isHltv = provider === 'hltv';
   const isLiquipedia = provider === 'liquipedia';
   const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
-  const shouldLoadRemotePreview = !isTikTok
+  const shouldLoadRemotePreview = !shouldHideNsfw
+    && !isTikTok
     && (isRezka || !(localPreviewSource && (!isVk || feedDescription)));
   const {
     cardRef,
@@ -48,6 +52,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     item.link,
     shouldLoadRemotePreview,
     isLiquipedia,
+    isHltv,
   );
   const loadedRemotePreview = getRemotePreview(openGraphPreview, item.title);
   const remotePreview = isRezka && loadedRemotePreview && localPreviewSource
@@ -106,6 +111,8 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     setShowSoundPrompt(requiresSoundGesture);
   }, [item.link, requiresSoundGesture]);
 
+  if (shouldHideNsfw) return null;
+
   return (
     <article
       ref={cardRef}
@@ -141,7 +148,12 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       {isPreviewPending ? (
         <div className="reader-card__preview-placeholder" role="status" aria-label="Loading preview" />
       ) : hltvMatchTeams ? (
-        <HltvMatchup teams={hltvMatchTeams} href={item.link} />
+        <HltvMatchup
+          teams={hltvMatchTeams}
+          href={item.link}
+          score={openGraphPreview?.matchScore}
+          isLive={openGraphPreview?.matchStatus === 'live'}
+        />
       ) : isYoutube && youtubeVideoId ? (
         <YoutubePreview
           videoId={youtubeVideoId}
@@ -201,11 +213,15 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           ) : null}
         </div>
       ) : visiblePreview.type === 'embed' ? (
-        <TikTokEmbed
-          src={visiblePreview.src}
-          title={visiblePreview.alt}
-          requiresSoundGesture={requiresSoundGesture}
-        />
+        isTikTok ? (
+          <TikTokEmbed
+            src={visiblePreview.src}
+            title={visiblePreview.alt}
+            requiresSoundGesture={requiresSoundGesture}
+          />
+        ) : (
+          <VideoEmbed src={visiblePreview.src} title={visiblePreview.alt} />
+        )
       ) : (
         <a
           className={[
@@ -282,20 +298,41 @@ function HltvCountdown({ startsAt }: { startsAt: string }) {
 function HltvMatchup({
   teams,
   href,
+  score,
+  isLive,
 }: {
   teams: NonNullable<OpenGraphPreview['matchTeams']>;
   href: string;
+  score: OpenGraphPreview['matchScore'];
+  isLive: boolean;
 }) {
+  const accessibleScore = score
+    ? `, ${isLive ? 'live' : 'final'} score ${score[0]} to ${score[1]}`
+    : '';
   return (
     <a
       className="reader-card__hltv-matchup"
       href={href}
       target="_blank"
       rel="noreferrer"
-      aria-label={`${teams[0].name} versus ${teams[1].name}`}
+      aria-label={`${teams[0].name} versus ${teams[1].name}${accessibleScore}`}
     >
       <HltvMatchupTeam team={teams[0]} />
-      <strong className="reader-card__hltv-versus">vs</strong>
+      {score ? (
+        <span
+          className={[
+            'reader-card__hltv-score',
+            isLive ? 'reader-card__hltv-score--live' : '',
+          ].filter(Boolean).join(' ')}
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {isLive ? <span><i aria-hidden="true" /> Live</span> : null}
+          <strong>{score[0]} : {score[1]}</strong>
+        </span>
+      ) : (
+        <strong className="reader-card__hltv-versus">vs</strong>
+      )}
       <HltvMatchupTeam team={teams[1]} />
     </a>
   );
@@ -381,6 +418,12 @@ function getRemotePreview(
 ): FeedItemPreview | null {
   if (!preview) return null;
   const altTitle = preview.title || title;
+
+  if (preview.video) {
+    const videoUrl = parseUrl(preview.video);
+    const vkVideoPreview = videoUrl ? getVkVideoPreview(videoUrl, altTitle) : null;
+    if (vkVideoPreview) return vkVideoPreview;
+  }
 
   if (preview.video && isDirectVideo(preview.video)) {
     return {

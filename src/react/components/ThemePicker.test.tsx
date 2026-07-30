@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { THEME_STORAGE_KEY } from '../theme';
 import {
-  NSFW_BLUR_STORAGE_KEY,
+  NSFW_MODE_STORAGE_KEY,
   NsfwPreferencesProvider,
 } from '../state/NsfwPreferencesProvider';
 import { ThemePicker } from './ThemePicker';
@@ -21,7 +21,7 @@ afterEach(() => {
 });
 
 describe('ThemePicker', () => {
-  it('enables NSFW blurring by default and persists changes', () => {
+  it('blurs NSFW by default and persists the hide mode', () => {
     const storage = stubLocalStorage();
     document.documentElement.dataset.theme = 'light';
     render(
@@ -31,13 +31,12 @@ describe('ThemePicker', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    const toggle = screen.getByRole('menuitemcheckbox', { name: /Blur NSFW/i });
-    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemradio', { name: 'Blur' }).getAttribute('aria-checked')).toBe('true');
 
-    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Hide' }));
 
-    expect(toggle.getAttribute('aria-checked')).toBe('false');
-    expect(storage.get(NSFW_BLUR_STORAGE_KEY)).toBe('false');
+    expect(screen.getByRole('menuitemradio', { name: 'Hide' }).getAttribute('aria-checked')).toBe('true');
+    expect(storage.get(NSFW_MODE_STORAGE_KEY)).toBe('hide');
   });
 
   it('moves the Reader view switch into Settings', () => {
@@ -62,7 +61,11 @@ describe('ThemePicker', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
-    expect(screen.getAllByRole('menuitemradio').map((option) => option.getAttribute('aria-label')))
+    expect(
+      screen.getAllByRole('menuitemradio')
+        .filter((option) => option.hasAttribute('data-theme-option'))
+        .map((option) => option.getAttribute('aria-label')),
+    )
       .toEqual([
         'System theme',
         'System Catppuccin theme',

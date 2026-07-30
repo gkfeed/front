@@ -13,6 +13,8 @@ export interface OpenGraphPreview {
   type: string | null;
   matchStartsAt?: string | null;
   matchTeams?: [HltvMatchTeamPreview, HltvMatchTeamPreview] | null;
+  matchStatus?: 'scheduled' | 'live' | 'over' | 'postponed' | 'deleted' | null;
+  matchScore?: [string, string] | null;
 }
 
 export type LiquipediaMatchResult = 'win' | 'loss' | 'default';

@@ -35,7 +35,7 @@ type ThemePickerProps = {
 };
 
 export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps) {
-  const { blurNsfw, setBlurNsfw } = useNsfwPreferences();
+  const { nsfwMode, setNsfwMode } = useNsfwPreferences();
   const [theme, setTheme] = useState(getInitialThemePreference);
   const [isOpen, setIsOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -131,21 +131,30 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
           ) : null}
           <div className="theme-picker__section">
             <span className="theme-picker__section-title">Content</span>
-            <button
-              className="theme-picker__toggle"
-              type="button"
-              role="menuitemcheckbox"
-              aria-checked={blurNsfw}
-              onClick={() => setBlurNsfw(!blurNsfw)}
-            >
-              <span className="theme-picker__toggle-copy">
-                <strong>Blur NSFW</strong>
-                <small>Porno365 and Pornhub items</small>
-              </span>
-              <span className="theme-picker__switch" aria-hidden="true">
-                <span />
-              </span>
-            </button>
+            <span className="theme-picker__content-description">Porno365 and Pornhub items</span>
+            <div className="theme-picker__nsfw-options">
+              {([
+                { mode: 'show', label: 'Show', icon: '○' },
+                { mode: 'blur', label: 'Blur', icon: '◉' },
+                { mode: 'hide', label: 'Hide', icon: '⊘' },
+              ] as const).map((option) => {
+                const selected = option.mode === nsfwMode;
+                return (
+                  <button
+                    className="theme-picker__nsfw-option"
+                    data-selected={selected || undefined}
+                    key={option.mode}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={selected}
+                    onClick={() => setNsfwMode(option.mode)}
+                  >
+                    <span aria-hidden="true">{option.icon}</span>
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div className="theme-picker__section">
             <span className="theme-picker__section-title">Appearance</span>

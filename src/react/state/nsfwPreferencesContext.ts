@@ -1,11 +1,13 @@
 import { createContext } from 'react';
 
+export type NsfwMode = 'show' | 'blur' | 'hide';
+
 export type NsfwPreferencesValue = {
-  blurNsfw: boolean;
-  setBlurNsfw: (blurNsfw: boolean) => void;
+  nsfwMode: NsfwMode;
+  setNsfwMode: (mode: NsfwMode) => void;
 };
 
 export const NsfwPreferencesContext = createContext<NsfwPreferencesValue>({
-  blurNsfw: true,
-  setBlurNsfw: () => undefined,
+  nsfwMode: 'blur',
+  setNsfwMode: () => undefined,
 });

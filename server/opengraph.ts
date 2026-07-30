@@ -231,6 +231,8 @@ function isRezkaUrl(url: URL): boolean {
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
   const isHltvMatch = isHltvMatchUrl(pageUrl);
+  const matchStatus = isHltvMatch ? parseHltvMatchStatus(html) : null;
+  const structuredVideo = parseVkStructuredVideo(html, pageUrl);
   const metadata = new Map<string, string>();
   for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
     const attributes = parseAttributes(tag);
@@ -246,26 +248,173 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     'og:image:url',
     'twitter:image',
     'twitter:image:src',
-  ]);
+  ]) ?? structuredVideo?.image ?? null;
   const video = firstMetadata(metadata, [
     'og:video:secure_url',
     'og:video',
     'og:video:url',
     'twitter:player:stream',
-  ]);
+  ]) ?? structuredVideo?.embedUrl ?? null;
 
   return {
     url: pageUrl.href,
     title: firstMetadata(metadata, ['og:title', 'twitter:title']) ??
       (documentTitle ? decodeHtml(stripTags(documentTitle).trim()) : null),
     description: firstMetadata(metadata, ['og:description', 'twitter:description', 'description']),
-    image: resolveHttpUrl(image, pageUrl),
+    image: resolvePreviewImageUrl(image, pageUrl),
     video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
     type: metadata.get('og:type') ?? null,
     matchStartsAt: isHltvMatch ? parseHltvMatchStartsAt(html) : null,
     matchTeams: isHltvMatch ? parseHltvMatchTeams(html, pageUrl) : null,
+    matchStatus,
+    matchScore: matchStatus === 'live' || matchStatus === 'over'
+      ? parseHltvMatchScore(html)
+      : null,
   };
+}
+
+function parseVkStructuredVideo(
+  html: string,
+  pageUrl: URL,
+): { embedUrl: string; image: string | null } | null {
+  const hostname = pageUrl.hostname.toLowerCase().replace(/^www\./, '');
+  if (!['vk.com', 'vk.ru'].includes(hostname)) return null;
+
+  for (const match of html.matchAll(
+    /<script\b[^>]*type=(?:"application\/ld\+json"|'application\/ld\+json')[^>]*>([\s\S]*?)<\/script>/gi,
+  )) {
+    let data: unknown;
+    try {
+      data = JSON.parse(match[1] ?? '');
+    } catch {
+      continue;
+    }
+
+    const video = findStructuredVideo(data);
+    if (!video) continue;
+    const embedUrl = getObjectString(video, 'embedUrl');
+    if (!embedUrl) continue;
+
+    const resolvedEmbedUrl = resolveHttpUrl(embedUrl, pageUrl);
+    if (!resolvedEmbedUrl || !isVkVideoEmbedUrl(resolvedEmbedUrl)) continue;
+    const thumbnail = getObjectString(video, 'thumbnailUrl');
+
+    return {
+      embedUrl: resolvedEmbedUrl,
+      image: resolveHttpUrl(thumbnail, pageUrl),
+    };
+  }
+
+  return null;
+}
+
+function findStructuredVideo(value: unknown): Record<string, unknown> | null {
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const video = findStructuredVideo(entry);
+      if (video) return video;
+    }
+    return null;
+  }
+  if (!value || typeof value !== 'object') return null;
+
+  const object = value as Record<string, unknown>;
+  if (object['@type'] === 'VideoObject') return object;
+
+  for (const key of ['video', '@graph']) {
+    const video = findStructuredVideo(object[key]);
+    if (video) return video;
+  }
+  return null;
+}
+
+function getObjectString(value: Record<string, unknown>, key: string): string | null {
+  const property = value[key];
+  return typeof property === 'string' && property.trim() ? property.trim() : null;
+}
+
+function isVkVideoEmbedUrl(value: string): boolean {
+  const url = new URL(value);
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+  return ['vk.com', 'vk.ru', 'vkvideo.ru'].includes(hostname)
+    && /^\/(?:video|clip)_ext\.php$/i.test(url.pathname)
+    && /^-?\d+$/.test(url.searchParams.get('oid') ?? '')
+    && /^\d+$/.test(url.searchParams.get('id') ?? '');
+}
+
+function resolvePreviewImageUrl(value: string | null | undefined, base: URL): string | null {
+  const resolved = resolveHttpUrl(value, base);
+  if (!resolved) return null;
+
+  const url = new URL(resolved);
+  if (url.protocol === 'http:' && isVkImageHost(url.hostname)) {
+    url.protocol = 'https:';
+  }
+  return url.href;
+}
+
+function isVkImageHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase();
+  return normalized === 'vkuserphoto.ru'
+    || normalized.endsWith('.vkuserphoto.ru')
+    || normalized === 'userapi.com'
+    || normalized.endsWith('.userapi.com');
+}
+
+function parseHltvMatchStatus(html: string): OpenGraphPreview['matchStatus'] {
+  const countdown = html.match(
+    /<div\b[^>]*class=(?:"[^"]*\bcountdown\b[^"]*"|'[^']*\bcountdown\b[^']*')[^>]*>([\s\S]*?)<\/div>/i,
+  )?.[1];
+  switch (htmlText(countdown ?? '').toLowerCase()) {
+    case 'live': return 'live';
+    case 'match over': return 'over';
+    case 'match postponed': return 'postponed';
+    case 'match deleted': return 'deleted';
+    default: return 'scheduled';
+  }
+}
+
+function parseHltvMatchScore(html: string): OpenGraphPreview['matchScore'] {
+  const mapStarts = [...html.matchAll(
+    /<div\b[^>]*class=(?:"[^"]*\bmapholder\b[^"]*"|'[^']*\bmapholder\b[^']*')[^>]*>/gi,
+  )];
+  let firstTeamMaps = 0;
+  let secondTeamMaps = 0;
+
+  mapStarts.forEach((match, index) => {
+    const start = match.index ?? 0;
+    const end = mapStarts[index + 1]?.index ?? Math.min(html.length, start + 20_000);
+    const map = html.slice(start, end);
+    // During a live map HLTV also marks the currently leading side as "won".
+    // A stats link is added once the map is actually complete.
+    if (!hasHltvCompletedMap(map)) {
+      return;
+    }
+    if (hasHltvResultClass(map, 'results-left', 'won')) firstTeamMaps += 1;
+    if (hasHltvResultClass(map, 'results-right', 'won')) secondTeamMaps += 1;
+  });
+
+  return [String(firstTeamMaps), String(secondTeamMaps)];
+}
+
+function hasHltvCompletedMap(html: string): boolean {
+  const links = html.match(/<a\b[^>]*>/gi) ?? [];
+  return links.some((tag) => {
+    const attributes = parseAttributes(tag);
+    return Boolean(
+      attributes.href
+      && attributes.class?.split(/\s+/).includes('results-stats'),
+    );
+  });
+}
+
+function hasHltvResultClass(html: string, sideClass: string, resultClass: string): boolean {
+  const openingTags = html.match(/<(?:div|span)\b[^>]*class=(?:"[^"]*"|'[^']*')[^>]*>/gi) ?? [];
+  return openingTags.some((tag) => {
+    const classes = parseAttributes(tag).class?.split(/\s+/) ?? [];
+    return classes.includes(sideClass) && classes.includes(resultClass);
+  });
 }
 
 function parseRezkaOriginalCover(html: string, pageUrl: URL): string | null {

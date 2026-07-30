@@ -18,6 +18,8 @@ type RemotePreview = {
 
 type RemotePreviewStatus = 'idle' | 'pending' | 'loaded' | 'failed';
 
+const HLTV_LIVE_REFRESH_MS = 30_000;
+
 const EMPTY_PREVIEW: RemotePreview = {
   liquipediaMatch: null,
   openGraphPreview: null,
@@ -27,6 +29,7 @@ export function useFeedItemRemotePreview(
   url: string,
   enabled: boolean,
   isLiquipedia: boolean,
+  isHltv = false,
 ) {
   const cardRef = useRef<HTMLElement>(null);
   const isVisible = usePreviewVisibility(cardRef);
@@ -59,6 +62,35 @@ export function useFeedItemRemotePreview(
       active = false;
     };
   }, [enabled, isLiquipedia, isVisible, url]);
+
+  useEffect(() => {
+    if (
+      !enabled
+      || !isVisible
+      || !isHltv
+      || preview.openGraphPreview?.matchStatus !== 'live'
+    ) return;
+
+    let requestInProgress = false;
+    const controller = new AbortController();
+    const refresh = () => {
+      if (requestInProgress) return;
+      requestInProgress = true;
+      getOpenGraphPreview(url, controller.signal).then((openGraphPreview) => {
+        setPreview({ liquipediaMatch: null, openGraphPreview });
+      }).catch(() => {
+        // Keep the last known score when a live refresh temporarily fails.
+      }).finally(() => {
+        requestInProgress = false;
+      });
+    };
+    const interval = window.setInterval(refresh, HLTV_LIVE_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(interval);
+      controller.abort();
+    };
+  }, [enabled, isHltv, isVisible, preview.openGraphPreview?.matchStatus, url]);
 
   return { cardRef, previewStatus: status, ...preview };
 }

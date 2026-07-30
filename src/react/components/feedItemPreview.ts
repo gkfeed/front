@@ -21,6 +21,9 @@ export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
   const url = parseUrl(item.link);
   if (!url) return getEmbeddedImage(item.text, item.title);
 
+  const vkVideoEmbed = getVkVideoPreview(url, item.title);
+  if (vkVideoEmbed) return vkVideoEmbed;
+
   if (isDirectImage(url)) {
     return { src: url.href, alt: item.title ? `Preview for ${item.title}` : 'Feed item preview' };
   }
@@ -95,7 +98,14 @@ export function getFeedItemProvider(item: FeedItem): FeedItemProvider {
   const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
   if (getYoutubeVideoId(url)) return 'youtube';
   if (hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com')) return 'tiktok';
-  if (hostname === 'vk.com' || hostname.endsWith('.vk.com')) return 'vk';
+  if (
+    hostname === 'vk.com'
+    || hostname.endsWith('.vk.com')
+    || hostname === 'vk.ru'
+    || hostname.endsWith('.vk.ru')
+    || hostname === 'vkvideo.ru'
+    || hostname.endsWith('.vkvideo.ru')
+  ) return 'vk';
   if (hostname === 'hltv.org' && /^\/matches\/\d+(?:\/|$)/.test(url.pathname)) return 'hltv';
   if (hostname === 'liquipedia.net' && /\/Match(?::|%3A)/i.test(url.pathname)) return 'liquipedia';
   return 'generic';
@@ -105,6 +115,13 @@ function getEmbeddedImage(html: string, title: string): FeedItemPreview | null {
   if (!html || typeof DOMParser === 'undefined') return null;
 
   const document = new DOMParser().parseFromString(html, 'text/html');
+  const frameSource = document.querySelector('iframe')?.getAttribute('src');
+  if (frameSource) {
+    const frameUrl = parseUrl(frameSource);
+    const vkVideoEmbed = frameUrl ? getVkVideoPreview(frameUrl, title) : null;
+    if (vkVideoEmbed) return vkVideoEmbed;
+  }
+
   const video = document.querySelector('video');
   const videoSource = video?.getAttribute('src') ??
     video?.querySelector('source')?.getAttribute('src');
@@ -125,6 +142,61 @@ function getEmbeddedImage(html: string, title: string): FeedItemPreview | null {
     src: source,
     alt: title ? `Preview for ${title}` : 'Feed item preview',
   };
+}
+
+export function getVkVideoPreview(url: URL, title: string): FeedItemPreview | null {
+  const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+  if (
+    hostname !== 'vk.com'
+    && !hostname.endsWith('.vk.com')
+    && hostname !== 'vk.ru'
+    && !hostname.endsWith('.vk.ru')
+    && hostname !== 'vkvideo.ru'
+    && !hostname.endsWith('.vkvideo.ru')
+  ) return null;
+
+  if (/^\/(?:video|clip)_ext\.php$/i.test(url.pathname)) {
+    const ownerId = url.searchParams.get('oid');
+    const videoId = url.searchParams.get('id');
+    if (!isVkMediaId(ownerId) || !isVkMediaId(videoId, false)) return null;
+
+    const embedUrl = new URL(url.href);
+    embedUrl.protocol = 'https:';
+    embedUrl.hostname = 'vk.com';
+    embedUrl.searchParams.set('autoplay', '1');
+    return {
+      src: embedUrl.href,
+      alt: title ? `Video preview for ${title}` : 'VK video preview',
+      type: 'embed',
+    };
+  }
+
+  const mediaReference = getVkMediaReference(url);
+  if (!mediaReference) return null;
+  const [, mediaType, ownerId, videoId] = mediaReference;
+  const embedUrl = new URL(`https://vk.com/${mediaType}_ext.php`);
+  embedUrl.searchParams.set('oid', ownerId!);
+  embedUrl.searchParams.set('id', videoId!);
+  embedUrl.searchParams.set('hd', '2');
+  embedUrl.searchParams.set('autoplay', '1');
+
+  return {
+    src: embedUrl.href,
+    alt: title ? `Video preview for ${title}` : 'VK video preview',
+    type: 'embed',
+  };
+}
+
+function getVkMediaReference(url: URL): RegExpMatchArray | null {
+  const pathReference = url.pathname.match(/^\/(video|clip)(-?\d+)_(\d+)(?:\/|$)/i);
+  if (pathReference) return pathReference;
+
+  const zReference = url.searchParams.get('z')?.match(/^(video|clip)(-?\d+)_(\d+)(?:\/|$)/i);
+  return zReference ?? null;
+}
+
+function isVkMediaId(value: string | null, signed = true): value is string {
+  return Boolean(value && (signed ? /^-?\d+$/ : /^\d+$/).test(value));
 }
 
 function isSafeMediaSource(source: string): boolean {

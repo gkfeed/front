@@ -25,10 +25,22 @@ function getBrowserImageUrl(imageUrl: string): string {
       url.protocol = 'https:';
       return url.href;
     }
+    if (url.protocol === 'http:' && isVkImageHost(url.hostname)) {
+      url.protocol = 'https:';
+      return url.href;
+    }
   } catch {
     return imageUrl;
   }
   return imageUrl;
+}
+
+function isVkImageHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase();
+  return normalized === 'vkuserphoto.ru'
+    || normalized.endsWith('.vkuserphoto.ru')
+    || normalized === 'userapi.com'
+    || normalized.endsWith('.userapi.com');
 }
 
 function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
@@ -41,10 +53,26 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   const type = getObjectProperty(value, 'type');
   const matchStartsAt = getObjectProperty(value, 'matchStartsAt');
   const matchTeams = getObjectProperty(value, 'matchTeams');
+  const matchStatus = getObjectProperty(value, 'matchStatus');
+  const matchScore = getObjectProperty(value, 'matchScore');
 
   return typeof url === 'string'
     && [title, description, image, video, siteName, type].every(isNullableString)
     && (matchStartsAt === undefined || isNullableString(matchStartsAt))
+    && (
+      matchStatus === undefined
+      || matchStatus === null
+      || ['scheduled', 'live', 'over', 'postponed', 'deleted'].includes(String(matchStatus))
+    )
+    && (
+      matchScore === undefined
+      || matchScore === null
+      || (
+        Array.isArray(matchScore)
+        && matchScore.length === 2
+        && matchScore.every((part) => typeof part === 'string')
+      )
+    )
     && (
       matchTeams === undefined
       || matchTeams === null
