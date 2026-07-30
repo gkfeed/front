@@ -87,6 +87,7 @@ export function useFeedItemRemotePreview(
         requestInProgress = false;
       });
     };
+    refresh();
     const interval = window.setInterval(refresh, HLTV_LIVE_REFRESH_MS);
 
     return () => {
@@ -102,6 +103,11 @@ function mergeHltvLiveData(
   next: OpenGraphPreview,
   previous: OpenGraphPreview | null,
 ): OpenGraphPreview {
+  if (previous?.matchStatus === 'live' && next.matchStatus === 'scheduled') {
+    // HLTV can briefly return an incomplete or protective page during a live
+    // match. Do not let that transient response stop polling permanently.
+    return previous;
+  }
   if (
     next.matchStatus !== 'live'
     || !previous
