@@ -14,11 +14,15 @@ export function useFeedReader() {
   const previousNsfwModeRef = useRef(nsfwMode);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [actionState, setActionState] = useState<ActionState>('idle');
+  const [deletedItemIds, setDeletedItemIds] = useState<Set<number>>(() => new Set());
   const load = useCallback(() => getFeedItems(credentials), [credentials]);
   const { result: loadedItems, isLoading, retry } = useAsyncLoad(load);
   const items = useMemo(
-    () => loadedItems?.filter((item) => nsfwMode !== 'hide' || !isNsfwLink(item.link)),
-    [loadedItems, nsfwMode],
+    () => loadedItems?.filter((item) => (
+      !deletedItemIds.has(item.id)
+      && (nsfwMode !== 'hide' || !isNsfwLink(item.link))
+    )),
+    [deletedItemIds, loadedItems, nsfwMode],
   );
   const currentItem = items?.[currentIndex];
 
@@ -40,11 +44,12 @@ export function useFeedReader() {
     setActionState('deleting');
     try {
       await deleteFeedItemById(currentItem.id, credentials);
-      advance();
+      setDeletedItemIds((ids) => new Set(ids).add(currentItem.id));
+      setActionState('idle');
     } catch {
       setActionState('error');
     }
-  }, [actionState, advance, credentials, currentItem]);
+  }, [actionState, credentials, currentItem]);
 
   const retryLoad = useCallback(() => {
     setCurrentIndex(0);

@@ -180,6 +180,37 @@ describe('ReaderPage', () => {
     expect(deleteFeedItemById).toHaveBeenCalledWith(10, { username: 'reader', password: 'secret' });
   });
 
+  it('keeps deleted items out of Scroll view', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue([
+      {
+        id: 10,
+        feedId: 2,
+        link: 'https://www.tiktok.com/@creator/video/123',
+        title: 'Deleted video',
+        text: '',
+      },
+      {
+        id: 11,
+        feedId: 3,
+        link: 'https://www.tiktok.com/@creator/video/456',
+        title: 'Remaining video',
+        text: '',
+      },
+    ]);
+    vi.mocked(deleteFeedItemById).mockResolvedValue();
+    renderReader();
+
+    expect(await screen.findByTitle('Video preview for Deleted video')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete item' }));
+
+    expect(await screen.findByTitle('Video preview for Remaining video')).toBeTruthy();
+    fireEvent.click(screen.getByLabelText('More review actions'));
+    fireEvent.click(screen.getByRole('button', { name: 'Scroll view' }));
+
+    expect(screen.queryByTitle('Video preview for Deleted video')).toBeNull();
+    expect(screen.getByTitle('Video preview for Remaining video')).toBeTruthy();
+  });
+
   it('keeps a failed deletion visible for retry', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     vi.mocked(deleteFeedItemById).mockRejectedValue(new Error('offline'));
