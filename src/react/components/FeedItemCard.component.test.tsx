@@ -319,6 +319,10 @@ describe('FeedItemCard Open Graph preview', () => {
       ],
       matchStatus: 'live',
       matchScore: ['1', '0'],
+      matchCurrentMap: {
+        name: 'Anubis',
+        score: ['12', '10'],
+      },
     });
 
     render(<FeedItemCard item={{
@@ -328,10 +332,12 @@ describe('FeedItemCard Open Graph preview', () => {
     }} />);
 
     expect(await screen.findByRole('link', {
-      name: 'Liquid versus Spirit, live score 1 to 0',
+      name: 'Liquid versus Spirit, live score 1 to 0, current map Anubis 12 to 10',
     })).toBeTruthy();
     expect(screen.queryByAltText('Preview for Liquid vs Spirit')).toBeNull();
     expect(screen.getByText('Live')).toBeTruthy();
+    expect(screen.getByText('Anubis')).toBeTruthy();
+    expect(screen.getByText('12 : 10')).toBeTruthy();
   });
 
   it('replaces the generic HLTV image with a team matchup', async () => {
@@ -379,11 +385,21 @@ describe('FeedItemCard Open Graph preview', () => {
       matchStatus: 'live' as const,
     };
     getPreview
-      .mockResolvedValueOnce({ ...basePreview, matchScore: ['1', '0'] })
+      .mockResolvedValueOnce({
+        ...basePreview,
+        matchScore: ['1', '0'],
+        matchCurrentMap: { name: 'Anubis', score: ['12', '10'] },
+      })
+      .mockResolvedValueOnce({
+        ...basePreview,
+        matchScore: ['1', '0'],
+        matchCurrentMap: { name: 'Anubis', score: ['12', '11'] },
+      })
       .mockResolvedValueOnce({
         ...basePreview,
         matchStatus: 'over',
         matchScore: ['1', '2'],
+        matchCurrentMap: null,
       });
 
     render(<FeedItemCard item={{ ...item, link: basePreview.url }} />);
@@ -393,8 +409,17 @@ describe('FeedItemCard Open Graph preview', () => {
     });
 
     expect(screen.getByRole('link', {
-      name: 'WW versus TDK, live score 1 to 0',
+      name: 'WW versus TDK, live score 1 to 0, current map Anubis 12 to 10',
     })).toBeTruthy();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+
+    expect(screen.getByRole('link', {
+      name: 'WW versus TDK, live score 1 to 0, current map Anubis 12 to 11',
+    })).toBeTruthy();
+    expect(screen.getByText('12 : 11')).toBeTruthy();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
@@ -404,12 +429,13 @@ describe('FeedItemCard Open Graph preview', () => {
       name: 'WW versus TDK, final score 1 to 2',
     })).toBeTruthy();
     expect(screen.queryByText('Live')).toBeNull();
+    expect(screen.queryByText('Anubis')).toBeNull();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60_000);
     });
 
-    expect(getPreview).toHaveBeenCalledTimes(2);
+    expect(getPreview).toHaveBeenCalledTimes(3);
   });
 
   it('does not call the BFF when the feed content contains an image', () => {

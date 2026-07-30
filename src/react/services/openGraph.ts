@@ -55,6 +55,7 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   const matchTeams = getObjectProperty(value, 'matchTeams');
   const matchStatus = getObjectProperty(value, 'matchStatus');
   const matchScore = getObjectProperty(value, 'matchScore');
+  const matchCurrentMap = getObjectProperty(value, 'matchCurrentMap');
 
   return typeof url === 'string'
     && [title, description, image, video, siteName, type].every(isNullableString)
@@ -74,6 +75,11 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
       )
     )
     && (
+      matchCurrentMap === undefined
+      || matchCurrentMap === null
+      || isHltvCurrentMap(matchCurrentMap)
+    )
+    && (
       matchTeams === undefined
       || matchTeams === null
       || (
@@ -82,6 +88,15 @@ function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
         && matchTeams.every(isHltvMatchTeam)
       )
     );
+}
+
+function isHltvCurrentMap(value: unknown): boolean {
+  const name = getObjectProperty(value, 'name');
+  const score = getObjectProperty(value, 'score');
+  return typeof name === 'string'
+    && Array.isArray(score)
+    && score.length === 2
+    && score.every((part) => typeof part === 'string');
 }
 
 function isHltvMatchTeam(value: unknown): boolean {

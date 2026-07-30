@@ -8,8 +8,10 @@ import {
   createGunzip,
   createInflate,
 } from 'node:zlib';
+import * as socketIo from 'socket.io-client';
 
 import type {
+  HltvCurrentMapPreview,
   LiquipediaMatchPreview,
   OpenGraphPreview,
 } from './previewContracts.js';
@@ -20,6 +22,7 @@ const MAX_HLTV_RESPONSE_BYTES = 2_000_000;
 const MAX_IMAGE_RESPONSE_BYTES = 10_000_000;
 const MAX_REDIRECTS = 5;
 const REQUEST_TIMEOUT_MS = 8_000;
+const SCOREBOT_TIMEOUT_MS = 4_000;
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
 const REZKA_USER_AGENT = 'TelegramBot (like TwitterBot)';
 const execFileAsync = promisify(execFile);
@@ -42,10 +45,18 @@ export class PreviewError extends Error {
 export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
   const requestedUrl = parsePublicHttpUrl(input);
   const url = getPreviewUrl(requestedUrl);
-  const page = isHltvMatchUrl(url)
+  const page: {
+    html: string;
+    url: URL;
+    currentMap?: HltvCurrentMapPreview | null;
+  } = isHltvMatchUrl(url)
     ? await fetchHltvHtml(url)
     : await fetchHtml(url, isRezkaUrl(requestedUrl) ? REZKA_USER_AGENT : TWITTERBOT_USER_AGENT);
-  return parseOpenGraph(page.html, page.url);
+  const preview = parseOpenGraph(page.html, page.url);
+  if (page.currentMap) {
+    preview.matchCurrentMap = page.currentMap;
+  }
+  return preview;
 }
 
 export async function fetchLiquipediaMatch(input: string): Promise<LiquipediaMatchPreview> {
@@ -179,9 +190,12 @@ async function fetchHtml(
   throw new PreviewError('The remote page redirected too many times', 502, 'too_many_redirects');
 }
 
-async function fetchHltvHtml(url: URL): Promise<{ html: string; url: URL }> {
+async function fetchHltvHtml(
+  url: URL,
+): Promise<{ html: string; url: URL; currentMap: HltvCurrentMapPreview | null }> {
   const directory = await mkdtemp(join(tmpdir(), 'gkfeed-hltv-'));
   const output = join(directory, 'response');
+  const cookies = join(directory, 'cookies.txt');
   try {
     await execFileAsync('aria2c', [
       '--quiet=true',
@@ -190,6 +204,8 @@ async function fetchHltvHtml(url: URL): Promise<{ html: string; url: URL }> {
       '--max-tries=1',
       '--connect-timeout=8',
       '--timeout=8',
+      '--save-cookies',
+      cookies,
       '--header',
       `User-Agent: ${TWITTERBOT_USER_AGENT}`,
       '--dir',
@@ -201,13 +217,88 @@ async function fetchHltvHtml(url: URL): Promise<{ html: string; url: URL }> {
 
     const body = await readFile(output);
     if (body.byteLength > MAX_HLTV_RESPONSE_BYTES) throw responseTooLarge();
-    return { html: body.toString('utf8'), url };
+    const html = body.toString('utf8');
+    const currentMap = parseHltvMatchStatus(html) === 'live'
+      ? await fetchHltvScorebotCurrentMap(html, cookies)
+      : null;
+    return { html, url, currentMap };
   } catch (error) {
     if (error instanceof PreviewError) throw error;
     throw new PreviewError('The HLTV page could not be fetched', 502, 'fetch_failed');
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+}
+
+async function fetchHltvScorebotCurrentMap(
+  html: string,
+  cookiesPath: string,
+): Promise<HltvCurrentMapPreview | null> {
+  const scoreboardTag = html.match(/<div\b[^>]*\bid=(?:"scoreboardElement"|'scoreboardElement')[^>]*>/i)?.[0];
+  if (!scoreboardTag) return null;
+  const attributes = parseAttributes(scoreboardTag);
+  const scorebotId = attributes['data-scorebot-id'];
+  const team1Id = attributes['data-team1-id'];
+  const rawUrl = attributes['data-scorebot-url']?.split(',').at(-1)?.trim();
+  if (!scorebotId || !team1Id || !rawUrl) return null;
+
+  let scorebotUrl: URL;
+  try {
+    scorebotUrl = new URL(rawUrl);
+  } catch {
+    return null;
+  }
+  if (
+    scorebotUrl.protocol !== 'https:'
+    || !scorebotUrl.hostname.toLowerCase().endsWith('.hltv.org')
+  ) return null;
+
+  let cookieHeader: string;
+  try {
+    cookieHeader = (await readFile(cookiesPath, 'utf8'))
+      .split(/\r?\n/)
+      .map((line) => line.split('\t'))
+      .filter((fields) => fields.length >= 7)
+      .map((fields) => `${fields[5]}=${fields[6]}`)
+      .join('; ');
+  } catch {
+    return null;
+  }
+  if (!cookieHeader) return null;
+
+  return new Promise((resolve) => {
+    const headers = {
+      Cookie: cookieHeader,
+      Origin: 'https://www.hltv.org',
+      Referer: 'https://www.hltv.org/',
+      'User-Agent': TWITTERBOT_USER_AGENT,
+    };
+    const socket = socketIo.connect(scorebotUrl.href, {
+      reconnection: false,
+      timeout: SCOREBOT_TIMEOUT_MS,
+      transportOptions: {
+        polling: { extraHeaders: headers },
+        websocket: { extraHeaders: headers },
+      },
+    });
+    let settled = false;
+    const finish = (currentMap: HltvCurrentMapPreview | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      socket.close();
+      resolve(currentMap);
+    };
+    const timeout = setTimeout(() => finish(null), SCOREBOT_TIMEOUT_MS);
+
+    socket.on('connect', () => {
+      socket.emit('readyForMatch', JSON.stringify({ token: '', listId: scorebotId }));
+    });
+    socket.on('scoreboard', (data: unknown) => {
+      finish(parseHltvScoreboardUpdate(data, html, team1Id));
+    });
+    socket.on('connect_error', () => finish(null));
+  });
 }
 
 function isHltvMatchUrl(url: URL): boolean {
@@ -271,6 +362,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     matchScore: matchStatus === 'live' || matchStatus === 'over'
       ? parseHltvMatchScore(html)
       : null,
+    matchCurrentMap: matchStatus === 'live' ? parseHltvCurrentMap(html) : null,
   };
 }
 
@@ -376,16 +468,10 @@ function parseHltvMatchStatus(html: string): OpenGraphPreview['matchStatus'] {
 }
 
 function parseHltvMatchScore(html: string): OpenGraphPreview['matchScore'] {
-  const mapStarts = [...html.matchAll(
-    /<div\b[^>]*class=(?:"[^"]*\bmapholder\b[^"]*"|'[^']*\bmapholder\b[^']*')[^>]*>/gi,
-  )];
   let firstTeamMaps = 0;
   let secondTeamMaps = 0;
 
-  mapStarts.forEach((match, index) => {
-    const start = match.index ?? 0;
-    const end = mapStarts[index + 1]?.index ?? Math.min(html.length, start + 20_000);
-    const map = html.slice(start, end);
+  getHltvMapSections(html).forEach((map) => {
     // During a live map HLTV also marks the currently leading side as "won".
     // A stats link is added once the map is actually complete.
     if (!hasHltvCompletedMap(map)) {
@@ -396,6 +482,76 @@ function parseHltvMatchScore(html: string): OpenGraphPreview['matchScore'] {
   });
 
   return [String(firstTeamMaps), String(secondTeamMaps)];
+}
+
+function parseHltvCurrentMap(html: string): OpenGraphPreview['matchCurrentMap'] {
+  const maps = getHltvMapSections(html).map((map) => {
+    if (hasHltvCompletedMap(map)) return null;
+    const nameMarkup = map.match(
+      /<div\b[^>]*class=(?:"[^"]*\bmapname\b[^"]*"|'[^']*\bmapname\b[^']*')[^>]*>([\s\S]*?)<\/div>/i,
+    )?.[1];
+    const scores = [...map.matchAll(
+      /<div\b[^>]*class=(?:"[^"]*\bresults-team-score\b[^"]*"|'[^']*\bresults-team-score\b[^']*')[^>]*>([\s\S]*?)<\/div>/gi,
+    )].map((match) => htmlText(match[1] ?? ''));
+    const name = htmlText(nameMarkup ?? '');
+    if (!name || scores.length < 2 || !scores.slice(0, 2).every((score) => /^\d+$/.test(score))) {
+      return null;
+    }
+    return {
+      name,
+      score: [scores[0]!, scores[1]!] as [string, string],
+    };
+  });
+
+  for (let index = maps.length - 1; index >= 0; index -= 1) {
+    const map = maps[index];
+    if (map) return map;
+  }
+  return null;
+}
+
+export function parseHltvScoreboardUpdate(
+  value: unknown,
+  html: string,
+  team1Id: string,
+): HltvCurrentMapPreview | null {
+  if (!value || typeof value !== 'object') return null;
+  const scoreboard = value as Record<string, unknown>;
+  const mapName = typeof scoreboard.mapName === 'string' ? scoreboard.mapName : '';
+  const ctTeamId = Number(scoreboard.ctTeamId);
+  const terroristTeamId = Number(scoreboard.tTeamId);
+  const ctScore = Number(scoreboard.ctTeamScore ?? scoreboard.counterTerroristScore);
+  const terroristScore = Number(scoreboard.tTeamScore ?? scoreboard.terroristScore);
+  const firstTeamId = Number(team1Id);
+  if (
+    !mapName
+    || ![ctTeamId, terroristTeamId, ctScore, terroristScore, firstTeamId].every(Number.isFinite)
+    || ![ctTeamId, terroristTeamId].includes(firstTeamId)
+  ) return null;
+
+  const mapSlug = mapName.replace(/^de_/, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+  const displayName = getHltvMapSections(html)
+    .map((map) => htmlText(map.match(
+      /<div\b[^>]*class=(?:"[^"]*\bmapname\b[^"]*"|'[^']*\bmapname\b[^']*')[^>]*>([\s\S]*?)<\/div>/i,
+    )?.[1] ?? ''))
+    .find((name) => name.replace(/[^a-z0-9]/gi, '').toLowerCase() === mapSlug)
+    ?? mapName.replace(/^de_/, '').replace(/^./, (letter) => letter.toUpperCase());
+  const score: [string, string] = firstTeamId === ctTeamId
+    ? [String(ctScore), String(terroristScore)]
+    : [String(terroristScore), String(ctScore)];
+
+  return { name: displayName, score };
+}
+
+function getHltvMapSections(html: string): string[] {
+  const mapStarts = [...html.matchAll(
+    /<div\b[^>]*class=(?:"[^"]*\bmapholder\b[^"]*"|'[^']*\bmapholder\b[^']*')[^>]*>/gi,
+  )];
+  return mapStarts.map((match, index) => {
+    const start = match.index ?? 0;
+    const end = mapStarts[index + 1]?.index ?? Math.min(html.length, start + 20_000);
+    return html.slice(start, end);
+  });
 }
 
 function hasHltvCompletedMap(html: string): boolean {

@@ -13,6 +13,7 @@ vi.mock('./publicHttp.js', async (importOriginal) => ({
 import {
   fetchOpenGraph,
   fetchRedditPreviewImage,
+  parseHltvScoreboardUpdate,
   parseLiquipediaMatch,
   parseOpenGraph,
 } from './opengraph.js';
@@ -44,6 +45,7 @@ describe('parseOpenGraph', () => {
       matchTeams: null,
       matchStatus: null,
       matchScore: null,
+      matchCurrentMap: null,
     });
   });
 
@@ -91,6 +93,7 @@ describe('parseOpenGraph', () => {
       </div>
       <div class="mapholder">
         <div class="results played">
+          <div class="map-name-holder"><div class="mapname">Anubis</div></div>
           <div class="results-left won"><div class="results-team-score">12</div></div>
           <span class="results-right lost pick"><div class="results-team-score">10</div></span>
         </div>
@@ -109,6 +112,10 @@ describe('parseOpenGraph', () => {
     )).toMatchObject({
       matchStatus: 'live',
       matchScore: ['1', '0'],
+      matchCurrentMap: {
+        name: 'Anubis',
+        score: ['12', '10'],
+      },
     });
 
     expect(parseOpenGraph(
@@ -117,6 +124,37 @@ describe('parseOpenGraph', () => {
     )).toMatchObject({
       matchStatus: 'over',
       matchScore: ['1', '0'],
+      matchCurrentMap: null,
+    });
+  });
+
+  it('maps a Scorebot update back to the HLTV team order and map name', () => {
+    const html = `
+      <div class="mapholder">
+        <div class="map-name-holder"><div class="mapname">Dust2</div></div>
+      </div>
+    `;
+
+    expect(parseHltvScoreboardUpdate({
+      mapName: 'de_dust2',
+      ctTeamId: 5973,
+      tTeamId: 7020,
+      ctTeamScore: 2,
+      tTeamScore: 3,
+    }, html, '5973')).toEqual({
+      name: 'Dust2',
+      score: ['2', '3'],
+    });
+
+    expect(parseHltvScoreboardUpdate({
+      mapName: 'de_dust2',
+      ctTeamId: 7020,
+      tTeamId: 5973,
+      ctTeamScore: 5,
+      tTeamScore: 7,
+    }, html, '5973')).toEqual({
+      name: 'Dust2',
+      score: ['7', '5'],
     });
   });
 

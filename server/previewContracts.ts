@@ -3,6 +3,11 @@ export interface HltvMatchTeamPreview {
   logo: string | null;
 }
 
+export interface HltvCurrentMapPreview {
+  name: string;
+  score: [string, string];
+}
+
 export interface OpenGraphPreview {
   url: string;
   title: string | null;
@@ -15,6 +20,7 @@ export interface OpenGraphPreview {
   matchTeams?: [HltvMatchTeamPreview, HltvMatchTeamPreview] | null;
   matchStatus?: 'scheduled' | 'live' | 'over' | 'postponed' | 'deleted' | null;
   matchScore?: [string, string] | null;
+  matchCurrentMap?: HltvCurrentMapPreview | null;
 }
 
 export type LiquipediaMatchResult = 'win' | 'loss' | 'default';

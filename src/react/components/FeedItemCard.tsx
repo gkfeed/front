@@ -161,6 +161,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           href={item.link}
           score={openGraphPreview?.matchScore}
           isLive={openGraphPreview?.matchStatus === 'live'}
+          currentMap={openGraphPreview?.matchCurrentMap}
         />
       ) : isYoutube && youtubeVideoId ? (
         <YoutubePreview
@@ -323,14 +324,19 @@ function HltvMatchup({
   href,
   score,
   isLive,
+  currentMap,
 }: {
   teams: NonNullable<OpenGraphPreview['matchTeams']>;
   href: string;
   score: OpenGraphPreview['matchScore'];
   isLive: boolean;
+  currentMap: OpenGraphPreview['matchCurrentMap'];
 }) {
   const accessibleScore = score
     ? `, ${isLive ? 'live' : 'final'} score ${score[0]} to ${score[1]}`
+    : '';
+  const accessibleMap = isLive && currentMap
+    ? `, current map ${currentMap.name} ${currentMap.score[0]} to ${currentMap.score[1]}`
     : '';
   return (
     <a
@@ -338,7 +344,7 @@ function HltvMatchup({
       href={href}
       target="_blank"
       rel="noreferrer"
-      aria-label={`${teams[0].name} versus ${teams[1].name}${accessibleScore}`}
+      aria-label={`${teams[0].name} versus ${teams[1].name}${accessibleScore}${accessibleMap}`}
     >
       <HltvMatchupTeam team={teams[0]} />
       {score ? (
@@ -350,8 +356,18 @@ function HltvMatchup({
           aria-live="polite"
           aria-atomic="true"
         >
-          {isLive ? <span><i aria-hidden="true" /> Live</span> : null}
+          {isLive ? (
+            <span className="reader-card__hltv-live-label">
+              <i aria-hidden="true" /> Live
+            </span>
+          ) : null}
           <strong>{score[0]} : {score[1]}</strong>
+          {isLive && currentMap ? (
+            <span className="reader-card__hltv-current-map">
+              <b>{currentMap.name}</b>
+              <span>{currentMap.score[0]} : {currentMap.score[1]}</span>
+            </span>
+          ) : null}
         </span>
       ) : (
         <strong className="reader-card__hltv-versus">vs</strong>
