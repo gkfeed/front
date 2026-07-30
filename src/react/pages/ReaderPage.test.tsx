@@ -19,6 +19,7 @@ const ITEMS = [
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.resetAllMocks();
 });
 
@@ -104,6 +105,40 @@ describe('ReaderPage', () => {
 
     expect(screen.queryByLabelText('Review controls')).toBeNull();
     expect(screen.getByTitle('Video preview for Short video')).toBeTruthy();
+  });
+
+  it('moves review actions to compact side buttons when they do not fit in the viewport', async () => {
+    let viewportHeight = 600;
+    vi.spyOn(window, 'innerHeight', 'get').mockImplementation(() => viewportHeight);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const bottom = this.classList.contains('reader-card') ? 900 : 0;
+      return {
+        x: 0,
+        y: 0,
+        top: 0,
+        right: 464,
+        bottom,
+        left: 0,
+        width: 464,
+        height: bottom,
+        toJSON: () => ({}),
+      };
+    });
+    vi.mocked(getFeedItems).mockResolvedValue([ITEMS[0]]);
+    render(<ReaderPage />);
+
+    expect(await screen.findByRole('complementary', { name: 'Feed item actions' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Keep item' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete item' })).toBeTruthy();
+
+    viewportHeight = 1200;
+    fireEvent(window, new Event('resize'));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('complementary', { name: 'Feed item actions' })).toBeNull();
+    });
+    expect(screen.getByRole('button', { name: /keep/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeTruthy();
   });
 
   it('deletes an item on the server before advancing', async () => {

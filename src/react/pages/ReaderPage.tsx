@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { FeedItemCard } from '../components/FeedItemCard';
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../components/feedItemPreview';
@@ -10,6 +10,10 @@ type ReaderMode = 'review' | 'scroll';
 
 export function ReaderPage() {
   const [mode, setMode] = useState<ReaderMode>('review');
+  const [compactActionsItemId, setCompactActionsItemId] = useState<number | null>(null);
+  const reviewPanelRef = useRef<HTMLDivElement>(null);
+  const reviewActionsRef = useRef<HTMLDivElement>(null);
+  const reviewActionsHeightRef = useRef(52);
   const {
     items,
     currentItem,
@@ -22,6 +26,48 @@ export function ReaderPage() {
     deleteItem,
     retryLoad,
   } = useFeedReader();
+  const useCompactActions = mode === 'review'
+    && currentItem?.id === compactActionsItemId;
+
+  useLayoutEffect(() => {
+    if (mode !== 'review' || !currentItem) {
+      setCompactActionsItemId(null);
+      return;
+    }
+
+    const itemId = currentItem.id;
+    const panel = reviewPanelRef.current;
+    const card = panel?.querySelector<HTMLElement>(':scope > .reader-card');
+    if (!panel || !card) return;
+
+    function updateActionsLayout() {
+      const actions = reviewActionsRef.current;
+      if (actions && actions.offsetHeight > 0) {
+        reviewActionsHeightRef.current = actions.offsetHeight;
+      }
+
+      const cardBottom = card!.getBoundingClientRect().bottom + window.scrollY;
+      const panelGap = Number.parseFloat(window.getComputedStyle(panel!).rowGap) || 0;
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const actionsBottom = cardBottom + panelGap + reviewActionsHeightRef.current;
+      setCompactActionsItemId(actionsBottom > viewportHeight ? itemId : null);
+    }
+
+    updateActionsLayout();
+
+    const resizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(updateActionsLayout);
+    resizeObserver?.observe(card);
+    window.addEventListener('resize', updateActionsLayout);
+    window.visualViewport?.addEventListener('resize', updateActionsLayout);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateActionsLayout);
+      window.visualViewport?.removeEventListener('resize', updateActionsLayout);
+    };
+  }, [currentItem, mode]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -82,9 +128,11 @@ export function ReaderPage() {
 
       {mode === 'review' && currentItem ? (
         <div
+          ref={reviewPanelRef}
           id="reader-review-panel"
           className={[
             'reader__item',
+            useCompactActions ? 'reader__item--compact-actions' : '',
             isShortVideoFeedItem(currentItem) ? 'reader__item--short-video' : '',
             isTikTokFeedItem(currentItem) ? 'reader__item--tiktok' : '',
           ].filter(Boolean).join(' ')}
@@ -102,7 +150,19 @@ export function ReaderPage() {
               onShowScroll={() => setMode('scroll')}
             />
           ) : null}
-          <div className="reader__actions" aria-label="Feed item actions">
+          {useCompactActions ? (
+            <CompactReviewActions
+              isDeleting={isDeleting}
+              onKeep={keepItem}
+              onDelete={deleteItem}
+            />
+          ) : null}
+          <div
+            ref={reviewActionsRef}
+            className="reader__actions"
+            aria-label="Feed item actions"
+            hidden={useCompactActions}
+          >
             <button type="button" className="reader__keep" onClick={keepItem} disabled={isDeleting}>
               <span aria-hidden="true">✓</span> Keep
             </button>
@@ -147,6 +207,41 @@ export function ReaderPage() {
         </div>
       ) : null}
     </section>
+  );
+}
+
+type CompactReviewActionsProps = {
+  isDeleting: boolean;
+  onKeep: () => void;
+  onDelete: () => void;
+};
+
+function CompactReviewActions({
+  isDeleting,
+  onKeep,
+  onDelete,
+}: CompactReviewActionsProps) {
+  return (
+    <aside className="reader__compact-actions" aria-label="Feed item actions">
+      <button
+        type="button"
+        className="reader__mobile-keep"
+        aria-label="Keep item"
+        onClick={onKeep}
+        disabled={isDeleting}
+      >
+        <span aria-hidden="true">✓</span>
+      </button>
+      <button
+        type="button"
+        className="reader__mobile-delete"
+        aria-label={isDeleting ? 'Deleting item' : 'Delete item'}
+        onClick={onDelete}
+        disabled={isDeleting}
+      >
+        <span aria-hidden="true">×</span>
+      </button>
+    </aside>
   );
 }
 
