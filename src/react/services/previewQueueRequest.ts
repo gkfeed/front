@@ -2,20 +2,27 @@ const CACHE_TTL_MS = 5 * 60_000;
 
 export type PreviewLoader<T> = (signal: AbortSignal) => Promise<T>;
 
-type RequestState = 'queued' | 'running' | 'settled';
+export type PreviewRequestState = 'queued' | 'running' | 'settled';
 
-export type PreviewRequestSettled<T> = (
-  request: PreviewRequest<T>,
+export interface PreviewRequestControl {
+  readonly isSettled: boolean;
+  readonly expiresAt: number | null;
+  start(): void;
+  cancel(): void;
+}
+
+export type PreviewRequestSettled = (
+  request: PreviewRequestControl,
   failed: boolean,
 ) => void;
 
 /** A single shared request and the subscribers waiting for its result. */
-export class PreviewRequest<T> {
+export class PreviewRequest<T> implements PreviewRequestControl {
   readonly promise: Promise<T>;
 
   private readonly resolvePromise: (value: T) => void;
   private readonly rejectPromise: (reason?: unknown) => void;
-  private state: RequestState = 'queued';
+  private state: PreviewRequestState = 'queued';
   private subscribers = 0;
   private controller?: AbortController;
   private settled = false;
@@ -24,7 +31,7 @@ export class PreviewRequest<T> {
   constructor(
     readonly key: string,
     private readonly load: PreviewLoader<T>,
-    private readonly onSettled: PreviewRequestSettled<T>,
+    private readonly onSettled: PreviewRequestSettled,
   ) {
     let resolve!: (value: T) => void;
     let reject!: (reason?: unknown) => void;

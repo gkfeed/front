@@ -1,8 +1,8 @@
-import { PreviewRequest } from './previewQueueRequest';
+import { PreviewRequest, type PreviewRequestControl } from './previewQueueRequest';
 
 /** Stores shared requests and owns expiration of completed preview values. */
 export class PreviewCache {
-  private readonly entries = new Map<string, PreviewRequest<unknown>>();
+  private readonly entries = new Map<string, PreviewRequestControl>();
 
   get<T>(key: string): PreviewRequest<T> | undefined {
     const entry = this.entries.get(key);
@@ -15,14 +15,16 @@ export class PreviewCache {
   }
 
   set<T>(key: string, entry: PreviewRequest<T>): void {
-    this.entries.set(key, entry as PreviewRequest<unknown>);
+    this.entries.set(key, entry);
   }
 
-  delete<T>(key: string, entry: PreviewRequest<T>): void {
+  delete(key: string, entry: PreviewRequestControl): void {
     if (this.entries.get(key) === entry) this.entries.delete(key);
   }
 
-  clear(): void {
+  clear(): PreviewRequestControl[] {
+    const entries = [...this.entries.values()];
     this.entries.clear();
+    return entries;
   }
 }

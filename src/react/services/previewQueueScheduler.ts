@@ -1,19 +1,23 @@
-import { PreviewRequest } from './previewQueueRequest';
+import type { PreviewRequestControl } from './previewQueueRequest';
 
 const MAX_CONCURRENT_PREVIEWS = 4;
 
 /** Starts queued requests while keeping the network concurrency bounded. */
 export class PreviewScheduler {
-  private readonly queue: Array<PreviewRequest<unknown>> = [];
-  private readonly active = new Set<PreviewRequest<unknown>>();
+  private readonly queue: PreviewRequestControl[] = [];
+  private readonly active = new Set<PreviewRequestControl>();
 
-  enqueue<T>(request: PreviewRequest<T>): void {
-    this.queue.push(request as PreviewRequest<unknown>);
+  enqueue(request: PreviewRequestControl): void {
+    this.queue.push(request);
     this.runNext();
   }
 
-  settled<T>(request: PreviewRequest<T>): void {
-    if (this.active.delete(request as PreviewRequest<unknown>)) this.runNext();
+  settled(request: PreviewRequestControl): void {
+    if (this.active.delete(request)) this.runNext();
+  }
+
+  clear(): void {
+    this.queue.length = 0;
   }
 
   private runNext(): void {

@@ -4,6 +4,7 @@ import {
   createInflate,
 } from 'node:zlib';
 import type { Readable } from 'node:stream';
+import { firstHeader } from './headers.js';
 
 export function getDecodedBody(
   body: Readable,
@@ -14,8 +15,4 @@ export function getDecodedBody(
   if (encoding === 'deflate') return body.pipe(createInflate());
   if (encoding === 'br') return body.pipe(createBrotliDecompress());
   return body;
-}
-
-function firstHeader(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
 }

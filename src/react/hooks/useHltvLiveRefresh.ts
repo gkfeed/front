@@ -1,10 +1,17 @@
-import { useEffect, type Dispatch, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 
 import { getOpenGraphPreview, type OpenGraphPreview } from '../services/openGraph';
 import {
   mergeHltvLiveData,
   type RemotePreview,
 } from '../services/remotePreview';
+import { useAsyncResource } from './useAsyncResource';
 
 const HLTV_LIVE_REFRESH_MS = 30_000;
 
@@ -23,36 +30,36 @@ export function useHltvLiveRefresh({
   currentPreview: OpenGraphPreview | null;
   setPreview: Dispatch<SetStateAction<RemotePreview>>;
 }): void {
+  const refreshEnabled = enabled
+    && isVisible
+    && isHltv
+    && currentPreview?.matchStatus === 'live';
+  const load = useCallback(
+    (signal: AbortSignal) => getOpenGraphPreview(url, signal),
+    [url],
+  );
+  const { result, isLoading, retry } = useAsyncResource<OpenGraphPreview>(load, {
+    enabled: refreshEnabled,
+    key: url,
+  });
+  const isLoadingRef = useRef(isLoading);
   useEffect(() => {
-    if (
-      !enabled
-      || !isVisible
-      || !isHltv
-      || currentPreview?.matchStatus !== 'live'
-    ) return;
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
 
-    let requestInProgress = false;
-    const controller = new AbortController();
-    const refresh = () => {
-      if (requestInProgress) return;
-      requestInProgress = true;
-      getOpenGraphPreview(url, controller.signal).then((openGraphPreview) => {
-        setPreview((previous) => ({
-          liquipediaMatch: null,
-          openGraphPreview: mergeHltvLiveData(openGraphPreview, previous.openGraphPreview),
-        }));
-      }).catch(() => {
-        // Keep the last known score when a live refresh temporarily fails.
-      }).finally(() => {
-        requestInProgress = false;
-      });
-    };
-    refresh();
-    const interval = window.setInterval(refresh, HLTV_LIVE_REFRESH_MS);
+  useEffect(() => {
+    if (!result) return;
+    setPreview((previous) => ({
+      liquipediaMatch: null,
+      openGraphPreview: mergeHltvLiveData(result, previous.openGraphPreview),
+    }));
+  }, [result, setPreview]);
 
-    return () => {
-      window.clearInterval(interval);
-      controller.abort();
-    };
-  }, [currentPreview?.matchStatus, enabled, isHltv, isVisible, setPreview, url]);
+  useEffect(() => {
+    if (!refreshEnabled) return undefined;
+    const interval = window.setInterval(() => {
+      if (!isLoadingRef.current) retry();
+    }, HLTV_LIVE_REFRESH_MS);
+    return () => window.clearInterval(interval);
+  }, [refreshEnabled, retry]);
 }

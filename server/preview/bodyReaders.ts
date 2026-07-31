@@ -7,7 +7,4 @@ export {
   readLimitedJson,
   responseTooLarge,
 } from './bodyAdapters.js';
-
-export function firstHeader(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
+export { firstHeader } from './headers.js';

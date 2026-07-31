@@ -3,6 +3,7 @@ import type { Readable } from 'node:stream';
 import type { PublicHttpResponse } from '../publicHttp.js';
 import { PreviewError } from './errors.js';
 import { getDecodedBody } from './decompression.js';
+import { firstHeader } from './headers.js';
 import {
   readBoundedBytes,
   readBoundedText,
@@ -88,10 +89,6 @@ function rejectDeclaredLength(
     response.body.destroy();
     throw tooLarge();
   }
-}
-
-function firstHeader(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
 }
 
 function destroyBody(response: PublicHttpResponse, body: Readable): void {

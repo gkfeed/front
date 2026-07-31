@@ -22,7 +22,7 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
   } = model;
   const isShortVideo = variant.type === 'tiktok' || variant.type === 'instagram';
   const isTikTok = variant.type === 'tiktok';
-  const preview = visiblePreview ? localizeFeedItemPreview(visiblePreview, t) : null;
+  const localizedPreview = visiblePreview ? localizeFeedItemPreview(visiblePreview, t) : null;
   const displayHostname = hostname ?? t('feed.item');
 
   if (isPreviewPending) {
@@ -47,14 +47,13 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
       <YoutubePreview
         videoId={variant.videoId}
         title={item.text || item.title}
-        preview={preview}
+        preview={localizedPreview}
         onPreviewError={onPreviewError}
       />
     );
   }
   if (liquipediaMatch) return <LiquipediaMatch match={liquipediaMatch} />;
-  if (!visiblePreview) return null;
-  const localizedPreview = localizeFeedItemPreview(visiblePreview, t);
+  if (!localizedPreview) return null;
 
   return (
     <FeedItemMedia

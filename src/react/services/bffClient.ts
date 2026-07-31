@@ -1,9 +1,5 @@
-import {
-  combineAbortSignals,
-  createTimeoutSignal,
-  DEFAULT_REQUEST_TIMEOUT_MS,
-  isAbortError,
-} from './requestTimeout';
+import { DEFAULT_REQUEST_TIMEOUT_MS } from './requestTimeout';
+import { requestJson } from './httpRequest';
 
 export const BFF_REQUEST_TIMEOUT_MS = DEFAULT_REQUEST_TIMEOUT_MS;
 
@@ -58,37 +54,26 @@ export async function requestBffJson<T>({
   signal,
   timeoutMs = BFF_REQUEST_TIMEOUT_MS,
 }: BffJsonRequest<T>): Promise<T> {
-  const timeout = createTimeoutSignal(timeoutMs);
-  const requestSignal = combineAbortSignals(signal, timeout.signal);
   const requestUrl = `${endpoint}?url=${encodeURIComponent(input)}`;
-
-  try {
-    const response = await fetch(requestUrl, { signal: requestSignal });
-    if (!response.ok) {
-      throw new BffHttpError(
-        `${httpErrorName} request failed with ${response.status}`,
-        response.status,
-        endpoint,
-      );
-    }
-
-    let value: unknown;
-    try {
-      value = await response.json();
-    } catch {
-      throw new BffResponseError(`Invalid ${resourceName} response`, endpoint, response.status);
-    }
-
-    if (!validate(value)) {
-      throw new BffResponseError(`Invalid ${resourceName} response`, endpoint, response.status);
-    }
-    return value;
-  } catch (error: unknown) {
-    if (timeout.didTimeout && isAbortError(error)) {
-      throw new BffTimeoutError(endpoint, timeoutMs);
-    }
-    throw error;
-  } finally {
-    timeout.dispose();
-  }
+  const value = await requestJson<T>(requestUrl, signal ? { signal } : {}, {
+    timeoutMs,
+    createHttpError: (status) => new BffHttpError(
+      `${httpErrorName} request failed with ${status}`,
+      status,
+      endpoint,
+    ),
+    createTimeoutError: (normalizedTimeoutMs) => new BffTimeoutError(endpoint, normalizedTimeoutMs),
+    createInvalidJsonError: (status) => new BffResponseError(
+      `Invalid ${resourceName} response`,
+      endpoint,
+      status,
+    ),
+    validate,
+    createInvalidResponseError: (status) => new BffResponseError(
+      `Invalid ${resourceName} response`,
+      endpoint,
+      status,
+    ),
+  });
+  return value;
 }

@@ -1,9 +1,8 @@
+import { DEFAULT_REQUEST_TIMEOUT_MS } from './requestTimeout';
 import {
-  combineAbortSignals,
-  createTimeoutSignal,
-  DEFAULT_REQUEST_TIMEOUT_MS,
-  isAbortError,
-} from './requestTimeout';
+  requestJson as requestJsonTransport,
+  requestResponse,
+} from './httpRequest';
 
 const DEFAULT_API_ROOT = import.meta.env.DEV
   ? '/api/v1'
@@ -39,26 +38,19 @@ export function requireCredentials<T extends { username: string; password: strin
 }
 
 export async function request(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  const timeout = createTimeoutSignal(DEFAULT_REQUEST_TIMEOUT_MS);
-  const signal = combineAbortSignals(init.signal, timeout.signal);
-  try {
-    const response = await fetch(input, { ...init, signal });
-    if (!response.ok) {
-      throw new ApiError(`Request failed with ${response.status}`, response.status);
-    }
-    return response;
-  } catch (error: unknown) {
-    if (timeout.didTimeout && isAbortError(error)) {
-      throw new ApiTimeoutError(DEFAULT_REQUEST_TIMEOUT_MS);
-    }
-    throw error;
-  } finally {
-    timeout.dispose();
-  }
+  return requestResponse(input, init, {
+    timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+    createHttpError: (status) => new ApiError(`Request failed with ${status}`, status),
+    createTimeoutError: (timeoutMs) => new ApiTimeoutError(timeoutMs),
+  });
 }
 
 export async function requestJson(input: RequestInfo | URL, init?: RequestInit): Promise<unknown> {
-  return (await request(input, init)).json();
+  return requestJsonTransport(input, init ?? {}, {
+    timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+    createHttpError: (status) => new ApiError(`Request failed with ${status}`, status),
+    createTimeoutError: (timeoutMs) => new ApiTimeoutError(timeoutMs),
+  });
 }
 
 export async function postJson(

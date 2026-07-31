@@ -22,7 +22,8 @@ class PreviewQueue {
   }
 
   clear(): void {
-    this.cache.clear();
+    for (const request of this.cache.clear()) request.cancel();
+    this.scheduler.clear();
   }
 }
 

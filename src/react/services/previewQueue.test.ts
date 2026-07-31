@@ -121,4 +121,18 @@ describe('loadQueuedPreview', () => {
     await expect(loadQueuedPreview('retry-url', load)).resolves.toBe('preview');
     expect(load).toHaveBeenCalledTimes(2);
   });
+
+  it('cancels cached requests when the preview cache is cleared', async () => {
+    let requestSignal!: AbortSignal;
+    const load = vi.fn((signal: AbortSignal) => {
+      requestSignal = signal;
+      return new Promise<string>(() => undefined);
+    });
+
+    const pending = loadQueuedPreview('clear-url', load);
+    clearPreviewCache();
+
+    expect(requestSignal.aborted).toBe(true);
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+  });
 });
