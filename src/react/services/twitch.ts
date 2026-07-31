@@ -1,7 +1,11 @@
 import { getFeedItemPreview } from '../domain/feedItemPreview';
 import type { Credentials, FeedItem } from '../types';
 import { getFeedItems } from './feeds';
-import { DEFAULT_REQUEST_TIMEOUT_MS } from './requestTimeout';
+import {
+  combineAbortSignals,
+  createTimeoutSignal,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+} from './requestTimeout';
 
 const OFFLINE_PREVIEW_PATH = /\/404_preview-\d+x\d+\.jpg$/i;
 const MAX_CONCURRENT_TWITCH_CHECKS = 4;
@@ -28,11 +32,13 @@ export async function isTwitchStreamLive(item: FeedItem, signal?: AbortSignal): 
   const preview = getFeedItemPreview(item);
   if (!preview) return false;
 
+  const timeout = createTimeoutSignal(DEFAULT_REQUEST_TIMEOUT_MS);
+  const requestSignal = combineAbortSignals(signal, timeout.signal);
   try {
     const response = await fetch(toProbeUrl(preview.src), {
       cache: 'no-store',
       redirect: 'follow',
-      signal: signal ?? AbortSignal.timeout(DEFAULT_REQUEST_TIMEOUT_MS),
+      signal: requestSignal,
     });
     if (!response.ok) return false;
 
@@ -40,6 +46,8 @@ export async function isTwitchStreamLive(item: FeedItem, signal?: AbortSignal): 
     return !OFFLINE_PREVIEW_PATH.test(finalUrl.pathname);
   } catch {
     return false;
+  } finally {
+    timeout.dispose();
   }
 }
 

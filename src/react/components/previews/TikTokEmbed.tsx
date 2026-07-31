@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { createTikTokPlayerAdapter } from './tikTokPlayerProtocol';
 
 type TikTokEmbedProps = {
   src: string;
@@ -11,25 +13,19 @@ export function TikTokEmbed({ src, title, requiresSoundGesture }: TikTokEmbedPro
   const { t } = useTranslation();
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [showSoundPrompt, setShowSoundPrompt] = useState(requiresSoundGesture);
+  const playerAdapter = useMemo(
+    () => createTikTokPlayerAdapter(() => frameRef.current?.contentWindow ?? null),
+    [],
+  );
 
   useEffect(() => {
-    const playWhenReady = (event: MessageEvent) => {
-      const playerWindow = frameRef.current?.contentWindow;
-      if (
-        event.origin !== 'https://www.tiktok.com' ||
-        !playerWindow ||
-        event.source !== playerWindow ||
-        !isTikTokPlayerReadyMessage(event.data)
-      ) return;
-
-      if (!requiresSoundGesture) {
-        playerWindow.postMessage({ type: 'unMute', 'x-tiktok-player': true }, event.origin);
-      }
-      playerWindow.postMessage({ type: 'play', 'x-tiktok-player': true }, event.origin);
+    const playWhenReady = (event: MessageEvent<unknown>) => {
+      if (!playerAdapter.isReadyMessage(event)) return;
+      playerAdapter.play({ unmute: !requiresSoundGesture });
     };
     window.addEventListener('message', playWhenReady);
     return () => window.removeEventListener('message', playWhenReady);
-  }, [requiresSoundGesture]);
+  }, [playerAdapter, requiresSoundGesture]);
 
   return (
     <div className="reader-card__preview reader-card__preview--short-video reader-card__preview--tiktok">
@@ -46,14 +42,7 @@ export function TikTokEmbed({ src, title, requiresSoundGesture }: TikTokEmbedPro
           type="button"
           className="reader-card__sound-toggle"
           onClick={() => {
-            frameRef.current?.contentWindow?.postMessage(
-              { type: 'unMute', 'x-tiktok-player': true },
-              'https://www.tiktok.com',
-            );
-            frameRef.current?.contentWindow?.postMessage(
-              { type: 'play', 'x-tiktok-player': true },
-              'https://www.tiktok.com',
-            );
+            playerAdapter.play({ unmute: true });
             setShowSoundPrompt(false);
           }}
         >
@@ -62,10 +51,4 @@ export function TikTokEmbed({ src, title, requiresSoundGesture }: TikTokEmbedPro
       ) : null}
     </div>
   );
-}
-
-function isTikTokPlayerReadyMessage(value: unknown): boolean {
-  if (!value || typeof value !== 'object') return false;
-  const message = value as Record<string, unknown>;
-  return message['x-tiktok-player'] === true && message.type === 'onPlayerReady';
 }

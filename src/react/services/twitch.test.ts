@@ -87,6 +87,50 @@ describe('Twitch live service', () => {
     await expect(getLiveTwitchItems(CREDENTIALS)).resolves.toEqual([secondItem]);
   });
 
+  it('releases a probe when the caller aborts a pending request', async () => {
+    const controller = new AbortController();
+    let requestSignal: AbortSignal | undefined;
+    vi.stubGlobal('fetch', vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      requestSignal = init?.signal ?? undefined;
+      return new Promise((_resolve, reject) => {
+        requestSignal?.addEventListener('abort', () => {
+          reject(new DOMException('The operation was aborted', 'AbortError'));
+        }, { once: true });
+      });
+    }));
+
+    const request = isTwitchStreamLive(TWITCH_ITEM, controller.signal);
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    controller.abort();
+
+    await expect(request).resolves.toBe(false);
+    expect(requestSignal?.aborted).toBe(true);
+  });
+
+  it('releases a probe when its timeout aborts a pending request', async () => {
+    vi.useFakeTimers();
+    try {
+      let requestSignal: AbortSignal | undefined;
+      vi.stubGlobal('fetch', vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+        requestSignal = init?.signal ?? undefined;
+        return new Promise((_resolve, reject) => {
+          requestSignal?.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted', 'AbortError'));
+          }, { once: true });
+        });
+      }));
+
+      const request = isTwitchStreamLive(TWITCH_ITEM);
+      await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      await expect(request).resolves.toBe(false);
+      expect(requestSignal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('checks no more than four Twitch channels concurrently', async () => {
     const twitchItems = Array.from({ length: 6 }, (_, index) => ({
       ...TWITCH_ITEM,
