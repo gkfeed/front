@@ -13,6 +13,11 @@ type TikTokCommentsLoadState = {
   result: TikTokCommentsResult | null;
 };
 
+type TikTokCommentsRequest = {
+  link: string;
+  controller: AbortController;
+};
+
 const getIdleState = (link: string): TikTokCommentsLoadState => ({
   link,
   status: 'idle',
@@ -23,6 +28,7 @@ export function useTikTokComments(link: string, enabled: boolean) {
   const [state, setState] = useState<TikTokCommentsLoadState>(() => getIdleState(link));
   const [retryCount, setRetryCount] = useState(0);
   const stateRef = useRef(state);
+  const requestRef = useRef<TikTokCommentsRequest | null>(null);
   const updateState = useCallback((nextState: TikTokCommentsLoadState) => {
     stateRef.current = nextState;
     setState(nextState);
@@ -33,30 +39,31 @@ export function useTikTokComments(link: string, enabled: boolean) {
     if (!enabled || (currentState.link === link && currentState.status !== 'idle')) return;
 
     const controller = new AbortController();
-    let isCurrentRequest = true;
+    const request: TikTokCommentsRequest = { link, controller };
+    requestRef.current = request;
     updateState({ link, status: 'loading', result: null });
 
     fetchTikTokComments(link, controller.signal)
       .then((result) => {
-        if (isCurrentRequest) updateState({ link, status: 'success', result });
+        if (requestRef.current !== request) return;
+        requestRef.current = null;
+        updateState({ link, status: 'success', result });
       })
       .catch((error: unknown) => {
-        if (isCurrentRequest && !isAbortError(error)) {
-          updateState({ link, status: 'error', result: null });
-        }
+        if (requestRef.current !== request) return;
+        requestRef.current = null;
+        if (!isAbortError(error)) updateState({ link, status: 'error', result: null });
       });
 
     return () => {
-      isCurrentRequest = false;
       controller.abort();
+      if (requestRef.current !== request) return;
+      requestRef.current = null;
+      if (stateRef.current.link === link && stateRef.current.status === 'loading') {
+        updateState(getIdleState(link));
+      }
     };
   }, [enabled, link, retryCount, updateState]);
-
-  useEffect(() => {
-    const currentState = stateRef.current;
-    if (enabled || currentState.link !== link || currentState.status !== 'loading') return;
-    updateState(getIdleState(link));
-  }, [enabled, link, updateState]);
 
   const currentState = state.link === link ? state : getIdleState(link);
   const retry = useCallback(() => {

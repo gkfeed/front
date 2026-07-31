@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { FeedItem } from '../../types';
@@ -24,6 +25,24 @@ afterEach(() => {
 });
 
 describe('TikTokComments', () => {
+  it('finishes loading when comments are expanded on mount in StrictMode', async () => {
+    window.sessionStorage.setItem('gkfeed:tiktok-comments-expanded', 'true');
+    vi.mocked(fetchTikTokComments).mockResolvedValue({
+      comments: [],
+      description: null,
+      creatorName: null,
+      creatorAvatarUrl: null,
+    });
+
+    render(
+      <StrictMode>
+        <TikTokComments item={item} />
+      </StrictMode>,
+    );
+
+    expect(await screen.findByText('No comments are available for this video.')).toBeTruthy();
+  });
+
   it('announces loading and aborts an in-flight request when collapsed', async () => {
     vi.mocked(fetchTikTokComments).mockImplementation((_url, signal) => new Promise((resolve) => {
       signal.addEventListener('abort', () => resolve({
