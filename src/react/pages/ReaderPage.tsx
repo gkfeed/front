@@ -23,6 +23,7 @@ export function ReaderPage() {
     remainingCount,
     keepItem,
     deleteItem,
+    resetReview,
     retryLoad,
   } = useFeedReader();
   const {
@@ -77,6 +78,7 @@ export function ReaderPage() {
           reviewActionsRef={reviewActionsRef}
           onKeep={keepItem}
           onDelete={deleteItem}
+          onReset={resetReview}
           onShowScroll={() => setMode('scroll')}
         />
       ) : null}
@@ -85,6 +87,11 @@ export function ReaderPage() {
           <span className="reader__done-mark" aria-hidden="true">✓</span>
           <h2>{t('reader.reviewedEverything')}</h2>
           <p>{t('reader.switchToScroll')}</p>
+          <div className="reader__state-actions">
+            <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={resetReview}>
+              {t('reader.reset')}
+            </button>
+          </div>
         </div>
       ) : null}
       {mode === 'scroll' && !isLoading && !loadFailed && items.length > 0 ? <ReaderScroll items={items} /> : null}

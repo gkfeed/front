@@ -18,6 +18,7 @@ export function ReaderReview({
   reviewActionsRef,
   onKeep,
   onDelete,
+  onReset,
   onShowScroll,
 }: {
   item: FeedItem;
@@ -29,6 +30,7 @@ export function ReaderReview({
   reviewActionsRef: RefObject<HTMLDivElement | null>;
   onKeep: () => void;
   onDelete: () => void;
+  onReset: () => void;
   onShowScroll: () => void;
 }) {
   const { t } = useTranslation();
@@ -73,6 +75,9 @@ export function ReaderReview({
         </p>
       ) : null}
       <div className="reader__count-row">
+        <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={onReset}>
+          {t('reader.reset')}
+        </button>
         <span className="reader__count">{t('reader.remaining', { count: remainingCount })}</span>
       </div>
     </div>

@@ -105,6 +105,8 @@ const en = {
     deleteItem: 'Delete item',
     deletingItem: 'Deleting item',
     deleteError: 'Could not delete this item. It is still in your feed; try again.',
+    reset: 'Reset',
+    resetKeptItems: 'Reset kept items',
     reviewControls: 'Review controls',
     moreReviewActions: 'More review actions',
     moreActions: 'More actions',

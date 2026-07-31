@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { getReviewStateStorageKey } from '../hooks/reviewStateStorage';
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
 import { NsfwPreferencesContext, type NsfwMode } from '../state/nsfwPreferencesContext';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
@@ -100,6 +101,26 @@ describe('ReaderPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
     expect(await screen.findByText('Second story')).toBeTruthy();
+  });
+
+  it('resets kept items and persists the empty kept state', async () => {
+    const storage = stubLocalStorage();
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    renderReader();
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Second story')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset kept items' }));
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    expect(JSON.parse(storage.get(getReviewStateStorageKey('reader')) ?? '')).toEqual({
+      version: 1,
+      pendingIds: [10, 11],
+      revisitIds: [],
+      keptItemIds: [],
+    });
   });
 
   it('starts with the newest item when a refresh finds several new items', async () => {

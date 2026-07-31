@@ -35,6 +35,29 @@
   transform: none;
 }
 
+.reader__reset {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid color-mix(in oklch, var(--color-border) 75%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: background-color var(--ease), border-color var(--ease), color var(--ease);
+}
+
+.reader__reset:hover {
+  border-color: var(--color-border);
+  background: color-mix(in oklch, var(--color-field) 18%, transparent);
+  color: var(--color-ink-inverse);
+}
+
+.reader__reset:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
 .reader__state {
   display: grid;
   justify-items: center;
@@ -52,6 +75,17 @@
 .reader__state .secondary {
   justify-self: center;
   margin-top: 10px;
+}
+
+.reader__state-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.reader__state-actions .reader__reset {
+  min-height: 44px;
+  padding-inline: 16px;
 }
 
 .reader__done-mark {

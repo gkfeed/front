@@ -18,6 +18,8 @@
 
 .reader__count-row {
   display: flex;
+  align-items: center;
+  gap: 12px;
   justify-content: flex-end;
 }
 

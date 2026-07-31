@@ -100,6 +100,10 @@ export function useFeedReader() {
     retry();
   }, [retry, reviewableIds]);
 
+  const resetReview = useCallback(() => {
+    dispatchReview({ type: 'reset', ids: reviewableIds });
+  }, [reviewableIds]);
+
   return {
     items: items ?? [],
     currentItem,
@@ -110,6 +114,7 @@ export function useFeedReader() {
     remainingCount: activeReviewIds.length,
     keepItem,
     deleteItem: deleteCurrentItem,
+    resetReview,
     retryLoad,
   };
 }
