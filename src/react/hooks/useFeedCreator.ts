@@ -2,18 +2,18 @@ import { useState } from 'react';
 
 import { createFeed, createFeedFromUrl } from '../services/feeds';
 import { useAuth } from '../state/useAuth';
+import {
+  EMPTY_FEED,
+  getFeedCreatorFields,
+  isFeedFieldValid,
+  trimFeed,
+  type FeedCreatorMode,
+} from '../domain/feedCreator';
 import type { FeedInput } from '../types';
 
 export type FeedCreatorSaveStatus = 'idle' | 'saving' | 'success' | 'error';
-export type FeedCreatorMode = 'lazy' | 'extended';
 
-const EMPTY_FEED: FeedInput = {
-  title: '',
-  type: 'web',
-  url: '',
-};
-const FEED_FIELDS: readonly (keyof FeedInput)[] = ['title', 'type', 'url'];
-const VALID_URL_PROTOCOLS: Record<string, true> = { 'http:': true, 'https:': true };
+export type { FeedCreatorMode } from '../domain/feedCreator';
 
 export function useFeedCreator() {
   const { credentials } = useAuth();
@@ -22,8 +22,8 @@ export function useFeedCreator() {
   const [submitted, setSubmitted] = useState(false);
   const [saveStatus, setSaveStatus] = useState<FeedCreatorSaveStatus>('idle');
   const isSaving = saveStatus === 'saving';
-  const visibleFields = getVisibleFields(mode);
-  const isValid = visibleFields.every((field) => isFeedFieldValid(feed, field));
+  const visibleFields = getFeedCreatorFields(mode);
+  const isValid = visibleFields.every((field) => isFeedFieldValid(feed, field.id));
 
   function updateFeed(field: keyof FeedInput, value: string) {
     setFeed((current) => ({ ...current, [field]: value }));
@@ -68,31 +68,4 @@ export function useFeedCreator() {
     updateFeed,
     submitFeed,
   };
-}
-
-function getVisibleFields(mode: FeedCreatorMode): readonly (keyof FeedInput)[] {
-  return mode === 'extended' ? FEED_FIELDS : ['url'];
-}
-
-function trimFeed(feed: FeedInput): FeedInput {
-  return {
-    title: feed.title.trim(),
-    type: feed.type.trim(),
-    url: feed.url.trim(),
-  };
-}
-
-function isFeedFieldValid(feed: FeedInput, field: keyof FeedInput) {
-  const value = feed[field].trim();
-  if (!value) return false;
-
-  return field === 'url' ? isValidFeedUrl(value) : true;
-}
-
-function isValidFeedUrl(value: string): boolean {
-  try {
-    return VALID_URL_PROTOCOLS[new URL(value).protocol] === true;
-  } catch {
-    return false;
-  }
 }

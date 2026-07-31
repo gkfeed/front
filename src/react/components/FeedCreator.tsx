@@ -1,33 +1,14 @@
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  getFeedCreatorFields,
+  type FeedCreatorFieldConfig,
+} from '../domain/feedCreator';
 import { useFeedCreator } from '../hooks/useFeedCreator';
 import type { FeedCreatorMode, FeedCreatorSaveStatus } from '../hooks/useFeedCreator';
 import type { FeedInput } from '../types';
 import { FeedTypePicker } from './FeedTypePicker';
-
-type CreatorFieldConfig = {
-  id: keyof FeedInput;
-  labelKey: string;
-  type: 'select' | 'text' | 'url';
-  placeholderKey?: string;
-  errorKey: string;
-};
-
-const URL_FIELD: CreatorFieldConfig = {
-  id: 'url',
-  labelKey: 'creator.url',
-  type: 'url',
-  errorKey: 'creator.validUrl',
-};
-
-const URL_FIELDS: readonly CreatorFieldConfig[] = [URL_FIELD];
-
-const MANUAL_FIELDS: readonly CreatorFieldConfig[] = [
-  { id: 'title', labelKey: 'creator.title', type: 'text', placeholderKey: 'creator.titlePlaceholder', errorKey: 'creator.titleRequired' },
-  { id: 'type', labelKey: 'creator.type', type: 'select', errorKey: 'creator.typeRequired' },
-  URL_FIELD,
-];
 
 export function FeedCreator() {
   const { t } = useTranslation();
@@ -60,7 +41,7 @@ export function FeedCreator() {
           <CreatorPanel
             id="feed-create-lazy-panel"
             labelledBy="feed-create-lazy-tab"
-            fields={URL_FIELDS}
+            fields={getFeedCreatorFields('lazy')}
             feed={feed}
             submitted={submitted}
             isSaving={isSaving}
@@ -71,7 +52,7 @@ export function FeedCreator() {
           <CreatorPanel
             id="feed-create-extended-panel"
             labelledBy="feed-create-extended-tab"
-            fields={MANUAL_FIELDS}
+            fields={getFeedCreatorFields('extended')}
             feed={feed}
             submitted={submitted}
             isSaving={isSaving}
@@ -132,7 +113,7 @@ function ModeTab({ children, mode, currentMode, disabled, onSelect }: ModeTabPro
 type CreatorPanelProps = {
   id: string;
   labelledBy: string;
-  fields: readonly CreatorFieldConfig[];
+  fields: readonly FeedCreatorFieldConfig[];
   feed: FeedInput;
   submitted: boolean;
   isSaving: boolean;
@@ -166,7 +147,7 @@ function CreatorPanel({
   );
 }
 
-type CreatorFieldProps = CreatorFieldConfig & {
+type CreatorFieldProps = FeedCreatorFieldConfig & {
   value: string;
   invalid: boolean;
   disabled: boolean;

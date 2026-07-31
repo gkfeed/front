@@ -1,6 +1,48 @@
-import { describe, expect, it } from 'vitest';
+import { Readable } from 'node:stream';
 
-import { parseTikTokComments, parseTikTokDescription, parseTikTokDetails } from './tiktok.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const requestPublicHttp = vi.hoisted(() => vi.fn());
+
+vi.mock('./publicHttp.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./publicHttp.js')>(),
+  requestPublicHttp,
+}));
+
+import { PublicHttpError } from './publicHttp.js';
+import {
+  fetchTikTokComments,
+  parseTikTokComments,
+  parseTikTokDescription,
+  parseTikTokDetails,
+} from './tiktok.js';
+
+beforeEach(() => {
+  requestPublicHttp.mockReset();
+});
+
+describe('fetchTikTokComments', () => {
+  it('maps a non-success comments response to an upstream error', async () => {
+    requestPublicHttp.mockImplementation(async () => jsonResponse('{}', 503));
+
+    await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
+      .rejects.toMatchObject({ code: 'comments_upstream_error', status: 502 });
+  });
+
+  it('preserves invalid JSON and response-size errors from the comments provider', async () => {
+    requestPublicHttp.mockImplementation(async () => jsonResponse('not-json'));
+
+    await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
+      .rejects.toMatchObject({ code: 'invalid_comments', status: 502 });
+  });
+
+  it('maps a provider timeout to a fetch error', async () => {
+    requestPublicHttp.mockRejectedValue(new PublicHttpError('timeout'));
+
+    await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
+      .rejects.toMatchObject({ code: 'comments_fetch_failed', status: 502 });
+  });
+});
 
 describe('parseTikTokComments', () => {
   it('maps multiple comments with names, usernames, and avatars', () => {
@@ -74,3 +116,12 @@ describe('parseTikTokDetails', () => {
     });
   });
 });
+
+function jsonResponse(body: string, status = 200) {
+  return {
+    body: Readable.from([body]),
+    headers: {},
+    status,
+    url: new URL('https://provider.example/'),
+  };
+}

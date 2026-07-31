@@ -10,7 +10,7 @@ import type {
   HltvMatchTeamSidesPreview,
 } from '../../shared/previewContracts.js';
 import { responseTooLarge } from './bodyReaders.js';
-import { parseHltvMatchStatus } from './hltvParser.js';
+import { parseHltvMatchStatus } from './hltvHtmlParser.js';
 import { fetchHltvScorebotSnapshot } from './hltvScorebot.js';
 import { REMOTE_REQUEST_TIMEOUT_MS } from '../timeouts.js';
 

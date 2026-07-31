@@ -16,7 +16,7 @@ export { PreviewError };
 export {
   parseHltvScoreboardSnapshot,
   parseHltvScoreboardUpdate,
-} from './hltvParser.js';
+} from './hltvScorebotParser.js';
 export { parseOpenGraph } from './openGraphParser.js';
 
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';

@@ -8,7 +8,7 @@ import {
   parseHltvMatchStartsAt,
   parseHltvMatchStatus,
   parseHltvMatchTeams,
-} from './hltvParser.js';
+} from './hltvHtmlParser.js';
 import { parseRezkaOriginalCover, parseVkStructuredVideo } from './openGraphProviderParsers.js';
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {

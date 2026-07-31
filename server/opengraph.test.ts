@@ -212,6 +212,29 @@ describe('parseOpenGraph', () => {
     });
   });
 
+  it('rejects malformed Scorebot payloads without unsafe object assumptions', () => {
+    const html = '<div class="mapholder"><div class="mapname">Dust2</div></div>';
+    const invalidPayloads: unknown[] = [
+      null,
+      [],
+      { mapName: 'de_dust2', ctTeamId: {}, tTeamId: 7020, ctTeamScore: 1, tTeamScore: 2 },
+      { mapName: 'de_dust2', ctTeamId: 5973, tTeamId: 7020, ctTeamScore: '', tTeamScore: 2 },
+    ];
+
+    invalidPayloads.forEach((payload) => {
+      expect(parseHltvScoreboardSnapshot(payload, html, '5973')).toBeNull();
+    });
+
+    expect(parseHltvScoreboardSnapshot({
+      mapName: 'de_dust2',
+      ctTeamId: 5973,
+      tTeamId: 7020,
+      ctTeamScore: 1,
+      tTeamScore: 2,
+      CT: [{ score: {} }],
+    }, html, '5973')?.playerStats).toEqual([[], []]);
+  });
+
   it('falls back to standard title and description metadata', () => {
     const html = '<title>Fallback title</title><meta name="description" content="Fallback description">';
 

@@ -1,105 +1,77 @@
 const MAX_CONCURRENT_PREVIEWS = 4;
 const CACHE_TTL_MS = 5 * 60_000;
 
-type CacheEntry<T> = {
-  key: string;
-  expiresAt: number;
-  promise: Promise<T>;
-  reject: (reason?: unknown) => void;
-  queueEntry: QueueEntry;
-  subscribers: number;
-  settled: boolean;
-};
+type PreviewLoader<T> = (signal: AbortSignal) => Promise<T>;
 
-type QueueEntry = {
-  run: () => void;
-  cancelled: boolean;
-  started: boolean;
-  controller?: AbortController;
-};
+type RequestState = 'queued' | 'running' | 'settled';
 
-class PreviewQueue {
-  private readonly cache = new Map<string, CacheEntry<unknown>>();
-  private readonly queue: QueueEntry[] = [];
-  private activeCount = 0;
+/** A single shared request and the subscribers waiting for its result. */
+class PreviewRequest<T> {
+  readonly promise: Promise<T>;
 
-  load<T>(
-    key: string,
-    load: (signal: AbortSignal) => Promise<T>,
-    signal?: AbortSignal,
-  ): Promise<T> {
-    const cached = this.cache.get(key) as CacheEntry<T> | undefined;
-    if (cached && cached.expiresAt > Date.now()) return this.subscribe(cached, signal);
-    if (cached) this.cache.delete(key);
+  private readonly resolvePromise: (value: T) => void;
+  private readonly rejectPromise: (reason?: unknown) => void;
+  private state: RequestState = 'queued';
+  private subscribers = 0;
+  private controller?: AbortController;
+  private settled = false;
 
-    let resolvePromise!: (value: T) => void;
-    let rejectPromise!: (reason?: unknown) => void;
-    const state: { entry?: CacheEntry<T> } = {};
-    const queueEntry: QueueEntry = {
-      cancelled: false,
-      started: false,
-      run: () => {
-        if (queueEntry.cancelled) return;
-        queueEntry.started = true;
-        const controller = new AbortController();
-        queueEntry.controller = controller;
-        load(controller.signal).then(
-          (value) => {
-            resolvePromise(value);
-            this.settle(state.entry!);
-          },
-          (error: unknown) => {
-            rejectPromise(error);
-            this.settle(state.entry!);
-          },
-        );
-      },
-    };
-    const promise = new Promise<T>((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
+  constructor(
+    readonly key: string,
+    private readonly load: PreviewLoader<T>,
+    private readonly onSettled: (request: PreviewRequest<T>, failed: boolean) => void,
+  ) {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    this.promise = new Promise<T>((promiseResolve, promiseReject) => {
+      resolve = promiseResolve;
+      reject = promiseReject;
     });
-    const cacheEntry: CacheEntry<T> = {
-      key,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-      promise,
-      reject: rejectPromise,
-      queueEntry,
-      settled: false,
-      subscribers: 0,
-    };
-    state.entry = cacheEntry;
-    this.cache.set(key, cacheEntry);
-    this.queue.push(queueEntry);
-    promise.catch(() => {
-      if (this.cache.get(key)?.promise === promise) this.cache.delete(key);
-    });
-
-    const subscribed = this.subscribe(cacheEntry, signal);
-    this.runNext();
-    return subscribed;
+    this.resolvePromise = resolve;
+    this.rejectPromise = reject;
+    this.promise.catch(() => undefined);
   }
 
-  clear(): void {
-    this.cache.clear();
+  get isSettled(): boolean {
+    return this.settled;
   }
 
-  private runNext(): void {
-    while (this.activeCount < MAX_CONCURRENT_PREVIEWS) {
-      const next = this.queue.shift();
-      if (!next) return;
-      if (next.cancelled) continue;
-      this.activeCount += 1;
-      next.run();
+  get expiresAt(): number | null {
+    return this._expiresAt;
+  }
+
+  private _expiresAt: number | null = null;
+
+  set expiresAt(value: number | null) {
+    this._expiresAt = value;
+  }
+
+  start(): void {
+    if (this.state !== 'queued') return;
+    this.state = 'running';
+    const controller = new AbortController();
+    this.controller = controller;
+
+    let result: Promise<T>;
+    try {
+      result = this.load(controller.signal);
+    } catch (error: unknown) {
+      this.fail(error);
+      return;
     }
+
+    Promise.resolve(result).then(
+      (value) => this.succeed(value),
+      (error: unknown) => this.fail(error),
+    );
   }
 
-  private subscribe<T>(entry: CacheEntry<T>, signal?: AbortSignal): Promise<T> {
-    entry.subscribers += 1;
-    if (!signal) return entry.promise;
+  subscribe(signal?: AbortSignal): Promise<T> {
+    this.subscribers += 1;
+    if (!signal) return this.promise;
 
     if (signal.aborted) {
-      this.release(entry);
+      this.release();
       return neverPromise();
     }
 
@@ -110,10 +82,11 @@ class PreviewQueue {
         if (finished) return;
         finished = true;
         cleanup();
-        this.release(entry);
+        this.release();
       };
+
       signal.addEventListener('abort', onAbort, { once: true });
-      entry.promise.then(
+      this.promise.then(
         (value) => {
           if (finished) return;
           finished = true;
@@ -130,30 +103,109 @@ class PreviewQueue {
     });
   }
 
-  private release<T>(entry: CacheEntry<T>): void {
-    if (entry.settled) return;
-    entry.subscribers -= 1;
-    if (entry.subscribers > 0) return;
+  cancel(): void {
+    if (this.settled) return;
+    this.controller?.abort();
+    this.fail(createAbortError());
+  }
 
-    entry.queueEntry.cancelled = true;
-    if (entry.queueEntry.started) {
-      entry.queueEntry.controller?.abort();
-    } else {
-      this.rejectEntry(entry, createAbortError());
+  private release(): void {
+    if (this.settled) return;
+    this.subscribers -= 1;
+    if (this.subscribers === 0) this.cancel();
+  }
+
+  private succeed(value: T): void {
+    if (this.settled) return;
+    this.expiresAt = Date.now() + CACHE_TTL_MS;
+    this.settled = true;
+    this.state = 'settled';
+    this.onSettled(this, false);
+    this.resolvePromise(value);
+  }
+
+  private fail(error: unknown): void {
+    if (this.settled) return;
+    this.settled = true;
+    this.state = 'settled';
+    this.onSettled(this, true);
+    this.rejectPromise(error);
+  }
+}
+
+/** Stores shared requests and owns expiration of completed preview values. */
+class PreviewCache {
+  private readonly entries = new Map<string, PreviewRequest<unknown>>();
+
+  get<T>(key: string): PreviewRequest<T> | undefined {
+    const entry = this.entries.get(key);
+    if (!entry) return undefined;
+    if (entry.expiresAt !== null && entry.expiresAt <= Date.now()) {
+      this.delete(key, entry);
+      return undefined;
     }
+    return entry as PreviewRequest<T>;
+  }
+
+  set<T>(key: string, entry: PreviewRequest<T>): void {
+    this.entries.set(key, entry as PreviewRequest<unknown>);
+  }
+
+  delete<T>(key: string, entry: PreviewRequest<T>): void {
+    if (this.entries.get(key) === entry) this.entries.delete(key);
+  }
+
+  clear(): void {
+    this.entries.clear();
+  }
+}
+
+/** Schedules requests independently from the cache and subscriber lifecycle. */
+class PreviewScheduler {
+  private readonly queue: Array<PreviewRequest<unknown>> = [];
+  private readonly active = new Set<PreviewRequest<unknown>>();
+
+  enqueue<T>(request: PreviewRequest<T>): void {
+    this.queue.push(request as PreviewRequest<unknown>);
     this.runNext();
   }
 
-  private settle<T>(entry: CacheEntry<T>): void {
-    entry.settled = true;
-    this.activeCount -= 1;
-    this.runNext();
+  settled<T>(request: PreviewRequest<T>): void {
+    if (this.active.delete(request as PreviewRequest<unknown>)) this.runNext();
   }
 
-  private rejectEntry<T>(entry: CacheEntry<T>, error: unknown): void {
-    entry.settled = true;
-    if (this.cache.get(entry.key) === entry) this.cache.delete(entry.key);
-    entry.reject(error);
+  private runNext(): void {
+    while (this.active.size < MAX_CONCURRENT_PREVIEWS) {
+      const next = this.queue.shift();
+      if (!next) return;
+      if (next.isSettled) continue;
+      this.active.add(next);
+      next.start();
+    }
+  }
+}
+
+class PreviewQueue {
+  private readonly cache = new PreviewCache();
+  private readonly scheduler = new PreviewScheduler();
+
+  load<T>(key: string, load: PreviewLoader<T>, signal?: AbortSignal): Promise<T> {
+    const cached = this.cache.get<T>(key);
+    if (cached) return cached.subscribe(signal);
+
+    const request = new PreviewRequest<T>(key, load, (settled, failed) => {
+      this.scheduler.settled(settled);
+      if (failed) this.cache.delete(key, settled);
+    });
+    this.cache.set(key, request);
+
+    const subscribed = request.subscribe(signal);
+    this.scheduler.enqueue(request);
+    return subscribed;
+  }
+
+  clear(): void {
+    this.cache.clear();
   }
 }
 
@@ -161,7 +213,7 @@ const previewQueue = new PreviewQueue();
 
 export function loadQueuedPreview<T>(
   key: string,
-  load: (signal: AbortSignal) => Promise<T>,
+  load: PreviewLoader<T>,
   signal?: AbortSignal,
 ): Promise<T> {
   return previewQueue.load(key, load, signal);

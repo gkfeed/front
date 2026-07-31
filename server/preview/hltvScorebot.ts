@@ -9,9 +9,11 @@ import type {
 import { parseAttributes } from './html.js';
 import {
   parseHltvCurrentMap,
+} from './hltvHtmlParser.js';
+import {
   parseHltvScoreboardSnapshot,
   type HltvScorebotSnapshot,
-} from './hltvParser.js';
+} from './hltvScorebotParser.js';
 
 const SCOREBOT_TIMEOUT_MS = 2_500;
 const SCOREBOT_CACHE_TTL_MS = 5 * 60_000;
