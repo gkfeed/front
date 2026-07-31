@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 
 import { LockIcon, UserIcon } from '../components/Icons';
@@ -12,11 +13,12 @@ type LoginFormState = typeof EMPTY_FORM;
 type LoginFieldName = keyof LoginFormState;
 
 const FIELDS = [
-  { name: 'username', label: 'Username', type: 'text', autoComplete: 'username', Icon: UserIcon },
-  { name: 'password', label: 'Password', type: 'password', autoComplete: 'current-password', Icon: LockIcon },
+  { name: 'username', labelKey: 'auth.username', type: 'text', autoComplete: 'username', Icon: UserIcon },
+  { name: 'password', labelKey: 'auth.password', type: 'password', autoComplete: 'current-password', Icon: LockIcon },
 ] as const;
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const { credentials, status, authenticate, clearCredentials } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,14 +43,14 @@ export function LoginPage() {
       setSubmitted(false);
       navigate(redirectTo, { replace: true });
     } catch (error) {
-      setErrorMessage(authenticationErrorMessage(error));
+      setErrorMessage(authenticationErrorMessage(error, t));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   if (status === 'checking') {
-    return <section className="login"><div className="login__form"><p role="status">Checking authentication…</p></div></section>;
+    return <section className="login"><div className="login__form"><p role="status">{t('auth.checking')}</p></div></section>;
   }
 
   return (
@@ -74,28 +76,29 @@ export function LoginPage() {
 }
 
 function SavedLogin({ username, onLogout }: { username: string; onLogout: () => void }) {
+  const { t } = useTranslation();
   const [isConfirmingLogout, setIsConfirmingLogout] = useState(false);
 
   return (
     <div className="login__form login__form--saved">
-      <h1 id="login-title" className="page-title">Signed in to GKFEED</h1>
+      <h1 id="login-title" className="page-title">{t('auth.signedIn')}</h1>
       <div className="login__account" role="status">
         <span className="field__icon" aria-hidden="true"><UserIcon /></span>
         <span className="login__account-copy">
-          Logged in as <strong>{username}</strong>
+          {t('auth.loggedInAs')} <strong>{username}</strong>
         </span>
       </div>
       {isConfirmingLogout ? (
         <div className="login__logout-confirmation" role="group" aria-labelledby="logout-confirmation">
-          <p id="logout-confirmation">Are you sure you want to log out?</p>
+          <p id="logout-confirmation">{t('auth.logoutQuestion')}</p>
           <div className="login__actions">
-            <button type="button" className="login__cancel" autoFocus onClick={() => setIsConfirmingLogout(false)}>Cancel</button>
-            <button type="button" className="danger" onClick={onLogout}>Yes, log out</button>
+            <button type="button" className="login__cancel" autoFocus onClick={() => setIsConfirmingLogout(false)}>{t('auth.cancel')}</button>
+            <button type="button" className="danger" onClick={onLogout}>{t('auth.yesLogout')}</button>
           </div>
         </div>
       ) : (
         <div className="login__actions">
-          <button type="button" className="danger" onClick={() => setIsConfirmingLogout(true)}>Log out</button>
+          <button type="button" className="danger" onClick={() => setIsConfirmingLogout(true)}>{t('auth.logout')}</button>
         </div>
       )}
     </div>
@@ -119,9 +122,11 @@ function LoginForm({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onChange: (name: LoginFieldName, value: string) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <form className="login__form" onSubmit={onSubmit} noValidate>
-      <h1 id="login-title" className="page-title">Sign in to GKFEED</h1>
+      <h1 id="login-title" className="page-title">{t('auth.signInTitle')}</h1>
       <div className="login__fields">
         {FIELDS.map((field) => (
           <LoginField
@@ -135,14 +140,14 @@ function LoginForm({
       </div>
       {errorMessage ? <p className="field__error" role="alert">{errorMessage}</p> : null}
       <div className="login__actions">
-        <button type="submit" disabled={!isValid || isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'}</button>
+        <button type="submit" disabled={!isValid || isSubmitting}>{isSubmitting ? t('auth.signingIn') : t('auth.signIn')}</button>
       </div>
     </form>
   );
 }
 
 function LoginField({
-  field: { name, label, Icon, ...inputProps },
+  field: { name, labelKey, Icon, ...inputProps },
   value,
   invalid,
   onChange,
@@ -152,12 +157,13 @@ function LoginField({
   invalid: boolean;
   onChange: (name: LoginFieldName, value: string) => void;
 }) {
+  const { t } = useTranslation();
   const helpId = `${name}-help`;
   const errorId = `${name}-error`;
 
   return (
     <div className="field">
-      <label htmlFor={name}>{label}</label>
+      <label htmlFor={name}>{t(labelKey)}</label>
       <div className="field__control">
         <span className="field__icon" aria-hidden="true"><Icon /></span>
         <input
@@ -172,8 +178,8 @@ function LoginField({
           required
         />
       </div>
-      <p id={helpId} className="field__hint">Required. Enter your {name}.</p>
-      {invalid ? <p id={errorId} className="field__error" role="alert">Enter your {name}.</p> : null}
+      <p id={helpId} className="field__hint">{t('auth.required', { field: t(labelKey).toLocaleLowerCase() })}</p>
+      {invalid ? <p id={errorId} className="field__error" role="alert">{t('auth.enter', { field: t(labelKey).toLocaleLowerCase() })}</p> : null}
     </div>
   );
 }
@@ -182,9 +188,9 @@ function isFieldEmpty(value: string): boolean {
   return !value.trim();
 }
 
-function authenticationErrorMessage(error: unknown): string {
+function authenticationErrorMessage(error: unknown, t: (key: string) => string): string {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {
-    return 'Invalid username or password.';
+    return t('auth.invalidCredentials');
   }
-  return 'Unable to sign in. Try again.';
+  return t('auth.signInError');
 }

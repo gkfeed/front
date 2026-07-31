@@ -1,4 +1,5 @@
 import { InstagramIcon } from './Icons';
+import { useTranslation } from 'react-i18next';
 import {
   FeedItemCardCopy,
   FeedItemCardPreview,
@@ -7,6 +8,7 @@ import {
 import { useFeedItemCardModel } from './useFeedItemCardModel';
 
 export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCardModel>[0] }) {
+  const { t } = useTranslation();
   const model = useFeedItemCardModel(item);
   const {
     cardRef,
@@ -50,7 +52,7 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
       {shouldBlurNsfw ? (
         <div className="reader-card__nsfw-shield" aria-hidden="true">
           <strong>NSFW</strong>
-          <span>Hidden by settings</span>
+          <span>{t('preview.hidden')}</span>
         </div>
       ) : null}
       {isInstagram ? (

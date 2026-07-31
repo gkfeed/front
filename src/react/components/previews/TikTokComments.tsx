@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { FeedItem } from '../../types';
 import {
@@ -9,6 +10,7 @@ import { useTikTokCommentsPreference } from '../../hooks/useTikTokCommentsPrefer
 import { UserIcon } from '../Icons';
 
 export function TikTokComments({ item }: { item: FeedItem }) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useTikTokCommentsPreference();
   const [comments, setComments] = useState<TikTokComment[] | null>(null);
   const [remoteDescription, setRemoteDescription] = useState<string | null>(null);
@@ -49,10 +51,10 @@ export function TikTokComments({ item }: { item: FeedItem }) {
   }
 
   return (
-    <aside className="tiktok-comments" aria-label="TikTok comments">
+    <aside className="tiktok-comments" aria-label={t('comments.label')}>
       <div className="tiktok-comments__toolbar">
         <h2 id={`tiktok-comments-${item.id}`} className="tiktok-comments__title">
-          Comments
+          {t('comments.title')}
         </h2>
         <button
           type="button"
@@ -61,12 +63,12 @@ export function TikTokComments({ item }: { item: FeedItem }) {
           aria-controls={commentsId}
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          {isExpanded ? 'Hide comments' : 'Show comments'}
+          {isExpanded ? t('comments.hide') : t('comments.show')}
         </button>
       </div>
       {isExpanded && isLoading ? (
         <div id={commentsId} className="tiktok-comments__empty" role="status">
-          <p>Loading comments…</p>
+          <p>{t('comments.loading')}</p>
         </div>
       ) : isExpanded && comments && (comments.length > 0 || description) ? (
         <ol id={commentsId} className="tiktok-comments__list">
@@ -107,23 +109,23 @@ export function TikTokComments({ item }: { item: FeedItem }) {
           ))}
           {comments.length === 0 ? (
             <li className="tiktok-comments__empty">
-              <p>No comments are available for this video.</p>
+              <p>{t('comments.none')}</p>
               <a href={item.link} target="_blank" rel="noreferrer">
-                View comments on TikTok <span aria-hidden="true">↗</span>
+                {t('comments.viewOnTikTok')} <span aria-hidden="true">↗</span>
               </a>
             </li>
           ) : null}
         </ol>
       ) : isExpanded && loadFailed ? (
         <div id={commentsId} className="tiktok-comments__empty" role="alert">
-          <p>Could not load TikTok comments.</p>
-          <button type="button" className="secondary" onClick={retry}>Try again</button>
+          <p>{t('comments.loadError')}</p>
+          <button type="button" className="secondary" onClick={retry}>{t('live.tryAgain')}</button>
         </div>
       ) : isExpanded && comments ? (
         <div id={commentsId} className="tiktok-comments__empty">
-          <p>No comments are available for this video.</p>
+          <p>{t('comments.none')}</p>
           <a href={item.link} target="_blank" rel="noreferrer">
-            View comments on TikTok <span aria-hidden="true">↗</span>
+            {t('comments.viewOnTikTok')} <span aria-hidden="true">↗</span>
           </a>
         </div>
       ) : null}

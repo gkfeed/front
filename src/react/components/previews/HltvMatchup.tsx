@@ -1,4 +1,5 @@
 import type { OpenGraphPreview } from '../../../../shared/previewContracts';
+import { useTranslation } from 'react-i18next';
 import { getHltvMapScoreClass, isCompletedHltvMapScore } from './hltvPresentation';
 
 export function HltvMatchup({
@@ -20,19 +21,30 @@ export function HltvMatchup({
   playerStats: OpenGraphPreview['matchPlayerStats'];
   teamSides: OpenGraphPreview['matchTeamSides'];
 }) {
+  const { t } = useTranslation();
   const accessibleScore = score
-    ? `, ${isLive ? 'live' : 'final'} score ${score[0]} to ${score[1]}`
+    ? `, ${t('hltv.score', {
+      status: isLive ? t('hltv.statusLive') : t('hltv.statusFinal'),
+      first: score[0],
+      second: score[1],
+    })}`
     : '';
   const accessibleMap = isLive && currentMap
-    ? `, current map ${currentMap.name} ${currentMap.score[0]} to ${currentMap.score[1]}`
+    ? `, ${t('hltv.currentMap', {
+      name: currentMap.name,
+      first: currentMap.score[0],
+      second: currentMap.score[1],
+    })}`
     : '';
   const visibleCompletedMaps = completedMaps?.filter(
     (map) => !currentMap || map.name !== currentMap.name,
   );
   const accessibleCompletedMaps = visibleCompletedMaps?.length
-    ? `, completed maps ${visibleCompletedMaps
-      .map((map) => `${map.name} ${map.score[0]} to ${map.score[1]}`)
-      .join(', ')}`
+    ? `, ${t('hltv.completedMaps', {
+      maps: visibleCompletedMaps
+        .map((map) => `${map.name} ${map.score[0]} ${t('hltv.to')} ${map.score[1]}`)
+        .join(', '),
+    })}`
     : '';
   const isCurrentMapFinished = currentMap
     ? isCompletedHltvMapScore(currentMap.score)
@@ -48,7 +60,7 @@ export function HltvMatchup({
         href={href}
         target="_blank"
         rel="noreferrer"
-        aria-label={`${teams[0].name} versus ${teams[1].name}${accessibleScore}${accessibleMap}${accessibleCompletedMaps}${accessibleSides}`}
+        aria-label={`${teams[0].name} ${t('hltv.versus')} ${teams[1].name}${accessibleScore}${accessibleMap}${accessibleCompletedMaps}${accessibleSides}`}
       >
         <HltvMatchupTeam team={teams[0]} />
         {score ? (
@@ -62,7 +74,7 @@ export function HltvMatchup({
           >
             {isLive ? (
               <span className="reader-card__hltv-live-label">
-                <i aria-hidden="true" /> Live
+                <i aria-hidden="true" /> {t('hltv.live')}
               </span>
             ) : null}
             <strong>{score[0]} : {score[1]}</strong>
@@ -80,7 +92,7 @@ export function HltvMatchup({
             ) : null}
           </span>
         ) : (
-          <strong className="reader-card__hltv-versus">vs</strong>
+          <strong className="reader-card__hltv-versus">{t('hltv.versus')}</strong>
         )}
         <HltvMatchupTeam team={teams[1]} />
       </a>
@@ -112,11 +124,12 @@ function HltvPlayerStats({
   teams: NonNullable<OpenGraphPreview['matchTeams']>;
   playerStats: OpenGraphPreview['matchPlayerStats'];
 }) {
+  const { t } = useTranslation();
   const hasPlayerStats = playerStats?.some((team) => team.length > 0);
   return (
     <details className="reader-card__hltv-player-stats">
       <summary>
-        <span>Player stats</span>
+        <span>{t('hltv.playerStats')}</span>
         <span aria-hidden="true">⌄</span>
       </summary>
       {hasPlayerStats && playerStats ? (
@@ -126,10 +139,10 @@ function HltvPlayerStats({
               <caption>{team.name}</caption>
               <thead>
                 <tr>
-                  <th scope="col">Player</th>
+                  <th scope="col">{t('hltv.player')}</th>
                   <th scope="col">K–D</th>
-                  <th scope="col"><abbr title="Assists">A</abbr></th>
-                  <th scope="col"><abbr title="Average damage per round">ADR</abbr></th>
+                  <th scope="col"><abbr title={t('hltv.assists')}>A</abbr></th>
+                  <th scope="col"><abbr title={t('hltv.averageDamage')}>ADR</abbr></th>
                 </tr>
               </thead>
               <tbody>
@@ -147,7 +160,7 @@ function HltvPlayerStats({
         </div>
       ) : (
         <p className="reader-card__hltv-player-stats-pending" role="status">
-          Waiting for player stats…
+          {t('hltv.waiting')}
         </p>
       )}
     </details>

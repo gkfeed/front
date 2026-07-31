@@ -2,15 +2,22 @@ import type {
   LiquipediaMatchPreview,
   LiquipediaMatchTeam,
 } from '../../services/liquipedia';
+import { useTranslation } from 'react-i18next';
 
 export function LiquipediaMatch({ match }: { match: LiquipediaMatchPreview }) {
+  const { t } = useTranslation();
   const [firstTeam, secondTeam] = match.teams;
   const [firstScore, secondScore] = match.score;
 
   return (
     <section
       className="liquipedia-match"
-      aria-label={`${firstTeam.name} ${firstScore} to ${secondScore} ${secondTeam.name}`}
+      aria-label={t('liquipedia.match', {
+        firstTeam: firstTeam.name,
+        firstScore,
+        secondScore,
+        secondTeam: secondTeam.name,
+      })}
     >
       <time className="liquipedia-match__date">{match.date}</time>
       <div className="liquipedia-match__overview">
@@ -31,6 +38,7 @@ export function LiquipediaMatch({ match }: { match: LiquipediaMatchPreview }) {
 }
 
 function LiquipediaTeam({ team, reverse = false }: { team: LiquipediaMatchTeam; reverse?: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className={reverse ? 'liquipedia-team liquipedia-team--reverse' : 'liquipedia-team'}>
       <div className="liquipedia-team__identity">
@@ -44,12 +52,12 @@ function LiquipediaTeam({ team, reverse = false }: { team: LiquipediaMatchTeam; 
         )}
       </div>
       {team.results.length > 0 ? (
-        <div className="liquipedia-team__form" aria-label={`${team.name} game results`}>
+        <div className="liquipedia-team__form" aria-label={t('liquipedia.gameResults', { team: team.name })}>
           {team.results.map((result, index) => (
             <span
               key={`${result}-${index}`}
               className={`liquipedia-team__form-result liquipedia-team__form-result--${result}`}
-              aria-label={result === 'default' ? 'No result' : result}
+              aria-label={result === 'default' ? t('liquipedia.noResult') : result}
             >
               {result === 'win' ? 'W' : result === 'loss' ? 'L' : '–'}
             </span>

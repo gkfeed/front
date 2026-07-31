@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { FeedCreator } from './react/components/FeedCreator';
 import { FeedsList } from './react/components/FeedsList';
@@ -15,9 +16,11 @@ import { NsfwPreferencesProvider } from './react/state/NsfwPreferencesProvider';
 import { useAuth } from './react/state/useAuth';
 
 function FeedListPage() {
+  const { t } = useTranslation();
+
   return (
     <section aria-labelledby="feeds-page-title">
-      <h1 id="feeds-page-title" className="page-title">Feed sources</h1>
+      <h1 id="feeds-page-title" className="page-title">{t('pages.feedSources')}</h1>
       <FeedsList />
     </section>
   );
@@ -26,24 +29,31 @@ function FeedListPage() {
 function RouteEffects() {
   const { pathname } = useLocation();
   const { status } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const main = document.querySelector<HTMLElement>('main');
     main?.focus();
-    document.title = `${main?.querySelector('h1')?.textContent ?? 'GKFEED'} | GKFEED`;
-  }, [pathname, status]);
+    document.title = `${main?.querySelector('h1')?.textContent ?? t('app.fallbackTitle')} | GKFEED`;
+  }, [pathname, status, t]);
 
   return null;
 }
 
 export function App() {
+  const { i18n, t } = useTranslation();
+
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n, i18n.language]);
+
   return (
     <BrowserRouter>
       <AuthProvider>
         <NsfwPreferencesProvider>
           <FeedSearchProvider>
             <RouteEffects />
-            <a className="skip-link" href="#main">Skip to content</a>
+            <a className="skip-link" href="#main">{t('app.skipToContent')}</a>
             <Navbar />
             <main id="main" tabIndex={-1}>
               <Routes>

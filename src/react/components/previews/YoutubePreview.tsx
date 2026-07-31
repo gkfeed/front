@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { FeedItemPreview } from '../../domain/feedItemPreview';
 
@@ -15,6 +16,7 @@ export function YoutubePreview({
   title,
   videoId,
 }: YoutubePreviewProps) {
+  const { t } = useTranslation();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
 
@@ -54,7 +56,7 @@ export function YoutubePreview({
       <button
         type="button"
         className="reader-card__youtube-trigger"
-        aria-label={`Play video ${title}`}
+        aria-label={t('preview.playVideo', { title })}
         onClick={() => {
           setIsPlayerOpen(true);
           setIsTheaterOpen(true);
@@ -82,6 +84,7 @@ type YoutubePlayerProps = {
 };
 
 function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater }: YoutubePlayerProps) {
+  const { t } = useTranslation();
   const parameters = new URLSearchParams({ autoplay: '1', rel: '0' });
 
   return (
@@ -94,18 +97,18 @@ function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater }: Youtu
           <button
             type="button"
             className="reader-card__theater-toggle"
-            aria-label={isTheaterOpen ? 'Exit theater mode' : 'Enter theater mode'}
+            aria-label={isTheaterOpen ? t('preview.exitTheater') : t('preview.enterTheater')}
             aria-pressed={isTheaterOpen}
             onClick={onToggleTheater}
           >
             <span aria-hidden="true">{isTheaterOpen ? '↙' : '↗'}</span>
-            {isTheaterOpen ? 'Exit theater' : 'Theater mode'}
+            {isTheaterOpen ? t('preview.exitTheaterShort') : t('preview.theater')}
           </button>
         </div>
         <div className="reader-card__preview reader-card__preview--youtube-player">
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
-            title={title || 'YouTube video player'}
+            title={title || t('preview.youtubePlayer')}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"

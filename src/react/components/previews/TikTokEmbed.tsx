@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type TikTokEmbedProps = {
   src: string;
@@ -7,6 +8,7 @@ type TikTokEmbedProps = {
 };
 
 export function TikTokEmbed({ src, title, requiresSoundGesture }: TikTokEmbedProps) {
+  const { t } = useTranslation();
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [showSoundPrompt, setShowSoundPrompt] = useState(requiresSoundGesture);
 
@@ -55,7 +57,7 @@ export function TikTokEmbed({ src, title, requiresSoundGesture }: TikTokEmbedPro
             setShowSoundPrompt(false);
           }}
         >
-          Tap for sound
+          {t('preview.sound')}
         </button>
       ) : null}
     </div>

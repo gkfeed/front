@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { createFeed, createFeedFromUrl } from '../services/feeds';
 import { useAuth } from '../state/useAuth';
@@ -16,6 +17,7 @@ const FEED_FIELDS: readonly (keyof FeedInput)[] = ['title', 'type', 'url'];
 const VALID_URL_PROTOCOLS: Record<string, true> = { 'http:': true, 'https:': true };
 
 export function useFeedCreator() {
+  const { t } = useTranslation();
   const { credentials } = useAuth();
   const [feed, setFeed] = useState<FeedInput>(EMPTY_FEED);
   const [mode, setMode] = useState<FeedCreatorMode>('lazy');
@@ -63,7 +65,7 @@ export function useFeedCreator() {
     submitted,
     saveStatus,
     isSaving,
-    statusMessage: getStatusMessage(saveStatus),
+    statusMessage: getStatusMessage(saveStatus, t),
     isFeedFieldValid: (field: keyof FeedInput) => isFeedFieldValid(feed, field),
     updateMode,
     updateFeed,
@@ -98,9 +100,9 @@ function isValidFeedUrl(value: string): boolean {
   }
 }
 
-function getStatusMessage(saveStatus: SaveStatus): string {
-  if (saveStatus === 'saving') return 'Saving source...';
-  if (saveStatus === 'success') return 'Feed source saved.';
-  if (saveStatus === 'error') return 'Could not save feed source. Try again.';
+function getStatusMessage(saveStatus: SaveStatus, t: (key: string) => string): string {
+  if (saveStatus === 'saving') return t('creator.saving');
+  if (saveStatus === 'success') return t('creator.saved');
+  if (saveStatus === 'error') return t('creator.saveError');
   return '';
 }

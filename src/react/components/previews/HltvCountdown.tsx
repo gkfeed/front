@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { OpenGraphPreview } from '../../../../shared/previewContracts';
 import { formatHltvCountdown } from './hltvPresentation';
@@ -16,6 +17,7 @@ export function HltvImageScore({
 }
 
 export function HltvCountdown({ startsAt }: { startsAt: string }) {
+  const { i18n, t } = useTranslation();
   const startTimestamp = Date.parse(startsAt);
   const [now, setNow] = useState(Date.now);
 
@@ -32,10 +34,10 @@ export function HltvCountdown({ startsAt }: { startsAt: string }) {
     <time
       className="reader-card__hltv-countdown"
       dateTime={startsAt}
-      title={new Date(startTimestamp).toLocaleString()}
+      title={new Date(startTimestamp).toLocaleString(i18n.language)}
       aria-live="polite"
     >
-      Starts in {formatHltvCountdown(remainingMilliseconds)}
+      {t('hltv.startsIn')} {formatHltvCountdown(remainingMilliseconds)}
     </time>
   );
 }

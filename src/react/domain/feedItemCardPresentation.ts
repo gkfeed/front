@@ -1,4 +1,6 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
+import type { TFunction } from 'i18next';
+import i18n from '../i18n';
 
 import {
   getRemoteFeedItemPreview,
@@ -64,12 +66,14 @@ export function buildFeedItemCardPresentation({
   nsfwMode,
   remotePreview,
   previewFailures,
+  t = i18n.t,
 }: {
   item: FeedItem;
   analysis: FeedItemAnalysis;
   nsfwMode: NsfwMode;
   remotePreview: RemotePreview;
   previewFailures: number;
+  t?: TFunction;
 }): FeedItemCardPresentation {
   const { hostname, url: itemUrl, provider, localPreview, youtubeVideoId } = analysis;
   const isNsfw = isNsfwLink(item.link);
@@ -86,14 +90,14 @@ export function buildFeedItemCardPresentation({
   const isHltv = provider === 'hltv';
   const isLiquipedia = provider === 'liquipedia';
   const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
-  const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
+  const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title, t);
   const remoteItemPreview = isRezka && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
   const description = isVk
     ? feedDescription ?? getFeedItemDescription(remotePreview.openGraphPreview?.description ?? '', item.title)
     : null;
-  const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item) : null;
+  const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item, t) : null;
   const preview = isTikTok
     ? tiktokEmbedPreview ?? localPreview
     : isRezka

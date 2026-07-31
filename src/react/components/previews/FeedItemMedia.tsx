@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { FeedItemPreview } from '../../domain/feedItemPreview';
 import { isAppleMobileDevice } from '../../domain/device';
@@ -25,6 +26,7 @@ export function FeedItemMedia({
   hltvImageScore,
   onPreviewError,
 }: FeedItemMediaProps) {
+  const { t } = useTranslation();
   const requiresSoundGesture = isAppleMobileDevice();
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
   const [showSoundPrompt, setShowSoundPrompt] = useState(requiresSoundGesture);
@@ -80,7 +82,7 @@ export function FeedItemMedia({
               setShowSoundPrompt(false);
             }}
           >
-            Tap for sound
+            {t('preview.sound')}
           </button>
         ) : null}
       </div>
@@ -110,8 +112,8 @@ export function FeedItemMedia({
       target="_blank"
       rel="noreferrer"
       aria-label={hltvImageScore
-        ? `Open ${hostname}, final score ${hltvImageScore[0]} to ${hltvImageScore[1]}`
-        : `Open ${hostname}`}
+        ? t('preview.openScore', { hostname, first: hltvImageScore[0], second: hltvImageScore[1] })
+        : t('preview.open', { hostname })}
     >
       <img
         src={preview.src}

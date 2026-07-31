@@ -1,4 +1,5 @@
 import { useLocation, useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { ReaderReview } from '../components/ReaderReview';
 import { ReaderScroll } from '../components/ReaderScroll';
@@ -8,6 +9,7 @@ import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
 
 export function ReaderPage() {
+  const { t } = useTranslation();
   const { search } = useLocation();
   const [, setSearchParams] = useSearchParams();
   const mode = getReaderMode(search);
@@ -47,20 +49,20 @@ export function ReaderPage() {
 
   return (
     <section className="reader" aria-labelledby="reader-page-title">
-      <h1 id="reader-page-title" className="sr-only">Reader</h1>
+      <h1 id="reader-page-title" className="sr-only">{t('pages.reader')}</h1>
       {isLoading ? <ReaderLoading /> : null}
       {loadFailed ? (
         <div className="reader__state" role="alert">
-          <p>Could not load your feed items.</p>
-          <button type="button" className="secondary" onClick={retryLoad}>Try again</button>
+          <p>{t('reader.loadError')}</p>
+          <button type="button" className="secondary" onClick={retryLoad}>{t('live.tryAgain')}</button>
         </div>
       ) : null}
       {!isLoading && !loadFailed && items.length === 0 ? (
         <div className="reader__state">
           <span className="reader__done-mark" aria-hidden="true">✓</span>
-          <h2>You’re all caught up</h2>
-          <p>There are no more items in this reading session.</p>
-          <button type="button" className="secondary" onClick={retryLoad}>Check again</button>
+          <h2>{t('reader.caughtUp')}</h2>
+          <p>{t('reader.noMore')}</p>
+          <button type="button" className="secondary" onClick={retryLoad}>{t('reader.checkAgain')}</button>
         </div>
       ) : null}
       {mode === 'review' && currentItem ? (
@@ -81,8 +83,8 @@ export function ReaderPage() {
       {mode === 'review' && !isLoading && !loadFailed && items.length > 0 && !currentItem ? (
         <div id="reader-review-panel" className="reader__state" role="region" aria-label="Review view">
           <span className="reader__done-mark" aria-hidden="true">✓</span>
-          <h2>You’ve reviewed everything</h2>
-          <p>Switch to Scroll to browse all items again.</p>
+          <h2>{t('reader.reviewedEverything')}</h2>
+          <p>{t('reader.switchToScroll')}</p>
         </div>
       ) : null}
       {mode === 'scroll' && !isLoading && !loadFailed && items.length > 0 ? <ReaderScroll items={items} /> : null}
@@ -91,8 +93,10 @@ export function ReaderPage() {
 }
 
 function ReaderLoading() {
+  const { t } = useTranslation();
+
   return (
-    <div className="reader__loading" role="status" aria-label="Loading feed items">
+    <div className="reader__loading" role="status" aria-label={t('reader.loading')}>
       <div className="reader__loading-line reader__loading-line--short" />
       <div className="reader__loading-line reader__loading-line--title" />
       <div className="reader__loading-line" />

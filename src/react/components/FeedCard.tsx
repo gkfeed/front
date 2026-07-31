@@ -1,14 +1,20 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import type { Feed } from '../types';
 import { getFeedIcon } from './feedIcons';
 
-function FeedContent({ feed, actionCopy }: { feed: Feed; actionCopy: string }) {
+function FeedContent({ feed, actionCopyKey }: { feed: Feed; actionCopyKey: 'feed.openDetails' | 'feed.details' }) {
+  const { t } = useTranslation();
   const feedIcon = getFeedIcon(feed);
   return (
     <>
-      <span className="feed__type-logo" role="img" aria-label={feedIcon.label}>
+      <span
+        className="feed__type-logo"
+        role="img"
+        aria-label={t('feed.typeIcon', { type: feedIcon.label.replace(/ feed type$/, '') })}
+      >
         <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
           <path d={feedIcon.path} fill="currentColor" />
         </svg>
@@ -19,21 +25,23 @@ function FeedContent({ feed, actionCopy }: { feed: Feed; actionCopy: string }) {
       </span>
       <span className="feed__url">{feed.url}</span>
       <span className="feed__action">
-        <span className="feed__action-copy">{actionCopy}</span>
-        <span className="feed__action-hint">source record</span>
+        <span className="feed__action-copy">{t(actionCopyKey)}</span>
+        <span className="feed__action-hint">{t('feed.sourceRecord')}</span>
       </span>
     </>
   );
 }
 
 export const FeedCard = memo(function FeedCard({ feed, asLink = true }: { feed: Feed; asLink?: boolean }) {
+  const { t } = useTranslation();
+
   return asLink ? (
-    <Link className="feed" to={`/feed/${feed.id}`} aria-label={`Open feed ${feed.title}`}>
-      <FeedContent feed={feed} actionCopy="Open details" />
+    <Link className="feed" to={`/feed/${feed.id}`} aria-label={t('feed.open', { title: feed.title })}>
+      <FeedContent feed={feed} actionCopyKey="feed.openDetails" />
     </Link>
   ) : (
     <article className="feed">
-      <FeedContent feed={feed} actionCopy="Feed details" />
+      <FeedContent feed={feed} actionCopyKey="feed.details" />
     </article>
   );
 });

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { getFeedItemPreview } from '../domain/feedItemPreview';
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
@@ -7,6 +8,7 @@ import { useAuth } from '../state/useAuth';
 import type { FeedItem } from '../types';
 
 export function LivePage() {
+  const { t } = useTranslation();
   const { credentials } = useAuth();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
@@ -21,28 +23,28 @@ export function LivePage() {
 
   return (
     <section className="live" aria-labelledby="live-page-title">
-      <h1 id="live-page-title" className="sr-only">Live</h1>
+      <h1 id="live-page-title" className="sr-only">{t('pages.live')}</h1>
 
       {isLoading ? (
         <div className="live__status" role="status">
           <span className="live__spinner" aria-hidden="true" />
-          Checking Twitch channels…
+          {t('live.checking')}
         </div>
       ) : null}
 
       {status === 'error' ? (
         <div className="live__state" role="alert">
-          <h2>Couldn’t check Twitch</h2>
-          <p>The live status check failed. Try again in a moment.</p>
-          <button type="button" className="secondary" onClick={retry}>Try again</button>
+          <h2>{t('live.checkErrorTitle')}</h2>
+          <p>{t('live.checkErrorText')}</p>
+          <button type="button" className="secondary" onClick={retry}>{t('live.tryAgain')}</button>
         </div>
       ) : null}
 
       {!isLoading && items?.length === 0 ? (
         <div className="live__state">
-          <h2>No one is live</h2>
-          <p>Your Twitch feeds are currently offline.</p>
-          <button type="button" className="secondary" onClick={retry}>Check again</button>
+          <h2>{t('live.noOne')}</h2>
+          <p>{t('live.offline')}</p>
+          <button type="button" className="secondary" onClick={retry}>{t('live.checkAgain')}</button>
         </div>
       ) : null}
 
@@ -55,9 +57,9 @@ export function LivePage() {
           />
           <div className="live__channels">
             <p className="sr-only" role="status">
-              {items.length} {items.length === 1 ? 'stream' : 'streams'} live
+              {t('live.stream', { count: items.length })}
             </p>
-            <ul aria-label="Live Twitch channels">
+            <ul aria-label={t('live.channels')}>
               {items.map((item) => {
                 const channel = getTwitchChannel(item);
                 const selected = item.id === selectedItem.id;
@@ -90,6 +92,7 @@ type TwitchPreviewProps = {
 };
 
 function TwitchPreview({ item, isPlaying, onPlay }: TwitchPreviewProps) {
+  const { t } = useTranslation();
   const channel = getTwitchChannel(item);
   const preview = getFeedItemPreview(item);
 
@@ -104,7 +107,7 @@ function TwitchPreview({ item, isPlaying, onPlay }: TwitchPreviewProps) {
       <div className="live__preview live__preview--player">
         <iframe
           src={`https://player.twitch.tv/?${parameters}`}
-          title={`${channel} Twitch player`}
+          title={t('live.playerTitle', { channel })}
           allow="autoplay; fullscreen"
           allowFullScreen
         />
@@ -116,10 +119,10 @@ function TwitchPreview({ item, isPlaying, onPlay }: TwitchPreviewProps) {
     <button
       type="button"
       className="live__preview live__preview-trigger"
-      aria-label={`Play ${channel} on Twitch`}
+      aria-label={t('live.playOn', { channel })}
       onClick={onPlay}
     >
-      {preview ? <img src={preview.src} alt={`${channel} live stream preview`} /> : null}
+      {preview ? <img src={preview.src} alt={t('live.previewAlt', { channel })} /> : null}
       <span className="live__play" aria-hidden="true">▶</span>
     </button>
   );

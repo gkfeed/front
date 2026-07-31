@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   applyTheme,
@@ -11,22 +12,31 @@ import {
 import type { ReaderMode } from '../state/readerMode';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 
-const shortLabels: Record<ThemePreference, string> = {
-  system: 'System',
-  'system-catppuccin': 'Catppuccin',
-  light: 'Light',
-  dark: 'Dark',
-  latte: 'Latte',
-  mocha: 'Mocha',
+const themeLabelKeys: Record<ThemePreference, string> = {
+  system: 'settings.themeSystem',
+  'system-catppuccin': 'settings.themeSystemCatppuccin',
+  light: 'settings.themeLight',
+  dark: 'settings.themeDark',
+  latte: 'settings.themeLatte',
+  mocha: 'settings.themeMocha',
 };
 
-const descriptions: Record<ThemePreference, string> = {
-  system: 'Light / Dark',
-  'system-catppuccin': 'Latte / Mocha',
-  light: 'Clean neutral',
-  dark: 'GKFEED original',
-  latte: 'Warm pastel',
-  mocha: 'Deep pastel',
+const themeDescriptionKeys: Record<ThemePreference, string> = {
+  system: 'settings.descriptionSystem',
+  'system-catppuccin': 'settings.descriptionSystemCatppuccin',
+  light: 'settings.descriptionLight',
+  dark: 'settings.descriptionDark',
+  latte: 'settings.descriptionLatte',
+  mocha: 'settings.descriptionMocha',
+};
+
+const themeAriaLabelKeys: Record<ThemePreference, string> = {
+  system: 'settings.themeSystemAria',
+  'system-catppuccin': 'settings.themeSystemCatppuccinAria',
+  light: 'settings.themeLightAria',
+  dark: 'settings.themeDarkAria',
+  latte: 'settings.themeLatteAria',
+  mocha: 'settings.themeMochaAria',
 };
 
 type ThemePickerProps = {
@@ -35,6 +45,7 @@ type ThemePickerProps = {
 };
 
 export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps) {
+  const { t } = useTranslation();
   const { nsfwMode, setNsfwMode } = useNsfwPreferences();
   const [theme, setTheme] = useState(getInitialThemePreference);
   const [isOpen, setIsOpen] = useState(false);
@@ -84,7 +95,7 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
       <button
         className="theme-picker__trigger"
         type="button"
-        aria-label="Settings"
+        aria-label={t('settings.button')}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={panelId}
@@ -97,14 +108,14 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
       </button>
 
       {isOpen ? (
-        <div className="theme-picker__panel" id={panelId} role="menu" aria-label="Settings menu">
+        <div className="theme-picker__panel" id={panelId} role="menu" aria-label={t('settings.menu')}>
           <div className="theme-picker__heading">
-            <strong>Settings</strong>
-            <span>Preferences and appearance</span>
+            <strong>{t('settings.heading')}</strong>
+            <span>{t('settings.description')}</span>
           </div>
           {readerMode && onReaderModeChange ? (
             <div className="theme-picker__section">
-              <span className="theme-picker__section-title">Reader view</span>
+              <span className="theme-picker__section-title">{t('settings.readerView')}</span>
               <div className="theme-picker__reader-options">
                 {(['review', 'scroll'] as const).map((mode) => {
                   const selected = mode === readerMode;
@@ -122,7 +133,7 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
                       }}
                     >
                       <span aria-hidden="true">{mode === 'review' ? '✓' : '↕'}</span>
-                      {mode === 'review' ? 'Review' : 'Scroll'}
+                      {mode === 'review' ? t('settings.review') : t('settings.scroll')}
                     </button>
                   );
                 })}
@@ -130,13 +141,13 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
             </div>
           ) : null}
           <div className="theme-picker__section">
-            <span className="theme-picker__section-title">Content</span>
-            <span className="theme-picker__content-description">Porno365 and Pornhub items</span>
+            <span className="theme-picker__section-title">{t('settings.content')}</span>
+            <span className="theme-picker__content-description">{t('settings.nsfwDescription')}</span>
             <div className="theme-picker__nsfw-options">
               {([
-                { mode: 'show', label: 'Show', icon: '○' },
-                { mode: 'blur', label: 'Blur', icon: '◉' },
-                { mode: 'hide', label: 'Hide', icon: '⊘' },
+                { mode: 'show', labelKey: 'settings.show', icon: '○' },
+                { mode: 'blur', labelKey: 'settings.blur', icon: '◉' },
+                { mode: 'hide', labelKey: 'settings.hide', icon: '⊘' },
               ] as const).map((option) => {
                 const selected = option.mode === nsfwMode;
                 return (
@@ -150,14 +161,14 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
                     onClick={() => setNsfwMode(option.mode)}
                   >
                     <span aria-hidden="true">{option.icon}</span>
-                    {option.label}
+                    {t(option.labelKey)}
                   </button>
                 );
               })}
             </div>
           </div>
           <div className="theme-picker__section">
-            <span className="theme-picker__section-title">Appearance</span>
+            <span className="theme-picker__section-title">{t('settings.appearance')}</span>
           <div className="theme-picker__options">
             {themePreferences.map((option) => {
               const selected = option.value === theme;
@@ -170,7 +181,7 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
                   type="button"
                   role="menuitemradio"
                   aria-checked={selected}
-                  aria-label={`${option.label} theme`}
+                  aria-label={t('settings.theme', { theme: t(themeAriaLabelKeys[option.value]) })}
                   onClick={() => {
                     setTheme(option.value);
                     saveTheme(option.value);
@@ -179,8 +190,8 @@ export function ThemePicker({ readerMode, onReaderModeChange }: ThemePickerProps
                 >
                   <ThemeSwatch theme={option.value} />
                   <span className="theme-picker__option-copy">
-                    <strong>{shortLabels[option.value]}</strong>
-                    <small>{descriptions[option.value]}</small>
+                    <strong>{t(themeLabelKeys[option.value])}</strong>
+                    <small>{t(themeDescriptionKeys[option.value])}</small>
                   </span>
                   <span className="theme-picker__check" aria-hidden="true">✓</span>
                 </button>

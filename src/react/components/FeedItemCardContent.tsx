@@ -1,4 +1,5 @@
 import type { FeedItemCardModel } from './useFeedItemCardModel';
+import { useTranslation } from 'react-i18next';
 import { HltvCountdown, HltvMatchup } from './previews/HltvMatch';
 import { FeedItemMedia } from './previews/FeedItemMedia';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
@@ -6,6 +7,7 @@ import { TikTokComments } from './previews/TikTokComments';
 import { YoutubePreview } from './previews/YoutubePreview';
 
 export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
+  const { t } = useTranslation();
   const {
     item,
     hostname,
@@ -22,7 +24,7 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
   } = model;
 
   if (isPreviewPending) {
-    return <div className="reader-card__preview-placeholder" role="status" aria-label="Loading preview" />;
+    return <div className="reader-card__preview-placeholder" role="status" aria-label={t('preview.loading')} />;
   }
   if (hltvMatchTeams) {
     return (
@@ -77,6 +79,7 @@ export function FeedItemCardSupplementary({ model }: { model: FeedItemCardModel 
 }
 
 export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
+  const { t } = useTranslation();
   const {
     item,
     hostname,
@@ -105,12 +108,12 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
     <>
       <div className="reader-card__meta">
         <span>{hostname}</span>
-        <span>Feed #{item.feedId}</span>
+        <span>{t('feed.item')} #{item.feedId}</span>
       </div>
       <h2 className="reader-card__title">{item.title || hostname}</h2>
       {description ? <p className="reader-card__description">{description}</p> : null}
       <a className="reader-card__link" href={item.link} target="_blank" rel="noreferrer">
-        Read original <span aria-hidden="true">↗</span>
+        {t('reader.openOriginal')} <span aria-hidden="true">↗</span>
       </a>
     </>
   );

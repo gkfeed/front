@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useFeedCreator } from '../hooks/useFeedCreator';
 import type { FeedCreatorMode } from '../hooks/useFeedCreator';
@@ -7,29 +8,29 @@ import { FeedTypePicker } from './FeedTypePicker';
 
 type CreatorFieldConfig = {
   id: keyof FeedInput;
-  label: string;
+  labelKey: string;
   type: 'select' | 'text' | 'url';
-  placeholder: string;
-  error: string;
+  placeholderKey?: string;
+  errorKey: string;
 };
 
 const URL_FIELD: CreatorFieldConfig = {
   id: 'url',
-  label: 'URL',
+  labelKey: 'creator.url',
   type: 'url',
-  placeholder: 'https://example.com/feed.xml',
-  error: 'Enter a valid feed URL.',
+  errorKey: 'creator.validUrl',
 };
 
 const URL_FIELDS: readonly CreatorFieldConfig[] = [URL_FIELD];
 
 const MANUAL_FIELDS: readonly CreatorFieldConfig[] = [
-  { id: 'title', label: 'Title', type: 'text', placeholder: 'Product updates', error: 'Enter a feed title.' },
-  { id: 'type', label: 'Type', type: 'select', placeholder: '', error: 'Select a feed type.' },
+  { id: 'title', labelKey: 'creator.title', type: 'text', placeholderKey: 'creator.titlePlaceholder', errorKey: 'creator.titleRequired' },
+  { id: 'type', labelKey: 'creator.type', type: 'select', errorKey: 'creator.typeRequired' },
   URL_FIELD,
 ];
 
 export function FeedCreator() {
+  const { t } = useTranslation();
   const {
     feed,
     mode,
@@ -51,10 +52,10 @@ export function FeedCreator() {
   return (
     <section className="creator" aria-labelledby="feed-create-title">
       <form className="creator__form" onSubmit={onSubmit} noValidate>
-        <h1 id="feed-create-title" className="page-title">Create feed</h1>
-        <div className="creator__tabs" role="tablist" aria-label="Feed creation mode">
-          <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>URL only</ModeTab>
-          <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>Manual</ModeTab>
+        <h1 id="feed-create-title" className="page-title">{t('pages.createFeed')}</h1>
+        <div className="creator__tabs" role="tablist" aria-label={t('creator.mode')}>
+          <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>{t('creator.urlOnly')}</ModeTab>
+          <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>{t('creator.manual')}</ModeTab>
         </div>
         {mode === 'lazy' ? (
           <CreatorPanel
@@ -88,7 +89,7 @@ export function FeedCreator() {
             {statusMessage}
           </span>
           <button className="creator__submit" type="submit" disabled={isSaving}>
-            {isSaving ? 'Saving source' : 'Add feed'}
+            {isSaving ? t('creator.savingButton') : t('creator.addButton')}
           </button>
         </div>
       </form>
@@ -168,16 +169,18 @@ type CreatorFieldProps = CreatorFieldConfig & {
 
 function CreatorField({
   id,
-  label,
+  labelKey,
   type,
   value,
-  placeholder,
-  error,
+  placeholderKey,
+  errorKey,
   invalid,
   disabled,
   onChange,
 }: CreatorFieldProps) {
+  const { t } = useTranslation();
   const errorId = `${id}-error`;
+  const label = t(labelKey);
 
   return (
     <div className={`field field--${id}${invalid ? ' field--invalid' : ''}`}>
@@ -203,7 +206,7 @@ function CreatorField({
               value={value}
               onChange={(event) => onChange(event.target.value)}
               autoComplete={id === 'url' ? 'url' : 'off'}
-              placeholder={placeholder}
+              placeholder={placeholderKey ? t(placeholderKey) : undefined}
               aria-describedby={invalid ? errorId : undefined}
               aria-invalid={invalid ? 'true' : undefined}
               disabled={disabled}
@@ -212,7 +215,7 @@ function CreatorField({
           </div>
         </>
       )}
-      {invalid ? <p id={errorId} className="field__error" role="alert">{error}</p> : null}
+      {invalid ? <p id={errorId} className="field__error" role="alert">{t(errorKey)}</p> : null}
     </div>
   );
 }

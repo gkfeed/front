@@ -1,4 +1,5 @@
 import { useCallback, useDeferredValue, useMemo, useState, useTransition } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
@@ -13,6 +14,7 @@ const SEARCH_DEBOUNCE_MS = 80;
 const SKELETON_ITEMS = [1, 2, 3] as const;
 
 export function FeedsList() {
+  const { t } = useTranslation();
   const { credentials } = useAuth();
   const { searchTerm, setSearchTerm } = useFeedSearch();
   const [draftSearchTerm, setDraftSearchTerm] = useState(searchTerm);
@@ -23,20 +25,22 @@ export function FeedsList() {
   const displayQuery = settledSearchTerm.trim();
   const normalizedQuery = displayQuery.toLowerCase();
   const filteredFeeds = useMemo(() => filterFeeds(feeds, normalizedQuery), [feeds, normalizedQuery]);
-  const resultsAnnouncement = isLoading ? 'Loading feeds.' : getResultsAnnouncement(filteredFeeds.length, displayQuery);
+  const resultsAnnouncement = isLoading
+    ? t('feed.loadingPeriod')
+    : getResultsAnnouncement(filteredFeeds.length, displayQuery, t);
 
   return (
     <div className="container">
       <label className="feed-search">
-        <span className="sr-only">Search feeds</span>
+        <span className="sr-only">{t('feed.search')}</span>
         <svg className="feed-search__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <path d="m20 20-4.3-4.3m2.3-5.2a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
         </svg>
         <input
           className="feed-search__input"
           type="search"
-          placeholder="Search feeds"
-          aria-label="Search feeds"
+          placeholder={t('feed.search')}
+          aria-label={t('feed.search')}
           value={draftSearchTerm}
           onChange={(event) => {
             const nextSearchTerm = event.target.value;
@@ -49,7 +53,7 @@ export function FeedsList() {
         {resultsAnnouncement}
       </p>
       {isLoading ? (
-        <div className="loading" role="status" aria-live="polite" aria-label="Loading feeds">
+        <div className="loading" role="status" aria-live="polite" aria-label={t('feed.loading')}>
           {SKELETON_ITEMS.map((item) => (
             <div key={item} className="feed-skeleton" aria-hidden="true">
               <span className="skeleton-line skeleton-title" />
@@ -57,41 +61,40 @@ export function FeedsList() {
               <span className="skeleton-line skeleton-url" />
             </div>
           ))}
-          <span className="sr-only">Loading feeds...</span>
+          <span className="sr-only">{t('feed.loading')}...</span>
         </div>
       ) : errorMessage ? (
         <div className="empty">
           <span role="alert">{errorMessage}</span>
-          <button type="button" className="secondary" onClick={retry}>Try again</button>
+          <button type="button" className="secondary" onClick={retry}>{t('live.tryAgain')}</button>
         </div>
       ) : filteredFeeds.length ? (
         filteredFeeds.map((feed) => <FeedCard key={feed.id} feed={feed} />)
       ) : (
         <p className="empty">
-          {normalizedQuery ? 'No matching feeds.' : <>No feeds yet. <Link to="/create">Create one</Link>.</>}
+          {normalizedQuery
+            ? t('feed.noMatching')
+            : <>{t('feed.noFeeds')} <Link to="/create">{t('feed.createOne')}</Link>.</>}
         </p>
       )}
     </div>
   );
 }
 
-function getResultsAnnouncement(count: number, query = ''): string {
-  const feedLabel = count === 1 ? 'feed' : 'feeds';
-
-  if (!query) return `Showing ${count} ${feedLabel}.`;
-
-  return count === 0
-    ? `No feeds found for search term ${query}.`
-    : `${count} ${feedLabel} found for search term ${query}.`;
+function getResultsAnnouncement(count: number, query: string, t: (key: string, options?: Record<string, unknown>) => string): string {
+  if (!query) return t('feed.showing', { count });
+  if (count === 0) return t('feed.noResults', { query });
+  return t('feed.found', { count, query });
 }
 
 function useFeeds(credentials: Credentials | null) {
+  const { t } = useTranslation();
   const load = useCallback((signal: AbortSignal) => getAllFeeds(credentials, signal), [credentials]);
   const { result: feeds = [], error, isLoading, retry } = useAsyncLoad(load);
 
   return {
     feeds,
-    errorMessage: error ? getLoadErrorMessage(error) : '',
+    errorMessage: error ? getLoadErrorMessage(error, t) : '',
     isLoading,
     retry,
   };
@@ -105,10 +108,10 @@ function filterFeeds(feeds: Feed[], normalizedQuery: string): Feed[] {
   ));
 }
 
-function getLoadErrorMessage(error: unknown): string {
+function getLoadErrorMessage(error: unknown, t: (key: string) => string): string {
   return isStatusError(error) && error.status === 401
-    ? 'Unable to load feeds. Log in and try again.'
-    : 'Unable to load feeds. Check your connection and try again.';
+    ? t('feed.unableUnauthorized')
+    : t('feed.unableConnection');
 }
 
 function isStatusError(error: unknown): error is Error & { status: number } {

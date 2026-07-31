@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAsyncLoad } from './useAsyncLoad';
 import { deleteFeedById, getFeedById } from '../services/feeds';
@@ -7,11 +8,8 @@ import type { Credentials, Feed } from '../types';
 
 type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
 
-const FEED_NOT_FOUND_MESSAGE = 'Feed source not found.';
-const LOAD_ERROR_MESSAGE = 'Could not load this feed source.';
-const DELETE_ERROR_MESSAGE = 'Could not delete this feed source. Try again.';
-
 export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) {
+  const { t } = useTranslation();
   const { credentials } = useAuth();
   const [deleteState, setDeleteState] = useState<DeleteState>('idle');
   const feedId = parseFeedId(feedIdParam);
@@ -22,12 +20,12 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
   const { result: feed, error: loadErrorValue, isLoading, retry: retryLoad } = useAsyncLoad(load);
   const isFeedNotFound = loadErrorValue instanceof FeedNotFoundError;
   const loadError = loadErrorValue
-    ? isFeedNotFound ? FEED_NOT_FOUND_MESSAGE : LOAD_ERROR_MESSAGE
+    ? isFeedNotFound ? t('feedDetails.notFound') : t('feedDetails.loadError')
     : '';
   const isDeleting = deleteState === 'deleting';
   const isConfirmingDelete = deleteState !== 'idle';
   const canRetryLoad = Boolean(loadErrorValue) && !isFeedNotFound;
-  const deleteError = deleteState === 'error' ? DELETE_ERROR_MESSAGE : '';
+  const deleteError = deleteState === 'error' ? t('feedDetails.deleteError') : '';
 
   async function deleteFeed() {
     if (feedId === null || isDeleting) return;

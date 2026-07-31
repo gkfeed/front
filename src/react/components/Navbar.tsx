@@ -1,10 +1,12 @@
 import { NavLink, useLocation, useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
 import { BrandMark } from './Icons';
 import { ThemePicker } from './ThemePicker';
 
 export function Navbar() {
+  const { t } = useTranslation();
   const location = useLocation();
   const [, setSearchParams] = useSearchParams();
   const isReader = location.pathname === '/reader';
@@ -19,17 +21,17 @@ export function Navbar() {
   }
 
   return (
-    <nav className="nav" aria-label="Primary navigation">
-      <NavLink className="nav__brand" to="/" aria-label="GKFEED home">
+    <nav className="nav" aria-label={t('nav.primary')}>
+      <NavLink className="nav__brand" to="/" aria-label={t('nav.home')}>
         <BrandMark />
         <span>GKFEED</span>
       </NavLink>
-      <span className="nav__links" aria-label="Feed sections">
-        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/" end>List</NavLink>
-        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/reader">Reader</NavLink>
-        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/create">Create</NavLink>
-        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/live">Live</NavLink>
-        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/login">Login</NavLink>
+      <span className="nav__links" aria-label={t('nav.sections')}>
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/" end>{t('nav.list')}</NavLink>
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/reader">{t('nav.reader')}</NavLink>
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/create">{t('nav.create')}</NavLink>
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/live">{t('nav.live')}</NavLink>
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/login">{t('nav.login')}</NavLink>
       </span>
       <ThemePicker
         readerMode={isReader ? getReaderMode(location.search) : undefined}
