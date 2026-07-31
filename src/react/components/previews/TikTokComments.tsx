@@ -1,54 +1,23 @@
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FeedItem } from '../../types';
-import {
-  fetchTikTokComments,
-  type TikTokComment,
-} from '../../services/tiktokComments';
+import { useTikTokComments } from '../../hooks/useTikTokComments';
 import { useTikTokCommentsPreference } from '../../hooks/useTikTokCommentsPreference';
 import { UserIcon } from '../Icons';
 
 export function TikTokComments({ item }: { item: FeedItem }) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useTikTokCommentsPreference();
-  const [comments, setComments] = useState<TikTokComment[] | null>(null);
-  const [remoteDescription, setRemoteDescription] = useState<string | null>(null);
-  const [creator, setCreator] = useState<{ name: string; avatarUrl: string | null } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [loadAttempt, setLoadAttempt] = useState(0);
+  const {
+    comments,
+    remoteDescription,
+    creator,
+    isLoading,
+    loadFailed,
+    retry,
+  } = useTikTokComments(item.link, isExpanded);
   const commentsId = `tiktok-comments-list-${item.id}`;
   const description = getVideoDescription(item.text, item.title) ?? remoteDescription;
-
-  useEffect(() => {
-    if (!isExpanded || comments !== null || loadFailed) return;
-
-    const controller = new AbortController();
-    setIsLoading(true);
-    fetchTikTokComments(item.link, controller.signal)
-      .then((result) => {
-        setComments(result.comments);
-        setRemoteDescription(result.description);
-        setCreator(result.creatorName ? {
-          name: result.creatorName,
-          avatarUrl: result.creatorAvatarUrl,
-        } : null);
-      })
-      .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) setLoadFailed(true);
-      })
-      .finally(() => setIsLoading(false));
-    return () => controller.abort();
-  }, [comments, isExpanded, item.link, loadAttempt, loadFailed]);
-
-  function retry() {
-    setLoadFailed(false);
-    setComments(null);
-    setRemoteDescription(null);
-    setCreator(null);
-    setLoadAttempt((attempt) => attempt + 1);
-  }
 
   return (
     <aside className="tiktok-comments" aria-label={t('comments.label')}>

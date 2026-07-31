@@ -1,6 +1,6 @@
 import { decodeHtml, parseAttributes, resolveHttpUrl } from './html.js';
 import { normalizeHostname } from '../../shared/urlRules.js';
-import { getStringProperty, isRecord } from '../../shared/previewGuards.js';
+import { getStringProperty, isRecord } from '../../shared/valueGuards.js';
 
 export function parseVkStructuredVideo(
   html: string,

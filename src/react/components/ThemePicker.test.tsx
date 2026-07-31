@@ -149,4 +149,28 @@ describe('ThemePicker', () => {
     expect(screen.queryByRole('menu')).toBeNull();
     expect(document.activeElement).toBe(trigger);
   });
+
+  it('keeps the settings menu relationship and expanded state accessible', () => {
+    document.documentElement.dataset.theme = 'light';
+    render(<ThemePicker />);
+    const trigger = screen.getByRole('button', { name: 'Settings' });
+
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.getAttribute('aria-controls')).toBeTruthy();
+
+    fireEvent.click(trigger);
+
+    const menu = screen.getByRole('menu', { name: 'Settings menu' });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(trigger.getAttribute('aria-controls')).toBe(menu.id);
+    expect(screen.getAllByRole('menuitemradio').every((item) => (
+      item.getAttribute('aria-checked') === 'true' || item.getAttribute('aria-checked') === 'false'
+    ))).toBe(true);
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
 });

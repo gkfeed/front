@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { FeedItem } from '../../types';
-import { fetchTikTokComments } from '../../services/tiktokComments';
+import { fetchTikTokComments, type TikTokCommentsResult } from '../../services/tiktokComments';
 import { TikTokComments } from './TikTokComments';
 
 vi.mock('../../services/tiktokComments');
@@ -24,6 +24,28 @@ afterEach(() => {
 });
 
 describe('TikTokComments', () => {
+  it('announces loading and aborts an in-flight request when collapsed', async () => {
+    vi.mocked(fetchTikTokComments).mockImplementation((_url, signal) => new Promise((resolve) => {
+      signal.addEventListener('abort', () => resolve({
+        comments: [],
+        description: null,
+        creatorName: null,
+        creatorAvatarUrl: null,
+      }));
+    }));
+    render(<TikTokComments item={item} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
+
+    expect(await screen.findByText('Loading comments…')).toBeTruthy();
+    const signal = vi.mocked(fetchTikTokComments).mock.calls[0]?.[1];
+    expect(signal?.aborted).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide comments' }));
+
+    expect(signal?.aborted).toBe(true);
+  });
+
   it('shows and hides the video description with the comments', async () => {
     vi.mocked(fetchTikTokComments).mockResolvedValue({
       comments: [],
@@ -97,6 +119,37 @@ describe('TikTokComments', () => {
 
     await waitFor(() => expect(fetchTikTokComments).toHaveBeenCalledTimes(2));
     expect(await screen.findByText('No comments are available for this video.')).toBeTruthy();
+  });
+
+  it('ignores a stale response after the video link changes', async () => {
+    let resolveFirst: ((result: TikTokCommentsResult) => void) | undefined;
+    let resolveSecond: ((result: TikTokCommentsResult) => void) | undefined;
+    vi.mocked(fetchTikTokComments)
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveSecond = resolve; }));
+    const view = render(<TikTokComments item={item} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
+    await waitFor(() => expect(fetchTikTokComments).toHaveBeenCalledTimes(1));
+
+    view.rerender(<TikTokComments item={{ ...item, link: 'https://www.tiktok.com/@creator/video/456' }} />);
+    await waitFor(() => expect(fetchTikTokComments).toHaveBeenCalledTimes(2));
+
+    resolveFirst?.({
+      comments: [{ id: 'old', text: 'Old response', author: 'Old', username: 'old', avatarUrl: null }],
+      description: null,
+      creatorName: null,
+      creatorAvatarUrl: null,
+    });
+    resolveSecond?.({
+      comments: [{ id: 'new', text: 'New response', author: 'New', username: 'new', avatarUrl: null }],
+      description: null,
+      creatorName: null,
+      creatorAvatarUrl: null,
+    });
+
+    expect(await screen.findByText('New response')).toBeTruthy();
+    expect(screen.queryByText('Old response')).toBeNull();
   });
 
   it('remembers comment visibility across TikTok videos for the session', async () => {

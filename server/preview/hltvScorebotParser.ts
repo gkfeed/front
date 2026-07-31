@@ -4,7 +4,7 @@ import type {
   HltvMatchTeamSidesPreview,
   HltvPlayerStatsPreview,
 } from '../../shared/previewContracts.js';
-import { isRecord } from '../../shared/previewGuards.js';
+import { isRecord } from '../../shared/valueGuards.js';
 import { findHltvMapDisplayName } from './hltvHtmlParser.js';
 
 export interface HltvScorebotSnapshot {

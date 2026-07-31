@@ -1,5 +1,5 @@
 import { PreviewError } from './preview/errors.js';
-import { isRecord } from '../shared/previewGuards.js';
+import { isRecord } from '../shared/valueGuards.js';
 
 export type TikTokComment = {
   id: string;

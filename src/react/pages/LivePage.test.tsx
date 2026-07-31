@@ -34,6 +34,21 @@ afterEach(() => {
 });
 
 describe('LivePage', () => {
+  it('announces the loading state and labels the live channel group', async () => {
+    let resolveItems: ((items: typeof LIVE_ITEM[]) => void) | undefined;
+    vi.mocked(getLiveTwitchItems).mockImplementation(
+      () => new Promise((resolve) => { resolveItems = resolve; }),
+    );
+    render(<LivePage />);
+
+    expect(screen.getByRole('status').textContent).toContain('Checking Twitch channels');
+
+    resolveItems?.([LIVE_ITEM]);
+
+    expect(await screen.findByRole('list', { name: 'Live Twitch channels' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Live' })).toBeTruthy();
+  });
+
   it('shows live Twitch items as selectable streams', async () => {
     vi.mocked(getLiveTwitchItems).mockResolvedValue([LIVE_ITEM, SECOND_LIVE_ITEM]);
     render(<LivePage />);
@@ -60,6 +75,19 @@ describe('LivePage', () => {
     expect(player.getAttribute('src')).toContain('https://player.twitch.tv/?');
     expect(player.getAttribute('src')).toContain('channel=some_channel');
     expect(player.getAttribute('src')).toContain('parent=localhost');
+  });
+
+  it('stops the current player when another live channel is selected', async () => {
+    vi.mocked(getLiveTwitchItems).mockResolvedValue([LIVE_ITEM, SECOND_LIVE_ITEM]);
+    render(<LivePage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Play some_channel on Twitch' }));
+    expect(screen.getByTitle('some_channel Twitch player')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'another_channel' }));
+
+    expect(screen.queryByTitle('some_channel Twitch player')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Play another_channel on Twitch' })).toBeTruthy();
   });
 
   it('shows a clear empty state when all Twitch feeds are offline', async () => {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { getPreview, item } from './FeedItemCard.component.testUtils';
@@ -200,6 +200,42 @@ describe('FeedItemCard HLTV previews', () => {
     const completedScore = screen.getByText('Dust2').parentElement
       ?.querySelector('.reader-card__hltv-current-map-score');
     expect(completedScore?.children[2]?.classList.contains('reader-card__hltv-current-map-score--winner')).toBe(true);
+  });
+
+  it('keeps player stats collapsed until requested and exposes table semantics', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+      description: null,
+      image: 'https://www.hltv.org/img/static/openGraphHltvLogo.png',
+      video: null,
+      siteName: 'HLTV.org',
+      type: null,
+      matchStatus: 'live',
+      matchTeams: [
+        { name: 'Liquid', logo: null },
+        { name: 'Spirit', logo: null },
+      ],
+      matchScore: ['1', '0'],
+      matchPlayerStats: [
+        [{ nickname: 'NAF', kills: 18, deaths: 12, assists: 4, adr: 91.3 }],
+        [{ nickname: 'donk', kills: 20, deaths: 14, assists: 3, adr: 104.8 }],
+      ],
+    });
+
+    render(<FeedItemCard item={{ ...item, link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event' }} />);
+
+    const summary = await screen.findByText('Player stats');
+    const details = summary.closest('details');
+    expect(details?.open).toBe(false);
+
+    fireEvent.click(summary);
+
+    expect(details?.open).toBe(true);
+    const liquidTable = screen.getByRole('table', { name: 'Liquid' });
+    expect(liquidTable).toBeTruthy();
+    expect(within(liquidTable).getByRole('columnheader', { name: 'Player' })).toBeTruthy();
+    expect(within(liquidTable).getByTitle('Average damage per round')).toBeTruthy();
   });
 
   it('replaces the generic HLTV image with a team matchup', async () => {
