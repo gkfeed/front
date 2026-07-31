@@ -1,9 +1,9 @@
-import type { OpenGraphPreview } from '../../../../shared/previewContracts';
+import type { HltvMatchSnapshot } from '../../../../shared/previewContracts';
 
 export function getHltvMapScoreClass(
   score: [string, string],
   teamIndex: 0 | 1,
-  teamSides: OpenGraphPreview['matchTeamSides'],
+  teamSides: HltvMatchSnapshot['teamSides'],
 ): string | undefined {
   if (!isCompletedHltvMapScore(score)) {
     return teamSides

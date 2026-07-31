@@ -2,6 +2,7 @@ import { DEFAULT_REQUEST_TIMEOUT_MS } from './requestTimeout';
 import {
   requestJson as requestJsonTransport,
   requestResponse,
+  type HttpRequestOptions,
 } from './httpRequest';
 
 const DEFAULT_API_ROOT = import.meta.env.DEV
@@ -37,20 +38,18 @@ export function requireCredentials<T extends { username: string; password: strin
   throw new ApiError('Login required', 401);
 }
 
+const apiRequestOptions: HttpRequestOptions = {
+  timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+  createHttpError: (status) => new ApiError(`Request failed with ${status}`, status),
+  createTimeoutError: (timeoutMs) => new ApiTimeoutError(timeoutMs),
+};
+
 export async function request(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  return requestResponse(input, init, {
-    timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
-    createHttpError: (status) => new ApiError(`Request failed with ${status}`, status),
-    createTimeoutError: (timeoutMs) => new ApiTimeoutError(timeoutMs),
-  });
+  return requestResponse(input, init, apiRequestOptions);
 }
 
-export async function requestJson(input: RequestInfo | URL, init?: RequestInit): Promise<unknown> {
-  return requestJsonTransport(input, init ?? {}, {
-    timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
-    createHttpError: (status) => new ApiError(`Request failed with ${status}`, status),
-    createTimeoutError: (timeoutMs) => new ApiTimeoutError(timeoutMs),
-  });
+export async function requestJson(input: RequestInfo | URL, init: RequestInit = {}): Promise<unknown> {
+  return requestJsonTransport(input, init, apiRequestOptions);
 }
 
 export async function postJson(

@@ -1,10 +1,10 @@
 import type {
   HltvCurrentMapPreview,
-  OpenGraphPreview,
+  HltvMatchSnapshot,
 } from '../../shared/previewContracts.js';
 import { decodeHtml, htmlText, parseAttributes, resolveHttpUrl } from './html.js';
 
-export function parseHltvMatchStatus(html: string): OpenGraphPreview['matchStatus'] {
+export function parseHltvMatchStatus(html: string): HltvMatchSnapshot['status'] {
   const countdown = html.match(
     /<div\b[^>]*class=(?:"[^"]*\bcountdown\b[^"]*"|'[^']*\bcountdown\b[^']*')[^>]*>([\s\S]*?)<\/div>/i,
   )?.[1];
@@ -17,7 +17,7 @@ export function parseHltvMatchStatus(html: string): OpenGraphPreview['matchStatu
   }
 }
 
-export function parseHltvMatchScore(html: string): OpenGraphPreview['matchScore'] {
+export function parseHltvMatchScore(html: string): HltvMatchSnapshot['score'] {
   let firstTeamMaps = 0;
   let secondTeamMaps = 0;
 
@@ -30,7 +30,7 @@ export function parseHltvMatchScore(html: string): OpenGraphPreview['matchScore'
   return [String(firstTeamMaps), String(secondTeamMaps)];
 }
 
-export function parseHltvCurrentMap(html: string): OpenGraphPreview['matchCurrentMap'] {
+export function parseHltvCurrentMap(html: string): HltvMatchSnapshot['currentMap'] {
   const maps = getHltvMapSections(html).map((map) => {
     if (hasHltvCompletedMap(map)) return null;
     const nameMarkup = map.match(
@@ -51,7 +51,7 @@ export function parseHltvCurrentMap(html: string): OpenGraphPreview['matchCurren
   return null;
 }
 
-export function parseHltvCompletedMaps(html: string): NonNullable<OpenGraphPreview['matchCompletedMaps']> {
+export function parseHltvCompletedMaps(html: string): NonNullable<HltvMatchSnapshot['completedMaps']> {
   return getHltvMapSections(html).flatMap((map) => {
     const parsed = parseHltvMapNameAndScore(map);
     if (!parsed || (!hasHltvCompletedMap(map) && !isCompletedHltvMapScore(parsed.score))) return [];
@@ -76,7 +76,7 @@ export function parseHltvMatchStartsAt(html: string): string | null {
 export function parseHltvMatchTeams(
   html: string,
   pageUrl: URL,
-): OpenGraphPreview['matchTeams'] {
+): HltvMatchSnapshot['teams'] {
   const teams = [1, 2].map((side) => {
     const blockPattern = new RegExp(
       `<div\\b[^>]*class=(?:"[^"]*\\bteam${side}-gradient\\b[^"]*"|'[^']*\\bteam${side}-gradient\\b[^']*')[^>]*>`,

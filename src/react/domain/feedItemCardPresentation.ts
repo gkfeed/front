@@ -1,5 +1,11 @@
-import type { OpenGraphPreview } from '../../../shared/previewContracts';
+import type { HltvMatchSnapshot, OpenGraphPreview } from '../../../shared/previewContracts';
 
+import {
+  getFeedItemCardPresentationDescriptor,
+  type FeedItemCardImagePreview,
+  type FeedItemCardPresentationDescriptor,
+  type FeedItemCardVariant,
+} from './feedItemProviders';
 import { resolveFeedItemCardMetadata } from './feedItemCardMetadata';
 import {
   resolveFeedItemCardPreviews,
@@ -11,23 +17,17 @@ import type { FeedItem } from '../types';
 import type { NsfwMode } from '../state/nsfwPreferencesContext';
 import type { RemotePreview } from '../services/remotePreview';
 
-export type FeedItemCardVariant =
-  | { type: 'standard' }
-  | { type: 'youtube'; videoId: string }
-  | { type: 'tiktok' }
-  | { type: 'instagram'; media: 'photo' | 'video' }
-  | { type: 'liquipedia' }
-  | { type: 'simple-image' };
-
-export type FeedItemCardImagePreview =
-  | { type: 'none' }
-  | { type: 'generated'; source: 'reddit' | 'other' }
-  | { type: 'hltv' };
+export type {
+  FeedItemCardImagePreview,
+  FeedItemCardPresentationDescriptor,
+  FeedItemCardVariant,
+} from './feedItemProviders';
 
 export type FeedItemCardPresentation = {
   item: FeedItem;
   hostname: string | null;
   provider: FeedItemAnalysis['provider'];
+  descriptor: FeedItemCardPresentationDescriptor;
   variant: FeedItemCardVariant;
   imagePreview: FeedItemCardImagePreview;
   openGraphPreview: OpenGraphPreview | null;
@@ -38,7 +38,8 @@ export type FeedItemCardPresentation = {
   isNsfw: boolean;
   shouldBlurNsfw: boolean;
   shouldHideNsfw: boolean;
-  hltvMatchTeams: NonNullable<OpenGraphPreview>['matchTeams'];
+  hltvMatchTeams: HltvMatchSnapshot['teams'];
+  hltvSnapshot: HltvMatchSnapshot | null;
   hltvImageScore: [string, string] | null;
 };
 
@@ -72,10 +73,16 @@ export function buildFeedItemCardPresentation({
     visiblePreview,
     remoteItemPreview: previews.remoteItemPreview,
   });
+  const descriptor = getFeedItemCardPresentationDescriptor({
+    provider: metadata.provider,
+    variant: metadata.variant,
+    imagePreview: metadata.imagePreview,
+  });
 
   return {
     item,
     ...metadata,
+    descriptor,
     preview: previews.preview,
     visiblePreview,
   };

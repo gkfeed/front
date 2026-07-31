@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router';
 import { FeedCard } from '../components/FeedCard';
 import { useFeed } from '../hooks/useFeed';
 import type { FeedDeleteStatus } from '../hooks/useFeed';
+import { getRequestErrorMessage } from '../services/authError';
 
 export function FeedPage() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export function FeedPage() {
   const {
     feed,
     loadStatus,
+    loadError,
     deleteStatus,
     requestDelete,
     cancelDelete,
@@ -29,7 +31,9 @@ export function FeedPage() {
   } else if (loadStatus === 'not-found' || loadStatus === 'error') {
     content = (
       <LoadErrorState
-        message={t(loadStatus === 'not-found' ? 'feedDetails.notFound' : 'feedDetails.loadError')}
+        message={loadStatus === 'not-found'
+          ? t('feedDetails.notFound')
+          : getRequestErrorMessage(loadError, t, 'feedDetails.loadError')}
         canRetry={loadStatus === 'error'}
         onRetry={retryLoad}
       />

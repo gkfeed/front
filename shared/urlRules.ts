@@ -1,16 +1,40 @@
+const HTTP_PROTOCOLS = new Set(['http:', 'https:']);
+const TIKTOK_HOSTS = ['tiktok.com'] as const;
+const VK_HOSTS = ['vk.com', 'vk.ru', 'vkvideo.ru'] as const;
+const VK_IMAGE_HOSTS = ['vkuserphoto.ru', 'userapi.com'] as const;
+const HLTV_MATCH_PATH = /^\/matches\/\d+(?:\/|$)/;
+const LIQUIPEDIA_MATCH_PATH = /\/Match(?::|%3A)/i;
+const TIKTOK_VIDEO_PATH = /\/(?:video|v)\/\d+(?:\/|$)/;
+
 export function normalizeHostname(hostname: string): string {
   return hostname.replace(/^www\./, '').toLowerCase();
 }
 
+function isHostnameOrSubdomain(hostname: string, domains: readonly string[]): boolean {
+  const normalized = normalizeHostname(hostname);
+  return domains.some((domain) => normalized === domain || normalized.endsWith(`.${domain}`));
+}
+
 export function isHltvMatchUrl(url: URL): boolean {
   return normalizeHostname(url.hostname) === 'hltv.org'
-    && /^\/matches\/\d+(?:\/|$)/.test(url.pathname);
+    && HLTV_MATCH_PATH.test(url.pathname);
+}
+
+export function isTikTokVideoUrl(url: URL): boolean {
+  return HTTP_PROTOCOLS.has(url.protocol)
+    && isHostnameOrSubdomain(url.hostname, TIKTOK_HOSTS)
+    && TIKTOK_VIDEO_PATH.test(url.pathname);
+}
+
+export function isLiquipediaMatchUrl(url: URL): boolean {
+  return normalizeHostname(url.hostname) === 'liquipedia.net'
+    && LIQUIPEDIA_MATCH_PATH.test(url.pathname);
+}
+
+export function isVkHost(hostname: string): boolean {
+  return isHostnameOrSubdomain(hostname, VK_HOSTS);
 }
 
 export function isVkImageHost(hostname: string): boolean {
-  const normalized = normalizeHostname(hostname);
-  return normalized === 'vkuserphoto.ru'
-    || normalized.endsWith('.vkuserphoto.ru')
-    || normalized === 'userapi.com'
-    || normalized.endsWith('.userapi.com');
+  return isHostnameOrSubdomain(hostname, VK_IMAGE_HOSTS);
 }

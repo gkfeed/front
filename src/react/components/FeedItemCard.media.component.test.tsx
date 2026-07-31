@@ -16,6 +16,7 @@ describe('FeedItemCard media providers', () => {
       video: 'https://example.com/video.mp4',
       siteName: 'Example',
       type: 'video',
+      providerData: null,
     });
 
     render(<FeedItemCard item={item} />);
@@ -38,6 +39,7 @@ describe('FeedItemCard media providers', () => {
       video: 'https://example.com/portrait.mp4',
       siteName: 'Example',
       type: 'video',
+      providerData: null,
     });
 
     render(<FeedItemCard item={item} />);
@@ -115,6 +117,7 @@ describe('FeedItemCard media providers', () => {
       video: 'https://video.example.com/playback?id=123',
       siteName: 'TikTok',
       type: 'video',
+      providerData: null,
     });
 
     render(<FeedItemCard item={{
@@ -142,6 +145,7 @@ describe('FeedItemCard media providers', () => {
       video: null,
       siteName: 'TikTok',
       type: 'video',
+      providerData: null,
     });
 
     render(<FeedItemCard item={{

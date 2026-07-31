@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ApiError } from '../services/feeds';
+import { getRequestErrorMessage } from '../services/authError';
 import type { Credentials } from '../types';
 
 export interface LoginFormState {
@@ -50,7 +50,7 @@ export function useLoginForm({ authenticate, onAuthenticated }: UseLoginFormOpti
       setSubmitted(false);
       onAuthenticated();
     } catch (error) {
-      setErrorMessage(authenticationErrorMessage(error, t));
+      setErrorMessage(getRequestErrorMessage(error, t, 'auth.signInError', 'auth.invalidCredentials'));
     } finally {
       setIsSubmitting(false);
     }
@@ -70,11 +70,4 @@ export function useLoginForm({ authenticate, onAuthenticated }: UseLoginFormOpti
     onSubmit,
     onChange,
   };
-}
-
-function authenticationErrorMessage(error: unknown, t: (key: string) => string): string {
-  if (error instanceof ApiError && [401, 403].includes(error.status)) {
-    return t('auth.invalidCredentials');
-  }
-  return t('auth.signInError');
 }

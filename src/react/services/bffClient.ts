@@ -19,6 +19,7 @@ export class BffResponseError extends Error {
     message: string,
     readonly endpoint: string,
     readonly status?: number,
+    readonly reason: 'invalid-json' | 'invalid-shape' = 'invalid-shape',
   ) {
     super(message);
     this.name = 'BffResponseError';
@@ -55,7 +56,13 @@ export async function requestBffJson<T>({
   timeoutMs = BFF_REQUEST_TIMEOUT_MS,
 }: BffJsonRequest<T>): Promise<T> {
   const requestUrl = `${endpoint}?url=${encodeURIComponent(input)}`;
-  const value = await requestJson<T>(requestUrl, signal ? { signal } : {}, {
+  const createResponseError = (status: number) => new BffResponseError(
+    `Invalid ${resourceName} response`,
+    endpoint,
+    status,
+    'invalid-shape',
+  );
+  return requestJson<T>(requestUrl, { signal }, {
     timeoutMs,
     createHttpError: (status) => new BffHttpError(
       `${httpErrorName} request failed with ${status}`,
@@ -67,13 +74,9 @@ export async function requestBffJson<T>({
       `Invalid ${resourceName} response`,
       endpoint,
       status,
+      'invalid-json',
     ),
     validate,
-    createInvalidResponseError: (status) => new BffResponseError(
-      `Invalid ${resourceName} response`,
-      endpoint,
-      status,
-    ),
+    createInvalidResponseError: createResponseError,
   });
-  return value;
 }

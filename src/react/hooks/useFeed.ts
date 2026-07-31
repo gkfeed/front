@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { useAsyncLoad } from './useAsyncLoad';
+import { isNotFoundError } from '../services/authError';
 import { deleteFeedById, getFeedById } from '../services/feeds';
 import { useAuth } from '../state/useAuth';
 import type { Credentials, Feed } from '../types';
@@ -23,7 +24,7 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     error: loadError,
     retry: retryLoad,
   } = useAsyncLoad(load);
-  const loadStatus: FeedLoadStatus = loadError instanceof FeedNotFoundError
+  const loadStatus: FeedLoadStatus = (loadError instanceof FeedNotFoundError || isNotFoundError(loadError))
     ? 'not-found'
     : asyncLoadStatus;
   const isDeleting = deleteState === 'deleting';
@@ -52,6 +53,7 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
   return {
     feed,
     loadStatus,
+    loadError,
     deleteStatus: deleteState,
     retryLoad,
     requestDelete,

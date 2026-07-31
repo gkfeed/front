@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { RefObject } from 'react';
 
-export function usePreviewVisibility(ref: RefObject<HTMLElement | null>): boolean {
+export function usePreviewVisibility(
+  ref: RefObject<HTMLElement | null>,
+  rootMargin = '400px 0px',
+): boolean {
   const [isVisible, setIsVisible] = useState(() => typeof IntersectionObserver === 'undefined');
 
   useEffect(() => {
@@ -16,10 +19,10 @@ export function usePreviewVisibility(ref: RefObject<HTMLElement | null>): boolea
         setIsVisible(true);
         observer.disconnect();
       }
-    }, { rootMargin: '400px 0px' });
+    }, { rootMargin });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [ref]);
+  }, [ref, rootMargin]);
 
   return isVisible;
 }

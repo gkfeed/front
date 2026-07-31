@@ -1,4 +1,4 @@
-import type { OpenGraphPreview } from '../../shared/previewContracts.js';
+import type { HltvProviderData, OpenGraphPreview } from '../../shared/previewContracts.js';
 import { isHltvMatchUrl, isVkImageHost } from '../../shared/urlRules.js';
 import { decodeHtml, parseAttributes, resolveHttpUrl, stripTags } from './html.js';
 import {
@@ -13,7 +13,6 @@ import { parseRezkaOriginalCover, parseVkStructuredVideo } from './openGraphProv
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
   const isHltvMatch = isHltvMatchUrl(pageUrl);
-  const matchStatus = isHltvMatch ? parseHltvMatchStatus(html) : null;
   const structuredVideo = parseVkStructuredVideo(html, pageUrl);
   const metadata = parseMetadata(html);
   const documentTitle = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
@@ -40,18 +39,28 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
     type: metadata.get('og:type') ?? null,
-    matchStartsAt: isHltvMatch ? parseHltvMatchStartsAt(html) : null,
-    matchTeams: isHltvMatch ? parseHltvMatchTeams(html, pageUrl) : null,
-    matchStatus,
-    matchScore: matchStatus === 'live' || matchStatus === 'over' ? parseHltvMatchScore(html) : null,
-    matchCurrentMap: matchStatus === 'live' ? parseHltvCurrentMap(html) : null,
-    matchCompletedMaps: isHltvMatch ? parseHltvCompletedMaps(html) : null,
-    matchPlayerStats: null,
-    matchTeamSides: null,
+    providerData: isHltvMatch ? parseHltvProviderData(html, pageUrl) : null,
   };
 }
 
 export { isHltvMatchUrl } from '../../shared/urlRules.js';
+
+function parseHltvProviderData(html: string, pageUrl: URL): HltvProviderData {
+  const status = parseHltvMatchStatus(html);
+  return {
+    provider: 'hltv',
+    snapshot: {
+      startsAt: parseHltvMatchStartsAt(html),
+      teams: parseHltvMatchTeams(html, pageUrl),
+      status,
+      score: status === 'live' || status === 'over' ? parseHltvMatchScore(html) : null,
+      currentMap: status === 'live' ? parseHltvCurrentMap(html) : null,
+      completedMaps: parseHltvCompletedMaps(html),
+      playerStats: null,
+      teamSides: null,
+    },
+  };
+}
 
 function parseMetadata(html: string): Map<string, string> {
   const metadata = new Map<string, string>();

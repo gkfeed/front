@@ -10,21 +10,49 @@ const validPreview = {
   video: null,
   siteName: null,
   type: null,
+  providerData: null,
 };
 
 describe('isOpenGraphPreview', () => {
   it('rejects lookalike values instead of coercing external fields', () => {
-    expect(isOpenGraphPreview({ ...validPreview, matchStatus: ['live'] })).toBe(false);
-    expect(isOpenGraphPreview({ ...validPreview, matchStatus: { toString: () => 'live' } })).toBe(false);
-    expect(isOpenGraphPreview({ ...validPreview, matchScore: ['1', 0] })).toBe(false);
-  });
-
-  it('accepts the supported optional match fields after runtime validation', () => {
     expect(isOpenGraphPreview({
       ...validPreview,
-      matchStatus: 'live',
-      matchScore: ['1', '0'],
-      matchTeams: [{ name: 'A', logo: null }, { name: 'B', logo: 'https://cdn.example/b.png' }],
+      providerData: { provider: 'hltv', snapshot: { ...validSnapshot, status: ['live'] } },
+    })).toBe(false);
+    expect(isOpenGraphPreview({
+      ...validPreview,
+      providerData: { provider: 'hltv', snapshot: { ...validSnapshot, status: { toString: () => 'live' } } },
+    })).toBe(false);
+    expect(isOpenGraphPreview({
+      ...validPreview,
+      providerData: { provider: 'hltv', snapshot: { ...validSnapshot, score: ['1', 0] } },
+    })).toBe(false);
+    expect(isOpenGraphPreview({ ...validPreview, providerData: undefined })).toBe(false);
+  });
+
+  it('accepts the supported provider snapshot after runtime validation', () => {
+    expect(isOpenGraphPreview({
+      ...validPreview,
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          ...validSnapshot,
+          status: 'live',
+          score: ['1', '0'],
+          teams: [{ name: 'A', logo: null }, { name: 'B', logo: 'https://cdn.example/b.png' }],
+        },
+      },
     })).toBe(true);
   });
 });
+
+const validSnapshot = {
+  startsAt: null,
+  teams: null,
+  status: null,
+  score: null,
+  currentMap: null,
+  completedMaps: null,
+  playerStats: null,
+  teamSides: null,
+};

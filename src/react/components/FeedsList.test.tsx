@@ -58,7 +58,7 @@ describe('FeedsList', () => {
       .mockResolvedValueOnce([]);
     render(<FeedsList />, { wrapper });
 
-    expect(await screen.findByText('Unable to load feeds. Log in and try again.')).toBeTruthy();
+    expect(await screen.findByText('Your session has expired. Please sign in again.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText(/No feeds yet/)).toBeTruthy();
   });

@@ -3,7 +3,11 @@ import type { OpenGraphPreview } from '../../../shared/previewContracts';
 import { isVkImageHost } from '../../../shared/urlRules';
 import { requestBffJson } from './bffClient';
 
-export type { OpenGraphPreview } from '../../../shared/previewContracts';
+export type {
+  HltvMatchSnapshot,
+  OpenGraphMetadata,
+  OpenGraphPreview,
+} from '../../../shared/previewContracts';
 
 export async function getOpenGraphPreview(url: string, signal?: AbortSignal): Promise<OpenGraphPreview> {
   const value = await requestBffJson({

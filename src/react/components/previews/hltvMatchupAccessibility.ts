@@ -1,4 +1,4 @@
-import type { OpenGraphPreview } from '../../../../shared/previewContracts';
+import type { HltvMatchSnapshot, HltvMatchTeamPreview } from '../../../../shared/previewContracts';
 import { isCompletedHltvMapScore } from './hltvPresentation';
 
 type HltvMatchupAccessibilityMap = {
@@ -27,12 +27,12 @@ export function getHltvMatchupAccessibilityData({
   completedMaps,
   teamSides,
 }: {
-  teams: NonNullable<OpenGraphPreview['matchTeams']>;
-  score: OpenGraphPreview['matchScore'];
+  teams: [HltvMatchTeamPreview, HltvMatchTeamPreview];
+  score: HltvMatchSnapshot['score'];
   isLive: boolean;
-  currentMap: OpenGraphPreview['matchCurrentMap'];
-  completedMaps: OpenGraphPreview['matchCompletedMaps'];
-  teamSides: OpenGraphPreview['matchTeamSides'];
+  currentMap: HltvMatchSnapshot['currentMap'];
+  completedMaps: HltvMatchSnapshot['completedMaps'];
+  teamSides: HltvMatchSnapshot['teamSides'];
 }): HltvMatchupAccessibilityData {
   const visibleCompletedMaps = (completedMaps ?? []).filter(
     (map) => !currentMap || map.name !== currentMap.name,

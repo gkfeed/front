@@ -33,7 +33,8 @@ export function useHltvLiveRefresh({
   const refreshEnabled = enabled
     && isVisible
     && isHltv
-    && currentPreview?.matchStatus === 'live';
+    && currentPreview?.providerData?.provider === 'hltv'
+    && currentPreview.providerData.snapshot.status === 'live';
   const load = useCallback(
     (signal: AbortSignal) => getOpenGraphPreview(url, signal),
     [url],

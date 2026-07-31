@@ -1,12 +1,12 @@
-import type { OpenGraphPreview } from '../../../../shared/previewContracts';
+import type { HltvMatchSnapshot, HltvMatchTeamPreview } from '../../../../shared/previewContracts';
 import { useTranslation } from 'react-i18next';
 
 export function HltvPlayerStats({
   teams,
   playerStats,
 }: {
-  teams: NonNullable<OpenGraphPreview['matchTeams']>;
-  playerStats: OpenGraphPreview['matchPlayerStats'];
+  teams: [HltvMatchTeamPreview, HltvMatchTeamPreview];
+  playerStats: HltvMatchSnapshot['playerStats'];
 }) {
   const { t } = useTranslation();
   const hasPlayerStats = playerStats?.some((team) => team.length > 0);

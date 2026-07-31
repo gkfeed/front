@@ -10,7 +10,7 @@ import { useReviewSession } from './useReviewSession';
 export function useFeedReader() {
   const { credentials } = useAuth();
   const { nsfwMode } = useNsfwPreferences();
-  const { loadedItems, status, isLoading, retry } = useFeedItems(credentials);
+  const { loadedItems, status, error: loadError, isLoading, retry } = useFeedItems(credentials);
   const { deleteItem: deleteRemoteItem, isDeleting, deleteFailed } = useFeedItemDeletion(credentials);
   const [deletedItemIds, setDeletedItemIds] = useState<Set<number>>(() => new Set());
 
@@ -68,6 +68,7 @@ export function useFeedReader() {
     isLoading,
     isDeleting,
     loadFailed: status === 'error',
+    loadError,
     deleteFailed,
     remainingCount: activeReviewIds.length,
     keepItem,

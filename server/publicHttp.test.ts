@@ -5,5 +5,6 @@ describe('public HTTP exports', () => {
     const publicHttp = await import('./publicHttp.js');
     expect(publicHttp.isPrivateAddress('127.0.0.1')).toBe(true);
     expect(publicHttp.createPinnedLookup).toBeTypeOf('function');
+    expect(publicHttp.createPinnedHttpsAgent).toBeTypeOf('function');
   });
 });

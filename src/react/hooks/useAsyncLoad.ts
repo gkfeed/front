@@ -35,12 +35,9 @@ export function useAsyncLoad<T>(
     : resource.state;
 
   return {
+    ...resource,
     state,
     status: state.status,
-    result: resource.result,
-    data: resource.data,
-    error: resource.error,
     isLoading: state.status === 'loading',
-    retry: resource.retry,
   };
 }

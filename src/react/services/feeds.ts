@@ -11,6 +11,7 @@ import { parseFeedItemsPage, parseFeeds } from './feedSchemas';
 const ITEMS_PAGE_SIZE = 100;
 
 export { ApiError } from './apiClient';
+export { validateCredentials } from './auth';
 
 export async function getAllFeeds(credentials: Credentials | null, signal?: AbortSignal): Promise<Feed[]> {
   const response = await requestJson(endpoint('list'), {
@@ -18,10 +19,6 @@ export async function getAllFeeds(credentials: Credentials | null, signal?: Abor
     ...(signal ? { signal } : {}),
   });
   return parseFeeds(response);
-}
-
-export async function validateCredentials(credentials: Credentials, signal?: AbortSignal): Promise<void> {
-  await getAllFeeds(credentials, signal);
 }
 
 export async function getFeedById(
@@ -56,7 +53,9 @@ export async function getFeedItems(
     const page = parseFeedItemsPage(response);
     items.push(...page.items);
 
-    if (page.nextCursor === undefined) break;
+    // A broken upstream can keep returning empty pages with new cursors.
+    // There is no useful progress to make once a page contains no items.
+    if (page.items.length === 0 || page.nextCursor === undefined) break;
     if (seenCursors.has(page.nextCursor)) throw new Error('Invalid API response');
     seenCursors.add(page.nextCursor);
     cursor = page.nextCursor;

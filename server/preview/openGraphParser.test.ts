@@ -21,14 +21,7 @@ describe('parseOpenGraph: generic metadata', () => {
       video: null,
       siteName: 'Example',
       type: 'article',
-      matchStartsAt: null,
-      matchTeams: null,
-      matchStatus: null,
-      matchScore: null,
-      matchCurrentMap: null,
-      matchCompletedMaps: null,
-      matchPlayerStats: null,
-      matchTeamSides: null,
+      providerData: null,
     });
   });
 

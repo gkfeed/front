@@ -1,13 +1,17 @@
 import { useTranslation } from 'react-i18next';
+import { useRef } from 'react';
 
 import type { FeedItem } from '../../types';
 import { useTikTokComments } from '../../hooks/useTikTokComments';
 import { useTikTokCommentsPreference } from '../../hooks/useTikTokCommentsPreference';
+import { usePreviewVisibility } from '../../hooks/usePreviewVisibility';
 import { UserIcon } from '../Icons';
-import { normalizeExternalText } from '../../../../shared/text';
+import { getFeedItemDescription } from '../../domain/feedItemDescription';
 
 export function TikTokComments({ item }: { item: FeedItem }) {
   const { t } = useTranslation();
+  const commentsRef = useRef<HTMLElement>(null);
+  const isVisible = usePreviewVisibility(commentsRef, '0px');
   const [isExpanded, setIsExpanded] = useTikTokCommentsPreference();
   const {
     comments,
@@ -16,12 +20,12 @@ export function TikTokComments({ item }: { item: FeedItem }) {
     isLoading,
     loadFailed,
     retry,
-  } = useTikTokComments(item.link, isExpanded);
+  } = useTikTokComments(item.link, isExpanded && isVisible);
   const commentsId = `tiktok-comments-list-${item.id}`;
-  const description = getVideoDescription(item.text, item.title) ?? remoteDescription;
+  const description = getFeedItemDescription(item.text, item.title) ?? remoteDescription;
 
   return (
-    <aside className="tiktok-comments" aria-label={t('comments.label')}>
+    <aside ref={commentsRef} className="tiktok-comments" aria-label={t('comments.label')}>
       <div className="tiktok-comments__toolbar">
         <h2 id={`tiktok-comments-${item.id}`} className="tiktok-comments__title">
           {t('comments.title')}
@@ -101,18 +105,6 @@ export function TikTokComments({ item }: { item: FeedItem }) {
       ) : null}
     </aside>
   );
-}
-
-function getVideoDescription(content: string, title: string): string | null {
-  if (!content || typeof DOMParser === 'undefined') return null;
-
-  const document = new DOMParser().parseFromString(content, 'text/html');
-  document.querySelectorAll('script, style, noscript').forEach((element) => element.remove());
-  const description = normalizeExternalText(document.body.textContent ?? '');
-  if (!description || description.toLocaleLowerCase() === normalizeExternalText(title).toLocaleLowerCase()) {
-    return null;
-  }
-  return description;
 }
 
 function renderDescription(description: string) {

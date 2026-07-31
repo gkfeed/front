@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -18,21 +18,61 @@ const item: FeedItem = {
   text: 'Video caption',
 };
 
+const emptyComments: TikTokCommentsResult = {
+  comments: [],
+  description: null,
+  creatorName: null,
+  creatorAvatarUrl: null,
+};
+
+function renderComments(overrides: Partial<FeedItem> = {}) {
+  return render(<TikTokComments item={{ ...item, ...overrides }} />);
+}
+
 afterEach(() => {
   cleanup();
   window.sessionStorage.clear();
+  vi.unstubAllGlobals();
   vi.resetAllMocks();
 });
 
 describe('TikTokComments', () => {
+  it('loads comments only after the expanded card becomes visible', async () => {
+    window.sessionStorage.setItem('gkfeed:tiktok-comments-expanded', 'true');
+    const callbacks: IntersectionObserverCallback[] = [];
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(callback: IntersectionObserverCallback) {
+        callbacks.push(callback);
+      }
+
+      observe() {}
+
+      disconnect() {}
+    });
+    vi.mocked(fetchTikTokComments).mockResolvedValue(emptyComments);
+
+    render(
+      <>
+        <TikTokComments item={item} />
+        <TikTokComments item={{ ...item, id: 13, link: 'https://www.tiktok.com/@creator/video/456' }} />
+      </>,
+    );
+
+    expect(callbacks).toHaveLength(2);
+    expect(fetchTikTokComments).not.toHaveBeenCalled();
+
+    act(() => callbacks[0]?.(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      {} as IntersectionObserver,
+    ));
+
+    await waitFor(() => expect(fetchTikTokComments).toHaveBeenCalledTimes(1));
+    expect(fetchTikTokComments).toHaveBeenCalledWith(item.link, expect.any(AbortSignal));
+  });
+
   it('finishes loading when comments are expanded on mount in StrictMode', async () => {
     window.sessionStorage.setItem('gkfeed:tiktok-comments-expanded', 'true');
-    vi.mocked(fetchTikTokComments).mockResolvedValue({
-      comments: [],
-      description: null,
-      creatorName: null,
-      creatorAvatarUrl: null,
-    });
+    vi.mocked(fetchTikTokComments).mockResolvedValue(emptyComments);
 
     render(
       <StrictMode>
@@ -45,14 +85,9 @@ describe('TikTokComments', () => {
 
   it('announces loading and aborts an in-flight request when collapsed', async () => {
     vi.mocked(fetchTikTokComments).mockImplementation((_url, signal) => new Promise((resolve) => {
-      signal.addEventListener('abort', () => resolve({
-        comments: [],
-        description: null,
-        creatorName: null,
-        creatorAvatarUrl: null,
-      }));
+      signal.addEventListener('abort', () => resolve(emptyComments));
     }));
-    render(<TikTokComments item={item} />);
+    renderComments();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
 
@@ -66,13 +101,8 @@ describe('TikTokComments', () => {
   });
 
   it('shows and hides the video description with the comments', async () => {
-    vi.mocked(fetchTikTokComments).mockResolvedValue({
-      comments: [],
-      description: null,
-      creatorName: null,
-      creatorAvatarUrl: null,
-    });
-    render(<TikTokComments item={{ ...item, text: '<p>Video <strong>caption</strong> #topic</p>' }} />);
+    vi.mocked(fetchTikTokComments).mockResolvedValue(emptyComments);
+    renderComments({ text: '<p>Video <strong>caption</strong> #topic</p>' });
 
     expect(screen.queryByText('Video caption #topic')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
@@ -92,13 +122,8 @@ describe('TikTokComments', () => {
   });
 
   it('does not render replacement markers from a feed item', async () => {
-    vi.mocked(fetchTikTokComments).mockResolvedValue({
-      comments: [],
-      description: null,
-      creatorName: null,
-      creatorAvatarUrl: null,
-    });
-    render(<TikTokComments item={{ ...item, title: '\uFFFD', text: '<p>\uFFFD</p>' }} />);
+    vi.mocked(fetchTikTokComments).mockResolvedValue(emptyComments);
+    renderComments({ title: '\uFFFD', text: '<p>\uFFFD</p>' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
 
@@ -117,7 +142,7 @@ describe('TikTokComments', () => {
       creatorName: 'Video Creator',
       creatorAvatarUrl: 'https://example.com/creator.jpg',
     });
-    render(<TikTokComments item={{ ...item, text: '' }} />);
+    renderComments({ text: '' });
 
     expect(fetchTikTokComments).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
@@ -140,13 +165,8 @@ describe('TikTokComments', () => {
   it('offers retry when loading fails', async () => {
     vi.mocked(fetchTikTokComments)
       .mockRejectedValueOnce(new Error('offline'))
-      .mockResolvedValueOnce({
-        comments: [],
-        description: null,
-        creatorName: null,
-        creatorAvatarUrl: null,
-      });
-    render(<TikTokComments item={item} />);
+      .mockResolvedValueOnce(emptyComments);
+    renderComments();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
@@ -161,7 +181,7 @@ describe('TikTokComments', () => {
     vi.mocked(fetchTikTokComments)
       .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
       .mockImplementationOnce(() => new Promise((resolve) => { resolveSecond = resolve; }));
-    const view = render(<TikTokComments item={item} />);
+    const view = renderComments();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
     await waitFor(() => expect(fetchTikTokComments).toHaveBeenCalledTimes(1));
@@ -187,19 +207,14 @@ describe('TikTokComments', () => {
   });
 
   it('remembers comment visibility across TikTok videos for the session', async () => {
-    vi.mocked(fetchTikTokComments).mockResolvedValue({
-      comments: [],
-      description: null,
-      creatorName: null,
-      creatorAvatarUrl: null,
-    });
-    const first = render(<TikTokComments item={item} />);
+    vi.mocked(fetchTikTokComments).mockResolvedValue(emptyComments);
+    const first = renderComments();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
     expect(await screen.findByRole('button', { name: 'Hide comments' })).toBeTruthy();
     first.unmount();
 
-    render(<TikTokComments item={{ ...item, id: 13, link: 'https://www.tiktok.com/@creator/video/456' }} />);
+    renderComments({ id: 13, link: 'https://www.tiktok.com/@creator/video/456' });
     expect(screen.getByRole('button', { name: 'Hide comments' })).toBeTruthy();
     await waitFor(() => expect(fetchTikTokComments).toHaveBeenLastCalledWith(
       'https://www.tiktok.com/@creator/video/456',

@@ -1,4 +1,4 @@
-import type { OpenGraphPreview } from '../../../../shared/previewContracts';
+import type { HltvMatchSnapshot } from '../../../../shared/previewContracts';
 import { useTranslation } from 'react-i18next';
 
 import { getHltvMapScoreClass } from './hltvPresentation';
@@ -10,11 +10,11 @@ export function HltvMatchupScore({
   completedMaps,
   teamSides,
 }: {
-  score: OpenGraphPreview['matchScore'];
+  score: HltvMatchSnapshot['score'];
   isLive: boolean;
-  currentMap: OpenGraphPreview['matchCurrentMap'];
-  completedMaps: NonNullable<OpenGraphPreview['matchCompletedMaps']>;
-  teamSides: OpenGraphPreview['matchTeamSides'];
+  currentMap: HltvMatchSnapshot['currentMap'];
+  completedMaps: NonNullable<HltvMatchSnapshot['completedMaps']>;
+  teamSides: HltvMatchSnapshot['teamSides'];
 }) {
   const { t } = useTranslation();
 
@@ -56,7 +56,7 @@ function HltvMapScore({
   teamSides,
 }: {
   score: [string, string];
-  teamSides: OpenGraphPreview['matchTeamSides'];
+  teamSides: HltvMatchSnapshot['teamSides'];
 }) {
   return (
     <span className="reader-card__hltv-current-map-score">

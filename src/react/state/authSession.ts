@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ApiError, validateCredentials } from '../services/feeds';
+import { validateCredentials } from '../services/auth';
+import { isAuthenticationError } from '../services/authError';
 import type { Credentials } from '../types';
 import type { AuthContextValue, AuthStatus } from './authContext';
 import {
@@ -39,12 +40,13 @@ export function useAuthSession(): AuthContextValue {
   }, [storedCredentials]);
 
   const authenticate = useCallback(async (credentials: Credentials) => {
-    await authenticateAuthSession(credentials);
+    await validateCredentials(credentials);
+    writeStoredCredentials(credentials);
     setSession({ credentials, status: 'authenticated' });
   }, []);
 
   const clearCredentials = useCallback(() => {
-    clearAuthSession();
+    removeStoredCredentials();
     setSession({ credentials: null, status: 'anonymous' });
   }, []);
 
@@ -59,22 +61,13 @@ export function useAuthSession(): AuthContextValue {
 async function restoreAuthSession(credentials: Credentials): Promise<Credentials> {
   try {
     await validateCredentials(credentials);
-    return credentials;
   } catch (error) {
     if (isInvalidSessionError(error)) removeStoredCredentials();
     throw error;
   }
-}
-
-async function authenticateAuthSession(credentials: Credentials): Promise<void> {
-  await validateCredentials(credentials);
-  writeStoredCredentials(credentials);
-}
-
-function clearAuthSession(): void {
-  removeStoredCredentials();
+  return credentials;
 }
 
 function isInvalidSessionError(error: unknown): boolean {
-  return error instanceof ApiError && [401, 403].includes(error.status);
+  return isAuthenticationError(error);
 }

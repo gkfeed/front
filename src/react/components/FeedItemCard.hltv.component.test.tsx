@@ -16,7 +16,19 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: 'website',
-      matchStartsAt: '2999-07-23T18:05:00.000Z',
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: '2999-07-23T18:05:00.000Z',
+          teams: null,
+          status: 'scheduled',
+          score: null,
+          currentMap: null,
+          completedMaps: null,
+          playerStats: null,
+          teamSides: null,
+        },
+      },
     });
 
     render(<FeedItemCard item={{
@@ -46,7 +58,19 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: 'website',
-      matchStartsAt: '2000-01-01T00:00:00.000Z',
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: '2000-01-01T00:00:00.000Z',
+          teams: null,
+          status: 'scheduled',
+          score: null,
+          currentMap: null,
+          completedMaps: null,
+          playerStats: null,
+          teamSides: null,
+        },
+      },
     });
 
     render(<FeedItemCard item={{
@@ -67,13 +91,22 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: 'website',
-      matchStartsAt: '2026-07-23T18:05:00.000Z',
-      matchTeams: [
-        { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
-        { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
-      ],
-      matchStatus: 'over',
-      matchScore: ['1', '2'],
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: '2026-07-23T18:05:00.000Z',
+          teams: [
+            { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
+            { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+          ],
+          status: 'over',
+          score: ['1', '2'],
+          currentMap: null,
+          completedMaps: null,
+          playerStats: null,
+          teamSides: null,
+        },
+      },
     });
 
     render(<FeedItemCard item={{
@@ -98,19 +131,25 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: 'website',
-      matchStartsAt: '2026-07-23T18:05:00.000Z',
-      matchTeams: [
-        { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
-        { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
-      ],
-      matchStatus: 'live',
-      matchScore: ['1', '0'],
-      matchCurrentMap: { name: 'Anubis', score: ['12', '10'] },
-      matchPlayerStats: [
-        [{ nickname: 'NAF', kills: 18, deaths: 12, assists: 4, adr: 91.3 }],
-        [{ nickname: 'donk', kills: 20, deaths: 14, assists: 3, adr: 104.8 }],
-      ],
-      matchTeamSides: ['ct', 't'],
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: '2026-07-23T18:05:00.000Z',
+          teams: [
+            { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
+            { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+          ],
+          status: 'live',
+          score: ['1', '0'],
+          currentMap: { name: 'Anubis', score: ['12', '10'] },
+          completedMaps: null,
+          playerStats: [
+            [{ nickname: 'NAF', kills: 18, deaths: 12, assists: 4, adr: 91.3 }],
+            [{ nickname: 'donk', kills: 20, deaths: 14, assists: 3, adr: 104.8 }],
+          ],
+          teamSides: ['ct', 't'],
+        },
+      },
     });
 
     render(<FeedItemCard item={{
@@ -142,14 +181,22 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: 'website',
-      matchTeams: [
-        { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
-        { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
-      ],
-      matchStatus: 'live',
-      matchScore: ['0', '1'],
-      matchCurrentMap: { name: 'Dust2', score: ['7', '13'] },
-      matchTeamSides: ['t', 'ct'],
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: null,
+          teams: [
+            { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
+            { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+          ],
+          status: 'live',
+          score: ['0', '1'],
+          currentMap: { name: 'Dust2', score: ['7', '13'] },
+          completedMaps: null,
+          playerStats: null,
+          teamSides: ['t', 'ct'],
+        },
+      },
     });
 
     render(<FeedItemCard item={{
@@ -176,15 +223,22 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: 'website',
-      matchTeams: [
-        { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
-        { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
-      ],
-      matchStatus: 'live',
-      matchScore: ['0', '1'],
-      matchCompletedMaps: [{ name: 'Dust2', score: ['7', '13'] }],
-      matchCurrentMap: { name: 'Anubis', score: ['0', '0'] },
-      matchTeamSides: ['ct', 't'],
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: null,
+          teams: [
+            { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
+            { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+          ],
+          status: 'live',
+          score: ['0', '1'],
+          completedMaps: [{ name: 'Dust2', score: ['7', '13'] }],
+          currentMap: { name: 'Anubis', score: ['0', '0'] },
+          playerStats: null,
+          teamSides: ['ct', 't'],
+        },
+      },
     });
 
     render(<FeedItemCard item={{
@@ -211,16 +265,25 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: null,
-      matchStatus: 'live',
-      matchTeams: [
-        { name: 'Liquid', logo: null },
-        { name: 'Spirit', logo: null },
-      ],
-      matchScore: ['1', '0'],
-      matchPlayerStats: [
-        [{ nickname: 'NAF', kills: 18, deaths: 12, assists: 4, adr: 91.3 }],
-        [{ nickname: 'donk', kills: 20, deaths: 14, assists: 3, adr: 104.8 }],
-      ],
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: null,
+          status: 'live',
+          teams: [
+            { name: 'Liquid', logo: null },
+            { name: 'Spirit', logo: null },
+          ],
+          score: ['1', '0'],
+          currentMap: null,
+          completedMaps: null,
+          playerStats: [
+            [{ nickname: 'NAF', kills: 18, deaths: 12, assists: 4, adr: 91.3 }],
+            [{ nickname: 'donk', kills: 20, deaths: 14, assists: 3, adr: 104.8 }],
+          ],
+          teamSides: null,
+        },
+      },
     });
 
     render(<FeedItemCard item={{ ...item, link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event' }} />);
@@ -247,11 +310,22 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: null,
-      matchStartsAt: null,
-      matchTeams: [
-        { name: 'ENCE', logo: 'https://img-cdn.hltv.org/teamlogo/ence.png' },
-        { name: 'BOJONG', logo: 'https://img-cdn.hltv.org/teamlogo/bojong.png' },
-      ],
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: null,
+          teams: [
+            { name: 'ENCE', logo: 'https://img-cdn.hltv.org/teamlogo/ence.png' },
+            { name: 'BOJONG', logo: 'https://img-cdn.hltv.org/teamlogo/bojong.png' },
+          ],
+          status: 'scheduled',
+          score: null,
+          currentMap: null,
+          completedMaps: null,
+          playerStats: null,
+          teamSides: null,
+        },
+      },
     });
 
     render(<FeedItemCard item={{
@@ -275,19 +349,59 @@ describe('FeedItemCard HLTV previews', () => {
       video: null,
       siteName: 'HLTV.org',
       type: null,
-      matchStartsAt: '2026-07-30T10:00:00.000Z',
-      matchTeams: [
-        { name: 'WW', logo: 'https://img-cdn.hltv.org/teamlogo/ww.png' },
-        { name: 'TDK', logo: 'https://img-cdn.hltv.org/teamlogo/tdk.png' },
-      ] as [{ name: string; logo: string }, { name: string; logo: string }],
-      matchStatus: 'live' as const,
+      providerData: {
+        provider: 'hltv' as const,
+        snapshot: {
+          startsAt: '2026-07-30T10:00:00.000Z',
+          teams: [
+            { name: 'WW', logo: 'https://img-cdn.hltv.org/teamlogo/ww.png' },
+            { name: 'TDK', logo: 'https://img-cdn.hltv.org/teamlogo/tdk.png' },
+          ] as [{ name: string; logo: string }, { name: string; logo: string }],
+          status: 'live' as const,
+          score: null,
+          currentMap: null,
+          completedMaps: null,
+          playerStats: null,
+          teamSides: null,
+        },
+      },
     };
     getPreview
-      .mockResolvedValueOnce({ ...basePreview, matchScore: ['1', '0'], matchCurrentMap: { name: 'Anubis', score: ['12', '10'] } })
-      .mockResolvedValueOnce({ ...basePreview, matchScore: ['1', '0'], matchCurrentMap: null })
-      .mockResolvedValueOnce({ ...basePreview, matchStatus: 'scheduled', matchScore: null, matchCurrentMap: null })
-      .mockResolvedValueOnce({ ...basePreview, matchScore: ['1', '0'], matchCurrentMap: { name: 'Anubis', score: ['12', '11'] } })
-      .mockResolvedValueOnce({ ...basePreview, matchStatus: 'over', matchScore: ['1', '2'], matchCurrentMap: null });
+      .mockResolvedValueOnce({
+        ...basePreview,
+        providerData: {
+          ...basePreview.providerData,
+          snapshot: { ...basePreview.providerData.snapshot, score: ['1', '0'], currentMap: { name: 'Anubis', score: ['12', '10'] } },
+        },
+      })
+      .mockResolvedValueOnce({
+        ...basePreview,
+        providerData: {
+          ...basePreview.providerData,
+          snapshot: { ...basePreview.providerData.snapshot, score: ['1', '0'], currentMap: null },
+        },
+      })
+      .mockResolvedValueOnce({
+        ...basePreview,
+        providerData: {
+          ...basePreview.providerData,
+          snapshot: { ...basePreview.providerData.snapshot, status: 'scheduled', score: null, currentMap: null },
+        },
+      })
+      .mockResolvedValueOnce({
+        ...basePreview,
+        providerData: {
+          ...basePreview.providerData,
+          snapshot: { ...basePreview.providerData.snapshot, score: ['1', '0'], currentMap: { name: 'Anubis', score: ['12', '11'] } },
+        },
+      })
+      .mockResolvedValueOnce({
+        ...basePreview,
+        providerData: {
+          ...basePreview.providerData,
+          snapshot: { ...basePreview.providerData.snapshot, status: 'over', score: ['1', '2'], currentMap: null },
+        },
+      });
 
     render(<FeedItemCard item={{ ...item, link: basePreview.url }} />);
     await act(async () => {

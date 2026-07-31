@@ -9,11 +9,12 @@ export function useFeedItems(credentials: Credentials | null) {
     (signal: AbortSignal) => getFeedItems(credentials, 1000, signal),
     [credentials],
   );
-  const { result: loadedItems, status, isLoading, retry } = useAsyncLoad(load);
+  const { result: loadedItems, status, error, isLoading, retry } = useAsyncLoad(load);
 
   return {
     loadedItems,
     status,
+    error,
     isLoading,
     retry,
   };

@@ -7,6 +7,7 @@ import { useFeedReader } from '../hooks/useFeedReader';
 import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
+import { getRequestErrorMessage } from '../services/authError';
 
 export function ReaderPage() {
   const { t } = useTranslation();
@@ -19,6 +20,7 @@ export function ReaderPage() {
     isLoading,
     isDeleting,
     loadFailed,
+    loadError,
     deleteFailed,
     remainingCount,
     keepItem,
@@ -38,6 +40,7 @@ export function ReaderPage() {
     onKeep: keepItem,
     onDelete: deleteItem,
   });
+  const hasLoadedContent = !isLoading && !loadFailed;
 
   function setMode(nextMode: ReaderMode) {
     setSearchParams((currentParams) => {
@@ -54,11 +57,11 @@ export function ReaderPage() {
       {isLoading ? <ReaderLoading /> : null}
       {loadFailed ? (
         <div className="reader__state" role="alert">
-          <p>{t('reader.loadError')}</p>
+          <p>{getRequestErrorMessage(loadError, t, 'reader.loadError')}</p>
           <button type="button" className="secondary" onClick={retryLoad}>{t('live.tryAgain')}</button>
         </div>
       ) : null}
-      {!isLoading && !loadFailed && items.length === 0 ? (
+      {hasLoadedContent && items.length === 0 ? (
         <div className="reader__state">
           <span className="reader__done-mark" aria-hidden="true">✓</span>
           <h2>{t('reader.caughtUp')}</h2>
@@ -82,7 +85,7 @@ export function ReaderPage() {
           onShowScroll={() => setMode('scroll')}
         />
       ) : null}
-      {mode === 'review' && !isLoading && !loadFailed && items.length > 0 && !currentItem ? (
+      {mode === 'review' && hasLoadedContent && items.length > 0 && !currentItem ? (
         <div id="reader-review-panel" className="reader__state" role="region" aria-label="Review view">
           <span className="reader__done-mark" aria-hidden="true">✓</span>
           <h2>{t('reader.reviewedEverything')}</h2>
@@ -94,7 +97,7 @@ export function ReaderPage() {
           </div>
         </div>
       ) : null}
-      {mode === 'scroll' && !isLoading && !loadFailed && items.length > 0 ? <ReaderScroll items={items} /> : null}
+      {mode === 'scroll' && hasLoadedContent && items.length > 0 ? <ReaderScroll items={items} /> : null}
     </section>
   );
 }

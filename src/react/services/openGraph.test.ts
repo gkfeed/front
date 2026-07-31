@@ -14,6 +14,7 @@ describe('getOpenGraphPreview', () => {
       video: null,
       siteName: 'Example',
       type: 'article',
+      providerData: null,
     };
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
 
@@ -38,6 +39,7 @@ describe('getOpenGraphPreview', () => {
       video: null,
       siteName: 'Reddit',
       type: 'article',
+      providerData: null,
     };
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
 
@@ -55,6 +57,7 @@ describe('getOpenGraphPreview', () => {
       video: null,
       siteName: 'HLTV.org',
       type: 'website',
+      providerData: null,
     };
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
 
@@ -72,6 +75,7 @@ describe('getOpenGraphPreview', () => {
       video: null,
       siteName: 'VK',
       type: 'article',
+      providerData: null,
     };
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
 

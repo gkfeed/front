@@ -13,39 +13,34 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
     item,
     hostname,
     isPreviewPending,
+    descriptor,
     hltvMatchTeams,
-    variant,
+    hltvSnapshot,
     visiblePreview,
     hltvImageScore,
     onPreviewError,
     liquipediaMatch,
   } = model;
-  const isShortVideo = variant.type === 'tiktok' || variant.type === 'instagram';
-  const isTikTok = variant.type === 'tiktok';
+  const { preview } = descriptor;
   const localizedPreview = visiblePreview ? localizeFeedItemPreview(visiblePreview, t) : null;
   const displayHostname = hostname ?? t('feed.item');
 
   if (isPreviewPending) {
     return <div className="reader-card__preview-placeholder" role="status" aria-label={t('preview.loading')} />;
   }
-  if (hltvMatchTeams) {
+  if (hltvMatchTeams && hltvSnapshot) {
     return (
       <HltvMatchup
         teams={hltvMatchTeams}
         href={item.link}
-        score={model.openGraphPreview?.matchScore}
-        isLive={model.openGraphPreview?.matchStatus === 'live'}
-        currentMap={model.openGraphPreview?.matchCurrentMap}
-        completedMaps={model.openGraphPreview?.matchCompletedMaps}
-        playerStats={model.openGraphPreview?.matchPlayerStats}
-        teamSides={model.openGraphPreview?.matchTeamSides}
+        snapshot={hltvSnapshot}
       />
     );
   }
-  if (variant.type === 'youtube') {
+  if (preview.type === 'youtube') {
     return (
       <YoutubePreview
-        videoId={variant.videoId}
+        videoId={preview.videoId}
         title={item.text || item.title}
         preview={localizedPreview}
         onPreviewError={onPreviewError}
@@ -60,8 +55,8 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
       href={item.link}
       hostname={item.title || displayHostname}
       preview={localizedPreview}
-      isShortVideo={isShortVideo}
-      isTikTok={isTikTok}
+      isShortVideo={preview.isShortVideo}
+      isTikTok={preview.isTikTok}
       hltvImageScore={hltvImageScore}
       onPreviewError={onPreviewError}
     />
@@ -69,13 +64,15 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
 }
 
 export function FeedItemCardSupplementary({ model }: { model: FeedItemCardModel }) {
-  const { item, isPreviewPending, variant, provider, openGraphPreview } = model;
+  const { item, isPreviewPending, descriptor, hltvSnapshot } = model;
+  if (isPreviewPending) return null;
+
   return (
     <>
-      {!isPreviewPending && provider === 'hltv' && openGraphPreview?.matchStartsAt ? (
-        <HltvCountdown startsAt={openGraphPreview.matchStartsAt} />
+      {descriptor.showHltvCountdown && hltvSnapshot?.startsAt ? (
+        <HltvCountdown startsAt={hltvSnapshot.startsAt} />
       ) : null}
-      {!isPreviewPending && variant.type === 'tiktok' ? <TikTokComments item={item} /> : null}
+      {descriptor.showTikTokComments ? <TikTokComments item={item} /> : null}
     </>
   );
 }
@@ -86,15 +83,13 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
     item,
     hostname,
     isPreviewPending,
-    variant,
-    imagePreview,
+    descriptor,
     description,
   } = model;
-  const displayHostname = hostname ?? t('feed.item');
-  const isShortVideo = variant.type === 'tiktok' || variant.type === 'instagram';
 
-  if (isPreviewPending || imagePreview.type !== 'none' || isShortVideo) return null;
-  if (variant.type === 'youtube') {
+  if (isPreviewPending || descriptor.copy === 'none') return null;
+  const displayHostname = hostname ?? t('feed.item');
+  if (descriptor.copy === 'youtube') {
     return (
       <div className="reader-card__youtube-copy">
         <h2 className="reader-card__title">{item.text || item.title}</h2>
@@ -102,7 +97,7 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
       </div>
     );
   }
-  if (variant.type === 'simple-image') {
+  if (descriptor.copy === 'simple-image') {
     return <h2 className="reader-card__title">{item.title || displayHostname}</h2>;
   }
 

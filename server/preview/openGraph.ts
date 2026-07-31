@@ -39,10 +39,20 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
 }
 
 function enrichHltvPreview(preview: OpenGraphPreview, page: HltvPage): OpenGraphPreview {
-  if (page.currentMap) preview.matchCurrentMap = page.currentMap;
-  if (page.playerStats) preview.matchPlayerStats = page.playerStats;
-  if (page.teamSides) preview.matchTeamSides = page.teamSides;
-  return preview;
+  if (preview.providerData?.provider !== 'hltv') return preview;
+  const { snapshot } = preview.providerData;
+  return {
+    ...preview,
+    providerData: {
+      ...preview.providerData,
+      snapshot: {
+        ...snapshot,
+        currentMap: page.currentMap ?? snapshot.currentMap,
+        playerStats: page.playerStats ?? snapshot.playerStats,
+        teamSides: page.teamSides ?? snapshot.teamSides,
+      },
+    },
+  };
 }
 
 function getPreviewUrl(url: URL): URL {

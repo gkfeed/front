@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getLiveTwitchItems } from '../services/twitch';
+import { createStatusError } from '../testUtils';
 import { LivePage } from './LivePage';
 
 vi.mock('../services/twitch');
@@ -105,6 +106,19 @@ describe('LivePage', () => {
     render(<LivePage />);
 
     expect(await screen.findByRole('alert')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    await waitFor(() => expect(getLiveTwitchItems).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole('button', { name: 'some_channel' })).toBeTruthy();
+  });
+
+  it('shows the shared authentication message and keeps retry for 401', async () => {
+    vi.mocked(getLiveTwitchItems)
+      .mockRejectedValueOnce(createStatusError('unauthorized', 401))
+      .mockResolvedValueOnce([LIVE_ITEM]);
+    render(<LivePage />);
+
+    expect((await screen.findByRole('alert')).textContent).toContain('Your session has expired. Please sign in again.');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
     await waitFor(() => expect(getLiveTwitchItems).toHaveBeenCalledTimes(2));

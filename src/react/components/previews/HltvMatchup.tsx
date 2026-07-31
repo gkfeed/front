@@ -1,4 +1,4 @@
-import type { OpenGraphPreview } from '../../../../shared/previewContracts';
+import type { HltvMatchSnapshot, HltvMatchTeamPreview } from '../../../../shared/previewContracts';
 import { useTranslation } from 'react-i18next';
 
 import { getHltvMatchupAccessibilityData } from './hltvMatchupAccessibility';
@@ -8,23 +8,15 @@ import { HltvMatchupScore } from './HltvMatchupScore';
 export function HltvMatchup({
   teams,
   href,
-  score,
-  isLive,
-  currentMap,
-  completedMaps,
-  playerStats,
-  teamSides,
+  snapshot,
 }: {
-  teams: NonNullable<OpenGraphPreview['matchTeams']>;
+  teams: [HltvMatchTeamPreview, HltvMatchTeamPreview];
   href: string;
-  score: OpenGraphPreview['matchScore'];
-  isLive: boolean;
-  currentMap: OpenGraphPreview['matchCurrentMap'];
-  completedMaps: OpenGraphPreview['matchCompletedMaps'];
-  playerStats: OpenGraphPreview['matchPlayerStats'];
-  teamSides: OpenGraphPreview['matchTeamSides'];
+  snapshot: HltvMatchSnapshot;
 }) {
   const { t } = useTranslation();
+  const { score, status, currentMap, completedMaps, playerStats, teamSides } = snapshot;
+  const isLive = status === 'live';
   const accessibility = getHltvMatchupAccessibilityData({
     teams,
     score,
@@ -85,7 +77,7 @@ export function HltvMatchup({
 function HltvMatchupTeam({
   team,
 }: {
-  team: NonNullable<OpenGraphPreview['matchTeams']>[number];
+  team: HltvMatchTeamPreview;
 }) {
   return (
     <span className="reader-card__hltv-team">

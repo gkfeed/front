@@ -16,6 +16,7 @@ import {
   parseTikTokDescription,
   parseTikTokDetails,
 } from './tiktok.js';
+import { parseTikTokVideoUrl } from './tiktokParser.js';
 
 beforeEach(() => {
   requestPublicHttp.mockReset();
@@ -41,6 +42,22 @@ describe('fetchTikTokComments', () => {
 
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
       .rejects.toMatchObject({ code: 'comments_fetch_failed', status: 502 });
+  });
+});
+
+describe('parseTikTokVideoUrl', () => {
+  it.each([
+    ['https://www.tiktok.com/@creator/video/123', '/@creator/video/123'],
+    ['https://m.tiktok.com/v/123', '/v/123'],
+  ])('accepts shared TikTok video path %s', (value, pathname) => {
+    expect(parseTikTokVideoUrl(value).pathname).toBe(pathname);
+  });
+
+  it.each([
+    'https://tiktok.com.example.org/video/123',
+    'https://tiktok.com/video/123abc',
+  ])('rejects lookalike or malformed TikTok URL %s', (value) => {
+    expect(() => parseTikTokVideoUrl(value)).toThrowError('A valid TikTok video URL is required');
   });
 });
 

@@ -28,7 +28,9 @@ export type HltvMatchPlayerStatsPreview = [
 
 export type HltvMatchTeamSidesPreview = ['ct', 't'] | ['t', 'ct'];
 
-export interface OpenGraphPreview {
+export type HltvMatchStatus = 'scheduled' | 'live' | 'over' | 'postponed' | 'deleted';
+
+export interface OpenGraphMetadata {
   url: string;
   title: string | null;
   description: string | null;
@@ -36,14 +38,28 @@ export interface OpenGraphPreview {
   video: string | null;
   siteName: string | null;
   type: string | null;
-  matchStartsAt?: string | null;
-  matchTeams?: [HltvMatchTeamPreview, HltvMatchTeamPreview] | null;
-  matchStatus?: 'scheduled' | 'live' | 'over' | 'postponed' | 'deleted' | null;
-  matchScore?: [string, string] | null;
-  matchCurrentMap?: HltvCurrentMapPreview | null;
-  matchCompletedMaps?: HltvMapResultPreview[] | null;
-  matchPlayerStats?: HltvMatchPlayerStatsPreview | null;
-  matchTeamSides?: HltvMatchTeamSidesPreview | null;
+}
+
+export interface HltvMatchSnapshot {
+  startsAt: string | null;
+  teams: [HltvMatchTeamPreview, HltvMatchTeamPreview] | null;
+  status: HltvMatchStatus | null;
+  score: [string, string] | null;
+  currentMap: HltvCurrentMapPreview | null;
+  completedMaps: HltvMapResultPreview[] | null;
+  playerStats: HltvMatchPlayerStatsPreview | null;
+  teamSides: HltvMatchTeamSidesPreview | null;
+}
+
+export interface HltvProviderData {
+  provider: 'hltv';
+  snapshot: HltvMatchSnapshot;
+}
+
+export type OpenGraphProviderData = HltvProviderData | null;
+
+export interface OpenGraphPreview extends OpenGraphMetadata {
+  providerData: OpenGraphProviderData;
 }
 
 export type LiquipediaMatchResult = 'win' | 'loss' | 'default';

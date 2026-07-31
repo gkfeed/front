@@ -59,6 +59,7 @@ const en = {
     addButton: 'Add feed',
   },
   auth: {
+    sessionExpired: 'Your session has expired. Please sign in again.',
     checking: 'Checking authentication…',
     username: 'Username',
     password: 'Password',

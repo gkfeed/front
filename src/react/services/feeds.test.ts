@@ -175,6 +175,16 @@ describe('feed service', () => {
     await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([]);
   });
 
+  it('stops after an empty page even when the cursor changes', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({ items: [], next_cursor: 10 }))
+      .mockResolvedValueOnce(Response.json({ items: [], next_cursor: 20 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it('deletes a feed reader item using the API batch shape', async () => {
     respondWithoutBody();
 

@@ -29,11 +29,16 @@ describe('parseOpenGraph: HLTV provider', () => {
       html,
       new URL('https://www.hltv.org/matches/2396006/liquid-vs-spirit'),
     )).toMatchObject({
-      matchStartsAt: '2026-07-23T18:05:00.000Z',
-      matchTeams: [
-        { name: 'Liquid', logo: 'https://www.hltv.org/teamlogo/liquid.png' },
-        { name: 'Spirit', logo: 'https://cdn.example/spirit.png' },
-      ],
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: '2026-07-23T18:05:00.000Z',
+          teams: [
+            { name: 'Liquid', logo: 'https://www.hltv.org/teamlogo/liquid.png' },
+            { name: 'Spirit', logo: 'https://cdn.example/spirit.png' },
+          ],
+        },
+      },
     });
   });
 
@@ -69,19 +74,29 @@ describe('parseOpenGraph: HLTV provider', () => {
       html,
       new URL('https://www.hltv.org/matches/2396277/ww-vs-tdk-event'),
     )).toMatchObject({
-      matchStatus: 'live',
-      matchScore: ['1', '0'],
-      matchCurrentMap: { name: 'Anubis', score: ['12', '10'] },
-      matchCompletedMaps: [{ name: 'Mirage', score: ['13', '10'] }],
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          status: 'live',
+          score: ['1', '0'],
+          currentMap: { name: 'Anubis', score: ['12', '10'] },
+          completedMaps: [{ name: 'Mirage', score: ['13', '10'] }],
+        },
+      },
     });
 
     expect(parseOpenGraph(
       html.replace('LIVE</div>', 'Match over</div>'),
       new URL('https://www.hltv.org/matches/2396277/ww-vs-tdk-event'),
     )).toMatchObject({
-      matchStatus: 'over',
-      matchScore: ['1', '0'],
-      matchCurrentMap: null,
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          status: 'over',
+          score: ['1', '0'],
+          currentMap: null,
+        },
+      },
     });
   });
 });

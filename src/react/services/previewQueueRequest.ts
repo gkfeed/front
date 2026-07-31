@@ -78,33 +78,28 @@ export class PreviewRequest<T> implements PreviewRequestControl {
 
     if (signal.aborted) {
       this.release();
-      return neverPromise();
+      return Promise.reject(createAbortError());
     }
 
     return new Promise<T>((resolve, reject) => {
       let finished = false;
-      const cleanup = () => signal.removeEventListener('abort', onAbort);
-      const onAbort = () => {
+      const settle = (callback: () => void) => {
         if (finished) return;
         finished = true;
-        cleanup();
-        this.release();
+        signal.removeEventListener('abort', onAbort);
+        callback();
+      };
+      const onAbort = () => {
+        settle(() => {
+          reject(createAbortError());
+          this.release();
+        });
       };
 
       signal.addEventListener('abort', onAbort, { once: true });
       this.promise.then(
-        (value) => {
-          if (finished) return;
-          finished = true;
-          cleanup();
-          resolve(value);
-        },
-        (error: unknown) => {
-          if (finished) return;
-          finished = true;
-          cleanup();
-          reject(error);
-        },
+        (value) => settle(() => resolve(value)),
+        (error: unknown) => settle(() => reject(error)),
       );
     });
   }
@@ -141,8 +136,4 @@ export class PreviewRequest<T> implements PreviewRequestControl {
 
 function createAbortError(): DOMException {
   return new DOMException('The preview request was aborted', 'AbortError');
-}
-
-function neverPromise<T>(): Promise<T> {
-  return new Promise<T>(() => undefined);
 }

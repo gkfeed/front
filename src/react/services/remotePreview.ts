@@ -1,4 +1,5 @@
-import type { OpenGraphPreview } from './openGraph';
+import type { HltvMatchSnapshot, OpenGraphPreview } from './openGraph';
+import { BffHttpError, BffResponseError } from './bffClient';
 import { getLiquipediaMatchPreview, type LiquipediaMatchPreview } from './liquipedia';
 import { getOpenGraphPreview } from './openGraph';
 import { loadQueuedPreview } from './previewQueue';
@@ -27,7 +28,7 @@ export async function loadRemotePreview(
       );
       return { liquipediaMatch, openGraphPreview: null };
     } catch (error) {
-      if (isAbortError(error)) throw error;
+      if (!isUnsupportedLiquipediaMarkupError(error)) throw error;
       // Unsupported or changed Liquipedia markup still gets a generic preview.
     }
   }
@@ -44,29 +45,40 @@ export function mergeHltvLiveData(
   next: OpenGraphPreview,
   previous: OpenGraphPreview | null,
 ): OpenGraphPreview {
-  if (previous?.matchStatus === 'live' && next.matchStatus === 'scheduled') {
+  const nextSnapshot = getHltvSnapshot(next);
+  const previousSnapshot = previous ? getHltvSnapshot(previous) : null;
+  if (!nextSnapshot) return next;
+
+  if (previous && previousSnapshot?.status === 'live' && nextSnapshot.status === 'scheduled') {
     return previous;
   }
   if (
-    next.matchStatus !== 'live'
-    || !previous
-    || !sameMatchScore(next.matchScore, previous.matchScore)
+    !previous
+    || nextSnapshot.status !== 'live'
+    || !previousSnapshot
+    || !sameMatchScore(nextSnapshot.score, previousSnapshot.score)
   ) return next;
 
   return {
     ...next,
-    matchCurrentMap: next.matchCurrentMap ?? previous.matchCurrentMap,
-    matchCompletedMaps: next.matchCompletedMaps?.length
-      ? next.matchCompletedMaps
-      : previous.matchCompletedMaps,
-    matchPlayerStats: next.matchPlayerStats ?? previous.matchPlayerStats,
-    matchTeamSides: next.matchTeamSides ?? previous.matchTeamSides,
+    providerData: {
+      provider: 'hltv',
+      snapshot: {
+        ...nextSnapshot,
+        currentMap: nextSnapshot.currentMap ?? previousSnapshot.currentMap,
+        completedMaps: nextSnapshot.completedMaps?.length
+          ? nextSnapshot.completedMaps
+          : previousSnapshot.completedMaps,
+        playerStats: nextSnapshot.playerStats ?? previousSnapshot.playerStats,
+        teamSides: nextSnapshot.teamSides ?? previousSnapshot.teamSides,
+      },
+    },
   };
 }
 
 function sameMatchScore(
-  first: OpenGraphPreview['matchScore'],
-  second: OpenGraphPreview['matchScore'],
+  first: HltvMatchSnapshot['score'],
+  second: HltvMatchSnapshot['score'],
 ): boolean {
   return Boolean(
     first
@@ -76,6 +88,13 @@ function sameMatchScore(
   );
 }
 
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'AbortError';
+function getHltvSnapshot(preview: OpenGraphPreview): HltvMatchSnapshot | null {
+  return preview.providerData?.provider === 'hltv'
+    ? preview.providerData.snapshot
+    : null;
+}
+
+function isUnsupportedLiquipediaMarkupError(error: unknown): boolean {
+  return (error instanceof BffResponseError && error.reason === 'invalid-shape')
+    || (error instanceof BffHttpError && error.status === 422);
 }

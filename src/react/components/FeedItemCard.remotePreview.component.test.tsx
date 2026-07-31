@@ -16,6 +16,7 @@ describe('FeedItemCard remote and feed previews', () => {
       video: null,
       siteName: 'Reddit',
       type: 'website',
+      providerData: null,
     });
 
     render(<FeedItemCard item={{
@@ -50,6 +51,7 @@ describe('FeedItemCard remote and feed previews', () => {
       video: null,
       siteName: 'HDrezka',
       type: 'video.movie',
+      providerData: null,
     });
 
     render(<FeedItemCard item={{
@@ -92,6 +94,7 @@ describe('FeedItemCard remote and feed previews', () => {
       video: null,
       siteName: 'VK',
       type: 'article',
+      providerData: null,
     });
 
     render(<FeedItemCard item={{
@@ -129,6 +132,7 @@ describe('FeedItemCard remote and feed previews', () => {
       video: 'https://vk.ru/video_ext.php?oid=-28905875&id=456404323&hash=secret',
       siteName: 'VK',
       type: 'article',
+      providerData: null,
     });
 
     render(<FeedItemCard item={{

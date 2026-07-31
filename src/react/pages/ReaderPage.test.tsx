@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getReviewStateStorageKey } from '../hooks/reviewStateStorage';
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
 import { NsfwPreferencesContext, type NsfwMode } from '../state/nsfwPreferencesContext';
-import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
+import { createStatusError, restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { ReaderPage } from './ReaderPage';
 
 vi.mock('../services/feeds');
@@ -39,6 +39,19 @@ afterEach(() => {
 });
 
 describe('ReaderPage', () => {
+  it('shows the shared authentication message and keeps retry for 403', async () => {
+    vi.mocked(getFeedItems)
+      .mockRejectedValueOnce(createStatusError('forbidden', 403))
+      .mockResolvedValueOnce(ITEMS);
+    renderReader();
+
+    expect((await screen.findByRole('alert')).textContent).toContain('Your session has expired. Please sign in again.');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('First story')).toBeTruthy();
+  });
+
   it('keeps an item locally and advances without deleting it', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     renderReader();

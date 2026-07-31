@@ -122,6 +122,7 @@ describe('FeedItemCard YouTube and general states', () => {
       video: null,
       siteName: 'Example',
       type: 'article',
+      providerData: null,
     });
 
     render(<FeedItemCard item={item} />);
@@ -157,6 +158,7 @@ describe('FeedItemCard YouTube and general states', () => {
       video: null,
       siteName: 'Example',
       type: 'article',
+      providerData: null,
     });
 
     render(<FeedItemCard item={item} />);

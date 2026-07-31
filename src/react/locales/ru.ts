@@ -63,6 +63,7 @@ const ru = {
     addButton: 'Добавить ленту',
   },
   auth: {
+    sessionExpired: 'Сессия истекла. Войдите снова.',
     checking: 'Проверка авторизации…',
     username: 'Имя пользователя',
     password: 'Пароль',

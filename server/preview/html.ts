@@ -1,3 +1,6 @@
+const NAMED_ENTITIES: Record<string, string> = { amp: '&', apos: "'", gt: '>', lt: '<', quot: '"' };
+const MAX_CODE_POINT = 0x10ffff;
+
 export function parseAttributes(tag: string): Record<string, string> {
   const attributes: Record<string, string> = {};
   const pattern = /([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g;
@@ -10,12 +13,13 @@ export function parseAttributes(tag: string): Record<string, string> {
 }
 
 export function decodeHtml(value: string): string {
-  const named: Record<string, string> = { amp: '&', apos: "'", gt: '>', lt: '<', quot: '"' };
   return value.replace(/&(#\d+|#x[\da-f]+|amp|apos|gt|lt|quot);/gi, (entity, code: string) => {
-    if (code[0] !== '#') return named[code.toLowerCase()] ?? entity;
+    if (code[0] !== '#') return NAMED_ENTITIES[code.toLowerCase()] ?? entity;
     const radix = code[1]?.toLowerCase() === 'x' ? 16 : 10;
     const number = Number.parseInt(code.slice(radix === 16 ? 2 : 1), radix);
-    return Number.isFinite(number) ? String.fromCodePoint(number) : entity;
+    return Number.isSafeInteger(number) && number >= 0 && number <= MAX_CODE_POINT
+      ? String.fromCodePoint(number)
+      : entity;
   });
 }
 

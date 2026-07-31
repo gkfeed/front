@@ -7,6 +7,10 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+const expectAbortError = (promise: Promise<unknown>) => (
+  expect(promise).rejects.toMatchObject({ name: 'AbortError' })
+);
+
 describe('loadQueuedPreview', () => {
   it('deduplicates preview requests by cache key', async () => {
     const load = vi.fn().mockResolvedValue('preview');
@@ -52,10 +56,10 @@ describe('loadQueuedPreview', () => {
     controller.abort();
     resolveLoad('preview');
 
+    await expectAbortError(first);
     await expect(second).resolves.toBe('preview');
     expect(load).toHaveBeenCalledTimes(1);
     expect(load.mock.calls[0]?.[0].aborted).toBe(false);
-    expect(await Promise.race([first.then(() => 'settled'), Promise.resolve('pending')])).toBe('pending');
   });
 
   it('aborts a running request and releases its queue slot when all subscribers leave', async () => {
@@ -74,16 +78,16 @@ describe('loadQueuedPreview', () => {
     await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(2));
     expect(signals[0]?.aborted).toBe(true);
     releases[1]!();
+    await expectAbortError(first);
     await expect(second).resolves.toBe('preview');
-    expect(await Promise.race([first.then(() => 'settled'), Promise.resolve('pending')])).toBe('pending');
   });
 
-  it('does not start a request whose only subscriber is already aborted', () => {
+  it('rejects a request whose only subscriber is already aborted', async () => {
     const controller = new AbortController();
     controller.abort();
     const load = vi.fn().mockResolvedValue('preview');
 
-    loadQueuedPreview('aborted-url', load, controller.signal);
+    await expectAbortError(loadQueuedPreview('aborted-url', load, controller.signal));
 
     expect(load).not.toHaveBeenCalled();
   });
@@ -133,6 +137,6 @@ describe('loadQueuedPreview', () => {
     clearPreviewCache();
 
     expect(requestSignal.aborted).toBe(true);
-    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    await expectAbortError(pending);
   });
 });

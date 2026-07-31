@@ -1,13 +1,19 @@
 import { request as requestHttp } from 'node:http';
 import type { IncomingHttpHeaders, IncomingMessage, RequestOptions } from 'node:http';
-import { request as requestHttps } from 'node:https';
+import { Agent as HttpsAgent, request as requestHttps } from 'node:https';
 
 import { createPinnedLookup, resolvePublicAddress } from './publicAddress.js';
 import { PublicHttpError } from './publicHttpError.js';
 import { REMOTE_REQUEST_TIMEOUT_MS } from './timeouts.js';
 
 export { PublicHttpError } from './publicHttpError.js';
-export { createPinnedLookup, isPrivateAddress } from './publicAddress.js';
+export { createPinnedLookup, isPrivateAddress, resolvePublicAddress } from './publicAddress.js';
+
+export function createPinnedHttpsAgent(
+  address: { address: string; family: 4 | 6 },
+): HttpsAgent {
+  return new HttpsAgent({ lookup: createPinnedLookup(address) });
+}
 
 export interface PublicHttpResponse {
   body: IncomingMessage;
@@ -39,12 +45,8 @@ export async function requestPublicHttp(
       response.setTimeout(REMOTE_REQUEST_TIMEOUT_MS, () => {
         response.destroy(new PublicHttpError('timeout'));
       });
-      response.once('end', () => {
-        clearTimeout(totalTimeout);
-      });
-      response.once('close', () => {
-        clearTimeout(totalTimeout);
-      });
+      response.once('end', clearTotalTimeout);
+      response.once('close', clearTotalTimeout);
       resolve({
         body: response,
         headers: response.headers,
@@ -66,5 +68,9 @@ export async function requestPublicHttp(
       reject(error instanceof PublicHttpError ? error : new PublicHttpError('network'));
     });
     request.end();
+
+    function clearTotalTimeout() {
+      clearTimeout(totalTimeout);
+    }
   });
 }

@@ -14,45 +14,58 @@ export type HttpRequestOptions = {
   createInvalidResponseError?: (status: number) => Error;
 };
 
-export async function requestResponse(
+export function requestResponse(
   input: RequestInfo | URL,
   init: RequestInit,
   options: HttpRequestOptions,
 ): Promise<Response> {
-  return runRequest(
-    (signal) => fetch(input, { ...init, signal }).then((response) => {
-      if (!response.ok) throw options.createHttpError(response.status);
-      return response;
-    }),
-    init.signal,
+  return requestTransport(
+    input,
+    init,
     options,
+    (response) => response,
   );
 }
 
-export async function requestJson<T = unknown>(
+export function requestJson<T = unknown>(
   input: RequestInfo | URL,
   init: RequestInit,
   options: HttpRequestOptions,
 ): Promise<T> {
+  return requestTransport(
+    input,
+    init,
+    options,
+    async (response) => {
+      let value: T;
+      try {
+        value = await response.json() as T;
+      } catch (error: unknown) {
+        if (isAbortError(error)) throw error;
+        if (options.createInvalidJsonError) {
+          throw options.createInvalidJsonError(response.status);
+        }
+        throw error;
+      }
+      if (options.validate && !options.validate(value)) {
+        throw options.createInvalidResponseError?.(response.status)
+          ?? new Error('Invalid JSON response');
+      }
+      return value;
+    },
+  );
+}
+
+async function requestTransport<T>(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  options: HttpRequestOptions,
+  parse: (response: Response) => Promise<T> | T,
+): Promise<T> {
   return runRequest(async (signal) => {
     const response = await fetch(input, { ...init, signal });
     if (!response.ok) throw options.createHttpError(response.status);
-
-    let value: T;
-    try {
-      value = await response.json() as T;
-    } catch (error: unknown) {
-      if (isAbortError(error)) throw error;
-      if (options.createInvalidJsonError) {
-        throw options.createInvalidJsonError(response.status);
-      }
-      throw error;
-    }
-    if (options.validate && !options.validate(value)) {
-      throw options.createInvalidResponseError?.(response.status)
-        ?? new Error('Invalid JSON response');
-    }
-    return value;
+    return parse(response);
   }, init.signal, options);
 }
 

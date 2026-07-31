@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { OpenGraphPreview } from '../../../../shared/previewContracts';
+import type { HltvMatchSnapshot } from '../../../../shared/previewContracts';
 import { formatHltvCountdown } from './hltvPresentation';
 
 export function HltvImageScore({
   score,
 }: {
-  score: NonNullable<OpenGraphPreview['matchScore']>;
+  score: NonNullable<HltvMatchSnapshot['score']>;
 }) {
   return (
     <span className="reader-card__hltv-image-score" aria-hidden="true">

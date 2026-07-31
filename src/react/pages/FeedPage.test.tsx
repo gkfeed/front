@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedById, getFeedById } from '../services/feeds';
+import { createStatusError } from '../testUtils';
 import { AuthProvider } from '../state/AuthProvider';
 import { FeedPage } from './FeedPage';
 
@@ -52,6 +53,45 @@ describe('FeedPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('News')).toBeTruthy();
     expect(vi.mocked(getFeedById)).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the shared authentication message and keeps retry for 403', async () => {
+    vi.mocked(getFeedById)
+      .mockRejectedValueOnce(createStatusError('forbidden', 403))
+      .mockResolvedValueOnce({
+        id: 1,
+        title: 'News',
+        type: 'rss',
+        url: 'https://example.com/feed.xml',
+      });
+
+    render(
+      <MemoryRouter initialEntries={['/feed/1']}>
+        <AuthProvider>
+          <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Your session has expired. Please sign in again.');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('News')).toBeTruthy();
+    expect(vi.mocked(getFeedById)).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a 404 as not found without retry', async () => {
+    vi.mocked(getFeedById).mockRejectedValueOnce(createStatusError('missing', 404));
+
+    render(
+      <MemoryRouter initialEntries={['/feed/1']}>
+        <AuthProvider>
+          <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Feed source not found.');
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
   it('keeps focus and confirmation available after delete failure', async () => {

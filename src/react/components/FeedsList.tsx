@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { getAllFeeds } from '../services/feeds';
+import { getRequestErrorMessage } from '../services/authError';
 import { useAuth } from '../state/useAuth';
 import type { Credentials, Feed } from '../types';
 import { FeedCard } from './FeedCard';
@@ -93,7 +94,7 @@ function useFeeds(credentials: Credentials | null) {
 
   return {
     feeds,
-    errorMessage: error ? getLoadErrorMessage(error, t) : '',
+    errorMessage: error ? getRequestErrorMessage(error, t, 'feed.unableConnection') : '',
     isLoading,
     retry,
   };
@@ -105,16 +106,4 @@ function filterFeeds(feeds: Feed[], normalizedQuery: string): Feed[] {
   return feeds.filter((feed) => (
     `${feed.title} ${feed.type} ${feed.url}`.toLowerCase().includes(normalizedQuery)
   ));
-}
-
-function getLoadErrorMessage(error: unknown, t: (key: string) => string): string {
-  return isStatusError(error) && error.status === 401
-    ? t('feed.unableUnauthorized')
-    : t('feed.unableConnection');
-}
-
-function isStatusError(error: unknown): error is Error & { status: number } {
-  return error instanceof Error
-    && 'status' in error
-    && typeof error.status === 'number';
 }

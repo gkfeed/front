@@ -53,6 +53,7 @@ describe('feed item card presentation', () => {
           video: null,
           siteName: 'HDrezka',
           type: 'video.movie',
+          providerData: null,
         },
       },
       previewFailures: 0,

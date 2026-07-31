@@ -1,6 +1,7 @@
 import { PreviewError } from './preview/errors.js';
 import { isRecord } from '../shared/valueGuards.js';
 import { normalizeExternalText } from '../shared/text.js';
+import { isTikTokVideoUrl } from '../shared/urlRules.js';
 
 export type TikTokComment = {
   id: string;
@@ -73,22 +74,13 @@ export function parseTikTokOEmbedDetails(value: unknown): TikTokDetails {
 }
 
 export function parseTikTokVideoUrl(value: string): URL {
-  let url: URL;
   try {
-    url = new URL(value);
+    const url = new URL(value);
+    if (isTikTokVideoUrl(url)) return url;
   } catch {
-    throw new PreviewError('A valid TikTok video URL is required', 400, 'invalid_tiktok_url');
+    return invalidTikTokUrl();
   }
-
-  const hostname = url.hostname.toLowerCase().replace(/^www\./, '');
-  if (
-    (hostname !== 'tiktok.com' && !hostname.endsWith('.tiktok.com'))
-    || !/\/video\/\d+/.test(url.pathname)
-    || !['http:', 'https:'].includes(url.protocol)
-  ) {
-    throw new PreviewError('A valid TikTok video URL is required', 400, 'invalid_tiktok_url');
-  }
-  return url;
+  return invalidTikTokUrl();
 }
 
 export function emptyTikTokDetails(): TikTokDetails {
@@ -102,4 +94,8 @@ function safeHttpUrl(value: string): string | null {
   } catch {
     return null;
   }
+}
+
+function invalidTikTokUrl(): never {
+  throw new PreviewError('A valid TikTok video URL is required', 400, 'invalid_tiktok_url');
 }
