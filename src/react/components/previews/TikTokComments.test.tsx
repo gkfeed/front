@@ -91,6 +91,21 @@ describe('TikTokComments', () => {
     expect(screen.queryByText('Video caption #topic')).toBeNull();
   });
 
+  it('does not render replacement markers from a feed item', async () => {
+    vi.mocked(fetchTikTokComments).mockResolvedValue({
+      comments: [],
+      description: null,
+      creatorName: null,
+      creatorAvatarUrl: null,
+    });
+    render(<TikTokComments item={{ ...item, title: '\uFFFD', text: '<p>\uFFFD</p>' }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
+
+    expect(await screen.findByText('No comments are available for this video.')).toBeTruthy();
+    expect(document.querySelector('.tiktok-comments')?.textContent).not.toContain('\uFFFD');
+  });
+
   it('fetches multiple real comments only after expansion', async () => {
     vi.mocked(fetchTikTokComments).mockResolvedValue({
       comments: [

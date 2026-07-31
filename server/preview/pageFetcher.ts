@@ -40,6 +40,7 @@ export async function fetchHtml(
   try {
     const html = await readLimitedBody(response, {
       maxBytes: options.metadataOnly ? MAX_METADATA_RESPONSE_BYTES : MAX_RESPONSE_BYTES,
+      encoding: getCharset(contentType),
       stopAfterHead: options.metadataOnly === true,
       truncateAtLimit: options.metadataOnly === true,
     });
@@ -51,4 +52,9 @@ export async function fetchHtml(
       : 'The remote page could not be fetched';
     throw new PreviewError(message, 502, 'fetch_failed');
   }
+}
+
+function getCharset(contentType: string): string | undefined {
+  const match = contentType.match(/(?:^|;)\s*charset\s*=\s*(?:"([^"]+)"|'([^']+)'|([^;\s]+))/i);
+  return (match?.[1] ?? match?.[2] ?? match?.[3])?.trim() || undefined;
 }

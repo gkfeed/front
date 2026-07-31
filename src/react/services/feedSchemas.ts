@@ -1,5 +1,6 @@
 import type { Feed, FeedItem } from '../types';
 import { getObjectProperty } from '../unknownObject';
+import { normalizeExternalText } from '../../../shared/text';
 
 export function parseFeeds(value: unknown): Feed[] {
   if (Array.isArray(value) && value.every(isFeed)) return value;
@@ -35,8 +36,8 @@ export function parseFeedItemsPage(value: unknown): FeedItemsPage {
         id: item.id,
         feedId: item.feed_id,
         link: item.link,
-        title: item.title,
-        text: item.text,
+        title: normalizeExternalText(item.title),
+        text: normalizeExternalText(item.text),
       })),
     nextCursor: typeof rawNextCursor === 'number' ? rawNextCursor : undefined,
   };

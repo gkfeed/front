@@ -35,13 +35,14 @@ export async function readBoundedText(
   stream: BoundedStream,
   options: {
     maximumBytes: number;
+    encoding?: string;
     truncateAtLimit?: boolean;
     stopAfterHead?: boolean;
     tooLarge: () => Error;
     onLimit?: () => void;
   },
 ): Promise<string> {
-  const decoder = new TextDecoder();
+  const decoder = createTextDecoder(options.encoding);
   let size = 0;
   let result = '';
 
@@ -61,6 +62,7 @@ export async function readBoundedText(
     }
     size += value.byteLength;
     result += decoder.decode(value, { stream: true });
+
     if (options.stopAfterHead) {
       const headEnd = result.search(/<\/head\s*>/i);
       if (headEnd !== -1) {
@@ -71,6 +73,18 @@ export async function readBoundedText(
     }
   }
   return result + decoder.decode();
+}
+
+function createTextDecoder(encoding: string | undefined): TextDecoder {
+  if (!encoding) return new TextDecoder();
+
+  try {
+    return new TextDecoder(encoding);
+  } catch {
+    // A malformed charset declaration must not make an otherwise readable
+    // page fail. UTF-8 is the safe default for the web here.
+    return new TextDecoder();
+  }
 }
 
 function toBytes(chunk: string | Uint8Array): Uint8Array {

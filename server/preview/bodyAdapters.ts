@@ -13,6 +13,7 @@ export async function readLimitedBody(
   response: PublicHttpResponse,
   options: {
     maxBytes?: number;
+    encoding?: string;
     stopAfterHead?: boolean;
     truncateAtLimit?: boolean;
   } = {},
@@ -23,6 +24,7 @@ export async function readLimitedBody(
 
   return readBoundedText(body as BoundedStream, {
     maximumBytes: maxBytes,
+    encoding: options.encoding,
     stopAfterHead: options.stopAfterHead,
     truncateAtLimit: options.truncateAtLimit,
     tooLarge: responseTooLarge,

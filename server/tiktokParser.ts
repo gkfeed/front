@@ -1,5 +1,6 @@
 import { PreviewError } from './preview/errors.js';
 import { isRecord } from '../shared/valueGuards.js';
+import { normalizeExternalText } from '../shared/text.js';
 
 export type TikTokComment = {
   id: string;
@@ -31,9 +32,10 @@ export function parseTikTokComments(value: unknown): TikTokComment[] {
     const username = typeof user.unique_id === 'string' ? user.unique_id.trim() : '';
     const avatarUrl = typeof user.avatar === 'string' ? safeHttpUrl(user.avatar) : null;
 
-    return comment.text.trim() ? [{
+    const text = normalizeExternalText(comment.text);
+    return text ? [{
       id: comment.id,
-      text: comment.text.trim(),
+      text,
       author,
       username,
       avatarUrl,
@@ -43,7 +45,7 @@ export function parseTikTokComments(value: unknown): TikTokComment[] {
 
 export function parseTikTokDescription(value: unknown): string | null {
   if (!isRecord(value) || typeof value.title !== 'string') return null;
-  return value.title.replace(/\s+/g, ' ').trim() || null;
+  return normalizeExternalText(value.title) || null;
 }
 
 export function parseTikTokDetails(value: unknown): TikTokDetails | null {
@@ -51,10 +53,10 @@ export function parseTikTokDetails(value: unknown): TikTokDetails | null {
   const author = isRecord(value.data.author) ? value.data.author : {};
   return {
     description: typeof value.data.title === 'string'
-      ? value.data.title.replace(/\s+/g, ' ').trim() || null
+      ? normalizeExternalText(value.data.title) || null
       : null,
     creatorName: typeof author.nickname === 'string'
-      ? author.nickname.replace(/\s+/g, ' ').trim() || null
+      ? normalizeExternalText(author.nickname) || null
       : null,
     creatorAvatarUrl: typeof author.avatar === 'string' ? safeHttpUrl(author.avatar) : null,
   };
@@ -64,7 +66,7 @@ export function parseTikTokOEmbedDetails(value: unknown): TikTokDetails {
   return {
     description: parseTikTokDescription(value),
     creatorName: isRecord(value) && typeof value.author_name === 'string'
-      ? value.author_name.replace(/\s+/g, ' ').trim() || null
+      ? normalizeExternalText(value.author_name) || null
       : null,
     creatorAvatarUrl: null,
   };

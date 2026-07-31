@@ -94,7 +94,12 @@ describe('parseTikTokDescription', () => {
 
   it('returns null when the caption is unavailable', () => {
     expect(parseTikTokDescription({ title: '' })).toBeNull();
+    expect(parseTikTokDescription({ title: '\uFFFD' })).toBeNull();
     expect(parseTikTokDescription({})).toBeNull();
+  });
+
+  it('preserves valid emoji while removing replacement markers', () => {
+    expect(parseTikTokDescription({ title: '\uFFFD 🎉' })).toBe('🎉');
   });
 });
 

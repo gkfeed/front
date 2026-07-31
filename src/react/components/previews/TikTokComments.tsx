@@ -4,6 +4,7 @@ import type { FeedItem } from '../../types';
 import { useTikTokComments } from '../../hooks/useTikTokComments';
 import { useTikTokCommentsPreference } from '../../hooks/useTikTokCommentsPreference';
 import { UserIcon } from '../Icons';
+import { normalizeExternalText } from '../../../../shared/text';
 
 export function TikTokComments({ item }: { item: FeedItem }) {
   const { t } = useTranslation();
@@ -107,8 +108,10 @@ function getVideoDescription(content: string, title: string): string | null {
 
   const document = new DOMParser().parseFromString(content, 'text/html');
   document.querySelectorAll('script, style, noscript').forEach((element) => element.remove());
-  const description = document.body.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-  if (!description || description.toLocaleLowerCase() === title.trim().toLocaleLowerCase()) return null;
+  const description = normalizeExternalText(document.body.textContent ?? '');
+  if (!description || description.toLocaleLowerCase() === normalizeExternalText(title).toLocaleLowerCase()) {
+    return null;
+  }
   return description;
 }
 

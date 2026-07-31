@@ -119,6 +119,30 @@ describe('feed service', () => {
     });
   });
 
+  it('drops Unicode replacement markers without dropping valid emoji', async () => {
+    respondWith({
+      items: [
+        {
+          id: 10,
+          feed_id: 2,
+          link: 'https://www.tiktok.com/@creator/video/123',
+          title: '\uFFFD',
+          text: '\uFFFC 🎉',
+        },
+      ],
+    });
+
+    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([
+      {
+        id: 10,
+        feedId: 2,
+        link: 'https://www.tiktok.com/@creator/video/123',
+        title: '',
+        text: '🎉',
+      },
+    ]);
+  });
+
   it('follows item cursors using bounded pages', async () => {
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(Response.json({

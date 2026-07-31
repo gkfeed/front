@@ -37,6 +37,16 @@ describe('body readers', () => {
     })).resolves.toBe('hello ');
   });
 
+  it('decodes legacy Cyrillic pages using the declared charset', async () => {
+    const response = responseFrom([
+      Uint8Array.from([0xCF, 0xF0, 0xE8, 0xE2, 0xE5, 0xF2]),
+    ]);
+
+    await expect(readLimitedBody(response, {
+      encoding: 'windows-1251',
+    })).resolves.toBe('Привет');
+  });
+
   it('does not count compressed bytes against the decoded limit', async () => {
     const body = Buffer.from('{"ok":true}');
     const response = responseFrom([gzipSync(body)], { 'content-encoding': 'gzip' });
