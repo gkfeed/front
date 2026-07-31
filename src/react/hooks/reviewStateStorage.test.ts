@@ -26,6 +26,24 @@ describe('reviewStateStorage', () => {
     });
   });
 
+  it('puts the newest fetched items first regardless of API order', () => {
+    stubLocalStorage();
+    const key = getReviewStateStorageKey('reader');
+    const state = {
+      pendingIds: [4, 3, 1],
+      revisitIds: [2],
+      keptItemIds: new Set([2]),
+    };
+
+    writeReviewState(key, state);
+
+    expect(readReviewState(key, [1, 5, 4, 3, 7, 2])).toEqual({
+      pendingIds: [7, 5, 4, 3, 1],
+      revisitIds: [2],
+      keptItemIds: new Set([2]),
+    });
+  });
+
   it('ignores malformed persisted data', () => {
     const values = stubLocalStorage();
     const key = getReviewStateStorageKey('reader');

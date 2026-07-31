@@ -96,9 +96,43 @@ describe('ReaderPage', () => {
     await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
     expect(await screen.findByText('New story')).toBeTruthy();
     expect(screen.queryByText('First story')).toBeNull();
+    expect(screen.getByText('2 remaining')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
     expect(await screen.findByText('Second story')).toBeTruthy();
+  });
+
+  it('starts with the newest item when a refresh finds several new items', async () => {
+    stubLocalStorage();
+    const newItems = [
+      {
+        id: 12,
+        feedId: 4,
+        link: 'https://example.net/new',
+        title: 'New story',
+        text: 'New summary',
+      },
+      {
+        id: 13,
+        feedId: 5,
+        link: 'https://example.net/newest',
+        title: 'Newest story',
+        text: 'Newest summary',
+      },
+    ];
+    vi.mocked(getFeedItems)
+      .mockResolvedValueOnce(ITEMS)
+      .mockResolvedValueOnce([...ITEMS, ...newItems]);
+    const firstRender = renderReader();
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    firstRender.unmount();
+
+    renderReader();
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Newest story')).toBeTruthy();
+    expect(screen.queryByText('New story')).toBeNull();
   });
 
   it('keeps the current item with a', async () => {

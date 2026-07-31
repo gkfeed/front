@@ -38,7 +38,9 @@ export function readReviewState(
       ...filteredRevisitIds,
       ...keptItemIds,
     ]);
-    const newIds = availableIds.filter((id) => !knownIds.has(id));
+    const newIds = availableIds
+      .filter((id) => !knownIds.has(id))
+      .sort((left, right) => right - left);
 
     return {
       pendingIds: [...newIds, ...filteredPendingIds],
