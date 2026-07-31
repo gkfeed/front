@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { isAppleMobileDevice } from '../../domain/device';
+import { useSoundGesture } from '../../hooks/useSoundGesture';
 import { TikTokEmbed } from './TikTokEmbed';
 import { VideoEmbed } from './VideoEmbed';
 import { HltvImageScore } from './HltvMatch';
@@ -29,13 +30,12 @@ export function FeedItemMedia({
   const { t } = useTranslation();
   const requiresSoundGesture = isAppleMobileDevice();
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
-  const [showSoundPrompt, setShowSoundPrompt] = useState(requiresSoundGesture);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const soundGesture = useSoundGesture(requiresSoundGesture, preview.src);
 
   useEffect(() => {
     setVideoAspectRatio(null);
-    setShowSoundPrompt(requiresSoundGesture);
-  }, [preview.src, requiresSoundGesture]);
+  }, [preview.src]);
 
   if (preview.type === 'video') {
     return (
@@ -59,7 +59,7 @@ export function FeedItemMedia({
           autoPlay
           controls
           loop
-          muted={requiresSoundGesture}
+          muted={soundGesture.isMuted}
           playsInline
           preload="auto"
           onLoadedMetadata={(event) => {
@@ -70,16 +70,16 @@ export function FeedItemMedia({
           }}
           onError={onPreviewError}
         />
-        {showSoundPrompt ? (
+        {soundGesture.showPrompt ? (
           <button
             type="button"
             className="reader-card__sound-toggle"
             onClick={() => {
+              soundGesture.enableSound();
               if (videoRef.current) {
                 videoRef.current.muted = false;
                 void videoRef.current.play();
               }
-              setShowSoundPrompt(false);
             }}
           >
             {t('preview.sound')}
@@ -94,7 +94,7 @@ export function FeedItemMedia({
       <TikTokEmbed
         src={preview.src}
         title={preview.alt}
-        requiresSoundGesture={requiresSoundGesture}
+        soundGesture={soundGesture}
       />
     ) : (
       <VideoEmbed src={preview.src} title={preview.alt} />

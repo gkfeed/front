@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { SoundGestureLifecycle } from '../../hooks/useSoundGesture';
 import { createTikTokPlayerAdapter } from './tikTokPlayerProtocol';
 
 type TikTokEmbedProps = {
   src: string;
   title: string;
-  requiresSoundGesture: boolean;
+  soundGesture: SoundGestureLifecycle;
 };
 
-export function TikTokEmbed({ src, title, requiresSoundGesture }: TikTokEmbedProps) {
+export function TikTokEmbed({ src, title, soundGesture }: TikTokEmbedProps) {
   const { t } = useTranslation();
   const frameRef = useRef<HTMLIFrameElement>(null);
-  const [showSoundPrompt, setShowSoundPrompt] = useState(requiresSoundGesture);
   const playerAdapter = useMemo(
     () => createTikTokPlayerAdapter(() => frameRef.current?.contentWindow ?? null),
     [],
@@ -21,11 +21,11 @@ export function TikTokEmbed({ src, title, requiresSoundGesture }: TikTokEmbedPro
   useEffect(() => {
     const playWhenReady = (event: MessageEvent<unknown>) => {
       if (!playerAdapter.isReadyMessage(event)) return;
-      playerAdapter.play({ unmute: !requiresSoundGesture });
+      playerAdapter.play({ unmute: !soundGesture.isMuted });
     };
     window.addEventListener('message', playWhenReady);
     return () => window.removeEventListener('message', playWhenReady);
-  }, [playerAdapter, requiresSoundGesture]);
+  }, [playerAdapter, soundGesture.isMuted]);
 
   return (
     <div className="reader-card__preview reader-card__preview--short-video reader-card__preview--tiktok">
@@ -37,13 +37,13 @@ export function TikTokEmbed({ src, title, requiresSoundGesture }: TikTokEmbedPro
         allowFullScreen
         referrerPolicy="strict-origin-when-cross-origin"
       />
-      {showSoundPrompt ? (
+      {soundGesture.showPrompt ? (
         <button
           type="button"
           className="reader-card__sound-toggle"
           onClick={() => {
+            soundGesture.enableSound();
             playerAdapter.play({ unmute: true });
-            setShowSoundPrompt(false);
           }}
         >
           {t('preview.sound')}
