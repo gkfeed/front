@@ -1,15 +1,19 @@
 import { isOpenGraphPreview } from '../../../shared/previewGuards';
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
 import { isVkImageHost } from '../../../shared/urlRules';
+import { requestBffJson } from './bffClient';
 
 export type { OpenGraphPreview } from '../../../shared/previewContracts';
 
 export async function getOpenGraphPreview(url: string, signal?: AbortSignal): Promise<OpenGraphPreview> {
-  const response = await fetch(`/api/bff/open-graph?url=${encodeURIComponent(url)}`, { signal });
-  if (!response.ok) throw new Error(`Preview request failed with ${response.status}`);
-
-  const value: unknown = await response.json();
-  if (!isOpenGraphPreview(value)) throw new Error('Invalid preview response');
+  const value = await requestBffJson({
+    endpoint: '/api/bff/open-graph',
+    input: url,
+    resourceName: 'preview',
+    httpErrorName: 'Preview',
+    validate: isOpenGraphPreview,
+    signal,
+  });
   return {
     ...value,
     image: value.image ? getBrowserImageUrl(value.image) : null,

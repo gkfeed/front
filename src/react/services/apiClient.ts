@@ -1,3 +1,10 @@
+import {
+  combineAbortSignals,
+  createTimeoutSignal,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  isAbortError,
+} from './requestTimeout';
+
 const DEFAULT_API_ROOT = import.meta.env.DEV
   ? '/api/v1'
   : 'https://feed.gws.freemyip.com/api/v1';
@@ -7,6 +14,13 @@ export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
     super(message);
     this.name = 'ApiError';
+  }
+}
+
+export class ApiTimeoutError extends Error {
+  constructor(readonly timeoutMs: number) {
+    super(`Request timed out after ${timeoutMs}ms`);
+    this.name = 'ApiTimeoutError';
   }
 }
 
@@ -25,15 +39,22 @@ export function requireCredentials<T extends { username: string; password: strin
 }
 
 export async function request(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  const timeoutSignal = AbortSignal.timeout(10_000);
-  const signal = init.signal
-    ? AbortSignal.any([init.signal, timeoutSignal])
-    : timeoutSignal;
-  const response = await fetch(input, { ...init, signal });
-  if (!response.ok) {
-    throw new ApiError(`Request failed with ${response.status}`, response.status);
+  const timeout = createTimeoutSignal(DEFAULT_REQUEST_TIMEOUT_MS);
+  const signal = combineAbortSignals(init.signal, timeout.signal);
+  try {
+    const response = await fetch(input, { ...init, signal });
+    if (!response.ok) {
+      throw new ApiError(`Request failed with ${response.status}`, response.status);
+    }
+    return response;
+  } catch (error: unknown) {
+    if (timeout.didTimeout && isAbortError(error)) {
+      throw new ApiTimeoutError(DEFAULT_REQUEST_TIMEOUT_MS);
+    }
+    throw error;
+  } finally {
+    timeout.dispose();
   }
-  return response;
 }
 
 export async function requestJson(input: RequestInfo | URL, init?: RequestInit): Promise<unknown> {

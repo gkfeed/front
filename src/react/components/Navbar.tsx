@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
 import { BrandMark } from './Icons';
-import { ThemePicker } from './ThemePicker';
+import { SettingsMenu } from './SettingsMenu';
 
 export function Navbar() {
   const { t } = useTranslation();
@@ -33,7 +33,7 @@ export function Navbar() {
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/live">{t('nav.live')}</NavLink>
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/login">{t('nav.login')}</NavLink>
       </span>
-      <ThemePicker
+      <SettingsMenu
         readerMode={isReader ? getReaderMode(location.search) : undefined}
         onReaderModeChange={isReader ? setReaderMode : undefined}
       />

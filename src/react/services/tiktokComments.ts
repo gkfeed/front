@@ -1,3 +1,5 @@
+import { requestBffJson } from './bffClient';
+
 export type TikTokComment = {
   id: string;
   text: string;
@@ -17,26 +19,22 @@ export async function fetchTikTokComments(
   url: string,
   signal: AbortSignal,
 ): Promise<TikTokCommentsResult> {
-  const response = await fetch(`/api/bff/tiktok-comments?url=${encodeURIComponent(url)}`, { signal });
-  if (!response.ok) throw new Error(`TikTok comments request failed with ${response.status}`);
+  return requestBffJson({
+    endpoint: '/api/bff/tiktok-comments',
+    input: url,
+    resourceName: 'TikTok comments',
+    validate: isTikTokCommentsResult,
+    signal,
+  });
+}
 
-  const value: unknown = await response.json();
-  if (
-    !isRecord(value)
-    || !Array.isArray(value.comments)
-    || !value.comments.every(isTikTokComment)
-    || (value.description !== null && typeof value.description !== 'string')
-    || (value.creatorName !== null && typeof value.creatorName !== 'string')
-    || (value.creatorAvatarUrl !== null && typeof value.creatorAvatarUrl !== 'string')
-  ) {
-    throw new Error('Invalid TikTok comments response');
-  }
-  return {
-    comments: value.comments,
-    description: value.description,
-    creatorName: value.creatorName,
-    creatorAvatarUrl: value.creatorAvatarUrl,
-  };
+function isTikTokCommentsResult(value: unknown): value is TikTokCommentsResult {
+  return isRecord(value)
+    && Array.isArray(value.comments)
+    && value.comments.every(isTikTokComment)
+    && (value.description === null || typeof value.description === 'string')
+    && (value.creatorName === null || typeof value.creatorName === 'string')
+    && (value.creatorAvatarUrl === null || typeof value.creatorAvatarUrl === 'string');
 }
 
 function isTikTokComment(value: unknown): value is TikTokComment {

@@ -20,7 +20,7 @@ describe('getOpenGraphPreview', () => {
     await expect(getOpenGraphPreview(preview.url)).resolves.toEqual(preview);
     expect(fetch).toHaveBeenCalledWith(
       '/api/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fstory%3Fa%3D1%26b%3D2',
-      { signal: undefined },
+      { signal: expect.any(AbortSignal) },
     );
   });
 

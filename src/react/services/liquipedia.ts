@@ -3,6 +3,7 @@ import type {
   LiquipediaMatchPreview,
   LiquipediaMatchTeam,
 } from '../../../shared/previewContracts';
+import { requestBffJson } from './bffClient';
 
 export type {
   LiquipediaMatchPreview,
@@ -14,12 +15,13 @@ export async function getLiquipediaMatchPreview(
   url: string,
   signal?: AbortSignal,
 ): Promise<LiquipediaMatchPreview> {
-  const response = await fetch(`/api/bff/liquipedia-match?url=${encodeURIComponent(url)}`, { signal });
-  if (!response.ok) throw new Error(`Liquipedia preview request failed with ${response.status}`);
-
-  const value: unknown = await response.json();
-  if (!isLiquipediaMatchPreview(value)) throw new Error('Invalid Liquipedia preview response');
-  return value;
+  return requestBffJson({
+    endpoint: '/api/bff/liquipedia-match',
+    input: url,
+    resourceName: 'Liquipedia preview',
+    validate: isLiquipediaMatchPreview,
+    signal,
+  });
 }
 
 function isLiquipediaMatchPreview(value: unknown): value is LiquipediaMatchPreview {

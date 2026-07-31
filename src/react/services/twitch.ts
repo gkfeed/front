@@ -1,6 +1,7 @@
 import { getFeedItemPreview } from '../domain/feedItemPreview';
 import type { Credentials, FeedItem } from '../types';
 import { getFeedItems } from './feeds';
+import { DEFAULT_REQUEST_TIMEOUT_MS } from './requestTimeout';
 
 const OFFLINE_PREVIEW_PATH = /\/404_preview-\d+x\d+\.jpg$/i;
 const MAX_CONCURRENT_TWITCH_CHECKS = 4;
@@ -31,7 +32,7 @@ export async function isTwitchStreamLive(item: FeedItem, signal?: AbortSignal): 
     const response = await fetch(toProbeUrl(preview.src), {
       cache: 'no-store',
       redirect: 'follow',
-      signal: signal ?? AbortSignal.timeout(10_000),
+      signal: signal ?? AbortSignal.timeout(DEFAULT_REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) return false;
 
