@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { getAllFeeds } from '../services/feeds';
+import { FeedSearchProvider } from '../state/FeedSearchProvider';
 import { useAuth } from '../state/useAuth';
 import { useFeedSearch } from '../state/useFeedSearch';
 import type { Credentials, Feed } from '../types';
@@ -14,6 +15,14 @@ const SEARCH_DEBOUNCE_MS = 80;
 const SKELETON_ITEMS = [1, 2, 3] as const;
 
 export function FeedsList() {
+  return (
+    <FeedSearchProvider>
+      <FeedsListContent />
+    </FeedSearchProvider>
+  );
+}
+
+function FeedsListContent() {
   const { t } = useTranslation();
   const { credentials } = useAuth();
   const { searchTerm, setSearchTerm } = useFeedSearch();

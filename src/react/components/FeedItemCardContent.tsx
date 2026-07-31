@@ -14,15 +14,14 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
     hostname,
     isPreviewPending,
     hltvMatchTeams,
-    isYoutube,
-    youtubeVideoId,
+    variant,
     visiblePreview,
-    isShortVideo,
-    isTikTok,
     hltvImageScore,
     onPreviewError,
     liquipediaMatch,
   } = model;
+  const isShortVideo = variant.type === 'tiktok' || variant.type === 'instagram';
+  const isTikTok = variant.type === 'tiktok';
   const preview = visiblePreview ? localizeFeedItemPreview(visiblePreview, t) : null;
   const displayHostname = hostname ?? t('feed.item');
 
@@ -43,10 +42,10 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
       />
     );
   }
-  if (isYoutube && youtubeVideoId) {
+  if (variant.type === 'youtube') {
     return (
       <YoutubePreview
-        videoId={youtubeVideoId}
+        videoId={variant.videoId}
         title={item.text || item.title}
         preview={preview}
         onPreviewError={onPreviewError}
@@ -71,13 +70,13 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
 }
 
 export function FeedItemCardSupplementary({ model }: { model: FeedItemCardModel }) {
-  const { item, isPreviewPending, isHltv, isTikTok, openGraphPreview } = model;
+  const { item, isPreviewPending, variant, provider, openGraphPreview } = model;
   return (
     <>
-      {!isPreviewPending && isHltv && openGraphPreview?.matchStartsAt ? (
+      {!isPreviewPending && provider === 'hltv' && openGraphPreview?.matchStartsAt ? (
         <HltvCountdown startsAt={openGraphPreview.matchStartsAt} />
       ) : null}
-      {!isPreviewPending && isTikTok ? <TikTokComments item={item} /> : null}
+      {!isPreviewPending && variant.type === 'tiktok' ? <TikTokComments item={item} /> : null}
     </>
   );
 }
@@ -88,16 +87,15 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
     item,
     hostname,
     isPreviewPending,
-    isImagePreviewOnly,
-    isYoutube,
-    isShortVideo,
-    isSimpleImageCard,
+    variant,
+    imagePreview,
     description,
   } = model;
   const displayHostname = hostname ?? t('feed.item');
+  const isShortVideo = variant.type === 'tiktok' || variant.type === 'instagram';
 
-  if (isPreviewPending || isImagePreviewOnly || isShortVideo) return null;
-  if (isYoutube) {
+  if (isPreviewPending || imagePreview.type !== 'none' || isShortVideo) return null;
+  if (variant.type === 'youtube') {
     return (
       <div className="reader-card__youtube-copy">
         <h2 className="reader-card__title">{item.text || item.title}</h2>
@@ -105,7 +103,7 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
       </div>
     );
   }
-  if (isSimpleImageCard) {
+  if (variant.type === 'simple-image') {
     return <h2 className="reader-card__title">{item.title || displayHostname}</h2>;
   }
 

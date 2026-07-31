@@ -15,11 +15,25 @@ import type { FeedItem } from '../types';
 import type { NsfwMode } from '../state/nsfwPreferencesContext';
 import type { RemotePreview } from '../services/remotePreview';
 
+export type FeedItemCardVariant =
+  | { type: 'standard' }
+  | { type: 'youtube'; videoId: string }
+  | { type: 'tiktok' }
+  | { type: 'instagram'; media: 'photo' | 'video' }
+  | { type: 'liquipedia' }
+  | { type: 'simple-image' };
+
+export type FeedItemCardImagePreview =
+  | { type: 'none' }
+  | { type: 'generated'; source: 'reddit' | 'other' }
+  | { type: 'hltv' };
+
 export type FeedItemCardPresentation = {
   item: FeedItem;
   hostname: string | null;
   provider: FeedItemAnalysis['provider'];
-  youtubeVideoId: string | null;
+  variant: FeedItemCardVariant;
+  imagePreview: FeedItemCardImagePreview;
   openGraphPreview: OpenGraphPreview | null;
   liquipediaMatch: RemotePreview['liquipediaMatch'];
   preview: FeedItemPreview | null;
@@ -28,16 +42,6 @@ export type FeedItemCardPresentation = {
   isNsfw: boolean;
   shouldBlurNsfw: boolean;
   shouldHideNsfw: boolean;
-  isYoutube: boolean;
-  isTikTok: boolean;
-  isInstagram: boolean;
-  isShortVideo: boolean;
-  isReddit: boolean;
-  isHltv: boolean;
-  isLiquipedia: boolean;
-  isInstagramPhoto: boolean;
-  isSimpleImageCard: boolean;
-  isImagePreviewOnly: boolean;
   hltvMatchTeams: NonNullable<OpenGraphPreview>['matchTeams'];
   hltvImageScore: [string, string] | null;
 };
@@ -76,15 +80,12 @@ export function buildFeedItemCardPresentation({
   const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
   const shouldHideNsfw = isNsfw && nsfwMode === 'hide';
   const localPreviewSource = localPreview?.src;
-  const isYoutube = provider === 'youtube';
   const isTikTok = provider === 'tiktok';
   const isInstagram = provider === 'instagram';
-  const isShortVideo = isTikTok || isInstagram;
   const isReddit = isRedditUrl(itemUrl);
   const isRezka = isRezkaUrl(itemUrl);
   const isVk = provider === 'vk';
   const isHltv = provider === 'hltv';
-  const isLiquipedia = provider === 'liquipedia';
   const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
   const remoteItemPreview = isRezka && loadedRemotePreview && localPreviewSource
@@ -110,17 +111,13 @@ export function buildFeedItemCardPresentation({
     : previewFailures === 1 && fallbackPreview
       ? fallbackPreview
       : previewFailures > 0 ? null : preview;
-  const isInstagramPhoto = isInstagram && visiblePreview?.type === undefined;
-  const isSimpleImageCard = provider === 'generic'
-    && Boolean(visiblePreview && visiblePreview.type === undefined);
-  const isImagePreviewOnly = Boolean(
-    visiblePreview
-    && visiblePreview.type === undefined
-    && (
-      visiblePreview.src.startsWith('/api/bff/reddit-preview-image?')
-      || (isHltv && visiblePreview.src === remoteItemPreview?.src)
-    ),
-  );
+  const imagePreview = getImagePreviewType({
+    provider,
+    isReddit,
+    visiblePreview,
+    remotePreviewSource: remoteItemPreview?.src,
+  });
+  const isSimpleImage = provider === 'generic' && isImagePreview(visiblePreview);
   const hltvMatchTeams = isHltv
     && visiblePreview
     && visiblePreview.type === undefined
@@ -132,12 +129,19 @@ export function buildFeedItemCardPresentation({
     && remotePreview.openGraphPreview?.matchStatus === 'over'
     ? remotePreview.openGraphPreview.matchScore ?? null
     : null;
+  const variant = getCardVariant({
+    provider,
+    youtubeVideoId,
+    isSimpleImage,
+    isInstagramPhoto: isInstagram && isImagePreview(visiblePreview),
+  });
 
   return {
     item,
     hostname,
     provider,
-    youtubeVideoId,
+    variant,
+    imagePreview,
     openGraphPreview: remotePreview.openGraphPreview,
     liquipediaMatch: remotePreview.liquipediaMatch,
     preview,
@@ -146,17 +150,54 @@ export function buildFeedItemCardPresentation({
     isNsfw,
     shouldBlurNsfw,
     shouldHideNsfw,
-    isYoutube,
-    isTikTok,
-    isInstagram,
-    isShortVideo,
-    isReddit,
-    isHltv,
-    isLiquipedia,
-    isInstagramPhoto,
-    isSimpleImageCard,
-    isImagePreviewOnly,
     hltvMatchTeams,
     hltvImageScore,
   };
+}
+
+function getImagePreviewType({
+  provider,
+  isReddit,
+  visiblePreview,
+  remotePreviewSource,
+}: {
+  provider: FeedItemAnalysis['provider'];
+  isReddit: boolean;
+  visiblePreview: FeedItemPreview | null;
+  remotePreviewSource: string | undefined;
+}): FeedItemCardImagePreview {
+  if (!isImagePreview(visiblePreview)) return { type: 'none' };
+  if (visiblePreview.src.startsWith('/api/bff/reddit-preview-image?')) {
+    return { type: 'generated', source: isReddit ? 'reddit' : 'other' };
+  }
+  if (provider === 'hltv' && visiblePreview.src === remotePreviewSource) return { type: 'hltv' };
+  return { type: 'none' };
+}
+
+function isImagePreview(
+  preview: FeedItemPreview | null,
+): preview is FeedItemPreview & { type?: undefined } {
+  return Boolean(preview && preview.type === undefined);
+}
+
+function getCardVariant({
+  provider,
+  youtubeVideoId,
+  isSimpleImage,
+  isInstagramPhoto,
+}: {
+  provider: FeedItemAnalysis['provider'];
+  youtubeVideoId: string | null;
+  isSimpleImage: boolean;
+  isInstagramPhoto: boolean;
+}): FeedItemCardVariant {
+  if (provider === 'youtube' && youtubeVideoId) return { type: 'youtube', videoId: youtubeVideoId };
+  if (provider === 'tiktok') return { type: 'tiktok' };
+  if (provider === 'instagram') return {
+    type: 'instagram',
+    media: isInstagramPhoto ? 'photo' : 'video',
+  };
+  if (provider === 'liquipedia') return { type: 'liquipedia' };
+  if (isSimpleImage) return { type: 'simple-image' };
+  return { type: 'standard' };
 }

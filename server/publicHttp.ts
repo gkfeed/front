@@ -4,11 +4,10 @@ import { request as requestHttps } from 'node:https';
 
 import { createPinnedLookup, resolvePublicAddress } from './publicAddress.js';
 import { PublicHttpError } from './publicHttpError.js';
+import { REMOTE_REQUEST_TIMEOUT_MS } from './timeouts.js';
 
 export { PublicHttpError } from './publicHttpError.js';
 export { createPinnedLookup, isPrivateAddress } from './publicAddress.js';
-
-const REQUEST_TIMEOUT_MS = 8_000;
 
 export interface PublicHttpResponse {
   body: IncomingMessage;
@@ -37,7 +36,7 @@ export async function requestPublicHttp(
       lookup: createPinnedLookup(address),
     } satisfies RequestOptions, (response) => {
       responseBody = response;
-      response.setTimeout(8_000, () => {
+      response.setTimeout(REMOTE_REQUEST_TIMEOUT_MS, () => {
         response.destroy(new PublicHttpError('timeout'));
       });
       response.once('end', () => {
@@ -58,8 +57,8 @@ export async function requestPublicHttp(
       const error = new PublicHttpError('timeout');
       request.destroy(error);
       responseBody?.destroy(error);
-    }, REQUEST_TIMEOUT_MS);
-    request.setTimeout(REQUEST_TIMEOUT_MS, () => {
+    }, REMOTE_REQUEST_TIMEOUT_MS);
+    request.setTimeout(REMOTE_REQUEST_TIMEOUT_MS, () => {
       request.destroy(new PublicHttpError('timeout'));
     });
     request.on('error', (error) => {

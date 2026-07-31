@@ -12,9 +12,9 @@ import type {
 import { responseTooLarge } from './bodyReaders.js';
 import { parseHltvMatchStatus } from './hltvParser.js';
 import { fetchHltvScorebotSnapshot } from './hltvScorebot.js';
+import { REMOTE_REQUEST_TIMEOUT_MS } from '../timeouts.js';
 
 const MAX_HLTV_RESPONSE_BYTES = 2_000_000;
-const REQUEST_TIMEOUT_MS = 8_000;
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
 const execFileAsync = promisify(execFile);
 
@@ -47,7 +47,7 @@ export async function fetchHltvHtml(url: URL): Promise<HltvPage> {
       '--out',
       'response',
       url.href,
-    ], { timeout: REQUEST_TIMEOUT_MS });
+    ], { timeout: REMOTE_REQUEST_TIMEOUT_MS });
 
     const body = await readFile(output);
     if (body.byteLength > MAX_HLTV_RESPONSE_BYTES) throw responseTooLarge();

@@ -13,16 +13,8 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
   const {
     cardRef,
     isPreviewPending,
-    isLiquipedia,
-    isYoutube,
-    isShortVideo,
-    isTikTok,
-    isInstagram,
-    isInstagramPhoto,
-    isSimpleImageCard,
-    isImagePreviewOnly,
-    isReddit,
-    isHltv,
+    variant,
+    imagePreview,
     shouldBlurNsfw,
     shouldHideNsfw,
   } = model;
@@ -35,16 +27,16 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
       className={[
         'reader-card',
         isPreviewPending ? 'reader-card--preview-pending' : '',
-        isLiquipedia ? 'reader-card--liquipedia' : '',
-        isYoutube ? 'reader-card--youtube' : '',
-        isShortVideo ? 'reader-card--short-video' : '',
-        isTikTok ? 'reader-card--tiktok' : '',
-        isInstagram ? 'reader-card--instagram' : '',
-        isInstagramPhoto ? 'reader-card--instagram-photo' : '',
-        isSimpleImageCard ? 'reader-card--simple-image' : '',
-        isImagePreviewOnly ? 'reader-card--image-preview' : '',
-        isImagePreviewOnly && isReddit ? 'reader-card--reddit-preview' : '',
-        isImagePreviewOnly && isHltv ? 'reader-card--hltv-preview' : '',
+        variant.type === 'liquipedia' ? 'reader-card--liquipedia' : '',
+        variant.type === 'youtube' ? 'reader-card--youtube' : '',
+        variant.type === 'tiktok' || variant.type === 'instagram' ? 'reader-card--short-video' : '',
+        variant.type === 'tiktok' ? 'reader-card--tiktok' : '',
+        variant.type === 'instagram' ? 'reader-card--instagram' : '',
+        variant.type === 'instagram' && variant.media === 'photo' ? 'reader-card--instagram-photo' : '',
+        variant.type === 'simple-image' ? 'reader-card--simple-image' : '',
+        imagePreview.type !== 'none' ? 'reader-card--image-preview' : '',
+        imagePreview.type === 'generated' && imagePreview.source === 'reddit' ? 'reader-card--reddit-preview' : '',
+        imagePreview.type === 'hltv' ? 'reader-card--hltv-preview' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
       inert={shouldBlurNsfw}
@@ -55,7 +47,7 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
           <span>{t('preview.hidden')}</span>
         </div>
       ) : null}
-      {isInstagram ? (
+      {variant.type === 'instagram' ? (
         <div className="reader-card__short-video-identity">
           <span className="reader-card__short-video-logo"><InstagramIcon /></span>
           <span>{getInstagramUsername(item.title)}</span>

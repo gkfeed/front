@@ -1,0 +1,1 @@
+export const REMOTE_REQUEST_TIMEOUT_MS = 8_000;

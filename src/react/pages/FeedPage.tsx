@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router';
 
 import { FeedCard } from '../components/FeedCard';
 import { useFeed } from '../hooks/useFeed';
+import type { FeedDeleteStatus } from '../hooks/useFeed';
 
 export function FeedPage() {
   const { t } = useTranslation();
@@ -13,12 +14,8 @@ export function FeedPage() {
   const handleDeleted = useCallback(() => navigate('/'), [navigate]);
   const {
     feed,
-    isLoading,
-    isDeleting,
-    isConfirmingDelete,
-    canRetryLoad,
-    loadError,
-    deleteError,
+    loadStatus,
+    deleteStatus,
     requestDelete,
     cancelDelete,
     deleteFeed,
@@ -27,18 +24,22 @@ export function FeedPage() {
 
   let content: ReactNode = null;
 
-  if (isLoading) {
+  if (loadStatus === 'loading') {
     content = <p className="status" aria-live="polite">{t('feedDetails.loading')}</p>;
-  } else if (loadError) {
-    content = <LoadErrorState message={loadError} canRetry={canRetryLoad} onRetry={retryLoad} />;
+  } else if (loadStatus === 'not-found' || loadStatus === 'error') {
+    content = (
+      <LoadErrorState
+        message={t(loadStatus === 'not-found' ? 'feedDetails.notFound' : 'feedDetails.loadError')}
+        canRetry={loadStatus === 'error'}
+        onRetry={retryLoad}
+      />
+    );
   } else if (feed) {
     content = (
       <>
         <FeedCard feed={feed} asLink={false} />
           <DeleteActions
-          isConfirmingDelete={isConfirmingDelete}
-          isDeleting={isDeleting}
-          deleteError={deleteError}
+          deleteStatus={deleteStatus}
           onRequestDelete={requestDelete}
           onCancelDelete={cancelDelete}
           onDelete={deleteFeed}
@@ -69,21 +70,19 @@ function LoadErrorState({ message, canRetry, onRetry }: { message: string; canRe
 }
 
 function DeleteActions({
-  isConfirmingDelete,
-  isDeleting,
-  deleteError,
+  deleteStatus,
   onRequestDelete,
   onCancelDelete,
   onDelete,
 }: {
-  isConfirmingDelete: boolean;
-  isDeleting: boolean;
-  deleteError: string;
+  deleteStatus: FeedDeleteStatus;
   onRequestDelete: () => void;
   onCancelDelete: () => void;
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
+  const isConfirmingDelete = deleteStatus !== 'idle';
+  const isDeleting = deleteStatus === 'deleting';
 
   return (
     <div className="actions">
@@ -104,8 +103,8 @@ function DeleteActions({
           {t('feedDetails.delete')}
         </button>
       )}
-      {deleteError ? (
-        <p className="status status--error" role="alert">{deleteError}</p>
+      {deleteStatus === 'error' ? (
+        <p className="status status--error" role="alert">{t('feedDetails.deleteError')}</p>
       ) : isDeleting ? (
         <p className="status" aria-live="polite">{t('feedDetails.deletingSource')}</p>
       ) : null}

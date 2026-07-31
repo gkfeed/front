@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useFeedCreator } from '../hooks/useFeedCreator';
-import type { FeedCreatorMode } from '../hooks/useFeedCreator';
+import type { FeedCreatorMode, FeedCreatorSaveStatus } from '../hooks/useFeedCreator';
 import type { FeedInput } from '../types';
 import { FeedTypePicker } from './FeedTypePicker';
 
@@ -37,7 +37,6 @@ export function FeedCreator() {
     submitted,
     saveStatus,
     isSaving,
-    statusMessage,
     isFeedFieldValid,
     updateMode,
     updateFeed,
@@ -86,7 +85,7 @@ export function FeedCreator() {
             role={saveStatus === 'error' ? 'alert' : undefined}
             aria-live="polite"
           >
-            {statusMessage}
+            {getStatusMessage(saveStatus, t)}
           </span>
           <button className="creator__submit" type="submit" disabled={isSaving}>
             {isSaving ? t('creator.savingButton') : t('creator.addButton')}
@@ -95,6 +94,13 @@ export function FeedCreator() {
       </form>
     </section>
   );
+}
+
+function getStatusMessage(saveStatus: FeedCreatorSaveStatus, t: (key: string) => string): string {
+  if (saveStatus === 'saving') return t('creator.saving');
+  if (saveStatus === 'success') return t('creator.saved');
+  if (saveStatus === 'error') return t('creator.saveError');
+  return '';
 }
 
 type ModeTabProps = {

@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { createFeed, createFeedFromUrl } from '../services/feeds';
 import { useAuth } from '../state/useAuth';
 import type { FeedInput } from '../types';
 
-type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
+export type FeedCreatorSaveStatus = 'idle' | 'saving' | 'success' | 'error';
 export type FeedCreatorMode = 'lazy' | 'extended';
 
 const EMPTY_FEED: FeedInput = {
@@ -17,12 +16,11 @@ const FEED_FIELDS: readonly (keyof FeedInput)[] = ['title', 'type', 'url'];
 const VALID_URL_PROTOCOLS: Record<string, true> = { 'http:': true, 'https:': true };
 
 export function useFeedCreator() {
-  const { t } = useTranslation();
   const { credentials } = useAuth();
   const [feed, setFeed] = useState<FeedInput>(EMPTY_FEED);
   const [mode, setMode] = useState<FeedCreatorMode>('lazy');
   const [submitted, setSubmitted] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [saveStatus, setSaveStatus] = useState<FeedCreatorSaveStatus>('idle');
   const isSaving = saveStatus === 'saving';
   const visibleFields = getVisibleFields(mode);
   const isValid = visibleFields.every((field) => isFeedFieldValid(feed, field));
@@ -65,7 +63,6 @@ export function useFeedCreator() {
     submitted,
     saveStatus,
     isSaving,
-    statusMessage: getStatusMessage(saveStatus, t),
     isFeedFieldValid: (field: keyof FeedInput) => isFeedFieldValid(feed, field),
     updateMode,
     updateFeed,
@@ -98,11 +95,4 @@ function isValidFeedUrl(value: string): boolean {
   } catch {
     return false;
   }
-}
-
-function getStatusMessage(saveStatus: SaveStatus, t: (key: string) => string): string {
-  if (saveStatus === 'saving') return t('creator.saving');
-  if (saveStatus === 'success') return t('creator.saved');
-  if (saveStatus === 'error') return t('creator.saveError');
-  return '';
 }

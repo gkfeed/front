@@ -21,9 +21,7 @@ describe('useFeed', () => {
   it('rejects invalid route ids without requesting data', async () => {
     const { result } = renderHook(() => useFeed('0', vi.fn()), { wrapper });
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.loadError).toBe('Feed source not found.');
-    expect(result.current.canRetryLoad).toBe(false);
+    await waitFor(() => expect(result.current.loadStatus).toBe('not-found'));
     expect(getFeed).not.toHaveBeenCalled();
   });
 
@@ -35,7 +33,7 @@ describe('useFeed', () => {
 
     await waitFor(() => expect(result.current.feed).toEqual(feed));
     act(result.current.requestDelete);
-    expect(result.current.isConfirmingDelete).toBe(true);
+    expect(result.current.deleteStatus).toBe('confirming');
     await act(result.current.deleteFeed);
     expect(deleteFeed).toHaveBeenCalledWith(1, null);
     expect(onDeleted).toHaveBeenCalledOnce();
@@ -45,8 +43,7 @@ describe('useFeed', () => {
     getFeed.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(feed);
     const { result } = renderHook(() => useFeed('1', vi.fn()), { wrapper });
 
-    await waitFor(() => expect(result.current.loadError).toBe('Could not load this feed source.'));
-    expect(result.current.canRetryLoad).toBe(true);
+    await waitFor(() => expect(result.current.loadStatus).toBe('error'));
     act(result.current.retryLoad);
     await waitFor(() => expect(result.current.feed).toEqual(feed));
     expect(getFeed).toHaveBeenCalledTimes(2);
@@ -60,7 +57,6 @@ describe('useFeed', () => {
     await waitFor(() => expect(result.current.feed).toEqual(feed));
     act(result.current.requestDelete);
     await act(result.current.deleteFeed);
-    expect(result.current.isConfirmingDelete).toBe(true);
-    expect(result.current.deleteError).toBe('Could not delete this feed source. Try again.');
+    expect(result.current.deleteStatus).toBe('error');
   });
 });
