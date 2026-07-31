@@ -1,5 +1,6 @@
 import { decodeHtml, parseAttributes, resolveHttpUrl } from './html.js';
 import { normalizeHostname } from '../../shared/urlRules.js';
+import { getStringProperty, isRecord } from '../../shared/previewGuards.js';
 
 export function parseVkStructuredVideo(
   html: string,
@@ -53,8 +54,8 @@ function findStructuredVideo(value: unknown): Record<string, unknown> | null {
     }
     return null;
   }
-  if (!value || typeof value !== 'object') return null;
-  const object = value as Record<string, unknown>;
+  if (!isRecord(value)) return null;
+  const object = value;
   if (object['@type'] === 'VideoObject') return object;
   for (const key of ['video', '@graph']) {
     const video = findStructuredVideo(object[key]);
@@ -64,8 +65,8 @@ function findStructuredVideo(value: unknown): Record<string, unknown> | null {
 }
 
 function getObjectString(value: Record<string, unknown>, key: string): string | null {
-  const property = value[key];
-  return typeof property === 'string' && property.trim() ? property.trim() : null;
+  const property = getStringProperty(value, key);
+  return property?.trim() || null;
 }
 
 function isVkVideoEmbedUrl(value: string): boolean {

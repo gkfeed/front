@@ -60,7 +60,20 @@ export async function fetchPublicResponse(
       if (redirects === maxRedirects) {
         throw new PreviewError(options.tooManyRedirectsMessage, 502, 'too_many_redirects');
       }
-      url = parsePublicHttpUrl(new URL(location, url).href);
+      let redirectedUrl: URL;
+      try {
+        redirectedUrl = new URL(location, url);
+      } catch {
+        throw new PreviewError(options.invalidRedirectMessage, 502, 'invalid_redirect');
+      }
+      try {
+        url = parsePublicHttpUrl(redirectedUrl.href);
+      } catch (error) {
+        if (error instanceof PreviewError && error.code === 'invalid_url') {
+          throw new PreviewError(options.invalidRedirectMessage, 502, 'invalid_redirect');
+        }
+        throw error;
+      }
       continue;
     }
 

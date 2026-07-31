@@ -1,8 +1,16 @@
 import type { OpenGraphPreview } from './previewContracts.js';
 
+const OPEN_GRAPH_MATCH_STATUSES = new Set([
+  'scheduled',
+  'live',
+  'over',
+  'postponed',
+  'deleted',
+]);
+
 export function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
-  const object = asRecord(value);
-  if (!object) return false;
+  if (!isRecord(value)) return false;
+  const object = value;
 
   const matchStatus = object.matchStatus;
   const matchScore = object.matchScore;
@@ -19,7 +27,7 @@ export function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
     && (
       matchStatus === undefined
       || matchStatus === null
-      || ['scheduled', 'live', 'over', 'postponed', 'deleted'].includes(String(matchStatus))
+      || isMatchStatus(matchStatus)
     )
     && (matchScore === undefined || matchScore === null || isStringPair(matchScore))
     && (matchCurrentMap === undefined || matchCurrentMap === null || isHltvCurrentMap(matchCurrentMap))
@@ -61,24 +69,26 @@ export function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
     );
 }
 
+function isMatchStatus(value: unknown): boolean {
+  return typeof value === 'string' && OPEN_GRAPH_MATCH_STATUSES.has(value);
+}
+
 function isHltvPlayerStats(value: unknown): boolean {
-  const object = asRecord(value);
-  if (!object) return false;
+  if (!isRecord(value)) return false;
+  const object = value;
   return typeof object.nickname === 'string'
     && [object.kills, object.deaths, object.assists, object.adr]
       .every((number) => typeof number === 'number' && Number.isFinite(number));
 }
 
 function isHltvCurrentMap(value: unknown): boolean {
-  const object = asRecord(value);
-  return Boolean(object)
-    && typeof object!.name === 'string'
-    && isStringPair(object!.score);
+  return isRecord(value)
+    && typeof value.name === 'string'
+    && isStringPair(value.score);
 }
 
 function isHltvMatchTeam(value: unknown): boolean {
-  const object = asRecord(value);
-  return Boolean(object) && typeof object!.name === 'string' && isNullableString(object!.logo);
+  return isRecord(value) && typeof value.name === 'string' && isNullableString(value.logo);
 }
 
 function isStringPair(value: unknown): value is [string, string] {
@@ -91,8 +101,12 @@ function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
 }
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null;
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function getStringProperty(value: unknown, property: string): string | null {
+  if (!isRecord(value)) return null;
+  const propertyValue = value[property];
+  return typeof propertyValue === 'string' ? propertyValue : null;
 }

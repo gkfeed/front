@@ -1,4 +1,5 @@
 import { PreviewError } from './preview/errors.js';
+import { isRecord } from '../shared/previewGuards.js';
 
 export type TikTokComment = {
   id: string;
@@ -99,8 +100,4 @@ function safeHttpUrl(value: string): string | null {
   } catch {
     return null;
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }

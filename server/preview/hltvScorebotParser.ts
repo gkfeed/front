@@ -4,6 +4,7 @@ import type {
   HltvMatchTeamSidesPreview,
   HltvPlayerStatsPreview,
 } from '../../shared/previewContracts.js';
+import { isRecord } from '../../shared/previewGuards.js';
 import { findHltvMapDisplayName } from './hltvHtmlParser.js';
 
 export interface HltvScorebotSnapshot {
@@ -79,10 +80,6 @@ function parseHltvScoreboardPlayers(value: unknown): HltvPlayerStatsPreview[] {
 
 function isHltvScoreboard(value: unknown): value is HltvScoreboard {
   return isRecord(value) && typeof value.mapName === 'string';
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function parseFiniteNumber(value: unknown): number | null {
