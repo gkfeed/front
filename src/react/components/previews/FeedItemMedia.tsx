@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { FeedItemPreview } from '../../domain/feedItemPreview';
+import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { isAppleMobileDevice } from '../../domain/device';
 import { TikTokEmbed } from './TikTokEmbed';
 import { VideoEmbed } from './VideoEmbed';
@@ -10,7 +10,7 @@ import { HltvImageScore } from './HltvMatch';
 type FeedItemMediaProps = {
   href: string;
   hostname: string;
-  preview: FeedItemPreview;
+  preview: LocalizedFeedItemPreview;
   isShortVideo: boolean;
   isTikTok: boolean;
   hltvImageScore: [string, string] | null;

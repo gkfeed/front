@@ -28,7 +28,7 @@ describe('getFeedItemPreview', () => {
   it('builds the same live Twitch thumbnail used by gkbot', () => {
     expect(getFeedItemPreview(item({ link: 'https://www.twitch.tv/some_channel' }))).toEqual({
       src: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_some_channel-1920x1080.jpg',
-      alt: 'some_channel Twitch preview',
+      alt: { kind: 'twitch', channel: 'some_channel' },
     });
   });
 
@@ -46,7 +46,7 @@ describe('getFeedItemPreview', () => {
   it('uses an image embedded in feed content', () => {
     expect(getFeedItemPreview(item({ text: '<p>Summary</p><img src="https://cdn.example.com/cover.jpg">' }))).toEqual({
       src: 'https://cdn.example.com/cover.jpg',
-      alt: 'Preview for Story',
+      alt: { kind: 'item', title: 'Story' },
     });
   });
 
@@ -56,7 +56,7 @@ describe('getFeedItemPreview', () => {
       text: '<p>Summary</p><img src="http://sun9-67.vkuserphoto.ru/impg/cover.jpg?size=1170x1560">',
     }))).toEqual({
       src: 'https://sun9-67.vkuserphoto.ru/impg/cover.jpg?size=1170x1560',
-      alt: 'Preview for Story',
+      alt: { kind: 'item', title: 'Story' },
     });
   });
 

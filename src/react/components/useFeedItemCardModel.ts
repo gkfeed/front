@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { analyzeFeedItem } from '../domain/feedItemPreview';
 import {
@@ -20,9 +19,8 @@ export type FeedItemCardModel = FeedItemCardPresentation & {
 };
 
 export function useFeedItemCardModel(item: FeedItem): FeedItemCardModel {
-  const { t } = useTranslation();
   const { nsfwMode } = useNsfwPreferences();
-  const analysis = analyzeFeedItem(item, t);
+  const analysis = analyzeFeedItem(item);
   const shouldHideNsfw = isNsfwLink(item.link) && nsfwMode === 'hide';
   const shouldLoadRemote = shouldLoadRemotePreview(item, analysis, shouldHideNsfw);
   const {
@@ -43,7 +41,6 @@ export function useFeedItemCardModel(item: FeedItem): FeedItemCardModel {
     nsfwMode,
     remotePreview: { openGraphPreview, liquipediaMatch },
     previewFailures,
-    t,
   });
   const isPreviewPending = shouldLoadRemote && !analysis.localPreview && previewStatus === 'pending';
 

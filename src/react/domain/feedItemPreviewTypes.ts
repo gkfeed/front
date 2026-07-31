@@ -2,11 +2,19 @@ import type { FeedItem } from '../types';
 
 export interface FeedItemPreview {
   src: string;
-  alt: string;
+  alt: FeedItemPreviewAlt;
   type?: 'video' | 'embed';
   poster?: string;
   fallbackSrc?: string;
 }
+
+export type FeedItemPreviewAlt =
+  | { kind: 'item'; title: string | null }
+  | { kind: 'video'; title: string | null }
+  | { kind: 'youtube'; title: string | null }
+  | { kind: 'tiktok'; title: string | null }
+  | { kind: 'twitch'; channel: string }
+  | { kind: 'vk'; title: string | null };
 
 export type FeedItemProvider =
   | 'generic'
@@ -19,7 +27,7 @@ export type FeedItemProvider =
 
 export interface FeedItemAnalysis {
   url: URL | null;
-  hostname: string;
+  hostname: string | null;
   provider: FeedItemProvider;
   localPreview: FeedItemPreview | null;
   youtubeVideoId: string | null;

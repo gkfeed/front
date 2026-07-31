@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { FeedItemPreview } from '../../domain/feedItemPreview';
+import type { LocalizedFeedItemPreview } from '../previewLocalization';
 
 type YoutubePreviewProps = {
   onPreviewError: () => void;
-  preview: FeedItemPreview | null;
+  preview: LocalizedFeedItemPreview | null;
   title: string;
   videoId: string;
 };

@@ -1,6 +1,4 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
-import type { TFunction } from 'i18next';
-import i18n from '../i18n';
 
 import {
   getRemoteFeedItemPreview,
@@ -19,7 +17,7 @@ import type { RemotePreview } from '../services/remotePreview';
 
 export type FeedItemCardPresentation = {
   item: FeedItem;
-  hostname: string;
+  hostname: string | null;
   provider: FeedItemAnalysis['provider'];
   youtubeVideoId: string | null;
   openGraphPreview: OpenGraphPreview | null;
@@ -66,14 +64,12 @@ export function buildFeedItemCardPresentation({
   nsfwMode,
   remotePreview,
   previewFailures,
-  t = i18n.t,
 }: {
   item: FeedItem;
   analysis: FeedItemAnalysis;
   nsfwMode: NsfwMode;
   remotePreview: RemotePreview;
   previewFailures: number;
-  t?: TFunction;
 }): FeedItemCardPresentation {
   const { hostname, url: itemUrl, provider, localPreview, youtubeVideoId } = analysis;
   const isNsfw = isNsfwLink(item.link);
@@ -90,14 +86,14 @@ export function buildFeedItemCardPresentation({
   const isHltv = provider === 'hltv';
   const isLiquipedia = provider === 'liquipedia';
   const feedDescription = isVk ? getFeedItemDescription(item.text, item.title) : null;
-  const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title, t);
+  const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
   const remoteItemPreview = isRezka && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
   const description = isVk
     ? feedDescription ?? getFeedItemDescription(remotePreview.openGraphPreview?.description ?? '', item.title)
     : null;
-  const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item, t) : null;
+  const tiktokEmbedPreview = isTikTok ? getTikTokEmbedPreview(item) : null;
   const preview = isTikTok
     ? tiktokEmbedPreview ?? localPreview
     : isRezka

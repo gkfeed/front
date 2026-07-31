@@ -1,5 +1,6 @@
 import type { FeedItemCardModel } from './useFeedItemCardModel';
 import { useTranslation } from 'react-i18next';
+import { localizeFeedItemPreview } from './previewLocalization';
 import { HltvCountdown, HltvMatchup } from './previews/HltvMatch';
 import { FeedItemMedia } from './previews/FeedItemMedia';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
@@ -22,6 +23,8 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
     onPreviewError,
     liquipediaMatch,
   } = model;
+  const preview = visiblePreview ? localizeFeedItemPreview(visiblePreview, t) : null;
+  const displayHostname = hostname ?? t('feed.item');
 
   if (isPreviewPending) {
     return <div className="reader-card__preview-placeholder" role="status" aria-label={t('preview.loading')} />;
@@ -45,19 +48,20 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
       <YoutubePreview
         videoId={youtubeVideoId}
         title={item.text || item.title}
-        preview={visiblePreview}
+        preview={preview}
         onPreviewError={onPreviewError}
       />
     );
   }
   if (liquipediaMatch) return <LiquipediaMatch match={liquipediaMatch} />;
   if (!visiblePreview) return null;
+  const localizedPreview = localizeFeedItemPreview(visiblePreview, t);
 
   return (
     <FeedItemMedia
       href={item.link}
-      hostname={item.title || hostname}
-      preview={visiblePreview}
+      hostname={item.title || displayHostname}
+      preview={localizedPreview}
       isShortVideo={isShortVideo}
       isTikTok={isTikTok}
       hltvImageScore={hltvImageScore}
@@ -90,6 +94,7 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
     isSimpleImageCard,
     description,
   } = model;
+  const displayHostname = hostname ?? t('feed.item');
 
   if (isPreviewPending || isImagePreviewOnly || isShortVideo) return null;
   if (isYoutube) {
@@ -101,16 +106,16 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
     );
   }
   if (isSimpleImageCard) {
-    return <h2 className="reader-card__title">{item.title || hostname}</h2>;
+    return <h2 className="reader-card__title">{item.title || displayHostname}</h2>;
   }
 
   return (
     <>
       <div className="reader-card__meta">
-        <span>{hostname}</span>
+        <span>{displayHostname}</span>
         <span>{t('feed.item')} #{item.feedId}</span>
       </div>
-      <h2 className="reader-card__title">{item.title || hostname}</h2>
+      <h2 className="reader-card__title">{item.title || displayHostname}</h2>
       {description ? <p className="reader-card__description">{description}</p> : null}
       <a className="reader-card__link" href={item.link} target="_blank" rel="noreferrer">
         {t('reader.openOriginal')} <span aria-hidden="true">↗</span>
