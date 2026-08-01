@@ -264,6 +264,11 @@
   font-weight: 750;
 }
 
+.reader-card__hltv-player-tables tbody tr.reader-card__hltv-player-row--best-adr th:first-child,
+.reader-card__hltv-player-tables tbody tr.reader-card__hltv-player-row--best-adr td:last-child {
+  color: #ffd08a;
+}
+
 .reader-card__hltv-player-tables abbr {
   text-decoration: none;
 }

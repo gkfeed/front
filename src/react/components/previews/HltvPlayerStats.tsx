@@ -10,6 +10,11 @@ export function HltvPlayerStats({
 }) {
   const { t } = useTranslation();
   const hasPlayerStats = playerStats?.some((team) => team.length > 0);
+  const allPlayers = playerStats?.flat() ?? [];
+  const bestAdrPlayer = allPlayers.reduce<typeof allPlayers[number] | null>(
+    (best, player) => !best || player.adr > best.adr ? player : best,
+    null,
+  );
 
   return (
     <details className="reader-card__hltv-player-stats">
@@ -32,7 +37,12 @@ export function HltvPlayerStats({
               </thead>
               <tbody>
                 {playerStats[teamIndex]!.map((player) => (
-                  <tr key={player.nickname}>
+                  <tr
+                    key={player.nickname}
+                    className={player === bestAdrPlayer
+                      ? 'reader-card__hltv-player-row--best-adr'
+                      : undefined}
+                  >
                     <th scope="row">{player.nickname}</th>
                     <td>{player.kills}–{player.deaths}</td>
                     <td>{player.assists}</td>

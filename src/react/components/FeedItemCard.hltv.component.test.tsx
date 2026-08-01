@@ -144,8 +144,14 @@ describe('FeedItemCard HLTV previews', () => {
           currentMap: { name: 'Anubis', score: ['12', '10'] },
           completedMaps: null,
           playerStats: [
-            [{ nickname: 'NAF', kills: 18, deaths: 12, assists: 4, adr: 91.3 }],
-            [{ nickname: 'donk', kills: 20, deaths: 14, assists: 3, adr: 104.8 }],
+            [
+              { nickname: 'NAF', kills: 18, deaths: 12, assists: 4, adr: 91.3 },
+              { nickname: 'YEKINDAR', kills: 14, deaths: 15, assists: 2, adr: 75.6 },
+            ],
+            [
+              { nickname: 'donk', kills: 20, deaths: 14, assists: 3, adr: 104.8 },
+              { nickname: 'magixx', kills: 16, deaths: 15, assists: 4, adr: 98.2 },
+            ],
           ],
           teamSides: ['ct', 't'],
         },
@@ -170,6 +176,10 @@ describe('FeedItemCard HLTV previews', () => {
     expect(screen.getByText('NAF')).toBeTruthy();
     expect(screen.getByText('18–12')).toBeTruthy();
     expect(screen.getByText('104.8')).toBeTruthy();
+    expect(screen.getByText('NAF').closest('tr')?.classList.contains('reader-card__hltv-player-row--best-adr')).toBe(false);
+    expect(screen.getByText('YEKINDAR').closest('tr')?.classList.contains('reader-card__hltv-player-row--best-adr')).toBe(false);
+    expect(screen.getByText('donk').closest('tr')?.classList.contains('reader-card__hltv-player-row--best-adr')).toBe(true);
+    expect(screen.getByText('magixx').closest('tr')?.classList.contains('reader-card__hltv-player-row--best-adr')).toBe(false);
   });
 
   it('emphasizes the winner instead of the sides after a live map ends', async () => {
