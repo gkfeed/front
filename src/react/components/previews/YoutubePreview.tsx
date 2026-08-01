@@ -20,12 +20,14 @@ export function YoutubePreview({
   const { t } = useTranslation();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
+  const [isDoubleSpeed, setIsDoubleSpeed] = useState(true);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsPlayerOpen(false);
     setIsTheaterOpen(false);
+    setIsDoubleSpeed(true);
   }, [videoId]);
 
   useEffect(() => {
@@ -73,8 +75,17 @@ export function YoutubePreview({
         videoId={videoId}
         title={title}
         isTheaterOpen={isTheaterOpen}
+        isDoubleSpeed={isDoubleSpeed}
         shellRef={playerRef}
         onToggleTheater={() => setIsTheaterOpen((isOpen) => !isOpen)}
+        onTogglePlaybackSpeed={() => {
+          const nextIsDoubleSpeed = !isDoubleSpeed;
+          setIsDoubleSpeed(nextIsDoubleSpeed);
+          sendPlaybackRate(
+            playerRef.current?.querySelector<HTMLIFrameElement>('iframe') ?? null,
+            nextIsDoubleSpeed ? 2 : 1,
+          );
+        }}
       />
     );
   }
@@ -109,13 +120,30 @@ type YoutubePlayerProps = {
   videoId: string;
   title: string;
   isTheaterOpen: boolean;
+  isDoubleSpeed: boolean;
   onToggleTheater: () => void;
+  onTogglePlaybackSpeed: () => void;
   shellRef: RefObject<HTMLDivElement | null>;
 };
 
-function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater, shellRef }: YoutubePlayerProps) {
+function YoutubePlayer({
+  videoId,
+  title,
+  isTheaterOpen,
+  isDoubleSpeed,
+  onToggleTheater,
+  onTogglePlaybackSpeed,
+  shellRef,
+}: YoutubePlayerProps) {
   const { t } = useTranslation();
-  const parameters = new URLSearchParams({ autoplay: '1', rel: '0' });
+  const parameters = new URLSearchParams({ autoplay: '1', rel: '0', enablejsapi: '1' });
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const sendCurrentPlaybackRate = () => sendPlaybackRate(iframeRef.current, isDoubleSpeed ? 2 : 1);
+    const retryTimers = [300, 1000].map((delay) => window.setTimeout(sendCurrentPlaybackRate, delay));
+    return () => retryTimers.forEach((timer) => window.clearTimeout(timer));
+  }, [isDoubleSpeed]);
 
   return (
     <div
@@ -130,6 +158,15 @@ function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater, shellRe
     >
       <div className="reader-card__youtube-player-stage">
         <div className="reader-card__youtube-player-toolbar">
+          <button
+            type="button"
+            className="reader-card__speed-toggle"
+            aria-label={t('preview.playbackSpeed', { speed: isDoubleSpeed ? '2x' : '1x' })}
+            aria-pressed={isDoubleSpeed}
+            onClick={onTogglePlaybackSpeed}
+          >
+            {isDoubleSpeed ? '2x' : '1x'}
+          </button>
           <button
             type="button"
             className="reader-card__theater-toggle"
@@ -148,11 +185,21 @@ function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater, shellRe
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
+            ref={iframeRef}
+            onLoad={() => sendPlaybackRate(iframeRef.current, isDoubleSpeed ? 2 : 1)}
           />
         </div>
       </div>
     </div>
   );
+}
+
+function sendPlaybackRate(iframe: HTMLIFrameElement | null, playbackRate: number): void {
+  iframe?.contentWindow?.postMessage(JSON.stringify({
+    event: 'command',
+    func: 'setPlaybackRate',
+    args: [playbackRate],
+  }), '*');
 }
 
 function getFocusableElements(container: HTMLElement | null): HTMLElement[] {

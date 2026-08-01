@@ -42,11 +42,13 @@
   min-height: 40px;
   align-items: center;
   justify-content: flex-end;
+  gap: 8px;
   padding: 5px 8px;
   border-bottom: 1px solid color-mix(in oklch, var(--color-card-border) 72%, transparent);
   background: linear-gradient(160deg, var(--color-card-hover), var(--color-card));
 }
 
+.reader-card__speed-toggle,
 .reader-card__theater-toggle {
   display: inline-flex;
   min-height: 30px;
@@ -64,11 +66,23 @@
   transition: background-color var(--ease), border-color var(--ease), color var(--ease);
 }
 
+.reader-card__speed-toggle {
+  min-width: 42px;
+  justify-content: center;
+}
+
+.reader-card__speed-toggle:hover,
 .reader-card__theater-toggle:hover {
   border-color: color-mix(in oklch, var(--color-field) 42%, var(--color-page));
   background: color-mix(in oklch, var(--color-field) 18%, var(--color-control-well));
 }
 
+.reader-card__speed-toggle[aria-pressed="true"] {
+  border-color: color-mix(in oklch, var(--color-field) 62%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 26%, var(--color-control-well));
+}
+
+.reader-card__speed-toggle:focus-visible,
 .reader-card__theater-toggle:focus-visible {
   outline: 2px solid var(--color-focus-light);
   outline-offset: 2px;
@@ -111,15 +125,22 @@
   background: #18181b;
 }
 
+.reader-card__youtube-player-shell--theater .reader-card__speed-toggle,
 .reader-card__youtube-player-shell--theater .reader-card__theater-toggle {
   border-color: rgb(255 255 255 / 22%);
   background: rgb(255 255 255 / 9%);
   color: #f7f7f8;
 }
 
+.reader-card__youtube-player-shell--theater .reader-card__speed-toggle:hover,
 .reader-card__youtube-player-shell--theater .reader-card__theater-toggle:hover {
   border-color: rgb(255 255 255 / 32%);
   background: rgb(255 255 255 / 16%);
+}
+
+.reader-card__youtube-player-shell--theater .reader-card__speed-toggle[aria-pressed="true"] {
+  border-color: rgb(255 255 255 / 42%);
+  background: rgb(255 255 255 / 20%);
 }
 
 html.reader-theater-open {

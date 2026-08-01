@@ -66,11 +66,30 @@ describe('FeedItemCard YouTube and general states', () => {
     const player = screen.getByTitle('Example video');
     expect(player.tagName).toBe('IFRAME');
     expect(player.getAttribute('src'))
-      .toBe('https://www.youtube-nocookie.com/embed/abc123xyz?autoplay=1&rel=0');
+      .toBe('https://www.youtube-nocookie.com/embed/abc123xyz?autoplay=1&rel=0&enablejsapi=1');
     expect(player.getAttribute('allow')).toContain('autoplay');
     expect(screen.queryByAltText('Preview for Story')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Playback speed: 2x' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Exit theater mode' }).getAttribute('aria-pressed')).toBe('true');
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
+  });
+
+  it('toggles YouTube playback speed from the default 2x setting', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    const speedToggle = screen.getByRole('button', { name: 'Playback speed: 2x' });
+
+    fireEvent.click(speedToggle);
+
+    expect(screen.getByRole('button', { name: 'Playback speed: 1x' }).getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Playback speed: 1x' }));
+
+    expect(screen.getByRole('button', { name: 'Playback speed: 2x' }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('toggles theater mode without reloading the YouTube player', () => {
