@@ -39,6 +39,10 @@
   container-type: inline-size;
 }
 
+.reader__item:focus {
+  outline: none;
+}
+
 .reader__stream {
   display: grid;
   gap: 18px;
