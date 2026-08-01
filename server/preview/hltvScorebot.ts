@@ -16,6 +16,8 @@ import {
 import { TWITTERBOT_USER_AGENT } from './previewFetchers.js';
 import type { RequestContext } from '../requestContext.js';
 
+// HLTV's public Scorebot endpoint still speaks the Socket.IO v2 / Engine.IO
+// v3 protocol, so this import intentionally uses socket.io-client 2.x.
 const SCOREBOT_TIMEOUT_MS = 2_500;
 const MAX_SCOREBOT_PAYLOAD_BYTES = 256_000;
 const SCOREBOT_CACHE_TTL_MS = 5 * 60_000;
@@ -135,10 +137,16 @@ function requestHltvScorebotSnapshot(
     const socket = socketIo.connect(scorebotUrl.href, {
       reconnection: false,
       timeout: timeoutMs,
-      // WebSocket avoids an HTTP redirect-capable polling client. The agent
-      // pins the TLS connection to the address validated above.
-      transports: ['websocket'],
+      // HLTV's Scorebot starts with Engine.IO polling and may upgrade to a
+      // WebSocket. Keep both transports enabled so the connection works on
+      // deployments where the WebSocket upgrade is unavailable. The pinned
+      // agent is used for both transports after the endpoint was validated.
+      transports: ['polling', 'websocket'],
       transportOptions: {
+        polling: {
+          extraHeaders: headers,
+          agent,
+        },
         websocket: {
           extraHeaders: headers,
           agent,
@@ -147,6 +155,7 @@ function requestHltvScorebotSnapshot(
       },
     });
     let settled = false;
+    let latestSnapshot: HltvScorebotSnapshot | null = null;
     const finish = (snapshot: HltvScorebotSnapshot | null) => {
       if (settled) return;
       settled = true;
@@ -155,7 +164,7 @@ function requestHltvScorebotSnapshot(
       context?.signal.removeEventListener('abort', abort);
       resolve(snapshot);
     };
-    const timeout = setTimeout(() => finish(null), timeoutMs);
+    const timeout = setTimeout(() => finish(latestSnapshot), timeoutMs);
     const abort = () => finish(null);
     context?.signal.addEventListener('abort', abort, { once: true });
 
@@ -163,10 +172,20 @@ function requestHltvScorebotSnapshot(
       socket.emit('readyForMatch', JSON.stringify({ token: '', listId: scorebotId }));
     });
     socket.on('scoreboard', (data: unknown) => {
-      finish(parseHltvScoreboardSnapshot(data, html, team1Id));
+      const snapshot = parseHltvScoreboardSnapshot(data, html, team1Id);
+      if (!snapshot) return;
+      latestSnapshot = snapshot;
+      // Scorebot can send an initial score/map update before its player rows
+      // are populated. Keep listening so that the first snapshot does not
+      // permanently turn player stats into an empty table.
+      if (hasPlayerStats(snapshot)) finish(snapshot);
     });
     socket.on('connect_error', () => finish(null));
   });
+}
+
+function hasPlayerStats(snapshot: HltvScorebotSnapshot): boolean {
+  return snapshot.playerStats.some((team) => team.length > 0);
 }
 
 function isValidScorebotUrl(url: URL): boolean {

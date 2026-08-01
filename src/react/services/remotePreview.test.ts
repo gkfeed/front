@@ -6,9 +6,9 @@ import {
   BffTimeoutError,
 } from './bffClient';
 import { getLiquipediaMatchPreview } from './liquipedia';
-import { getOpenGraphPreview } from './openGraph';
+import { getOpenGraphPreview, type OpenGraphPreview } from './openGraph';
 import { clearPreviewCache } from './previewQueue';
-import { loadRemotePreview } from './remotePreview';
+import { loadRemotePreview, mergeHltvLiveData } from './remotePreview';
 
 vi.mock('./liquipedia');
 vi.mock('./openGraph');
@@ -58,5 +58,52 @@ describe('loadRemotePreview', () => {
     await expect(loadRemotePreview(LIQUIPEDIA_URL, true, new AbortController().signal))
       .rejects.toBe(error);
     expect(getOpenGraphPreview).not.toHaveBeenCalled();
+  });
+});
+
+describe('mergeHltvLiveData', () => {
+  it('keeps loaded player stats when a live refresh has empty rows', () => {
+    const previous: OpenGraphPreview = {
+      url: 'https://www.hltv.org/matches/1/example',
+      title: 'Example',
+      description: null,
+      image: null,
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      providerData: {
+        provider: 'hltv' as const,
+        snapshot: {
+          startsAt: null,
+          teams: [
+            { name: 'Alpha', logo: null },
+            { name: 'Bravo', logo: null },
+          ] as [{ name: string; logo: null }, { name: string; logo: null }],
+          status: 'live' as const,
+          score: ['0', '1'] as [string, string],
+          currentMap: { name: 'Dust2', score: ['6', '13'] as [string, string] },
+          completedMaps: [],
+          playerStats: [
+            [{ nickname: 'one', kills: 10, deaths: 5, assists: 2, adr: 90 }],
+            [{ nickname: 'two', kills: 12, deaths: 4, assists: 1, adr: 101 }],
+          ],
+          teamSides: ['ct', 't'] as ['ct', 't'],
+        },
+      },
+    };
+    const previousSnapshot = previous.providerData!.snapshot;
+    const next: OpenGraphPreview = {
+      ...previous,
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          ...previousSnapshot,
+          playerStats: [[], []] as [never[], never[]],
+        },
+      },
+    };
+
+    expect(mergeHltvLiveData(next, previous).providerData?.snapshot.playerStats)
+      .toEqual(previousSnapshot.playerStats);
   });
 });

@@ -55,8 +55,9 @@ describe('fetchHltvScorebotSnapshot', () => {
     expect(socketConnect).toHaveBeenCalledWith(
       'https://scorebot.hltv.org/socket.io',
       expect.objectContaining({
-        transports: ['websocket'],
+        transports: ['polling', 'websocket'],
         transportOptions: expect.objectContaining({
+          polling: expect.objectContaining({ agent }),
           websocket: expect.objectContaining({
             agent,
             maxPayload: 256_000,
@@ -65,6 +66,30 @@ describe('fetchHltvScorebotSnapshot', () => {
       }),
     );
     expect(agent.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('waits for player rows when the first scoreboard update is empty', async () => {
+    const agent = { destroy: vi.fn() };
+    resolvePublicAddress.mockResolvedValue({ address: '203.0.113.10', family: 4 });
+    createPinnedHttpsAgent.mockReturnValue(agent);
+    socketConnect.mockImplementation(() => createSocket([
+      scoreboard({ CT: [], TERRORIST: [] }),
+      scoreboard({
+        CT: [{ nick: 'rain', score: 7, deaths: 3, assists: 2, damagePrRound: 91.26 }],
+        TERRORIST: [{ nick: 'donk', score: 5, deaths: 4, assists: 1, damagePrRound: 84 }],
+      }),
+    ]));
+
+    const result = await fetchHltvScorebotSnapshot(
+      scorebotHtml('https://scorebot.hltv.org/socket.io'),
+      undefined,
+      'session=abc',
+    );
+
+    expect(result?.playerStats).toEqual([
+      [{ nickname: 'rain', kills: 7, deaths: 3, assists: 2, adr: 91.3 }],
+      [{ nickname: 'donk', kills: 5, deaths: 4, assists: 1, adr: 84 }],
+    ]);
   });
 
   it('does not connect when the endpoint resolves to a private address', async () => {
@@ -87,7 +112,10 @@ function scorebotHtml(url: string): string {
     <div class="mapholder"><div class="mapname">Dust2</div></div>`;
 }
 
-function createSocket() {
+function createSocket(scoreboards = [scoreboard({
+  CT: [{ nick: 'rain', score: 1, deaths: 0, assists: 0, damagePrRound: 100 }],
+  TERRORIST: [],
+})]) {
   const handlers = new Map<string, (data?: unknown) => void>();
   const socket = {
     on: vi.fn((event: string, handler: (data?: unknown) => void) => {
@@ -96,19 +124,24 @@ function createSocket() {
     }),
     emit: vi.fn((event: string) => {
       if (event === 'readyForMatch') {
-        handlers.get('scoreboard')?.({
-          mapName: 'de_dust2',
-          ctTeamId: 5973,
-          tTeamId: 7020,
-          ctTeamScore: 2,
-          tTeamScore: 3,
-          CT: [],
-          TERRORIST: [],
-        });
+        scoreboards.forEach((update) => handlers.get('scoreboard')?.(update));
       }
     }),
     close: vi.fn(),
   };
   queueMicrotask(() => handlers.get('connect')?.());
   return socket;
+}
+
+function scoreboard(
+  players: { CT: unknown[]; TERRORIST: unknown[] },
+) {
+  return {
+    mapName: 'de_dust2',
+    ctTeamId: 5973,
+    tTeamId: 7020,
+    ctTeamScore: 2,
+    tTeamScore: 3,
+    ...players,
+  };
 }

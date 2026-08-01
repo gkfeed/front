@@ -69,7 +69,9 @@ export function mergeHltvLiveData(
         completedMaps: nextSnapshot.completedMaps?.length
           ? nextSnapshot.completedMaps
           : previousSnapshot.completedMaps,
-        playerStats: nextSnapshot.playerStats ?? previousSnapshot.playerStats,
+        playerStats: hasPlayerStats(nextSnapshot.playerStats)
+          ? nextSnapshot.playerStats
+          : previousSnapshot.playerStats,
         teamSides: nextSnapshot.teamSides ?? previousSnapshot.teamSides,
       },
     },
@@ -86,6 +88,10 @@ function sameMatchScore(
     && first[0] === second[0]
     && first[1] === second[1],
   );
+}
+
+function hasPlayerStats(snapshot: HltvMatchSnapshot['playerStats']): boolean {
+  return Boolean(snapshot?.some((team) => team.length > 0));
 }
 
 function getHltvSnapshot(preview: OpenGraphPreview): HltvMatchSnapshot | null {
