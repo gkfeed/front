@@ -43,10 +43,6 @@ type FeedItemCardVariantContext = {
 };
 
 export type FeedItemProviderAdapter = {
-  remotePreview: boolean;
-  previewMode: 'local-first' | 'tiktok-embed';
-  description: 'none' | 'vk';
-  metadata: 'none' | 'hltv';
   supplementary: 'none' | 'hltv' | 'tiktok';
   isShortVideo: boolean;
   isTikTok: boolean;
@@ -62,10 +58,6 @@ function createFeedItemProviderAdapter(
   overrides: FeedItemProviderAdapterOverrides,
 ): FeedItemProviderAdapter {
   return {
-    remotePreview: true,
-    previewMode: 'local-first',
-    description: 'none',
-    metadata: 'none',
     supplementary: 'none',
     isShortVideo: false,
     isTikTok: false,
@@ -84,7 +76,6 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
     classNames: (variant) => variant.type === 'simple-image' ? ['reader-card--simple-image'] : [],
   }),
   hltv: createFeedItemProviderAdapter({
-    metadata: 'hltv',
     supplementary: 'hltv',
   }),
   instagram: createFeedItemProviderAdapter({
@@ -107,17 +98,13 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
     classNames: () => ['reader-card--liquipedia'],
   }),
   tiktok: createFeedItemProviderAdapter({
-    remotePreview: false,
-    previewMode: 'tiktok-embed',
     supplementary: 'tiktok',
     isShortVideo: true,
     isTikTok: true,
     resolveVariant: () => ({ type: 'tiktok' }),
     classNames: () => ['reader-card--short-video', 'reader-card--tiktok'],
   }),
-  vk: createFeedItemProviderAdapter({
-    description: 'vk',
-  }),
+  vk: createFeedItemProviderAdapter({}),
   youtube: createFeedItemProviderAdapter({
     resolveVariant: ({ youtubeVideoId }) => youtubeVideoId
       ? { type: 'youtube', videoId: youtubeVideoId }

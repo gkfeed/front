@@ -5,6 +5,7 @@ import { Agent as HttpsAgent, request as requestHttps } from 'node:https';
 import { createPinnedLookup, resolvePublicAddress } from './publicAddress.js';
 import { PublicHttpError } from './publicHttpError.js';
 import { REMOTE_REQUEST_TIMEOUT_MS } from './timeouts.js';
+import { createDetachedRequestContext, type RequestContext } from './requestContext.js';
 
 export { PublicHttpError } from './publicHttpError.js';
 export { createPinnedLookup, isPrivateAddress, resolvePublicAddress } from './publicAddress.js';
@@ -25,11 +26,18 @@ export interface PublicHttpResponse {
 export async function requestPublicHttp(
   input: URL,
   headers: Record<string, string>,
+  context?: RequestContext,
 ): Promise<PublicHttpResponse> {
-  const address = await resolvePublicAddress(input);
+  const requestContext = context ?? createDetachedRequestContext();
+  const address = await resolvePublicAddress(input, requestContext);
+  const timeoutMs = requestContext.remainingMs(REMOTE_REQUEST_TIMEOUT_MS);
+  if (timeoutMs <= 0 || requestContext.signal.aborted) {
+    throw new PublicHttpError(requestContext.timedOut ? 'timeout' : 'aborted');
+  }
 
   return new Promise((resolve, reject) => {
     let responseBody: IncomingMessage | undefined;
+    let settled = false;
     const request = (input.protocol === 'https:' ? requestHttps : requestHttp)({
       protocol: input.protocol,
       hostname: input.hostname,
@@ -47,6 +55,9 @@ export async function requestPublicHttp(
       });
       response.once('end', clearTotalTimeout);
       response.once('close', clearTotalTimeout);
+      requestContext.signal.addEventListener('abort', abortRequest, { once: true });
+      if (requestContext.signal.aborted) abortRequest();
+      settled = true;
       resolve({
         body: response,
         headers: response.headers,
@@ -59,18 +70,32 @@ export async function requestPublicHttp(
       const error = new PublicHttpError('timeout');
       request.destroy(error);
       responseBody?.destroy(error);
-    }, REMOTE_REQUEST_TIMEOUT_MS);
-    request.setTimeout(REMOTE_REQUEST_TIMEOUT_MS, () => {
+    }, timeoutMs);
+    request.setTimeout(timeoutMs, () => {
       request.destroy(new PublicHttpError('timeout'));
     });
+    requestContext.signal.addEventListener('abort', abortRequest, { once: true });
     request.on('error', (error) => {
       clearTimeout(totalTimeout);
+      requestContext.signal.removeEventListener('abort', abortRequest);
+      if (settled) return;
       reject(error instanceof PublicHttpError ? error : new PublicHttpError('network'));
     });
     request.end();
 
     function clearTotalTimeout() {
       clearTimeout(totalTimeout);
+      requestContext.signal.removeEventListener('abort', abortRequest);
+    }
+
+    function abortRequest() {
+      const error = new PublicHttpError(requestContext.timedOut ? 'timeout' : 'aborted');
+      request.destroy(error);
+      responseBody?.destroy(error);
     }
   });
+}
+
+export function discardResponseBody(body: IncomingMessage): void {
+  body.destroy();
 }

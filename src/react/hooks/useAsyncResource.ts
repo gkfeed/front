@@ -36,7 +36,7 @@ export function useAsyncResource<T>(
   {
     enabled = true,
     key,
-    timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+    timeoutMs,
     createTimeoutError = createDefaultTimeoutError,
   }: UseAsyncResourceOptions = {},
 ) {
@@ -54,11 +54,15 @@ export function useAsyncResource<T>(
 
     let active = true;
     const requestController = new AbortController();
-    const timeout = createTimeoutSignal(timeoutMs);
-    const signal = combineAbortSignals(requestController.signal, timeout.signal);
-    const normalizedTimeoutMs = Number.isFinite(timeoutMs)
-      ? Math.max(0, timeoutMs)
-      : DEFAULT_REQUEST_TIMEOUT_MS;
+    const timeout = timeoutMs === undefined ? null : createTimeoutSignal(timeoutMs);
+    const signal = timeout
+      ? combineAbortSignals(requestController.signal, timeout.signal)
+      : requestController.signal;
+    const normalizedTimeoutMs = timeoutMs === undefined
+      ? DEFAULT_REQUEST_TIMEOUT_MS
+      : Number.isFinite(timeoutMs)
+        ? Math.max(0, timeoutMs)
+        : DEFAULT_REQUEST_TIMEOUT_MS;
 
     setInternal({ key, state: getInitialState<T>(true) });
 
@@ -68,23 +72,23 @@ export function useAsyncResource<T>(
         setInternal({ key, state: { status: 'success', data, error: null } });
       })
       .catch((nextError: unknown) => {
-        if (!active || (isAbortError(nextError) && !timeout.didTimeout)) return;
+        if (!active || (isAbortError(nextError) && !timeout?.didTimeout)) return;
         setInternal({
           key,
           state: {
             status: 'error',
             data: undefined,
-            error: timeout.didTimeout
+            error: timeout?.didTimeout
               ? createTimeoutError(normalizedTimeoutMs)
               : toError(nextError),
           },
         });
       })
-      .finally(timeout.dispose);
+      .finally(() => timeout?.dispose());
 
     return () => {
       active = false;
-      timeout.dispose();
+      timeout?.dispose();
       requestController.abort();
     };
   }, [attempt, enabled, key, load, timeoutMs, createTimeoutError]);

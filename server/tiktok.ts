@@ -10,6 +10,8 @@ import {
   type TikTokComment,
   type TikTokDetails,
 } from './tiktokParser.js';
+import type { RequestContext } from './requestContext.js';
+import { discardResponseBody } from './publicHttp.js';
 
 const COMMENT_LIMIT = 10;
 const TIKTOK_HEADERS = {
@@ -72,9 +74,10 @@ export {
 
 export async function fetchTikTokComments(
   input: string,
+  context?: RequestContext,
 ): Promise<{ comments: TikTokComment[] } & TikTokDetails> {
   const videoUrl = parseTikTokVideoUrl(input);
-  const detailsPromise = fetchTikTokDetails(videoUrl);
+  const detailsPromise = fetchTikTokDetails(videoUrl, context);
   const upstream = new URL('https://www.tikwm.com/api/comment/list');
   upstream.searchParams.set('url', videoUrl.href);
   upstream.searchParams.set('count', String(COMMENT_LIMIT));
@@ -82,7 +85,7 @@ export async function fetchTikTokComments(
 
   let body: TikTokJsonResult | null;
   try {
-    body = await fetchTikTokJson(upstream, 'comments');
+    body = await fetchTikTokJson(upstream, 'comments', context);
   } catch (error) {
     if (error instanceof PreviewError) throw error;
     const message = error instanceof PublicHttpError && error.reason === 'timeout'
@@ -98,12 +101,12 @@ export async function fetchTikTokComments(
   };
 }
 
-async function fetchTikTokDetails(videoUrl: URL): Promise<TikTokDetails> {
+async function fetchTikTokDetails(videoUrl: URL, context?: RequestContext): Promise<TikTokDetails> {
   const upstream = new URL('https://www.tikwm.com/api/');
   upstream.searchParams.set('url', videoUrl.href);
 
   try {
-    const response = await fetchTikTokJson(upstream, 'details');
+    const response = await fetchTikTokJson(upstream, 'details', context);
     if (response) {
       const details = parseTikTokDetails(response.value);
       if (details) return details;
@@ -112,15 +115,15 @@ async function fetchTikTokDetails(videoUrl: URL): Promise<TikTokDetails> {
     // Fall through to TikTok's official oEmbed metadata.
   }
 
-  return fetchTikTokOEmbedDetails(videoUrl);
+  return fetchTikTokOEmbedDetails(videoUrl, context);
 }
 
-async function fetchTikTokOEmbedDetails(videoUrl: URL): Promise<TikTokDetails> {
+async function fetchTikTokOEmbedDetails(videoUrl: URL, context?: RequestContext): Promise<TikTokDetails> {
   const upstream = new URL('https://www.tiktok.com/oembed');
   upstream.searchParams.set('url', videoUrl.href);
 
   try {
-    const response = await fetchTikTokJson(upstream, 'oembed');
+    const response = await fetchTikTokJson(upstream, 'oembed', context);
     return response ? parseTikTokOEmbedDetails(response.value) : emptyTikTokDetails();
   } catch {
     return emptyTikTokDetails();
@@ -130,17 +133,19 @@ async function fetchTikTokOEmbedDetails(videoUrl: URL): Promise<TikTokDetails> {
 async function fetchTikTokJson(
   upstream: URL,
   source: TikTokJsonSource,
+  context?: RequestContext,
 ): Promise<TikTokJsonResult | null> {
-  const response = await requestPublicHttp(upstream, TIKTOK_HEADERS);
-  return readTikTokJsonResponse(response, source);
+  const response = await requestPublicHttp(upstream, TIKTOK_HEADERS, context);
+  return readTikTokJsonResponse(response, source, context);
 }
 
 async function readTikTokJsonResponse(
   response: Awaited<ReturnType<typeof requestPublicHttp>>,
   source: TikTokJsonSource,
+  context?: RequestContext,
 ): Promise<TikTokJsonResult | null> {
   if (response.status < 200 || response.status >= 300) {
-    response.body.resume();
+    discardResponseBody(response.body);
     return null;
   }
 
@@ -148,6 +153,7 @@ async function readTikTokJsonResponse(
     value: await readLimitedJson(response, {
       maximumBytes: 1_000_000,
       ...TIKTOK_JSON_ERRORS[source],
+      context,
     }),
   };
 }

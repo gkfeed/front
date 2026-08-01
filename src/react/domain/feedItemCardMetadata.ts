@@ -5,6 +5,7 @@ import {
   getFeedItemProviderAdapter,
   type FeedItemCardImagePreview,
 } from './feedItemProviders';
+import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import { isNsfwLink } from './nsfw';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
 import type { FeedItem } from '../types';
@@ -45,19 +46,20 @@ export function resolveFeedItemCardMetadata({
 }): FeedItemCardMetadata {
   const { hostname, provider, youtubeVideoId } = analysis;
   const adapter = getFeedItemProviderAdapter(provider);
+  const policy = getFeedItemProviderPolicy(provider);
   const isNsfw = isNsfwLink(item.link);
   const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
   const shouldHideNsfw = isNsfw && nsfwMode === 'hide';
   const isReddit = isRedditUrl(analysis.url);
-  const isHltv = adapter.metadata === 'hltv';
+  const isHltv = policy.metadata === 'hltv';
   const hltvSnapshot = remotePreview.openGraphPreview?.providerData?.provider === 'hltv'
     ? remotePreview.openGraphPreview.providerData.snapshot
     : null;
   const isSimpleImage = adapter.supportsSimpleImage && isImagePreview(visiblePreview);
-  const feedDescription = adapter.description === 'vk'
+  const feedDescription = policy.description === 'vk'
     ? getFeedItemDescription(item.text, item.title)
     : null;
-  const description = adapter.description === 'vk'
+  const description = policy.description === 'vk'
     ? feedDescription ?? getFeedItemDescription(remotePreview.openGraphPreview?.description ?? '', item.title)
     : null;
   const hltvMatchTeams = isHltv

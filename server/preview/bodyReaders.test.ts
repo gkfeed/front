@@ -12,6 +12,24 @@ import {
 } from './bodyReaders.js';
 
 describe('body readers', () => {
+  it('destroys a pending body when the request context is aborted', async () => {
+    const controller = new AbortController();
+    const response = responseFromPendingBody();
+    const context = {
+      signal: controller.signal,
+      deadline: Date.now() + 10_000,
+      timedOut: false,
+      clientAborted: false,
+      remainingMs: (maximum = Number.POSITIVE_INFINITY) => maximum,
+    };
+
+    const pending = readLimitedBody(response, { context });
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ reason: 'aborted' });
+    expect(response.body.destroyed).toBe(true);
+  });
+
   it('rejects a body that exceeds the byte limit while streaming', async () => {
     const response = responseFrom([Buffer.from('abc'), Buffer.from('def')]);
 
@@ -66,6 +84,15 @@ function responseFrom(
   return {
     body: Readable.from(chunks),
     headers,
+    status: 200,
+    url: new URL('https://example.com/'),
+  };
+}
+
+function responseFromPendingBody(): PublicHttpResponse {
+  return {
+    body: new Readable({ read() {} }),
+    headers: {},
     status: 200,
     url: new URL('https://example.com/'),
   };

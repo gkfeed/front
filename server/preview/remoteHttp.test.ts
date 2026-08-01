@@ -17,6 +17,24 @@ beforeEach(() => {
 });
 
 describe('fetchPublicResponse', () => {
+  it('destroys an infinite redirect body instead of draining it', async () => {
+    const body = infiniteBody();
+    requestPublicHttp.mockResolvedValue(response(302, 'file:///etc/passwd', body));
+
+    await expect(fetchPublicResponse(new URL('https://example.com/'), options()))
+      .rejects.toMatchObject({ code: 'invalid_redirect' });
+    expect(body.destroyed).toBe(true);
+  });
+
+  it('destroys an infinite non-success body before returning the upstream error', async () => {
+    const body = infiniteBody();
+    requestPublicHttp.mockResolvedValue(response(503, undefined, body));
+
+    await expect(fetchPublicResponse(new URL('https://example.com/'), options()))
+      .rejects.toMatchObject({ code: 'upstream_error' });
+    expect(body.destroyed).toBe(true);
+  });
+
   it('re-validates every redirect target before requesting it', async () => {
     requestPublicHttp
       .mockResolvedValueOnce(response(302, 'http://127.0.0.1/private'))
@@ -47,13 +65,21 @@ describe('fetchPublicResponse', () => {
   });
 });
 
-function response(status: number, location?: string) {
+function response(status: number, location?: string, body = Readable.from([])) {
   return {
-    body: Readable.from([]),
+    body,
     headers: location ? { location } : {},
     status,
     url: new URL('https://example.com/'),
   };
+}
+
+function infiniteBody() {
+  return new Readable({
+    read() {
+      this.push('x');
+    },
+  });
 }
 
 function options() {

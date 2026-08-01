@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FeedItem } from '../types';
-import type { ReviewActionProps } from './ReaderReviewActions';
+import { ReviewDecisionButtons, type ReviewActionProps } from './ReaderReviewActions';
 
 export function ReaderMobileRail({
   item,
@@ -41,18 +41,7 @@ export function ReaderMobileRail({
         </div>
       </details>
       <div className="reader__mobile-decisions">
-        <button type="button" className="reader__mobile-keep" aria-label={t('reader.keepItem')} onClick={onKeep} disabled={isDeleting}>
-          <span aria-hidden="true">✓</span>
-        </button>
-        <button
-          type="button"
-          className="reader__mobile-delete"
-          aria-label={isDeleting ? t('reader.deletingItem') : t('reader.deleteItem')}
-          onClick={onDelete}
-          disabled={isDeleting}
-        >
-          <span aria-hidden="true">×</span>
-        </button>
+        <ReviewDecisionButtons compact isDeleting={isDeleting} onKeep={onKeep} onDelete={onDelete} />
       </div>
     </aside>
   );

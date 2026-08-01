@@ -28,7 +28,6 @@ export function FeedTypePicker({ value, invalid, disabled, errorId, onChange }: 
         aria-labelledby="type-label type-picker-selected"
         aria-describedby={invalid ? errorId : undefined}
         aria-expanded={isOpen}
-        aria-haspopup="listbox"
         aria-invalid={invalid ? 'true' : undefined}
         disabled={disabled}
         onClick={() => setIsOpen((current) => !current)}

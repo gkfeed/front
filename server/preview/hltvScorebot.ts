@@ -14,6 +14,7 @@ import {
   type HltvScorebotSnapshot,
 } from './hltvScorebotParser.js';
 import { TWITTERBOT_USER_AGENT } from './previewFetchers.js';
+import type { RequestContext } from '../requestContext.js';
 
 const SCOREBOT_TIMEOUT_MS = 2_500;
 const MAX_SCOREBOT_PAYLOAD_BYTES = 256_000;
@@ -33,6 +34,7 @@ export async function fetchHltvScorebotSnapshot(
   html: string,
   cookiesPath?: string,
   cookieHeader?: string,
+  context?: RequestContext,
 ): Promise<HltvScorebotData | null> {
   const scoreboardTag = html.match(/<div\b[^>]*\bid=(?:"scoreboardElement"|'scoreboardElement')[^>]*>/i)?.[0];
   if (!scoreboardTag) return null;
@@ -57,7 +59,9 @@ export async function fetchHltvScorebotSnapshot(
 
   let address;
   try {
-    address = await resolvePublicAddress(scorebotUrl);
+    address = context
+      ? await resolvePublicAddress(scorebotUrl, context)
+      : await resolvePublicAddress(scorebotUrl);
   } catch {
     return null;
   }
@@ -79,6 +83,7 @@ export async function fetchHltvScorebotSnapshot(
         html,
         headers,
         agent,
+        context,
       );
       if (snapshot) {
         hltvScorebotCache.set(scorebotId, {
@@ -123,11 +128,13 @@ function requestHltvScorebotSnapshot(
   html: string,
   headers: Record<string, string>,
   agent: ReturnType<typeof createPinnedHttpsAgent>,
+  context?: RequestContext,
 ): Promise<HltvScorebotSnapshot | null> {
   return new Promise((resolve) => {
+    const timeoutMs = context?.remainingMs(SCOREBOT_TIMEOUT_MS) ?? SCOREBOT_TIMEOUT_MS;
     const socket = socketIo.connect(scorebotUrl.href, {
       reconnection: false,
-      timeout: SCOREBOT_TIMEOUT_MS,
+      timeout: timeoutMs,
       // WebSocket avoids an HTTP redirect-capable polling client. The agent
       // pins the TLS connection to the address validated above.
       transports: ['websocket'],
@@ -145,9 +152,12 @@ function requestHltvScorebotSnapshot(
       settled = true;
       clearTimeout(timeout);
       socket.close();
+      context?.signal.removeEventListener('abort', abort);
       resolve(snapshot);
     };
-    const timeout = setTimeout(() => finish(null), SCOREBOT_TIMEOUT_MS);
+    const timeout = setTimeout(() => finish(null), timeoutMs);
+    const abort = () => finish(null);
+    context?.signal.addEventListener('abort', abort, { once: true });
 
     socket.on('connect', () => {
       socket.emit('readyForMatch', JSON.stringify({ token: '', listId: scorebotId }));

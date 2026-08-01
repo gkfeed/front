@@ -38,7 +38,8 @@ export function useReviewActionsLayout(
       const panelGap = Number.parseFloat(window.getComputedStyle(panel!).rowGap) || 0;
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
       const actionsBottom = cardBottom + panelGap + actionsHeightRef.current;
-      setCompactActionsItemId(actionsBottom > viewportHeight ? itemId : null);
+      const viewportBottom = window.scrollY + viewportHeight;
+      setCompactActionsItemId(actionsBottom > viewportBottom ? itemId : null);
     }
 
     updateActionsLayout();
@@ -48,11 +49,13 @@ export function useReviewActionsLayout(
       : new ResizeObserver(updateActionsLayout);
     resizeObserver?.observe(card);
     window.addEventListener('resize', updateActionsLayout);
+    window.addEventListener('scroll', updateActionsLayout, { passive: true });
     window.visualViewport?.addEventListener('resize', updateActionsLayout);
 
     return () => {
       resizeObserver?.disconnect();
       window.removeEventListener('resize', updateActionsLayout);
+      window.removeEventListener('scroll', updateActionsLayout);
       window.visualViewport?.removeEventListener('resize', updateActionsLayout);
     };
   }, [currentItem, mode]);

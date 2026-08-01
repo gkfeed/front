@@ -43,10 +43,6 @@
   gap: 16px;
 }
 
-.field {
-  gap: 6px;
-}
-
 .creator h1 {
   margin: 0;
   color: var(--color-ink-strong);
@@ -64,14 +60,6 @@
   font-weight: 650;
   letter-spacing: 0.035em;
   text-transform: uppercase;
-}
-
-.field__control {
-  min-height: 48px;
-  padding: 0 12px;
-  border: 1px solid color-mix(in oklch, var(--color-card-border) 60%, transparent);
-  border-radius: 12px;
-  background: var(--color-field);
 }
 
 .creator .field__control {
@@ -116,11 +104,6 @@
   font-size: 1.05rem;
   line-height: 1.2;
   overflow-wrap: anywhere;
-}
-
-.field__control:focus-within {
-  background: var(--color-field-focus);
-  border-color: var(--color-accent-focus);
 }
 
 .creator .field__control:focus-within {
@@ -338,13 +321,6 @@
   opacity: 0.62;
 }
 
-.field__icon {
-  display: inline-flex;
-  align-items: center;
-  width: 30px;
-  color: var(--color-accent-focus);
-}
-
 .login .field__icon {
   color: color-mix(in oklch, var(--color-ink-strong) 62%, var(--color-accent));
 }
@@ -359,28 +335,8 @@
   color: color-mix(in oklch, var(--color-ink-inverse) 82%, var(--color-surface));
 }
 
-.field__hint,
-.field__error {
-  font-size: 0.86rem;
-}
-
-.field__hint,
-.field__error {
-  margin: 0;
-  line-height: 1.35;
-}
-
-.field__hint {
-  color: var(--color-muted);
-}
-
 .login .field__hint {
   color: color-mix(in oklch, var(--color-ink-inverse) 64%, var(--color-page));
-}
-
-.field__error {
-  color: var(--color-danger-border);
-  font-weight: 700;
 }
 
 .login .field__error {
@@ -458,8 +414,7 @@
   color: color-mix(in oklch, var(--color-accent) 46%, var(--color-focus-light));
 }
 
-.creator__status--error,
-.status--error {
+.creator__status--error {
   color: color-mix(in oklch, var(--color-danger) 58%, var(--color-focus-light));
 }
 

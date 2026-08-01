@@ -4,14 +4,16 @@ import { handleBffRequest } from './apiRouter.js';
 import { sendJson } from './httpResponse.js';
 import { PreviewError } from './preview/errors.js';
 import { serveFrontend } from './staticServer.js';
+import { createRequestContext } from './requestContext.js';
 
 const port = Number(process.env.PORT ?? 3000);
 
 const server = createServer(async (request, response) => {
+  const context = createRequestContext(request, response);
   try {
     const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
 
-    if (request.method === 'GET' && await handleBffRequest(requestUrl, response)) return;
+    if (request.method === 'GET' && await handleBffRequest(requestUrl, response, context)) return;
 
     if (requestUrl.pathname.startsWith('/api/')) {
       sendJson(response, 404, { error: { code: 'not_found', message: 'Route not found' } });
@@ -25,12 +27,15 @@ const server = createServer(async (request, response) => {
 
     await serveFrontend(requestUrl.pathname, request.method === 'HEAD', response);
   } catch (error) {
+    if (context.clientAborted || response.destroyed) return;
     const previewError = error instanceof PreviewError
       ? error
       : new PreviewError('An unexpected error occurred', 500, 'internal_error');
     sendJson(response, previewError.status, {
       error: { code: previewError.code, message: previewError.message },
     });
+  } finally {
+    context.dispose();
   }
 });
 

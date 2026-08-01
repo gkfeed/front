@@ -1,6 +1,7 @@
 import type { PublicHttpResponse } from '../publicHttp.js';
 import { PublicHttpError, requestPublicHttp } from '../publicHttp.js';
-import { firstHeader } from './bodyReaders.js';
+import type { RequestContext } from '../requestContext.js';
+import { discardResponseBody, firstHeader } from './bodyReaders.js';
 import { PreviewError } from './errors.js';
 import { isRedirect, parsePublicHttpUrl } from './publicUrlPolicy.js';
 
@@ -33,6 +34,7 @@ export interface PublicResponseOptions {
 export async function fetchPublicResponse(
   input: URL,
   options: PublicResponseOptions,
+  context?: RequestContext,
 ): Promise<PublicHttpResponse> {
   let url = input;
   const maxRedirects = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
@@ -40,10 +42,13 @@ export async function fetchPublicResponse(
   for (let redirects = 0; redirects <= maxRedirects; redirects += 1) {
     let response: PublicHttpResponse;
     try {
-      response = await requestPublicHttp(url, {
+      const headers = {
         accept: options.accept,
         'user-agent': options.userAgent,
-      });
+      };
+      response = context
+        ? await requestPublicHttp(url, headers, context)
+        : await requestPublicHttp(url, headers);
     } catch (error) {
       throwPublicUrlError(error);
       throw new PreviewError(
@@ -54,7 +59,7 @@ export async function fetchPublicResponse(
     }
 
     if (isRedirect(response.status)) {
-      response.body.resume();
+      discardResponseBody(response.body);
       const location = firstHeader(response.headers.location);
       if (!location) throw new PreviewError(options.invalidRedirectMessage, 502, 'invalid_redirect');
       if (redirects === maxRedirects) {
@@ -78,7 +83,7 @@ export async function fetchPublicResponse(
     }
 
     if (response.status < 200 || response.status >= 300) {
-      response.body.resume();
+      discardResponseBody(response.body);
       throw new PreviewError(
         options.upstreamMessage(response.status),
         502,

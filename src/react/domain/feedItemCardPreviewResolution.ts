@@ -5,7 +5,7 @@ import {
   type FeedItemPreview,
 } from './feedItemPreview';
 import { getFeedItemDescription } from './feedItemDescription';
-import { getFeedItemProviderAdapter } from './feedItemProviders';
+import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
 import type { FeedItem } from '../types';
 import type { RemotePreview } from '../services/remotePreview';
@@ -22,15 +22,15 @@ export function shouldLoadRemotePreview(
   shouldHideNsfw: boolean,
 ): boolean {
   const { localPreview, url } = analysis;
-  const adapter = getFeedItemProviderAdapter(analysis.provider);
+  const policy = getFeedItemProviderPolicy(analysis.provider);
   const isRezka = isRezkaUrl(url);
-  const usesVkDescription = adapter.description === 'vk';
+  const usesVkDescription = policy.description === 'vk';
   const feedDescription = usesVkDescription
     ? getFeedItemDescription(item.text, item.title)
     : null;
 
   return !shouldHideNsfw
-    && adapter.remotePreview
+    && policy.remotePreview
     && (isRezka || !(localPreview?.src && (!usesVkDescription || feedDescription)));
 }
 
@@ -44,10 +44,10 @@ export function resolveFeedItemCardPreviews({
   remotePreview: RemotePreview;
 }): FeedItemCardPreviewResolution {
   const { localPreview } = analysis;
-  const adapter = getFeedItemProviderAdapter(analysis.provider);
+  const policy = getFeedItemProviderPolicy(analysis.provider);
   const localPreviewSource = localPreview?.src;
   const isRezka = isRezkaUrl(analysis.url);
-  const usesTikTokEmbed = adapter.previewMode === 'tiktok-embed';
+  const usesTikTokEmbed = policy.previewMode === 'tiktok-embed';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
   const remoteItemPreview = isRezka && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }

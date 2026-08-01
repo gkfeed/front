@@ -1,1 +1,2 @@
 export const REMOTE_REQUEST_TIMEOUT_MS = 8_000;
+export const REQUEST_DEADLINE_MS = 15_000;

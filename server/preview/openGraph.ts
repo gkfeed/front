@@ -8,6 +8,7 @@ import { fetchHltvHtml } from './hltvFetcher.js';
 import { parseLiquipediaMatch } from './liquipediaParser.js';
 import type { HltvPage } from './hltvFetcher.js';
 import { isHltvMatchUrl, parseOpenGraph } from './openGraphParser.js';
+import type { RequestContext } from '../requestContext.js';
 
 export { parseLiquipediaMatch };
 export { fetchLiquipediaMatch };
@@ -22,11 +23,11 @@ export { parseOpenGraph } from './openGraphParser.js';
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
 const REZKA_USER_AGENT = 'TelegramBot (like TwitterBot)';
 
-export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
+export async function fetchOpenGraph(input: string, context?: RequestContext): Promise<OpenGraphPreview> {
   const requestedUrl = parsePublicHttpUrl(input);
   const url = getPreviewUrl(requestedUrl);
   if (isHltvMatchUrl(url)) {
-    const page = await fetchHltvHtml(url);
+    const page = await fetchHltvHtml(url, context);
     return enrichHltvPreview(parseOpenGraph(page.html, page.url), page);
   }
 
@@ -34,6 +35,7 @@ export async function fetchOpenGraph(input: string): Promise<OpenGraphPreview> {
     url,
     isRezkaUrl(requestedUrl) ? REZKA_USER_AGENT : TWITTERBOT_USER_AGENT,
     { metadataOnly: isMatreshkaVideoUrl(requestedUrl) },
+    context,
   );
   return parseOpenGraph(page.html, page.url);
 }

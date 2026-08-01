@@ -64,6 +64,25 @@ describe('isPrivateAddress', () => {
   });
 });
 
+describe('resolvePublicAddress request cancellation', () => {
+  it('stops waiting for DNS when the request context is aborted', async () => {
+    const controller = new AbortController();
+    dnsLookup.mockReturnValue(new Promise(() => {}));
+    const context = {
+      signal: controller.signal,
+      deadline: Date.now() + 10_000,
+      timedOut: false,
+      clientAborted: false,
+      remainingMs: (maximum = Number.POSITIVE_INFINITY) => maximum,
+    };
+
+    const pending = resolvePublicAddress(new URL('https://example.com/'), context);
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ reason: 'aborted' });
+  });
+});
+
 describe('resolvePublicAddress', () => {
   it('rejects a literal local address without a DNS request', async () => {
     await expect(resolvePublicAddress(new URL('http://127.0.0.1/')))

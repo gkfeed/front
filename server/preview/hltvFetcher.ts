@@ -8,6 +8,7 @@ import { parseHltvMatchStatus } from './hltvHtmlParser.js';
 import { fetchHltvScorebotSnapshot } from './hltvScorebot.js';
 import { fetchPublicResponse } from './remoteHttp.js';
 import { readHtmlBody, TWITTERBOT_USER_AGENT } from './previewFetchers.js';
+import type { RequestContext } from '../requestContext.js';
 
 const MAX_HLTV_RESPONSE_BYTES = 2_000_000;
 
@@ -19,27 +20,37 @@ export interface HltvPage {
   teamSides: HltvMatchTeamSidesPreview | null;
 }
 
-export async function fetchHltvHtml(url: URL): Promise<HltvPage> {
+export async function fetchHltvHtml(url: URL, context?: RequestContext): Promise<HltvPage> {
   try {
-    const response = await fetchPublicResponse(url, {
+    const requestOptions = {
       accept: 'text/html,application/xhtml+xml',
       userAgent: TWITTERBOT_USER_AGENT,
       invalidRedirectMessage: 'The HLTV page returned an invalid redirect',
       tooManyRedirectsMessage: 'The HLTV page redirected too many times',
-      upstreamMessage: (status) => `The HLTV page returned HTTP ${status}`,
-      fetchFailedMessage: (timedOut) => timedOut
+      upstreamMessage: (status: number) => `The HLTV page returned HTTP ${status}`,
+      fetchFailedMessage: (timedOut: boolean) => timedOut
         ? 'The HLTV page took too long to respond'
         : 'The HLTV page could not be fetched',
       fetchFailedCode: 'fetch_failed',
       maxRedirects: 5,
-    });
-    const html = await readHtmlBody(response, { maxBytes: MAX_HLTV_RESPONSE_BYTES });
+    };
+    const response = context
+      ? await fetchPublicResponse(url, requestOptions, context)
+      : await fetchPublicResponse(url, requestOptions);
+    const html = await readHtmlBody(response, { maxBytes: MAX_HLTV_RESPONSE_BYTES, context });
     const scorebot = parseHltvMatchStatus(html) === 'live'
-      ? await fetchHltvScorebotSnapshot(
-        html,
-        undefined,
-        getCookieHeader(response.headers['set-cookie']),
-      )
+      ? context
+        ? await fetchHltvScorebotSnapshot(
+          html,
+          undefined,
+          getCookieHeader(response.headers['set-cookie']),
+          context,
+        )
+        : await fetchHltvScorebotSnapshot(
+          html,
+          undefined,
+          getCookieHeader(response.headers['set-cookie']),
+        )
       : null;
     return {
       html,

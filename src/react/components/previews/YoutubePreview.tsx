@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
@@ -19,6 +20,8 @@ export function YoutubePreview({
   const { t } = useTranslation();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsPlayerOpen(false);
@@ -30,13 +33,37 @@ export function YoutubePreview({
     document.documentElement.classList.add('reader-theater-open');
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setIsTheaterOpen(false);
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsTheaterOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = getFocusableElements(playerRef.current);
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
+    const playerElement = playerRef.current;
+    const triggerElement = triggerRef.current;
     window.addEventListener('keydown', handleKeyDown);
+    playerElement?.querySelector<HTMLElement>('button, iframe')?.focus();
     return () => {
       document.documentElement.classList.remove('reader-theater-open');
       window.removeEventListener('keydown', handleKeyDown);
+      if (playerElement?.contains(document.activeElement)) {
+        playerElement.querySelector<HTMLButtonElement>('button')?.focus();
+      } else {
+        triggerElement?.focus();
+      }
     };
   }, [isTheaterOpen]);
 
@@ -46,6 +73,7 @@ export function YoutubePreview({
         videoId={videoId}
         title={title}
         isTheaterOpen={isTheaterOpen}
+        shellRef={playerRef}
         onToggleTheater={() => setIsTheaterOpen((isOpen) => !isOpen)}
       />
     );
@@ -55,6 +83,7 @@ export function YoutubePreview({
     <>
       <button
         type="button"
+        ref={triggerRef}
         className="reader-card__youtube-trigger"
         aria-label={t('preview.playVideo', { title })}
         onClick={() => {
@@ -81,17 +110,24 @@ type YoutubePlayerProps = {
   title: string;
   isTheaterOpen: boolean;
   onToggleTheater: () => void;
+  shellRef: RefObject<HTMLDivElement | null>;
 };
 
-function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater }: YoutubePlayerProps) {
+function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater, shellRef }: YoutubePlayerProps) {
   const { t } = useTranslation();
   const parameters = new URLSearchParams({ autoplay: '1', rel: '0' });
 
   return (
-    <div className={[
-      'reader-card__youtube-player-shell',
-      isTheaterOpen ? 'reader-card__youtube-player-shell--theater' : '',
-    ].filter(Boolean).join(' ')}>
+    <div
+      ref={shellRef}
+      className={[
+        'reader-card__youtube-player-shell',
+        isTheaterOpen ? 'reader-card__youtube-player-shell--theater' : '',
+      ].filter(Boolean).join(' ')}
+      role={isTheaterOpen ? 'dialog' : undefined}
+      aria-modal={isTheaterOpen ? 'true' : undefined}
+      aria-label={isTheaterOpen ? (title || t('preview.youtubePlayer')) : undefined}
+    >
       <div className="reader-card__youtube-player-stage">
         <div className="reader-card__youtube-player-toolbar">
           <button
@@ -117,4 +153,11 @@ function YoutubePlayer({ videoId, title, isTheaterOpen, onToggleTheater }: Youtu
       </div>
     </div>
   );
+}
+
+function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
+  if (!container) return [];
+  return Array.from(container.querySelectorAll<HTMLElement>(
+    'button, iframe, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+  )).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
 }

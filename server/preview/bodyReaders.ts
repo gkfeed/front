@@ -8,3 +8,4 @@ export {
   responseTooLarge,
 } from './bodyAdapters.js';
 export { firstHeader } from './headers.js';
+export { discardResponseBody } from '../publicHttp.js';

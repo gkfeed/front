@@ -7,8 +7,9 @@ import { fetchOpenGraph } from './preview/openGraph.js';
 import { fetchRedditPreviewImage } from './preview/reddit.js';
 import { withPreviewLimit } from './preview/previewLimiter.js';
 import { fetchTikTokComments } from './tiktok.js';
+import { createDetachedRequestContext, type RequestContext } from './requestContext.js';
 
-const JSON_PREVIEW_ROUTES: Record<string, (input: string) => Promise<unknown>> = {
+const JSON_PREVIEW_ROUTES: Record<string, (input: string, context: RequestContext) => Promise<unknown>> = {
   '/api/bff/open-graph': fetchOpenGraph,
   '/api/bff/liquipedia-match': fetchLiquipediaMatch,
   '/api/bff/tiktok-comments': fetchTikTokComments,
@@ -17,15 +18,17 @@ const JSON_PREVIEW_ROUTES: Record<string, (input: string) => Promise<unknown>> =
 export async function handleBffRequest(
   requestUrl: URL,
   response: ServerResponse,
+  context?: RequestContext,
 ): Promise<boolean> {
+  const requestContext = context ?? createDetachedRequestContext();
   const jsonLoader = JSON_PREVIEW_ROUTES[requestUrl.pathname];
   if (jsonLoader) {
-    await handleJsonPreview(requestUrl, response, jsonLoader);
+    await handleJsonPreview(requestUrl, response, jsonLoader, requestContext);
     return true;
   }
 
   if (requestUrl.pathname === '/api/bff/reddit-preview-image') {
-    const image = await withPreviewLimit(() => fetchRedditPreviewImage(getPreviewInput(requestUrl)));
+    const image = await withPreviewLimit(() => fetchRedditPreviewImage(getPreviewInput(requestUrl), requestContext));
     response.writeHead(200, {
       'cache-control': 'public, max-age=3600',
       'content-length': image.body.byteLength,
@@ -42,9 +45,10 @@ export async function handleBffRequest(
 async function handleJsonPreview<T>(
   requestUrl: URL,
   response: ServerResponse,
-  load: (input: string) => Promise<T>,
+  load: (input: string, context: RequestContext) => Promise<T>,
+  context: RequestContext,
 ): Promise<void> {
-  const result = await withPreviewLimit(() => load(getPreviewInput(requestUrl)));
+  const result = await withPreviewLimit(() => load(getPreviewInput(requestUrl), context));
   sendJson(response, 200, result);
 }
 

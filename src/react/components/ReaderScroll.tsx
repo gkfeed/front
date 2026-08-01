@@ -13,7 +13,11 @@ export function ReaderScroll({ items }: { items: FeedItem[] }) {
       aria-label={t('reader.scrollView')}
     >
       <div className="reader__stream">
-        {items.map((item) => <FeedItemCard key={item.id} item={item} />)}
+        {items.map((item) => (
+          <div className="reader__scroll-item" key={item.id}>
+            <FeedItemCard item={item} />
+          </div>
+        ))}
       </div>
     </div>
   );

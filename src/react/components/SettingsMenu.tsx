@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ReaderMode } from '../state/readerMode';
@@ -17,18 +18,26 @@ export function SettingsMenu({ readerMode, onReaderModeChange }: SettingsMenuPro
   const { theme, selectTheme } = useThemePreference();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
+
+  function closeMenu(focusTrigger = false) {
+    setIsOpen(false);
+    if (focusTrigger) triggerRef.current?.focus();
+  }
 
   useEffect(() => {
     if (!isOpen) return;
+
+    panelRef.current?.querySelector<HTMLElement>('[role="menuitemradio"]')?.focus();
 
     const closeOnOutsideClick = (event: PointerEvent) => {
       if (!menuRef.current?.contains(event.target as Node)) setIsOpen(false);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsOpen(false);
-        menuRef.current?.querySelector<HTMLButtonElement>('.theme-picker__trigger')?.focus();
+        closeMenu(true);
       }
     };
 
@@ -45,6 +54,7 @@ export function SettingsMenu({ readerMode, onReaderModeChange }: SettingsMenuPro
       <button
         className="theme-picker__trigger"
         type="button"
+        ref={triggerRef}
         aria-label={t('settings.button')}
         aria-haspopup="menu"
         aria-expanded={isOpen}
@@ -58,7 +68,14 @@ export function SettingsMenu({ readerMode, onReaderModeChange }: SettingsMenuPro
       </button>
 
       {isOpen ? (
-        <div className="theme-picker__panel" id={panelId} role="menu" aria-label={t('settings.menu')}>
+        <div
+          ref={panelRef}
+          className="theme-picker__panel"
+          id={panelId}
+          role="menu"
+          aria-label={t('settings.menu')}
+          onKeyDown={handleMenuKeyDown}
+        >
           <div className="theme-picker__heading">
             <strong>{t('settings.heading')}</strong>
             <span>{t('settings.description')}</span>
@@ -68,7 +85,7 @@ export function SettingsMenu({ readerMode, onReaderModeChange }: SettingsMenuPro
               readerMode={readerMode}
               onReaderModeChange={(mode) => {
                 onReaderModeChange(mode);
-                setIsOpen(false);
+                closeMenu(true);
               }}
             />
           ) : null}
@@ -76,10 +93,25 @@ export function SettingsMenu({ readerMode, onReaderModeChange }: SettingsMenuPro
           <ThemeOptions
             theme={theme}
             onThemeChange={selectTheme}
-            onSelect={() => setIsOpen(false)}
+            onSelect={() => closeMenu(true)}
           />
         </div>
       ) : null}
     </div>
   );
+}
+
+function handleMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
+  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+  const menu = event.currentTarget;
+  const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitemradio"]'));
+  if (items.length === 0) return;
+  const currentIndex = Math.max(0, items.indexOf(document.activeElement as HTMLElement));
+  const nextIndex = event.key === 'Home'
+    ? 0
+    : event.key === 'End'
+      ? items.length - 1
+      : (currentIndex + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+  event.preventDefault();
+  items[nextIndex]?.focus();
 }

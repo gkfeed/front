@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
@@ -41,6 +42,12 @@ export function ReaderPage() {
     onDelete: deleteItem,
   });
   const hasLoadedContent = !isLoading && !loadFailed;
+  const currentItemId = currentItem?.id;
+
+  useEffect(() => {
+    if (mode !== 'review' || currentItemId === undefined) return;
+    reviewPanelRef.current?.focus({ preventScroll: true });
+  }, [currentItemId, mode, reviewPanelRef]);
 
   function setMode(nextMode: ReaderMode) {
     setSearchParams((currentParams) => {
@@ -54,6 +61,14 @@ export function ReaderPage() {
   return (
     <section className="reader" aria-labelledby="reader-page-title">
       <h1 id="reader-page-title" className="sr-only">{t('pages.reader')}</h1>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {mode === 'review' && currentItem
+          ? t('reader.currentItemAnnouncement', {
+            title: currentItem.title || currentItem.text,
+            count: remainingCount,
+          })
+          : ''}
+      </p>
       {isLoading ? <ReaderLoading /> : null}
       {loadFailed ? (
         <div className="reader__state" role="alert">

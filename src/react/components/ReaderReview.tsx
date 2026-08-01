@@ -50,6 +50,7 @@ export function ReaderReview({
       ].filter(Boolean).join(' ')}
       role="region"
       aria-label={t('reader.reviewView')}
+      tabIndex={-1}
     >
       <FeedItemCard key={item.id} item={item} />
       {isShortVideo ? (

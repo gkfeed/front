@@ -101,6 +101,7 @@ const ru = {
     reviewedEverything: 'Вы просмотрели всё',
     switchToScroll: 'Переключитесь на прокрутку, чтобы снова просмотреть все элементы.',
     reviewView: 'Режим просмотра',
+    currentItemAnnouncement: 'Текущий элемент: {{title}}. Осталось: {{count}}.',
     scrollView: 'Режим прокрутки',
     itemActions: 'Действия с элементом ленты',
     keep: 'Оставить',

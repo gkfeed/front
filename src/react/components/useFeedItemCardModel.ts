@@ -1,15 +1,10 @@
-import { useEffect, useState } from 'react';
-
-import { analyzeFeedItem } from '../domain/feedItemPreview';
 import {
   buildFeedItemCardPresentation,
-  shouldLoadRemotePreview,
   type FeedItemCardPresentation,
 } from '../domain/feedItemCardPresentation';
-import { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
-import { useNsfwPreferences } from '../state/useNsfwPreferences';
+import { useFeedItemCardResource } from '../hooks/useFeedItemCardResource';
+import type { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
 import type { FeedItem } from '../types';
-import { isNsfwLink } from '../domain/nsfw';
 
 export type FeedItemCardModel = FeedItemCardPresentation & {
   cardRef: ReturnType<typeof useFeedItemRemotePreview>['cardRef'];
@@ -19,40 +14,23 @@ export type FeedItemCardModel = FeedItemCardPresentation & {
 };
 
 export function useFeedItemCardModel(item: FeedItem): FeedItemCardModel {
-  const { nsfwMode } = useNsfwPreferences();
-  const analysis = analyzeFeedItem(item);
-  const shouldHideNsfw = isNsfwLink(item.link) && nsfwMode === 'hide';
-  const shouldLoadRemote = shouldLoadRemotePreview(item, analysis, shouldHideNsfw);
-  const {
-    cardRef,
-    openGraphPreview,
-    liquipediaMatch,
-    previewStatus,
-  } = useFeedItemRemotePreview(
-    item.link,
-    shouldLoadRemote,
-    analysis.provider === 'liquipedia',
-    analysis.provider === 'hltv',
-  );
-  const [previewFailures, setPreviewFailures] = useState(0);
+  const resource = useFeedItemCardResource(item);
   const presentation = buildFeedItemCardPresentation({
     item,
-    analysis,
-    nsfwMode,
-    remotePreview: { openGraphPreview, liquipediaMatch },
-    previewFailures,
+    analysis: resource.analysis,
+    nsfwMode: resource.nsfwMode,
+    remotePreview: {
+      openGraphPreview: resource.openGraphPreview,
+      liquipediaMatch: resource.liquipediaMatch,
+    },
+    previewFailures: resource.previewFailures,
   });
-  const isPreviewPending = shouldLoadRemote && !analysis.localPreview && previewStatus === 'pending';
-
-  useEffect(() => {
-    setPreviewFailures(0);
-  }, [item.link]);
 
   return {
     ...presentation,
-    cardRef,
-    isPreviewPending,
-    previewStatus,
-    onPreviewError: () => setPreviewFailures((failures) => failures + 1),
+    cardRef: resource.cardRef,
+    isPreviewPending: resource.isPreviewPending,
+    previewStatus: resource.previewStatus,
+    onPreviewError: resource.onPreviewError,
   };
 }

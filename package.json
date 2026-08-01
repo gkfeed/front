@@ -6,7 +6,7 @@
     "dev": "vite --host 0.0.0.0 --port 4200",
     "dev:bff": "tsx watch server/index.ts",
     "build": "npm run typecheck && npm run build:bff && vite build",
-    "build:bff": "tsc -p tsconfig.server.json",
+    "build:bff": "rm -rf dist-server && tsc -p tsconfig.server.json",
     "start": "node dist-server/server/index.js",
     "check": "npm test && npm run lint && npm run build && npm run test:e2e",
     "lint": "eslint .",
