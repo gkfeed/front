@@ -90,6 +90,17 @@
     padding: 8px;
   }
 
+  body:has(.reader__item--short-video) .reader__fullscreen-toolbar {
+    display: block;
+  }
+
+  html:not([data-reader-fullscreen]) main:not(:fullscreen)
+  .reader__fullscreen-toolbar,
+  html:not([data-reader-fullscreen]) main:not(:-webkit-full-screen)
+  .reader__fullscreen-toolbar {
+    inset: 12px max(60px, calc(48px + env(safe-area-inset-right) + 12px)) auto auto;
+  }
+
   .reader-card {
     min-height: 0;
     padding: 16px;
@@ -394,5 +405,38 @@
 
   .liquipedia-team--reverse .liquipedia-team__form {
     padding-left: calc(clamp(38px, 8vw, 56px) + 7px);
+  }
+}
+
+/* Fullscreen has enough room to show media at a useful reading size. */
+@media (min-width: 641px) {
+  main:fullscreen .reader,
+  main:-webkit-full-screen .reader,
+  html[data-reader-fullscreen="true"] main .reader {
+    max-width: none;
+    padding-right: clamp(16px, 3vw, 48px);
+    padding-left: clamp(16px, 3vw, 48px);
+  }
+
+  main:fullscreen .reader__item,
+  main:fullscreen .reader__scroll-panel,
+  main:-webkit-full-screen .reader__item,
+  main:-webkit-full-screen .reader__scroll-panel,
+  html[data-reader-fullscreen="true"] main .reader__item,
+  html[data-reader-fullscreen="true"] main .reader__scroll-panel {
+    max-width: min(100%, 1600px);
+  }
+
+  main:fullscreen .reader-card__preview > img,
+  main:-webkit-full-screen .reader-card__preview > img,
+  html[data-reader-fullscreen="true"] main .reader-card__preview > img {
+    max-height: calc(100dvh - 180px);
+    object-fit: contain;
+  }
+
+  main:fullscreen .reader__item .reader-card__preview--short-video,
+  main:-webkit-full-screen .reader__item .reader-card__preview--short-video,
+  html[data-reader-fullscreen="true"] main .reader__item .reader-card__preview--short-video {
+    width: calc(56.25dvh - 16px);
   }
 }

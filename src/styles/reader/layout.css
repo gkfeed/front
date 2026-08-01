@@ -1,4 +1,5 @@
 .reader {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: 22px;
@@ -21,6 +22,14 @@
   align-items: center;
   gap: 12px;
   justify-content: flex-end;
+}
+
+.reader__fullscreen-toolbar {
+  display: none;
+  position: absolute;
+  inset: 12px max(16px, env(safe-area-inset-right)) auto auto;
+  z-index: 110;
+  width: auto;
 }
 
 .reader__count {

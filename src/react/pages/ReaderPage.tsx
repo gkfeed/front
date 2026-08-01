@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ReaderReview } from '../components/ReaderReview';
 import { ReaderScroll } from '../components/ReaderScroll';
+import { ReaderFullscreenButton } from '../components/ReaderFullscreenButton';
 import { useFeedReader } from '../hooks/useFeedReader';
 import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
@@ -59,61 +60,66 @@ export function ReaderPage() {
   }
 
   return (
-    <section className="reader" aria-labelledby="reader-page-title">
-      <h1 id="reader-page-title" className="sr-only">{t('pages.reader')}</h1>
-      <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {mode === 'review' && currentItem
-          ? t('reader.currentItemAnnouncement', {
-            title: currentItem.title || currentItem.text,
-            count: remainingCount,
-          })
-          : ''}
-      </p>
-      {isLoading ? <ReaderLoading /> : null}
-      {loadFailed ? (
-        <div className="reader__state" role="alert">
-          <p>{getRequestErrorMessage(loadError, t, 'reader.loadError')}</p>
-          <button type="button" className="secondary" onClick={retryLoad}>{t('live.tryAgain')}</button>
-        </div>
-      ) : null}
-      {hasLoadedContent && items.length === 0 ? (
-        <div className="reader__state">
-          <span className="reader__done-mark" aria-hidden="true">✓</span>
-          <h2>{t('reader.caughtUp')}</h2>
-          <p>{t('reader.noMore')}</p>
-          <button type="button" className="secondary" onClick={retryLoad}>{t('reader.checkAgain')}</button>
-        </div>
-      ) : null}
-      {mode === 'review' && currentItem ? (
-        <ReaderReview
-          key={currentItem.id}
-          item={currentItem}
-          remainingCount={remainingCount}
-          isDeleting={isDeleting}
-          deleteFailed={deleteFailed}
-          useCompactActions={useCompactActions}
-          reviewPanelRef={reviewPanelRef}
-          reviewActionsRef={reviewActionsRef}
-          onKeep={keepItem}
-          onDelete={deleteItem}
-          onReset={resetReview}
-          onShowScroll={() => setMode('scroll')}
-        />
-      ) : null}
-      {mode === 'review' && hasLoadedContent && items.length > 0 && !currentItem ? (
-        <div id="reader-review-panel" className="reader__state" role="region" aria-label="Review view">
-          <span className="reader__done-mark" aria-hidden="true">✓</span>
-          <h2>{t('reader.reviewedEverything')}</h2>
-          <p>{t('reader.switchToScroll')}</p>
-          <div className="reader__state-actions">
-            <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={resetReview}>
-              {t('reader.reset')}
-            </button>
+    <>
+      <div className="reader__fullscreen-toolbar">
+        <ReaderFullscreenButton />
+      </div>
+      <section className="reader" aria-labelledby="reader-page-title">
+        <h1 id="reader-page-title" className="sr-only">{t('pages.reader')}</h1>
+        <p className="sr-only" aria-live="polite" aria-atomic="true">
+          {mode === 'review' && currentItem
+            ? t('reader.currentItemAnnouncement', {
+              title: currentItem.title || currentItem.text,
+              count: remainingCount,
+            })
+            : ''}
+        </p>
+        {isLoading ? <ReaderLoading /> : null}
+        {loadFailed ? (
+          <div className="reader__state" role="alert">
+            <p>{getRequestErrorMessage(loadError, t, 'reader.loadError')}</p>
+            <button type="button" className="secondary" onClick={retryLoad}>{t('live.tryAgain')}</button>
           </div>
-        </div>
-      ) : null}
-      {mode === 'scroll' && hasLoadedContent && items.length > 0 ? <ReaderScroll items={items} /> : null}
-    </section>
+        ) : null}
+        {hasLoadedContent && items.length === 0 ? (
+          <div className="reader__state">
+            <span className="reader__done-mark" aria-hidden="true">✓</span>
+            <h2>{t('reader.caughtUp')}</h2>
+            <p>{t('reader.noMore')}</p>
+            <button type="button" className="secondary" onClick={retryLoad}>{t('reader.checkAgain')}</button>
+          </div>
+        ) : null}
+        {mode === 'review' && currentItem ? (
+          <ReaderReview
+            key={currentItem.id}
+            item={currentItem}
+            remainingCount={remainingCount}
+            isDeleting={isDeleting}
+            deleteFailed={deleteFailed}
+            useCompactActions={useCompactActions}
+            reviewPanelRef={reviewPanelRef}
+            reviewActionsRef={reviewActionsRef}
+            onKeep={keepItem}
+            onDelete={deleteItem}
+            onReset={resetReview}
+            onShowScroll={() => setMode('scroll')}
+          />
+        ) : null}
+        {mode === 'review' && hasLoadedContent && items.length > 0 && !currentItem ? (
+          <div id="reader-review-panel" className="reader__state" role="region" aria-label="Review view">
+            <span className="reader__done-mark" aria-hidden="true">✓</span>
+            <h2>{t('reader.reviewedEverything')}</h2>
+            <p>{t('reader.switchToScroll')}</p>
+            <div className="reader__state-actions">
+              <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={resetReview}>
+                {t('reader.reset')}
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {mode === 'scroll' && hasLoadedContent && items.length > 0 ? <ReaderScroll items={items} /> : null}
+      </section>
+    </>
   );
 }
 

@@ -34,28 +34,30 @@ export function useReviewActionsLayout(
         actionsHeightRef.current = actions.offsetHeight;
       }
 
-      const cardBottom = card!.getBoundingClientRect().bottom + window.scrollY;
+      const cardBottom = card!.getBoundingClientRect().bottom;
       const panelGap = Number.parseFloat(window.getComputedStyle(panel!).rowGap) || 0;
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
       const actionsBottom = cardBottom + panelGap + actionsHeightRef.current;
-      const viewportBottom = window.scrollY + viewportHeight;
-      setCompactActionsItemId(actionsBottom > viewportBottom ? itemId : null);
+      setCompactActionsItemId(actionsBottom > viewportHeight ? itemId : null);
     }
 
     updateActionsLayout();
 
+    const main = panel.closest<HTMLElement>('main');
     const resizeObserver = typeof ResizeObserver === 'undefined'
       ? null
       : new ResizeObserver(updateActionsLayout);
     resizeObserver?.observe(card);
     window.addEventListener('resize', updateActionsLayout);
     window.addEventListener('scroll', updateActionsLayout, { passive: true });
+    main?.addEventListener('scroll', updateActionsLayout, { passive: true });
     window.visualViewport?.addEventListener('resize', updateActionsLayout);
 
     return () => {
       resizeObserver?.disconnect();
       window.removeEventListener('resize', updateActionsLayout);
       window.removeEventListener('scroll', updateActionsLayout);
+      main?.removeEventListener('scroll', updateActionsLayout);
       window.visualViewport?.removeEventListener('resize', updateActionsLayout);
     };
   }, [currentItem, mode]);

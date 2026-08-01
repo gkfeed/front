@@ -21,18 +21,20 @@ const ITEMS = [
   { id: 11, feedId: 3, link: 'https://news.example.org/two', title: 'Second story', text: 'Second summary' },
 ];
 
-function renderReader(initialEntry = '/reader', nsfwMode: NsfwMode = 'blur') {
+function renderReader(initialEntry = '/reader', nsfwMode: NsfwMode = 'blur', container?: HTMLElement) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <NsfwPreferencesContext value={{ nsfwMode, setNsfwMode: vi.fn() }}>
         <ReaderPage />
       </NsfwPreferencesContext>
     </MemoryRouter>,
+    container ? { container } : undefined,
   );
 }
 
 afterEach(() => {
   cleanup();
+  document.querySelectorAll('main').forEach((main) => main.remove());
   restoreLocalStorage();
   vi.restoreAllMocks();
   vi.resetAllMocks();
@@ -287,6 +289,37 @@ describe('ReaderPage', () => {
     });
     expect(screen.getByRole('button', { name: /keep/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /delete/i })).toBeTruthy();
+  });
+
+  it('recomputes compact review actions when the fullscreen main scrolls', async () => {
+    const main = document.createElement('main');
+    document.body.append(main);
+    let cardBottom = 900;
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(600);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return {
+        x: 0,
+        y: 0,
+        top: 0,
+        right: 464,
+        bottom: this.classList.contains('reader-card') ? cardBottom : 0,
+        left: 0,
+        width: 464,
+        height: cardBottom,
+        toJSON: () => ({}),
+      };
+    });
+    vi.mocked(getFeedItems).mockResolvedValue([ITEMS[0]]);
+    renderReader('/reader', 'blur', main);
+
+    expect(await screen.findByRole('complementary', { name: 'Feed item actions' })).toBeTruthy();
+
+    cardBottom = 300;
+    fireEvent.scroll(document.querySelector('main')!);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('complementary', { name: 'Feed item actions' })).toBeNull();
+    });
   });
 
   it('deletes an item on the server before advancing', async () => {

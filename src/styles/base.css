@@ -150,6 +150,10 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+main {
+  position: relative;
+}
+
 button,
 a,
 input,
@@ -184,6 +188,54 @@ main:-webkit-full-screen {
   min-height: 100dvh;
   overflow-y: auto;
   background: var(--color-page);
+}
+
+html[data-reader-fullscreen="true"] {
+  overflow: hidden;
+}
+
+html[data-reader-fullscreen="true"] body {
+  overflow: hidden;
+}
+
+html[data-reader-fullscreen="true"] .nav {
+  display: none;
+}
+
+html[data-reader-fullscreen="true"] main {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  min-height: 100dvh;
+  overflow-y: auto;
+  background: var(--color-page);
+}
+
+html[data-reader-fullscreen="true"] main .reader {
+  min-height: 100dvh;
+}
+
+main:fullscreen .reader__actions,
+main:-webkit-full-screen .reader__actions,
+html[data-reader-fullscreen="true"] .reader__actions {
+  width: min(100%, var(--reader-actions-width, 100%));
+}
+
+main:fullscreen .reader__actions button,
+main:-webkit-full-screen .reader__actions button,
+html[data-reader-fullscreen="true"] .reader__actions button {
+  height: var(--reader-actions-height, 52px);
+  min-height: var(--reader-actions-height, 52px);
+}
+
+main:fullscreen .reader__fullscreen-toolbar,
+main:-webkit-full-screen .reader__fullscreen-toolbar,
+html[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
+  display: block;
+  position: fixed;
+  inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) auto auto;
+  z-index: 110;
+  width: auto;
 }
 
 .skip-link {

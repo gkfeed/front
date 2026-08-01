@@ -19,21 +19,37 @@ function getMainElement(): HTMLElement | null {
   return document.querySelector<HTMLElement>('main');
 }
 
+function setFallbackFullscreen(enabled: boolean): void {
+  if (enabled) document.documentElement.dataset.readerFullscreen = 'true';
+  else delete document.documentElement.dataset.readerFullscreen;
+}
+
+function rememberReviewActionsSize(main: HTMLElement): void {
+  const actions = document.querySelector<HTMLElement>('.reader__actions:not([hidden])');
+  if (!actions) return;
+
+  const { width, height } = actions.getBoundingClientRect();
+  if (width > 0) main.style.setProperty('--reader-actions-width', `${width}px`);
+  if (height > 0) main.style.setProperty('--reader-actions-height', `${height}px`);
+}
+
+function clearReviewActionsSize(main: HTMLElement | null): void {
+  main?.style.removeProperty('--reader-actions-width');
+  main?.style.removeProperty('--reader-actions-height');
+}
+
 export function ReaderFullscreenButton() {
   const { t } = useTranslation();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const [isFallbackFullscreen, setIsFallbackFullscreen] = useState(false);
 
   useEffect(() => {
     const main = getMainElement();
-    const fullscreenMain = () => setIsFullscreen(getFullscreenElement() === main);
-    const fullscreenElement = main as FullscreenElement | null;
-
-    setIsSupported(Boolean(
-      fullscreenElement
-      && (typeof fullscreenElement.requestFullscreen === 'function'
-        || typeof fullscreenElement.webkitRequestFullscreen === 'function'),
-    ));
+    const fullscreenMain = () => {
+      const isNativeFullscreen = getFullscreenElement() === main;
+      setIsFullscreen(isNativeFullscreen);
+      if (!isNativeFullscreen) clearReviewActionsSize(main);
+    };
     fullscreenMain();
 
     document.addEventListener('fullscreenchange', fullscreenMain);
@@ -41,6 +57,8 @@ export function ReaderFullscreenButton() {
     return () => {
       document.removeEventListener('fullscreenchange', fullscreenMain);
       document.removeEventListener('webkitfullscreenchange', fullscreenMain);
+      setFallbackFullscreen(false);
+      clearReviewActionsSize(main);
     };
   }, []);
 
@@ -49,6 +67,15 @@ export function ReaderFullscreenButton() {
     if (!main) return;
 
     const fullscreenDocument = document as FullscreenDocument;
+    if (isFallbackFullscreen) {
+      setFallbackFullscreen(false);
+      setIsFallbackFullscreen(false);
+      setIsFullscreen(false);
+      clearReviewActionsSize(main);
+      return;
+    }
+
+    rememberReviewActionsSize(main);
     try {
       if (getFullscreenElement()) {
         if (document.exitFullscreen) await document.exitFullscreen();
@@ -59,18 +86,35 @@ export function ReaderFullscreenButton() {
       const fullscreenElement = main as FullscreenElement;
       if (fullscreenElement.requestFullscreen) await fullscreenElement.requestFullscreen();
       else if (fullscreenElement.webkitRequestFullscreen) await fullscreenElement.webkitRequestFullscreen();
+      else throw new Error('Fullscreen API is unavailable');
     } catch {
-      // Fullscreen can be rejected by the browser or the current document context.
+      // Some iPad browsers do not expose fullscreen for arbitrary HTML elements.
+      setFallbackFullscreen(true);
+      setIsFallbackFullscreen(true);
+      setIsFullscreen(true);
     }
   }
 
-  return (
+  useEffect(() => {
+    if (!isFallbackFullscreen) return;
+    const main = getMainElement();
+    const exitOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setFallbackFullscreen(false);
+      setIsFallbackFullscreen(false);
+      setIsFullscreen(false);
+      clearReviewActionsSize(main);
+    };
+    document.addEventListener('keydown', exitOnEscape);
+    return () => document.removeEventListener('keydown', exitOnEscape);
+  }, [isFallbackFullscreen]);
+
+  const button = (
     <button
       className="reader-fullscreen"
       type="button"
       aria-label={t(isFullscreen ? 'reader.exitFullscreen' : 'reader.enterFullscreen')}
       aria-pressed={isFullscreen}
-      disabled={!isSupported}
       onClick={() => void toggleFullscreen()}
     >
       <svg className="reader-fullscreen__icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -82,4 +126,6 @@ export function ReaderFullscreenButton() {
       </svg>
     </button>
   );
+
+  return button;
 }
