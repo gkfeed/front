@@ -440,3 +440,28 @@
     width: calc(56.25dvh - 16px);
   }
 }
+
+/* Let the TikTok player grow in fullscreen instead of stretching a wider iframe
+   into the old comments-expanded height. */
+@media (min-width: 1024px) {
+  main:fullscreen .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"]),
+  main:-webkit-full-screen .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"]),
+  html[data-reader-fullscreen="true"] main .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"]) {
+    --reader-tiktok-fullscreen-height: min(
+      calc(100dvh - 152px),
+      calc((100cqw - clamp(300px, 28vw, 440px) - clamp(18px, 3vw, 30px)) * 16 / 9)
+    );
+    height: var(--reader-tiktok-fullscreen-height);
+  }
+
+  main:fullscreen .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .reader-card__preview--short-video,
+  main:-webkit-full-screen .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .reader-card__preview--short-video,
+  html[data-reader-fullscreen="true"] main .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .reader-card__preview--short-video {
+    width: calc(var(--reader-tiktok-fullscreen-height) * 9 / 16);
+    height: var(--reader-tiktok-fullscreen-height);
+    aspect-ratio: 9 / 16;
+  }
+}

@@ -90,6 +90,28 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(expandedBox!.height).toBeGreaterThanOrEqual(collapsedBox!.height - 1);
   });
 
+  test('makes the TikTok player larger in fullscreen', async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 1024 });
+    await page.goto('/reader');
+
+    const player = page.locator('.reader-card__preview--tiktok');
+    await expect(player).toBeVisible();
+    await page.getByRole('button', { name: 'Show comments' }).click();
+    const regularBox = await player.boundingBox();
+
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('.reader__fullscreen-toolbar').getByRole('button', {
+      name: 'Exit Reader fullscreen',
+    })).toBeVisible();
+    const fullscreenBox = await player.boundingBox();
+
+    expect(regularBox).not.toBeNull();
+    expect(fullscreenBox).not.toBeNull();
+    expect(fullscreenBox!.width).toBeGreaterThan(regularBox!.width);
+    expect(fullscreenBox!.height).toBeGreaterThan(regularBox!.height);
+    expect(Math.abs(fullscreenBox!.width * 16 / 9 - fullscreenBox!.height)).toBeLessThan(1);
+  });
+
   test('reflows controls after rotating from landscape to portrait', async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 1024 });
     await page.goto('/reader');
