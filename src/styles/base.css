@@ -218,7 +218,7 @@ html[data-reader-fullscreen="true"] main .reader {
 main:fullscreen .reader__actions,
 main:-webkit-full-screen .reader__actions,
 html[data-reader-fullscreen="true"] .reader__actions {
-  width: min(100%, var(--reader-actions-width, 100%));
+  width: 100%;
 }
 
 main:fullscreen .reader__actions button,

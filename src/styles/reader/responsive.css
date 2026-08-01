@@ -39,6 +39,97 @@
   }
 }
 
+/* Keep a regular review card and its actions inside the fullscreen viewport. */
+@media (min-width: 641px) {
+  main:fullscreen .reader,
+  main:-webkit-full-screen .reader,
+  html[data-reader-fullscreen="true"] main .reader,
+  main[data-reader-fullscreen="true"] .reader {
+    align-content: center;
+    gap: clamp(14px, 1.8vh, 22px);
+    min-height: 100dvh;
+    padding-top: max(28px, calc(env(safe-area-inset-top) + 20px));
+    padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
+  }
+
+  main:fullscreen .reader__item:not(.reader__item--short-video),
+  main:-webkit-full-screen .reader__item:not(.reader__item--short-video),
+  html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video),
+  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) {
+    width: min(100%, 960px);
+    max-width: none;
+  }
+
+  /* A 16:9 canvas is useful for media, but makes text-only cards awkwardly wide. */
+  main:fullscreen .reader__item:has(.reader-card--youtube),
+  main:fullscreen .reader__item:has(.reader-card--image-preview),
+  main:fullscreen .reader__item:has(.reader-card--simple-image),
+  main:-webkit-full-screen .reader__item:has(.reader-card--youtube),
+  main:-webkit-full-screen .reader__item:has(.reader-card--image-preview),
+  main:-webkit-full-screen .reader__item:has(.reader-card--simple-image),
+  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--youtube),
+  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--image-preview),
+  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--simple-image),
+  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--youtube),
+  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--image-preview),
+  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--simple-image) {
+    width: min(
+      100%,
+      1440px,
+      max(320px, calc((100dvh - 330px) * 16 / 9))
+    );
+  }
+
+  /* YouTube thumbnails are 16:9, so sizing the item from the available height
+     also removes the empty side strips caused by a separately capped image. */
+  main:fullscreen .reader-card--youtube .reader-card__preview > img,
+  main:-webkit-full-screen .reader-card--youtube .reader-card__preview > img,
+  html[data-reader-fullscreen="true"] main .reader-card--youtube .reader-card__preview > img,
+  main[data-reader-fullscreen="true"] .reader-card--youtube .reader-card__preview > img {
+    max-height: none;
+  }
+
+  main:fullscreen .reader-card--image-preview,
+  main:fullscreen .reader-card--simple-image,
+  main:-webkit-full-screen .reader-card--image-preview,
+  main:-webkit-full-screen .reader-card--simple-image,
+  html[data-reader-fullscreen="true"] main .reader-card--image-preview,
+  html[data-reader-fullscreen="true"] main .reader-card--simple-image,
+  main[data-reader-fullscreen="true"] .reader-card--image-preview,
+  main[data-reader-fullscreen="true"] .reader-card--simple-image {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  main:fullscreen .reader-card--image-preview .reader-card__preview,
+  main:fullscreen .reader-card--simple-image .reader-card__preview,
+  main:-webkit-full-screen .reader-card--image-preview .reader-card__preview,
+  main:-webkit-full-screen .reader-card--simple-image .reader-card__preview,
+  html[data-reader-fullscreen="true"] main .reader-card--image-preview .reader-card__preview,
+  html[data-reader-fullscreen="true"] main .reader-card--simple-image .reader-card__preview,
+  main[data-reader-fullscreen="true"] .reader-card--image-preview .reader-card__preview,
+  main[data-reader-fullscreen="true"] .reader-card--simple-image .reader-card__preview {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  main:fullscreen .reader-card--image-preview .reader-card__preview > img,
+  main:fullscreen .reader-card--simple-image .reader-card__preview > img,
+  main:-webkit-full-screen .reader-card--image-preview .reader-card__preview > img,
+  main:-webkit-full-screen .reader-card--simple-image .reader-card__preview > img,
+  html[data-reader-fullscreen="true"] main .reader-card--image-preview .reader-card__preview > img,
+  html[data-reader-fullscreen="true"] main .reader-card--simple-image .reader-card__preview > img,
+  main[data-reader-fullscreen="true"] .reader-card--image-preview .reader-card__preview > img,
+  main[data-reader-fullscreen="true"] .reader-card--simple-image .reader-card__preview > img {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(100dvh - 300px);
+    margin-inline: auto;
+    object-fit: contain;
+  }
+}
+
 @media (min-width: 641px) and (orientation: portrait) {
   .reader__item .reader-card__preview--short-video {
     width: calc(56.25dvh - 191.25px);
@@ -98,7 +189,8 @@
   .reader__fullscreen-toolbar,
   html:not([data-reader-fullscreen]) main:not(:-webkit-full-screen)
   .reader__fullscreen-toolbar {
-    inset: 12px max(60px, calc(48px + env(safe-area-inset-right) + 12px)) auto auto;
+    inset: max(12px, env(safe-area-inset-top))
+      max(60px, calc(48px + env(safe-area-inset-right) + 12px)) auto auto;
   }
 
   .reader-card {
@@ -410,21 +502,10 @@
 
 /* Fullscreen has enough room to show media at a useful reading size. */
 @media (min-width: 641px) {
-  main:fullscreen .reader,
-  main:-webkit-full-screen .reader,
-  html[data-reader-fullscreen="true"] main .reader {
-    max-width: none;
-    padding-right: clamp(16px, 3vw, 48px);
-    padding-left: clamp(16px, 3vw, 48px);
-  }
-
-  main:fullscreen .reader__item,
-  main:fullscreen .reader__scroll-panel,
-  main:-webkit-full-screen .reader__item,
-  main:-webkit-full-screen .reader__scroll-panel,
-  html[data-reader-fullscreen="true"] main .reader__item,
-  html[data-reader-fullscreen="true"] main .reader__scroll-panel {
-    max-width: min(100%, 1600px);
+  main:fullscreen .reader-card--tiktok .tiktok-comments__toggle,
+  main:-webkit-full-screen .reader-card--tiktok .tiktok-comments__toggle,
+  html[data-reader-fullscreen="true"] main .reader-card--tiktok .tiktok-comments__toggle {
+    transform: translateX(-56px);
   }
 
   main:fullscreen .reader-card__preview > img,
@@ -439,6 +520,59 @@
   html[data-reader-fullscreen="true"] main .reader__item .reader-card__preview--short-video {
     width: calc(56.25dvh - 16px);
   }
+}
+
+@media (min-width: 1024px) {
+  /* Fullscreen has enough horizontal space for a more readable comments rail. */
+  main:fullscreen .reader-card.reader-card--short-video,
+  main:-webkit-full-screen .reader-card.reader-card--short-video,
+  html[data-reader-fullscreen="true"] main .reader-card.reader-card--short-video {
+    grid-template-columns: auto minmax(clamp(300px, 28vw, 440px), 1fr);
+  }
+}
+
+/* Keep ordinary image previews wide even when fullscreen reports a narrow CSS viewport. */
+main:fullscreen .reader,
+main:-webkit-full-screen .reader,
+html[data-reader-fullscreen="true"] main .reader,
+main[data-reader-fullscreen="true"] .reader {
+  max-width: none;
+  padding-right: clamp(12px, 3vw, 48px);
+  padding-left: clamp(12px, 3vw, 48px);
+}
+
+main:fullscreen .reader__item,
+main:fullscreen .reader__scroll-panel,
+main:-webkit-full-screen .reader__item,
+main:-webkit-full-screen .reader__scroll-panel,
+html[data-reader-fullscreen="true"] main .reader__item,
+html[data-reader-fullscreen="true"] main .reader__scroll-panel,
+main[data-reader-fullscreen="true"] .reader__item,
+main[data-reader-fullscreen="true"] .reader__scroll-panel {
+  max-width: min(100%, 1600px);
+}
+
+main:fullscreen .reader__item:has(.reader-card--image-preview),
+main:fullscreen .reader__item:has(.reader-card--simple-image),
+main:fullscreen .reader__item:has(.reader-card--instagram-photo),
+main:-webkit-full-screen .reader__item:has(.reader-card--image-preview),
+main:-webkit-full-screen .reader__item:has(.reader-card--simple-image),
+main:-webkit-full-screen .reader__item:has(.reader-card--instagram-photo),
+html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--image-preview),
+html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--simple-image),
+html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--instagram-photo),
+main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--image-preview),
+main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--simple-image),
+main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--instagram-photo) {
+  width: min(100%, 1600px);
+}
+
+main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
+  display: block;
+  position: fixed;
+  inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) auto auto;
+  z-index: 110;
+  width: auto;
 }
 
 /* Let the TikTok player grow in fullscreen instead of stretching a wider iframe
@@ -463,5 +597,30 @@
     width: calc(var(--reader-tiktok-fullscreen-height) * 9 / 16);
     height: var(--reader-tiktok-fullscreen-height);
     aspect-ratio: 9 / 16;
+  }
+}
+
+@media (min-width: 641px) {
+  main:fullscreen .reader,
+  main:-webkit-full-screen .reader,
+  html[data-reader-fullscreen="true"] main .reader,
+  main[data-reader-fullscreen="true"] .reader {
+    padding-right: clamp(20px, 4vw, 72px);
+    padding-left: clamp(20px, 4vw, 72px);
+  }
+
+  main:fullscreen .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
+  main:fullscreen .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image),
+  main:-webkit-full-screen .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
+  main:-webkit-full-screen .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image),
+  html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
+  html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image),
+  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
+  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image) {
+    width: min(
+      100%,
+      1600px,
+      max(320px, calc((100dvh - 330px) * 16 / 9))
+    );
   }
 }

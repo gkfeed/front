@@ -53,6 +53,7 @@
   border: 1px solid color-mix(in oklch, var(--color-card-border) 70%, transparent);
   border-radius: 15px;
   background: color-mix(in oklch, var(--color-ink) 12%, var(--color-card));
+  -webkit-tap-highlight-color: transparent;
 }
 
 .reader-card__preview:focus-visible {
@@ -64,6 +65,7 @@
   display: block;
   width: 100%;
   height: auto;
+  -webkit-user-drag: none;
 }
 
 .reader-card__preview video {

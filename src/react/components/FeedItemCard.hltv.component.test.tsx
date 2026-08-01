@@ -49,6 +49,46 @@ describe('FeedItemCard HLTV previews', () => {
     expect(screen.getByText(/^Starts in /)).toBeTruthy();
   });
 
+  it('uses parsed teams instead of a generated HLTV screenshot for scheduled matches', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396021/spirit-vs-mouz-blast-bounty-2026-season-2-finals',
+      title: 'Spirit vs MOUZ at BLAST Bounty 2026 Season 2 Finals',
+      description: 'Complete overview of the Spirit vs. MOUZ matchup',
+      image: 'https://api.url2png.com/v6/account/signature/png/?url=match',
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: '2999-07-23T18:05:00.000Z',
+          teams: [
+            { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
+            { name: 'MOUZ', logo: 'https://img-cdn.hltv.org/teamlogo/mouz.png' },
+          ],
+          status: 'scheduled',
+          score: null,
+          currentMap: null,
+          completedMaps: [],
+          playerStats: null,
+          teamSides: null,
+        },
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396021/spirit-vs-mouz-blast-bounty-2026-season-2-finals',
+      title: 'Spirit vs MOUZ',
+    }} />);
+
+    expect(await screen.findByRole('link', { name: 'Spirit versus MOUZ' })).toBeTruthy();
+    expect(screen.getByText('Spirit')).toBeTruthy();
+    expect(screen.getByText('MOUZ')).toBeTruthy();
+    expect(screen.queryByAltText(/Spirit vs MOUZ at/)).toBeNull();
+    expect(screen.getByText(/^Starts in /)).toBeTruthy();
+  });
+
   it('does not show an HLTV countdown after the match start', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.hltv.org/matches/2396006/og-vs-spirit-event',
@@ -82,7 +122,7 @@ describe('FeedItemCard HLTV previews', () => {
     expect(screen.queryByText(/^Starts in /)).toBeNull();
   });
 
-  it('overlays the final score on a generated HLTV match image', async () => {
+  it('shows the final score in the native matchup when teams are available', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
       title: 'Liquid vs Spirit',
@@ -115,11 +155,11 @@ describe('FeedItemCard HLTV previews', () => {
       title: 'Liquid vs Spirit',
     }} />);
 
-    expect(await screen.findByAltText('Preview for Liquid vs Spirit')).toBeTruthy();
-    expect(screen.getByText('1 : 2')).toBeTruthy();
-    expect(screen.getByRole('link', {
-      name: 'Open Liquid vs Spirit, final score 1 to 2',
+    expect(await screen.findByRole('link', {
+      name: 'Liquid versus Spirit, final score 1 to 2',
     })).toBeTruthy();
+    expect(screen.getByText('1 : 2')).toBeTruthy();
+    expect(screen.queryByAltText('Preview for Liquid vs Spirit')).toBeNull();
   });
 
   it('converts a generated HLTV image into the live matchup format', async () => {

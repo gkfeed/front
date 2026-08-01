@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
@@ -43,12 +42,6 @@ export function ReaderPage() {
     onDelete: deleteItem,
   });
   const hasLoadedContent = !isLoading && !loadFailed;
-  const currentItemId = currentItem?.id;
-
-  useEffect(() => {
-    if (mode !== 'review' || currentItemId === undefined) return;
-    reviewPanelRef.current?.focus({ preventScroll: true });
-  }, [currentItemId, mode, reviewPanelRef]);
 
   function setMode(nextMode: ReaderMode) {
     setSearchParams((currentParams) => {

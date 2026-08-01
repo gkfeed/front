@@ -10,6 +10,8 @@ type FullscreenElement = HTMLElement & {
   webkitRequestFullscreen?: () => Promise<void> | void;
 };
 
+const FALLBACK_FULLSCREEN_EVENT = 'readerfullscreenchange';
+
 function getFullscreenElement(): Element | null {
   const fullscreenDocument = document as FullscreenDocument;
   return document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement ?? null;
@@ -19,44 +21,63 @@ function getMainElement(): HTMLElement | null {
   return document.querySelector<HTMLElement>('main');
 }
 
+function setNativeFullscreenAttribute(main: HTMLElement | null, enabled: boolean): void {
+  if (!main) return;
+  if (enabled) main.dataset.readerFullscreen = 'true';
+  else delete main.dataset.readerFullscreen;
+}
+
 function setFallbackFullscreen(enabled: boolean): void {
   if (enabled) document.documentElement.dataset.readerFullscreen = 'true';
   else delete document.documentElement.dataset.readerFullscreen;
+  document.dispatchEvent(new Event(FALLBACK_FULLSCREEN_EVENT));
 }
 
 function rememberReviewActionsSize(main: HTMLElement): void {
   const actions = document.querySelector<HTMLElement>('.reader__actions:not([hidden])');
   if (!actions) return;
 
-  const { width, height } = actions.getBoundingClientRect();
-  if (width > 0) main.style.setProperty('--reader-actions-width', `${width}px`);
+  const { height } = actions.getBoundingClientRect();
   if (height > 0) main.style.setProperty('--reader-actions-height', `${height}px`);
 }
 
 function clearReviewActionsSize(main: HTMLElement | null): void {
-  main?.style.removeProperty('--reader-actions-width');
   main?.style.removeProperty('--reader-actions-height');
 }
 
 export function ReaderFullscreenButton() {
   const { t } = useTranslation();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isFallbackFullscreen, setIsFallbackFullscreen] = useState(false);
+  const [isFallbackFullscreen, setIsFallbackFullscreen] = useState(
+    () => document.documentElement.dataset.readerFullscreen === 'true',
+  );
 
   useEffect(() => {
     const main = getMainElement();
     const fullscreenMain = () => {
       const isNativeFullscreen = getFullscreenElement() === main;
-      setIsFullscreen(isNativeFullscreen);
-      if (!isNativeFullscreen) clearReviewActionsSize(main);
+      setNativeFullscreenAttribute(main, isNativeFullscreen);
+      const isFallback = document.documentElement.dataset.readerFullscreen === 'true';
+      setIsFallbackFullscreen(isFallback);
+      setIsFullscreen(isNativeFullscreen || isFallback);
+      if (!isNativeFullscreen && !isFallback) clearReviewActionsSize(main);
+    };
+    const fallbackFullscreen = () => {
+      const isFallback = document.documentElement.dataset.readerFullscreen === 'true';
+      setIsFallbackFullscreen(isFallback);
+      setIsFullscreen(isFallback || getFullscreenElement() === main);
+      if (!isFallback && getFullscreenElement() !== main) clearReviewActionsSize(main);
     };
     fullscreenMain();
 
     document.addEventListener('fullscreenchange', fullscreenMain);
     document.addEventListener('webkitfullscreenchange', fullscreenMain);
+    document.addEventListener(FALLBACK_FULLSCREEN_EVENT, fallbackFullscreen);
     return () => {
       document.removeEventListener('fullscreenchange', fullscreenMain);
       document.removeEventListener('webkitfullscreenchange', fullscreenMain);
+      document.removeEventListener(FALLBACK_FULLSCREEN_EVENT, fallbackFullscreen);
+      setNativeFullscreenAttribute(main, false);
       setFallbackFullscreen(false);
       clearReviewActionsSize(main);
     };

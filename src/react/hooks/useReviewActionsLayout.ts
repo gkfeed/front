@@ -4,6 +4,8 @@ import type { RefObject } from 'react';
 import type { ReaderMode } from '../state/readerMode';
 import type { FeedItem } from '../types';
 
+const READER_FULLSCREEN_CHANGE_EVENT = 'readerfullscreenchange';
+
 export function useReviewActionsLayout(
   mode: ReaderMode,
   currentItem: FeedItem | undefined,
@@ -51,6 +53,9 @@ export function useReviewActionsLayout(
     window.addEventListener('resize', updateActionsLayout);
     window.addEventListener('scroll', updateActionsLayout, { passive: true });
     main?.addEventListener('scroll', updateActionsLayout, { passive: true });
+    document.addEventListener('fullscreenchange', updateActionsLayout);
+    document.addEventListener('webkitfullscreenchange', updateActionsLayout);
+    document.addEventListener(READER_FULLSCREEN_CHANGE_EVENT, updateActionsLayout);
     window.visualViewport?.addEventListener('resize', updateActionsLayout);
 
     return () => {
@@ -58,6 +63,9 @@ export function useReviewActionsLayout(
       window.removeEventListener('resize', updateActionsLayout);
       window.removeEventListener('scroll', updateActionsLayout);
       main?.removeEventListener('scroll', updateActionsLayout);
+      document.removeEventListener('fullscreenchange', updateActionsLayout);
+      document.removeEventListener('webkitfullscreenchange', updateActionsLayout);
+      document.removeEventListener(READER_FULLSCREEN_CHANGE_EVENT, updateActionsLayout);
       window.visualViewport?.removeEventListener('resize', updateActionsLayout);
     };
   }, [currentItem, mode]);

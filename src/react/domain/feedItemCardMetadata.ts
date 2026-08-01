@@ -1,5 +1,5 @@
 import type { FeedItemCardPresentation } from './feedItemCardPresentation';
-import { isGenericHltvPreview, isRedditUrl, type FeedItemPreview } from './feedItemPreview';
+import { isRedditUrl, type FeedItemPreview } from './feedItemPreview';
 import { getFeedItemDescription } from './feedItemDescription';
 import {
   getFeedItemProviderAdapter,
@@ -62,11 +62,10 @@ export function resolveFeedItemCardMetadata({
   const description = policy.description === 'vk'
     ? feedDescription ?? getFeedItemDescription(remotePreview.openGraphPreview?.description ?? '', item.title)
     : null;
-  const hltvMatchTeams = isHltv
-    && visiblePreview
-    && visiblePreview.type === undefined
-    && (isGenericHltvPreview(visiblePreview.src) || hltvSnapshot?.status === 'live')
-    ? hltvSnapshot?.teams ?? null
+  // Prefer the parsed match data over HLTV's generated screenshot. The screenshot
+  // endpoint can return a captured 404 page even when the match page itself is valid.
+  const hltvMatchTeams = isHltv && hltvSnapshot?.teams
+    ? hltvSnapshot.teams
     : null;
   const hltvImageScore = isHltv
     && !hltvMatchTeams

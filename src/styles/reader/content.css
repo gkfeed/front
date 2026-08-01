@@ -93,4 +93,5 @@
   border-bottom: 1px solid currentColor;
   color: var(--color-ink-strong);
   font-weight: 800;
+  -webkit-tap-highlight-color: transparent;
 }
