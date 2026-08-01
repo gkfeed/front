@@ -112,6 +112,8 @@ const en = {
     reviewControls: 'Review controls',
     moreReviewActions: 'More review actions',
     moreActions: 'More actions',
+    enterFullscreen: 'Open Reader fullscreen',
+    exitFullscreen: 'Exit Reader fullscreen',
     remaining_one: '{{count}} remaining',
     remaining_other: '{{count}} remaining',
     openOriginal: 'Open original',

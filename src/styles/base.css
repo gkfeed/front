@@ -170,6 +170,22 @@ main:focus {
   outline: 0;
 }
 
+main:fullscreen {
+  min-height: 100dvh;
+  overflow-y: auto;
+  background: var(--color-page);
+}
+
+main:fullscreen::backdrop {
+  background: var(--color-page);
+}
+
+main:-webkit-full-screen {
+  min-height: 100dvh;
+  overflow-y: auto;
+  background: var(--color-page);
+}
+
 .skip-link {
   position: fixed;
   inset: 8px auto auto 8px;

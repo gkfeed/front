@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
 import { BrandMark } from './Icons';
+import { ReaderFullscreenButton } from './ReaderFullscreenButton';
 import { SettingsMenu } from './SettingsMenu';
 
 export function Navbar() {
@@ -33,10 +34,13 @@ export function Navbar() {
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/live">{t('nav.live')}</NavLink>
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/login">{t('nav.login')}</NavLink>
       </span>
-      <SettingsMenu
-        readerMode={isReader ? getReaderMode(location.search) : undefined}
-        onReaderModeChange={isReader ? setReaderMode : undefined}
-      />
+      <div className="nav__tools">
+        {isReader ? <ReaderFullscreenButton /> : null}
+        <SettingsMenu
+          readerMode={isReader ? getReaderMode(location.search) : undefined}
+          onReaderModeChange={isReader ? setReaderMode : undefined}
+        />
+      </div>
     </nav>
   );
 }
