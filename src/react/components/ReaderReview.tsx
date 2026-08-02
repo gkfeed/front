@@ -1,9 +1,10 @@
 import type { RefObject } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemPreview';
 import {
+  FALLBACK_FULLSCREEN_EVENT,
   isReaderFullscreen,
   setFallbackFullscreen,
 } from '../services/readerFullscreen';
@@ -37,7 +38,22 @@ export function ReaderReview({
   const isShortVideo = isShortVideoFeedItem(item);
   const isTikTok = isTikTokFeedItem(item);
   const isMobileViewport = typeof window !== 'undefined' && window.innerWidth <= 640;
+  const [isFullscreen, setIsFullscreen] = useState(isReaderFullscreen);
   const reviewActions = { isDeleting, onKeep, onDelete };
+
+  useEffect(() => {
+    const updateFullscreenState = () => setIsFullscreen(isReaderFullscreen());
+    document.addEventListener('fullscreenchange', updateFullscreenState);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenState);
+    document.addEventListener(FALLBACK_FULLSCREEN_EVENT, updateFullscreenState);
+    updateFullscreenState();
+
+    return () => {
+      document.removeEventListener('fullscreenchange', updateFullscreenState);
+      document.removeEventListener('webkitfullscreenchange', updateFullscreenState);
+      document.removeEventListener(FALLBACK_FULLSCREEN_EVENT, updateFullscreenState);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isShortVideo || !isMobileViewport || isReaderFullscreen()) return;
@@ -52,6 +68,7 @@ export function ReaderReview({
       id="reader-review-panel"
       className={[
         'reader__item',
+        isFullscreen ? 'reader__item--fullscreen' : '',
         useCompactActions ? 'reader__item--compact-actions' : '',
         isShortVideo ? 'reader__item--short-video' : '',
         isTikTok ? 'reader__item--tiktok' : '',

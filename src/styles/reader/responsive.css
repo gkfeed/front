@@ -579,3 +579,36 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
     );
   }
 }
+
+/* React adds this modifier when fullscreen changes, which also covers
+   browsers whose fullscreen pseudo-class is limited. */
+@media (min-width: 641px) {
+  .reader__item--fullscreen:not(.reader__item--short-video) {
+    width: min(100%, 1280px);
+    max-width: none;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video):has(.reader-card--image-preview, .reader-card--simple-image) {
+    width: min(
+      100%,
+      1440px,
+      max(320px, calc((100dvh - 300px) * 16 / 9))
+    );
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card {
+    width: 100%;
+    max-width: none;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card .reader-card__preview {
+    width: 100%;
+    max-width: none;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card .reader-card__preview > img {
+    width: 100%;
+    max-width: none;
+    height: auto;
+  }
+}
