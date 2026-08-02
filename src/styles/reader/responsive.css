@@ -328,16 +328,10 @@
     pointer-events: none;
   }
 
-  .reader__mobile-menu,
   .reader__mobile-decisions {
     pointer-events: auto;
   }
 
-  .reader__mobile-menu {
-    position: relative;
-  }
-
-  .reader__mobile-menu summary,
   .reader__mobile-decisions button {
     display: grid;
     width: 48px;
@@ -352,57 +346,9 @@
     line-height: 1;
   }
 
-  .reader__mobile-menu summary {
-    background: color-mix(in oklch, var(--color-field) 92%, var(--color-page));
-    color: var(--color-ink-strong);
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .reader__mobile-menu summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .reader__mobile-menu summary:focus-visible,
-  .reader__mobile-decisions button:focus-visible,
-  .reader__mobile-menu-panel button:focus-visible,
-  .reader__mobile-menu-panel a:focus-visible {
+  .reader__mobile-decisions button:focus-visible {
     outline: 3px solid var(--color-focus);
     outline-offset: 2px;
-  }
-
-  .reader__mobile-menu-panel {
-    position: absolute;
-    top: 0;
-    right: calc(100% + 10px);
-    display: grid;
-    width: min(220px, calc(100vw - 82px));
-    gap: 5px;
-    padding: 10px;
-    border: 1px solid var(--color-control-border);
-    border-radius: 17px;
-    background: color-mix(in oklch, var(--color-page) 93%, transparent);
-    box-shadow: 0 18px 48px rgb(0 0 0 / 36%);
-    backdrop-filter: blur(18px);
-  }
-
-  .reader__mobile-menu-panel strong,
-  .reader__mobile-remaining {
-    padding: 6px 9px;
-    color: var(--color-ink-inverse);
-    font-size: 0.75rem;
-  }
-
-  .reader__mobile-menu-panel button,
-  .reader__mobile-menu-panel a {
-    min-height: 42px;
-    padding: 9px 10px;
-    border: 0;
-    border-radius: 11px;
-    background: color-mix(in oklch, var(--color-field) 16%, transparent);
-    color: var(--color-ink-inverse);
-    font-weight: 750;
-    text-align: left;
   }
 
   .reader__mobile-decisions {

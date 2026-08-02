@@ -57,6 +57,14 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(commentsButtonBox!.x + commentsButtonBox!.width).toBeLessThanOrEqual(1024);
   });
 
+  test('automatically opens TikTok in fullscreen on mobile without the action menu', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/reader');
+
+    await expect(page.getByRole('button', { name: 'Exit Reader fullscreen' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'More review actions' })).toHaveCount(0);
+  });
+
   test('uses the available height in landscape', async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 1024 });
     await page.goto('/reader');

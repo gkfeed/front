@@ -246,15 +246,36 @@ describe('ReaderPage', () => {
     renderReader();
 
     expect(await screen.findByLabelText('Review controls')).toBeTruthy();
-    expect(screen.getByLabelText('More review actions')).toBeTruthy();
+    expect(screen.queryByLabelText('More review actions')).toBeNull();
     expect(screen.getByRole('button', { name: 'Keep item' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Delete item' })).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(1);
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Scroll view' }));
+  it.each([
+    ['TikTok', {
+      id: 20,
+      feedId: 4,
+      link: 'https://www.tiktok.com/@creator/video/123',
+      title: 'Short video',
+      text: '',
+    }],
+    ['Instagram', {
+      id: 21,
+      feedId: 5,
+      link: 'https://www.instagram.com/p/example/',
+      title: 'inst: creator',
+      text: '',
+    }],
+  ] as const)('automatically enters fullscreen for %s on mobile', async (_provider, item) => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(390);
+    vi.mocked(getFeedItems).mockResolvedValue([item]);
+    const main = document.createElement('main');
+    document.body.append(main);
+    renderReader('/reader', 'blur', main);
 
-    expect(screen.queryByLabelText('Review controls')).toBeNull();
-    expect(screen.getByTitle('Video preview for Short video')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Exit Reader fullscreen' })).toBeTruthy();
+    expect(document.documentElement.dataset.readerFullscreen).toBe('true');
   });
 
   it('moves review actions to compact side buttons when they do not fit in the viewport', async () => {
@@ -335,7 +356,7 @@ describe('ReaderPage', () => {
   });
 
   it('keeps deleted items out of Scroll view', async () => {
-    vi.mocked(getFeedItems).mockResolvedValue([
+    const items = [
       {
         id: 10,
         feedId: 2,
@@ -350,19 +371,20 @@ describe('ReaderPage', () => {
         title: 'Remaining video',
         text: '',
       },
-    ]);
+    ];
+    vi.mocked(getFeedItems).mockResolvedValueOnce(items).mockResolvedValueOnce([items[1]]);
     vi.mocked(deleteFeedItemById).mockResolvedValue();
-    renderReader();
+    const review = renderReader();
 
     expect(await screen.findByTitle('Video preview for Deleted video')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Delete item' }));
 
     expect(await screen.findByTitle('Video preview for Remaining video')).toBeTruthy();
-    fireEvent.click(screen.getByLabelText('More review actions'));
-    fireEvent.click(screen.getByRole('button', { name: 'Scroll view' }));
+    review.unmount();
+    renderReader('/reader?view=scroll');
 
     expect(screen.queryByTitle('Video preview for Deleted video')).toBeNull();
-    expect(screen.getByTitle('Video preview for Remaining video')).toBeTruthy();
+    expect(await screen.findByTitle('Video preview for Remaining video')).toBeTruthy();
   });
 
   it('keeps a failed deletion visible for retry', async () => {

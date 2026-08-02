@@ -114,8 +114,6 @@ const ru = {
     reset: 'Сбросить',
     resetKeptItems: 'Сбросить сохранённые элементы',
     reviewControls: 'Управление просмотром',
-    moreReviewActions: 'Другие действия просмотра',
-    moreActions: 'Другие действия',
     enterFullscreen: 'Открыть чтение во весь экран',
     exitFullscreen: 'Выйти из полноэкранного режима чтения',
     remaining_one: 'Остался {{count}} элемент',

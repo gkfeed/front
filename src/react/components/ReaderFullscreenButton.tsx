@@ -1,49 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-type FullscreenDocument = Document & {
-  webkitFullscreenElement?: Element | null;
-  webkitExitFullscreen?: () => Promise<void> | void;
-};
-
-type FullscreenElement = HTMLElement & {
-  webkitRequestFullscreen?: () => Promise<void> | void;
-};
-
-const FALLBACK_FULLSCREEN_EVENT = 'readerfullscreenchange';
-
-function getFullscreenElement(): Element | null {
-  const fullscreenDocument = document as FullscreenDocument;
-  return document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement ?? null;
-}
-
-function getMainElement(): HTMLElement | null {
-  return document.querySelector<HTMLElement>('main');
-}
-
-function setNativeFullscreenAttribute(main: HTMLElement | null, enabled: boolean): void {
-  if (!main) return;
-  if (enabled) main.dataset.readerFullscreen = 'true';
-  else delete main.dataset.readerFullscreen;
-}
-
-function setFallbackFullscreen(enabled: boolean): void {
-  if (enabled) document.documentElement.dataset.readerFullscreen = 'true';
-  else delete document.documentElement.dataset.readerFullscreen;
-  document.dispatchEvent(new Event(FALLBACK_FULLSCREEN_EVENT));
-}
-
-function rememberReviewActionsSize(main: HTMLElement): void {
-  const actions = document.querySelector<HTMLElement>('.reader__actions:not([hidden])');
-  if (!actions) return;
-
-  const { height } = actions.getBoundingClientRect();
-  if (height > 0) main.style.setProperty('--reader-actions-height', `${height}px`);
-}
-
-function clearReviewActionsSize(main: HTMLElement | null): void {
-  main?.style.removeProperty('--reader-actions-height');
-}
+import {
+  FALLBACK_FULLSCREEN_EVENT,
+  clearReviewActionsSize,
+  type FullscreenDocument,
+  type FullscreenElement,
+  getFullscreenElement,
+  getMainElement,
+  rememberReviewActionsSize,
+  setFallbackFullscreen,
+  setNativeFullscreenAttribute,
+} from '../services/readerFullscreen';
 
 export function ReaderFullscreenButton() {
   const { t } = useTranslation();

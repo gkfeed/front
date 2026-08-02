@@ -1,12 +1,17 @@
 import type { RefObject } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemPreview';
+import {
+  exitReaderFullscreen,
+  isReaderFullscreen,
+  setFallbackFullscreen,
+} from '../services/readerFullscreen';
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
 import { CompactReviewActions, ReaderReviewActions } from './ReaderReviewActions';
 import { ReaderMobileRail } from './ReaderMobileRail';
-import { ReaderTikTokControls } from './ReaderTikTokControls';
 
 export function ReaderReview({
   item,
@@ -19,7 +24,6 @@ export function ReaderReview({
   onKeep,
   onDelete,
   onReset,
-  onShowScroll,
 }: {
   item: FeedItem;
   remainingCount: number;
@@ -31,12 +35,29 @@ export function ReaderReview({
   onKeep: () => void;
   onDelete: () => void;
   onReset: () => void;
-  onShowScroll: () => void;
 }) {
   const { t } = useTranslation();
   const isShortVideo = isShortVideoFeedItem(item);
   const isTikTok = isTikTokFeedItem(item);
+  const isMobileViewport = typeof window !== 'undefined' && window.innerWidth <= 640;
   const reviewActions = { isDeleting, onKeep, onDelete };
+
+  useEffect(() => {
+    if (!isShortVideo || !isMobileViewport || isReaderFullscreen()) return;
+    // Native fullscreen requires a user gesture in Chromium and Safari. The
+    // reader's fallback is the reliable automatic mobile fullscreen mode.
+    setFallbackFullscreen(true);
+  }, [isMobileViewport, isShortVideo, item.id]);
+
+  useEffect(() => {
+    if (isShortVideo && isMobileViewport) return;
+    if (!isReaderFullscreen()) return;
+    void exitReaderFullscreen();
+  }, [isMobileViewport, isShortVideo]);
+
+  useEffect(() => () => {
+    if (isReaderFullscreen()) void exitReaderFullscreen();
+  }, []);
 
   return (
     <div
@@ -54,13 +75,7 @@ export function ReaderReview({
       <FeedItemCard key={item.id} item={item} />
       {isShortVideo ? (
         <ReaderMobileRail
-          item={item}
-          remainingCount={remainingCount}
           {...reviewActions}
-          onShowScroll={onShowScroll}
-          renderTikTokControl={isTikTok
-            ? (closeMenu) => <ReaderTikTokControls item={item} onClose={closeMenu} />
-            : undefined}
         />
       ) : null}
       {useCompactActions ? <CompactReviewActions {...reviewActions} /> : null}
