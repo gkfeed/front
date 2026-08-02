@@ -1,7 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { TwitchTitle } from '../components/TwitchTitle';
 import { getFeedItemPreview } from '../domain/feedItemPreview';
+import {
+  getTwitchChannel as getTwitchChannelFromUrl,
+  getTwitchStreamTitle,
+} from '../domain/twitchPreview';
 import { useAsyncLoad } from '../hooks/useAsyncLoad';
 import { getLiveTwitchItems } from '../services/twitch';
 import { getRequestErrorMessage } from '../services/authError';
@@ -51,11 +56,20 @@ export function LivePage() {
 
       {items?.length && selectedItem ? (
         <div className="live__layout">
-          <TwitchPreview
-            item={selectedItem}
-            isPlaying={playingId === selectedItem.id}
-            onPlay={() => setPlayingId(selectedItem.id)}
-          />
+          <div className="live__stream-card">
+            <TwitchPreview
+              item={selectedItem}
+              isPlaying={playingId === selectedItem.id}
+              onPlay={() => setPlayingId(selectedItem.id)}
+            />
+            <div className="live__stream-copy">
+              <h2 className="live__stream-title">
+                <TwitchTitle
+                  text={getTwitchStreamTitle(selectedItem.title, getTwitchChannel(selectedItem))}
+                />
+              </h2>
+            </div>
+          </div>
           <div className="live__channels">
             <p className="sr-only" role="status">
               {t('live.stream', { count: items.length })}
@@ -131,7 +145,7 @@ function TwitchPreview({ item, isPlaying, onPlay }: TwitchPreviewProps) {
 
 function getTwitchChannel(item: FeedItem): string {
   try {
-    return new URL(item.link).pathname.split('/').filter(Boolean)[0] ?? item.title;
+    return getTwitchChannelFromUrl(new URL(item.link)) ?? item.title;
   } catch {
     return item.title;
   }

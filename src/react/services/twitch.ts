@@ -1,4 +1,5 @@
 import { getFeedItemPreview } from '../domain/feedItemPreview';
+import { getTwitchChannel } from '../domain/twitchPreview';
 import type { Credentials, FeedItem } from '../types';
 import { getFeedItems } from './feeds';
 import {
@@ -17,7 +18,7 @@ export async function getLiveTwitchItems(
   const items = signal
     ? await getFeedItems(credentials, 1000, signal)
     : await getFeedItems(credentials);
-  const twitchItems = items.filter(isTwitchFeedItem);
+  const twitchItems = deduplicateTwitchItems(items.filter(isTwitchFeedItem));
   const liveStates = await mapWithConcurrency(
     twitchItems,
     (item) => isTwitchStreamLive(item, signal),
@@ -84,9 +85,22 @@ function toProbeUrl(previewUrl: string): string {
 
 function isTwitchFeedItem(item: FeedItem): boolean {
   try {
-    const hostname = new URL(item.link).hostname.replace(/^www\./, '').toLowerCase();
-    return hostname === 'twitch.tv' || hostname.endsWith('.twitch.tv');
+    return getTwitchChannel(new URL(item.link)) !== null;
   } catch {
     return false;
   }
+}
+
+function deduplicateTwitchItems(items: readonly FeedItem[]): FeedItem[] {
+  const seenChannels = new Set<string>();
+
+  return items.filter((item) => {
+    const channel = getTwitchChannel(new URL(item.link));
+    if (!channel) return false;
+
+    const channelKey = channel.toLowerCase();
+    if (seenChannels.has(channelKey)) return false;
+    seenChannels.add(channelKey);
+    return true;
+  });
 }

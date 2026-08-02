@@ -19,14 +19,14 @@ const LIVE_ITEM = {
   id: 10,
   feedId: 2,
   link: 'https://www.twitch.tv/some_channel',
-  title: 'Some channel is live',
+  title: 'some_channel: Some channel is live',
   text: '',
 };
 const SECOND_LIVE_ITEM = {
   ...LIVE_ITEM,
   id: 11,
   link: 'https://www.twitch.tv/another_channel',
-  title: 'Another channel is live',
+  title: 'another_channel: Another channel is live',
 };
 
 afterEach(() => {
@@ -54,11 +54,13 @@ describe('LivePage', () => {
     vi.mocked(getLiveTwitchItems).mockResolvedValue([LIVE_ITEM, SECOND_LIVE_ITEM]);
     render(<LivePage />);
 
-    const firstChannel = await screen.findByRole('button', { name: 'some_channel' });
-    const secondChannel = screen.getByRole('button', { name: 'another_channel' });
+    const firstChannel = await screen.findByRole('button', { name: /^some_channel/ });
+    const secondChannel = screen.getByRole('button', { name: /^another_channel/ });
     expect(firstChannel.getAttribute('aria-pressed')).toBe('true');
     expect(secondChannel.getAttribute('aria-pressed')).toBe('false');
     expect(screen.getByAltText('some_channel live stream preview')).toBeTruthy();
+    expect(screen.getByText('Some channel is live')).toBeTruthy();
+    expect(screen.queryByText('some_channel: Some channel is live')).toBeNull();
 
     fireEvent.click(secondChannel);
 
@@ -85,7 +87,7 @@ describe('LivePage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Play some_channel on Twitch' }));
     expect(screen.getByTitle('some_channel Twitch player')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'another_channel' }));
+    fireEvent.click(screen.getByRole('button', { name: /^another_channel/ }));
 
     expect(screen.queryByTitle('some_channel Twitch player')).toBeNull();
     expect(screen.getByRole('button', { name: 'Play another_channel on Twitch' })).toBeTruthy();
@@ -109,7 +111,7 @@ describe('LivePage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
     await waitFor(() => expect(getLiveTwitchItems).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole('button', { name: 'some_channel' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^some_channel/ })).toBeTruthy();
   });
 
   it('shows the shared authentication message and keeps retry for 401', async () => {
@@ -122,6 +124,6 @@ describe('LivePage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
     await waitFor(() => expect(getLiveTwitchItems).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole('button', { name: 'some_channel' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^some_channel/ })).toBeTruthy();
   });
 });

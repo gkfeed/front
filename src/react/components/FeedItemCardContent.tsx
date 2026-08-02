@@ -1,4 +1,5 @@
 import type { FeedItemCardModel } from './useFeedItemCardModel';
+import { getTwitchStreamTitle } from '../domain/twitchPreview';
 import { useTranslation } from 'react-i18next';
 import { localizeFeedItemPreview } from './previewLocalization';
 import { HltvCountdown, HltvMatchup } from './previews/HltvMatch';
@@ -6,6 +7,7 @@ import { FeedItemMedia } from './previews/FeedItemMedia';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
 import { TikTokComments } from './previews/TikTokComments';
 import { TwitchPreview } from './previews/TwitchPreview';
+import { TwitchTitle } from './TwitchTitle';
 import { YoutubePreview } from './previews/YoutubePreview';
 
 export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
@@ -110,7 +112,7 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
   }
   if (descriptor.copy === 'twitch') {
     const streamTitle = variant.type === 'twitch'
-      ? removeTwitchChannelPrefix(item.title, variant.channel)
+      ? getTwitchStreamTitle(item.title, variant.channel)
       : item.title || item.text;
 
     return (
@@ -140,29 +142,4 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
 
 function getYoutubeChannelName(title: string): string {
   return title.replace(/^YT:\s*/i, '').trim() || 'YouTube';
-}
-
-function removeTwitchChannelPrefix(title: string, channel: string): string {
-  const prefix = new RegExp(`^${escapeRegExp(channel)}\\s*:\\s*`, 'i');
-  return title.replace(prefix, '').trim() || title;
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
-}
-
-function TwitchTitle({ text }: { text: string }) {
-  return (
-    <>
-      {text.split(/([@!][\p{L}\p{N}_-]+)/gu).map((part, index) => {
-        if (!/^[@!][\p{L}\p{N}_-]+$/u.test(part)) return part;
-        const kind = part.startsWith('@') ? 'mention' : 'command';
-        return (
-          <span key={`${part}-${index}`} className={`reader-card__title-token reader-card__title-token--${kind}`}>
-            {part}
-          </span>
-        );
-      })}
-    </>
-  );
 }

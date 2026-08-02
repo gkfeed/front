@@ -117,6 +117,10 @@ describe('Twitch feed items', () => {
       .toBe('twitch');
     expect(analyzeFeedItem(item({ link: 'https://twitch.tv.example.org/some_channel' })).provider)
       .toBe('generic');
+    expect(analyzeFeedItem(item({ link: 'https://clips.twitch.tv/some_clip' })).provider)
+      .toBe('generic');
+    expect(analyzeFeedItem(item({ link: 'https://player.twitch.tv/some_channel' })).provider)
+      .toBe('generic');
   });
 });
 

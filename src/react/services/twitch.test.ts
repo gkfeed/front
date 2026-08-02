@@ -74,6 +74,28 @@ describe('Twitch live service', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('deduplicates Twitch channels before checking their live status', async () => {
+    const duplicateItem = {
+      ...TWITCH_ITEM,
+      id: 11,
+      link: 'https://twitch.tv/SOME_CHANNEL',
+      title: 'some_channel: A newer title',
+    };
+    const secondItem = {
+      ...TWITCH_ITEM,
+      id: 12,
+      link: 'https://twitch.tv/another_channel',
+    };
+    vi.mocked(getFeedItems).mockResolvedValue([TWITCH_ITEM, duplicateItem, secondItem]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      url: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_some_channel-440x248.jpg',
+    }));
+
+    await expect(getLiveTwitchItems(CREDENTIALS)).resolves.toEqual([TWITCH_ITEM, secondItem]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it('treats a failed Twitch check as offline', async () => {
     const secondItem = { ...TWITCH_ITEM, id: 11, link: 'https://twitch.tv/working_channel' };
     vi.mocked(getFeedItems).mockResolvedValue([TWITCH_ITEM, secondItem]);
