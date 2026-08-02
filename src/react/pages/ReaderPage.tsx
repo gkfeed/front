@@ -45,7 +45,7 @@ export function ReaderPage() {
   return (
     <>
       <div className="reader__fullscreen-toolbar">
-        <ReaderFullscreenButton />
+        <ReaderFullscreenButton enableKeyboardShortcut />
       </div>
       <section className="reader" aria-labelledby="reader-page-title">
         <h1 id="reader-page-title" className="sr-only">{t('pages.reader')}</h1>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -13,7 +13,9 @@ import {
   setNativeFullscreenAttribute,
 } from '../services/readerFullscreen';
 
-export function ReaderFullscreenButton() {
+export function ReaderFullscreenButton({ enableKeyboardShortcut = false }: {
+  enableKeyboardShortcut?: boolean;
+} = {}) {
   const { t } = useTranslation();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFallbackFullscreen, setIsFallbackFullscreen] = useState(
@@ -51,7 +53,7 @@ export function ReaderFullscreenButton() {
     };
   }, []);
 
-  async function toggleFullscreen() {
+  const toggleFullscreen = useCallback(async () => {
     const main = getMainElement();
     if (!main) return;
 
@@ -82,7 +84,31 @@ export function ReaderFullscreenButton() {
       setIsFallbackFullscreen(true);
       setIsFullscreen(true);
     }
-  }
+  }, [isFallbackFullscreen]);
+
+  useEffect(() => {
+    if (!enableKeyboardShortcut) return;
+
+    const toggleOnKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key.toLowerCase() !== 'f'
+        || event.repeat
+        || event.altKey
+        || event.ctrlKey
+        || event.metaKey
+        || event.shiftKey
+        || isTextEntryTarget(event.target)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      void toggleFullscreen();
+    };
+
+    window.addEventListener('keydown', toggleOnKeyDown);
+    return () => window.removeEventListener('keydown', toggleOnKeyDown);
+  }, [enableKeyboardShortcut, toggleFullscreen]);
 
   useEffect(() => {
     if (!isFallbackFullscreen) return;
@@ -117,4 +143,13 @@ export function ReaderFullscreenButton() {
   );
 
   return button;
+}
+
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (
+    target.isContentEditable
+    || target instanceof HTMLInputElement
+    || target instanceof HTMLTextAreaElement
+    || target instanceof HTMLSelectElement
+  );
 }

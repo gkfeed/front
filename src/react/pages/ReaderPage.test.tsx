@@ -278,6 +278,28 @@ describe('ReaderPage', () => {
     expect(document.documentElement.dataset.readerFullscreen).toBe('true');
   });
 
+  it('toggles fullscreen with the f keyboard shortcut', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    const main = document.createElement('main');
+    document.body.append(main);
+    renderReader('/reader', 'blur', main);
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.keyDown(window, { key: 'f' });
+
+    await waitFor(() => {
+      expect(document.documentElement.dataset.readerFullscreen).toBe('true');
+      expect(screen.getByRole('button', { name: 'Exit Reader fullscreen' })).toBeTruthy();
+    });
+
+    fireEvent.keyDown(window, { key: 'f' });
+
+    await waitFor(() => {
+      expect(document.documentElement.dataset.readerFullscreen).toBeUndefined();
+      expect(screen.getByRole('button', { name: 'Open Reader fullscreen' })).toBeTruthy();
+    });
+  });
+
   it('moves review actions to compact side buttons when they do not fit in the viewport', async () => {
     let viewportHeight = 600;
     vi.spyOn(window, 'innerHeight', 'get').mockImplementation(() => viewportHeight);
