@@ -106,4 +106,64 @@ describe('mergeHltvLiveData', () => {
     expect(mergeHltvLiveData(next, previous).providerData?.snapshot.playerStats)
       .toEqual(previousSnapshot.playerStats);
   });
+
+  it('clears the previous map round history when the next map starts at 0:0', () => {
+    const previous = createHltvPreview(
+      { name: 'Dust2', score: ['13', '9'] },
+      [{ round: 1, teamIndex: 0, outcome: 'ct_win' }],
+    );
+    const next = createHltvPreview(
+      { name: 'Mirage', score: ['0', '0'] },
+      [],
+    );
+
+    expect(mergeHltvLiveData(next, previous).providerData?.snapshot.roundHistory)
+      .toEqual([]);
+  });
+
+  it('clears stale non-empty history when the new map payload still contains old rounds', () => {
+    const previous = createHltvPreview(
+      { name: 'Ancient', score: ['13', '9'] },
+      [{ round: 1, teamIndex: 0, outcome: 'ct_win' }],
+    );
+    const next = createHltvPreview(
+      { name: 'Nuke', score: ['0', '0'] },
+      [{ round: 1, teamIndex: 1, outcome: 't_win' }],
+    );
+
+    expect(mergeHltvLiveData(next, previous).providerData?.snapshot.roundHistory)
+      .toEqual([]);
+  });
 });
+
+function createHltvPreview(
+  currentMap: { name: string; score: [string, string] },
+  roundHistory: NonNullable<OpenGraphPreview['providerData']>['snapshot']['roundHistory'],
+): OpenGraphPreview {
+  return {
+    url: 'https://www.hltv.org/matches/1/example',
+    title: 'Example',
+    description: null,
+    image: null,
+    video: null,
+    siteName: 'HLTV.org',
+    type: 'website',
+    providerData: {
+      provider: 'hltv',
+      snapshot: {
+        startsAt: null,
+        teams: [
+          { name: 'Alpha', logo: null },
+          { name: 'Bravo', logo: null },
+        ],
+        status: 'live',
+        score: ['0', '1'],
+        currentMap,
+        completedMaps: [],
+        roundHistory,
+        playerStats: null,
+        teamSides: ['ct', 't'],
+      },
+    },
+  };
+}

@@ -28,6 +28,23 @@ export type HltvMatchPlayerStatsPreview = [
 
 export type HltvMatchTeamSidesPreview = ['ct', 't'] | ['t', 'ct'];
 
+export type HltvRoundOutcome =
+  | 'ct_win'
+  | 't_win'
+  | 'bomb_defused'
+  | 'bomb_exploded'
+  | 'stopwatch'
+  | 'unknown';
+
+export type HltvRoundHalf = 1 | 2;
+
+export interface HltvRoundPreview {
+  round: number;
+  teamIndex: 0 | 1;
+  outcome: HltvRoundOutcome;
+  half?: HltvRoundHalf;
+}
+
 export type HltvMatchStatus = 'scheduled' | 'live' | 'over' | 'postponed' | 'deleted';
 
 export interface OpenGraphMetadata {
@@ -47,6 +64,7 @@ export interface HltvMatchSnapshot {
   score: [string, string] | null;
   currentMap: HltvCurrentMapPreview | null;
   completedMaps: HltvMapResultPreview[] | null;
+  roundHistory?: HltvRoundPreview[] | null;
   playerStats: HltvMatchPlayerStatsPreview | null;
   teamSides: HltvMatchTeamSidesPreview | null;
 }

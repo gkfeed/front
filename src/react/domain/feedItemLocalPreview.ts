@@ -14,6 +14,7 @@ import {
   isDirectImage,
   isDirectVideo,
   isDirectVideoValue,
+  isRedditVideoUrl,
   parseUrl,
 } from './feedItemUrls';
 import { getYoutubePreview } from './youtubePreview';
@@ -50,6 +51,14 @@ export function getRemoteFeedItemPreview(
     const videoUrl = parseUrl(preview.video);
     const vkVideoPreview = videoUrl ? getVkVideoPreview(videoUrl, altTitle) : null;
     if (vkVideoPreview) return vkVideoPreview;
+    if (videoUrl && isRedditVideoUrl(videoUrl)) {
+      return {
+        src: videoUrl.href,
+        alt: { kind: 'video', title: altTitle || null },
+        type: 'video',
+        ...(preview.image ? { poster: preview.image } : {}),
+      };
+    }
   }
 
   if (preview.video && isDirectVideoValue(preview.video)) {
@@ -75,6 +84,14 @@ function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPre
 
   if (isDirectImage(url)) {
     return { src: url.href, alt: { kind: 'item', title: item.title || null } };
+  }
+
+  if (isRedditVideoUrl(url)) {
+    return {
+      src: url.href,
+      alt: { kind: 'video', title: item.title || null },
+      type: 'video',
+    };
   }
 
   if (isDirectVideo(url)) {

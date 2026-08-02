@@ -1,6 +1,7 @@
 import {
   getRemoteFeedItemPreview,
   getTikTokEmbedPreview,
+  isRedditUrl,
   isRezkaUrl,
   type FeedItemPreview,
 } from './feedItemPreview';
@@ -25,13 +26,14 @@ export function shouldLoadRemotePreview(
   const policy = getFeedItemProviderPolicy(analysis.provider);
   const isRezka = isRezkaUrl(url);
   const usesVkDescription = policy.description === 'vk';
+  const isReddit = isRedditUrl(url);
   const feedDescription = usesVkDescription
     ? getFeedItemDescription(item.text, item.title)
     : null;
 
   return !shouldHideNsfw
     && policy.remotePreview
-    && (isRezka || !(localPreview?.src && (!usesVkDescription || feedDescription)));
+    && (isReddit || isRezka || !(localPreview?.src && (!usesVkDescription || feedDescription)));
 }
 
 export function resolveFeedItemCardPreviews({
@@ -52,11 +54,14 @@ export function resolveFeedItemCardPreviews({
   const remoteItemPreview = isRezka && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
+  const isReddit = isRedditUrl(analysis.url);
   const tiktokEmbedPreview = usesTikTokEmbed ? getTikTokEmbedPreview(item) : null;
   const preview = usesTikTokEmbed
     ? tiktokEmbedPreview ?? localPreview
     : isRezka
       ? remoteItemPreview ?? localPreview
+      : isReddit && remoteItemPreview?.type === 'video'
+        ? remoteItemPreview
       : localPreview ?? remoteItemPreview;
 
   return { preview, remoteItemPreview, tiktokEmbedPreview };

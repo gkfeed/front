@@ -7,11 +7,15 @@ import {
 } from '../publicHttp.js';
 import { parseAttributes } from './html.js';
 import {
+  alignHltvRoundHistoryToScore,
   parseHltvCurrentMap,
 } from './hltvHtmlParser.js';
 import {
+  parseHltvScorebotLog,
+  parseHltvScorebotTeamIds,
   parseHltvScoreboardSnapshot,
   type HltvScorebotSnapshot,
+  type HltvScorebotTeamIds,
 } from './hltvScorebotParser.js';
 import { TWITTERBOT_USER_AGENT } from './previewFetchers.js';
 import type { RequestContext } from '../requestContext.js';
@@ -156,13 +160,58 @@ function requestHltvScorebotSnapshot(
     });
     let settled = false;
     let latestSnapshot: HltvScorebotSnapshot | null = null;
+    let teamIds: HltvScorebotTeamIds | null = null;
+    let roundHistory: HltvScorebotSnapshot['roundHistory'] = null;
+    let pendingLogs: unknown[] = [];
+    let finishTimer: ReturnType<typeof setTimeout> | null = null;
     const finish = (snapshot: HltvScorebotSnapshot | null) => {
       if (settled) return;
       settled = true;
+      if (finishTimer) clearTimeout(finishTimer);
       clearTimeout(timeout);
       socket.close();
       context?.signal.removeEventListener('abort', abort);
-      resolve(snapshot);
+      resolve(snapshot
+        ? {
+          ...snapshot,
+          roundHistory: alignHltvRoundHistoryToScore(
+            snapshot.roundHistory,
+            snapshot.currentMap.score,
+          ),
+        }
+        : null);
+    };
+    const scheduleFinish = () => {
+      if (!latestSnapshot || !hasPlayerStats(latestSnapshot) || finishTimer) return;
+      // A fullLog/log packet can be emitted immediately after scoreboard. Let
+      // the event loop deliver it before closing the short-lived connection.
+      finishTimer = setTimeout(() => finish(latestSnapshot), 100);
+    };
+    const applyLog = (data: unknown) => {
+      if (!teamIds) {
+        pendingLogs.push(data);
+        return;
+      }
+      if (latestSnapshot && isZeroMapScore(latestSnapshot.currentMap.score)) {
+        roundHistory = [];
+        latestSnapshot = { ...latestSnapshot, roundHistory };
+        return;
+      }
+      roundHistory = parseHltvScorebotLog(
+        data,
+        teamIds.firstTeamId,
+        teamIds.ctTeamId,
+        teamIds.terroristTeamId,
+        roundHistory ?? [],
+      );
+      if (latestSnapshot && roundHistory.length > 0) {
+        latestSnapshot = { ...latestSnapshot, roundHistory };
+      }
+    };
+    const flushPendingLogs = () => {
+      const logs = pendingLogs;
+      pendingLogs = [];
+      logs.forEach(applyLog);
     };
     const timeout = setTimeout(() => finish(latestSnapshot), timeoutMs);
     const abort = () => finish(null);
@@ -174,18 +223,36 @@ function requestHltvScorebotSnapshot(
     socket.on('scoreboard', (data: unknown) => {
       const snapshot = parseHltvScoreboardSnapshot(data, html, team1Id);
       if (!snapshot) return;
-      latestSnapshot = snapshot;
+      teamIds = parseHltvScorebotTeamIds(data, team1Id);
+      if (isZeroMapScore(snapshot.currentMap.score)) {
+        roundHistory = [];
+        latestSnapshot = { ...snapshot, roundHistory };
+      } else {
+        if (!roundHistory && snapshot.roundHistory) roundHistory = snapshot.roundHistory;
+        latestSnapshot = roundHistory?.length
+          ? { ...snapshot, roundHistory }
+          : snapshot;
+      }
+      flushPendingLogs();
       // Scorebot can send an initial score/map update before its player rows
       // are populated. Keep listening so that the first snapshot does not
       // permanently turn player stats into an empty table.
-      if (hasPlayerStats(snapshot)) finish(snapshot);
+      scheduleFinish();
     });
+    socket.on('fullLog', applyLog);
+    socket.on('fullLogUpdate', applyLog);
+    socket.on('log', applyLog);
+    socket.on('logUpdate', applyLog);
     socket.on('connect_error', () => finish(null));
   });
 }
 
 function hasPlayerStats(snapshot: HltvScorebotSnapshot): boolean {
   return snapshot.playerStats.some((team) => team.length > 0);
+}
+
+function isZeroMapScore(score: [string, string]): boolean {
+  return score[0] === '0' && score[1] === '0';
 }
 
 function isValidScorebotUrl(url: URL): boolean {

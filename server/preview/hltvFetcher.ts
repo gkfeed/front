@@ -8,6 +8,7 @@ import type {
   HltvCurrentMapPreview,
   HltvMatchPlayerStatsPreview,
   HltvMatchTeamSidesPreview,
+  HltvRoundPreview,
 } from '../../shared/previewContracts.js';
 import { REMOTE_REQUEST_TIMEOUT_MS } from '../timeouts.js';
 import { responseTooLarge } from './bodyReaders.js';
@@ -28,6 +29,7 @@ export interface HltvPage {
   currentMap: HltvCurrentMapPreview | null;
   playerStats: HltvMatchPlayerStatsPreview | null;
   teamSides: HltvMatchTeamSidesPreview | null;
+  roundHistory: HltvRoundPreview[] | null;
 }
 
 export async function fetchHltvHtml(url: URL, context?: RequestContext): Promise<HltvPage> {
@@ -79,6 +81,7 @@ async function fetchHltvHtmlWithPublicHttp(url: URL, context?: RequestContext): 
     currentMap: scorebot?.currentMap ?? null,
     playerStats: scorebot?.playerStats ?? null,
     teamSides: scorebot?.teamSides ?? null,
+    roundHistory: scorebot ? scorebot.roundHistory ?? [] : null,
   };
 }
 
@@ -123,6 +126,7 @@ async function fetchHltvHtmlWithAria2c(url: URL, context?: RequestContext): Prom
       currentMap: scorebot?.currentMap ?? null,
       playerStats: scorebot?.playerStats ?? null,
       teamSides: scorebot?.teamSides ?? null,
+      roundHistory: scorebot ? scorebot.roundHistory ?? [] : null,
     };
   } catch (error) {
     if (error instanceof PreviewError) throw error;

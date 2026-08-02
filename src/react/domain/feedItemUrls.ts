@@ -12,7 +12,7 @@ export function hostnameOf(url: URL): string {
   return normalizeHostname(url.hostname);
 }
 
-export { isVkHost, isVkImageHost } from '../../../shared/urlRules';
+export { isRedditVideoUrl, isVkHost, isVkImageHost } from '../../../shared/urlRules';
 
 export function isRedditUrl(url: URL | null): boolean {
   if (!url) return false;

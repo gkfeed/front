@@ -34,6 +34,14 @@ describe('feed item card presentation', () => {
     expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
   });
 
+  it('requests a remote preview for Reddit media even when the feed has a thumbnail', () => {
+    const feedItem = item({
+      link: 'https://www.reddit.com/r/example/comments/abc123/post/',
+      text: '<img src="https://share.redd.it/preview/post/abc123">',
+    });
+    expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
+  });
+
   it('keeps the local image as a fallback for a remote Rezka preview', () => {
     const feedItem = item({
       link: 'https://hdrezka.me/films/drama/123-story.html',

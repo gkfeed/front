@@ -92,6 +92,84 @@ describe('fetchHltvScorebotSnapshot', () => {
     ]);
   });
 
+  it('keeps round results from Scorebot log events', async () => {
+    const agent = { destroy: vi.fn() };
+    resolvePublicAddress.mockResolvedValue({ address: '203.0.113.10', family: 4 });
+    createPinnedHttpsAgent.mockReturnValue(agent);
+    socketConnect.mockImplementation(() => createSocket([
+      scoreboard({
+        CT: [{ nick: 'rain', score: 7, deaths: 3, assists: 2, damagePrRound: 91.26 }],
+        TERRORIST: [],
+      }),
+    ], [
+      ['fullLog', JSON.stringify({
+        log: [
+          {
+            RoundEnd: {
+              counterTerroristScore: 0,
+              terroristScore: 1,
+              winner: 'TERRORIST',
+              winType: 'Target_Bombed',
+            },
+          },
+          {
+            RoundEnd: {
+              counterTerroristScore: 1,
+              terroristScore: 1,
+              winner: 'CT',
+              winType: 'Target_Saved',
+            },
+          },
+        ],
+      })],
+    ]));
+
+    const result = await fetchHltvScorebotSnapshot(
+      scorebotHtml('https://scorebot.hltv.org/socket.io'),
+      undefined,
+      'session=abc',
+    );
+
+    expect(result?.roundHistory).toEqual([
+      { round: 1, teamIndex: 1, outcome: 'bomb_exploded' },
+      { round: 2, teamIndex: 0, outcome: 'stopwatch' },
+    ]);
+  });
+
+  it('does not apply an old log to a new map at 0:0', async () => {
+    const agent = { destroy: vi.fn() };
+    resolvePublicAddress.mockResolvedValue({ address: '203.0.113.10', family: 4 });
+    createPinnedHttpsAgent.mockReturnValue(agent);
+    socketConnect.mockImplementation(() => createSocket([
+      scoreboard({
+        CT: [{ nick: 'rain', score: 1, deaths: 0, assists: 0, damagePrRound: 100 }],
+        TERRORIST: [],
+        mapName: 'de_nuke',
+        ctTeamScore: 0,
+        tTeamScore: 0,
+      }),
+    ], [
+      ['fullLog', JSON.stringify({
+        log: [{
+          RoundEnd: {
+            counterTerroristScore: 13,
+            terroristScore: 9,
+            winner: 'CT',
+          },
+        }],
+      })],
+    ]));
+
+    const result = await fetchHltvScorebotSnapshot(
+      scorebotHtml('https://scorebot.hltv.org/socket.io'),
+      undefined,
+      'session=abc',
+    );
+
+    expect(result?.currentMap).toEqual({ name: 'Nuke', score: ['0', '0'] });
+    expect(result?.roundHistory).toEqual([]);
+  });
+
   it('does not connect when the endpoint resolves to a private address', async () => {
     resolvePublicAddress.mockRejectedValue(new Error('private'));
 
@@ -112,10 +190,13 @@ function scorebotHtml(url: string): string {
     <div class="mapholder"><div class="mapname">Dust2</div></div>`;
 }
 
-function createSocket(scoreboards = [scoreboard({
+function createSocket(
+  scoreboards = [scoreboard({
   CT: [{ nick: 'rain', score: 1, deaths: 0, assists: 0, damagePrRound: 100 }],
   TERRORIST: [],
-})]) {
+  })],
+  logs: Array<[string, unknown]> = [],
+) {
   const handlers = new Map<string, (data?: unknown) => void>();
   const socket = {
     on: vi.fn((event: string, handler: (data?: unknown) => void) => {
@@ -125,6 +206,7 @@ function createSocket(scoreboards = [scoreboard({
     emit: vi.fn((event: string) => {
       if (event === 'readyForMatch') {
         scoreboards.forEach((update) => handlers.get('scoreboard')?.(update));
+        logs.forEach(([logEvent, data]) => handlers.get(logEvent)?.(data));
       }
     }),
     close: vi.fn(),
@@ -134,14 +216,20 @@ function createSocket(scoreboards = [scoreboard({
 }
 
 function scoreboard(
-  players: { CT: unknown[]; TERRORIST: unknown[] },
+  players: {
+    CT: unknown[];
+    TERRORIST: unknown[];
+    mapName?: string;
+    ctTeamScore?: number;
+    tTeamScore?: number;
+  },
 ) {
   return {
-    mapName: 'de_dust2',
+    mapName: players.mapName ?? 'de_dust2',
     ctTeamId: 5973,
     tTeamId: 7020,
-    ctTeamScore: 2,
-    tTeamScore: 3,
+    ctTeamScore: players.ctTeamScore ?? 2,
+    tTeamScore: players.tTeamScore ?? 3,
     ...players,
   };
 }

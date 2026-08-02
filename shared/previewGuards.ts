@@ -12,6 +12,14 @@ const HLTV_MATCH_STATUSES = new Set([
   'postponed',
   'deleted',
 ]);
+const HLTV_ROUND_OUTCOMES = new Set([
+  'ct_win',
+  't_win',
+  'bomb_defused',
+  'bomb_exploded',
+  'stopwatch',
+  'unknown',
+]);
 
 export function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   if (!isRecord(value)) return false;
@@ -41,6 +49,10 @@ function isHltvMatchSnapshot(value: unknown): value is HltvMatchSnapshot {
       value.completedMaps,
       (maps) => Array.isArray(maps) && maps.every(isHltvMap),
     )
+    && (value.roundHistory === undefined || isNullable(
+      value.roundHistory,
+      (rounds) => Array.isArray(rounds) && rounds.every(isHltvRound),
+    ))
     && isNullable(
       value.playerStats,
       (stats) => Array.isArray(stats)
@@ -66,6 +78,17 @@ function isHltvMap(value: unknown): boolean {
   return isRecord(value)
     && typeof value.name === 'string'
     && isStringPair(value.score);
+}
+
+function isHltvRound(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return typeof value.round === 'number'
+    && Number.isInteger(value.round)
+    && value.round > 0
+    && (value.teamIndex === 0 || value.teamIndex === 1)
+    && typeof value.outcome === 'string'
+    && HLTV_ROUND_OUTCOMES.has(value.outcome)
+    && (value.half === undefined || value.half === 1 || value.half === 2);
 }
 
 function isHltvMatchTeam(value: unknown): boolean {

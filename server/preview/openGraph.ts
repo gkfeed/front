@@ -50,6 +50,7 @@ function enrichHltvPreview(preview: OpenGraphPreview, page: HltvPage): OpenGraph
       snapshot: {
         ...snapshot,
         currentMap: page.currentMap ?? snapshot.currentMap,
+        roundHistory: page.roundHistory ?? snapshot.roundHistory ?? null,
         playerStats: page.playerStats ?? snapshot.playerStats,
         teamSides: page.teamSides ?? snapshot.teamSides,
       },

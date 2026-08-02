@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isHltvMatchUrl,
   isLiquipediaMatchUrl,
+  isRedditVideoUrl,
   isTikTokVideoUrl,
   isVkHost,
 } from './urlRules.js';
@@ -25,6 +26,22 @@ describe('shared URL rules', () => {
     'https://tiktok.com/@creator/post/123',
   ])('rejects non-video TikTok URL %s', (value) => {
     expect(isTikTokVideoUrl(url(value))).toBe(false);
+  });
+
+  it.each([
+    'https://v.redd.it/abc123',
+    'https://v.redd.it/abc123/DASH_720.mp4?source=fallback',
+  ])('recognizes Reddit video URL %s', (value) => {
+    expect(isRedditVideoUrl(url(value))).toBe(true);
+  });
+
+  it.each([
+    'https://v.redd.it.example.org/abc123',
+    'https://v.redd.it/abc123/DASHPlaylist.mpd',
+    'ftp://v.redd.it/abc123',
+    'https://i.redd.it/abc123.jpg',
+  ])('rejects non-video Reddit URL %s', (value) => {
+    expect(isRedditVideoUrl(url(value))).toBe(false);
   });
 
   it.each([

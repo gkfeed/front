@@ -612,3 +612,14 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
     height: auto;
   }
 }
+
+/* A parsed HLTV matchup is a responsive layout, not a 16:9 image canvas. */
+@media (min-width: 641px) {
+  main:fullscreen .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview),
+  main:-webkit-full-screen .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview),
+  html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview),
+  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview) {
+    width: min(100%, 960px);
+    max-width: none;
+  }
+}

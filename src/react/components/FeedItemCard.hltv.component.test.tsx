@@ -222,6 +222,101 @@ describe('FeedItemCard HLTV previews', () => {
     expect(screen.getByText('magixx').closest('tr')?.classList.contains('reader-card__hltv-player-row--best-adr')).toBe(false);
   });
 
+  it('shows the HLTV-style round history between the score and player stats', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+      description: null,
+      image: 'https://www.hltv.org/img/static/openGraphHltvLogo.png',
+      video: null,
+      siteName: 'HLTV.org',
+      type: null,
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: null,
+          teams: [
+            { name: 'Liquid', logo: null },
+            { name: 'Spirit', logo: null },
+          ],
+          status: 'live',
+          score: ['1', '0'],
+          currentMap: { name: 'Dust2', score: ['13', '9'] },
+          completedMaps: null,
+          roundHistory: [
+            { round: 1, teamIndex: 0, outcome: 'bomb_exploded' },
+            { round: 2, teamIndex: 1, outcome: 'bomb_defused' },
+            { round: 3, teamIndex: 0, outcome: 'ct_win' },
+          ],
+          playerStats: null,
+          teamSides: ['ct', 't'],
+        },
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+    }} />);
+
+    const playerStats = await screen.findByText('Player stats');
+    expect(playerStats.closest('details')?.hasAttribute('open')).toBe(false);
+    fireEvent.click(playerStats);
+    const history = await screen.findByRole('region', { name: 'Round history' });
+    expect(history.querySelectorAll('[role="img"]')).toHaveLength(4);
+    expect(history.querySelectorAll('.reader-card__hltv-round-history-row')).toHaveLength(2);
+    expect(history.querySelectorAll('.reader-card__hltv-round-history-slot')).toHaveLength(44);
+    expect(history.querySelectorAll('.reader-card__hltv-round-history-swap')).toHaveLength(2);
+    expect(screen.getByLabelText('Round 1: bomb exploded')).toBeTruthy();
+    expect(screen.getByLabelText('Round 2: bomb defused')).toBeTruthy();
+    expect(screen.queryByText('Player stats')).toBeTruthy();
+  });
+
+  it('changes round colors when teams swap sides', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+      description: null,
+      image: 'https://www.hltv.org/img/static/openGraphHltvLogo.png',
+      video: null,
+      siteName: 'HLTV.org',
+      type: null,
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: null,
+          teams: [
+            { name: 'Liquid', logo: null },
+            { name: 'Spirit', logo: null },
+          ],
+          status: 'live',
+          score: ['1', '0'],
+          currentMap: { name: 'Dust2', score: ['13', '1'] },
+          completedMaps: null,
+          roundHistory: [
+            { round: 1, teamIndex: 0, outcome: 'ct_win', half: 1 },
+            { round: 13, teamIndex: 0, outcome: 't_win', half: 2 },
+          ],
+          playerStats: null,
+          teamSides: ['t', 'ct'],
+        },
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+    }} />);
+
+    fireEvent.click(await screen.findByText('Player stats'));
+    const history = await screen.findByRole('region', { name: 'Round history' });
+    expect(screen.getByLabelText('Round 1: CT win').classList
+      .contains('reader-card__hltv-round-history-slot--ct')).toBe(true);
+    expect(screen.getByLabelText('Round 13: T win').classList
+      .contains('reader-card__hltv-round-history-slot--t')).toBe(true);
+    expect(history.querySelectorAll('.reader-card__hltv-round-history-swap')).toHaveLength(2);
+  });
+
   it('emphasizes the winner instead of the sides after a live map ends', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',

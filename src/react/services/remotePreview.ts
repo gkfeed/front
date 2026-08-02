@@ -59,6 +59,8 @@ export function mergeHltvLiveData(
     || !sameMatchScore(nextSnapshot.score, previousSnapshot.score)
   ) return next;
 
+  const currentMapChanged = hasCurrentMapChanged(nextSnapshot, previousSnapshot);
+
   return {
     ...next,
     providerData: {
@@ -69,6 +71,13 @@ export function mergeHltvLiveData(
         completedMaps: nextSnapshot.completedMaps?.length
           ? nextSnapshot.completedMaps
           : previousSnapshot.completedMaps,
+        roundHistory: currentMapChanged
+          ? nextSnapshot.currentMap && isZeroMapScore(nextSnapshot.currentMap.score)
+            ? []
+            : nextSnapshot.roundHistory ?? null
+          : nextSnapshot.roundHistory?.length
+            ? nextSnapshot.roundHistory
+            : previousSnapshot.roundHistory,
         playerStats: hasPlayerStats(nextSnapshot.playerStats)
           ? nextSnapshot.playerStats
           : previousSnapshot.playerStats,
@@ -76,6 +85,21 @@ export function mergeHltvLiveData(
       },
     },
   };
+}
+
+function hasCurrentMapChanged(
+  next: HltvMatchSnapshot,
+  previous: HltvMatchSnapshot,
+): boolean {
+  if (!next.currentMap || !previous.currentMap) return false;
+  if (next.currentMap.name !== previous.currentMap.name) return true;
+
+  return isZeroMapScore(next.currentMap.score)
+    && !isZeroMapScore(previous.currentMap.score);
+}
+
+function isZeroMapScore(score: [string, string]): boolean {
+  return score[0] === '0' && score[1] === '0';
 }
 
 function sameMatchScore(

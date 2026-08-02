@@ -69,7 +69,15 @@ export function HltvMatchup({
         />
         <HltvMatchupTeam team={teams[1]} />
       </a>
-      {isLive ? <HltvPlayerStats teams={teams} playerStats={playerStats} /> : null}
+      {isLive ? (
+        <HltvPlayerStats
+          teams={teams}
+          playerStats={playerStats}
+          currentMap={currentMap}
+          teamSides={teamSides}
+          roundHistory={snapshot.roundHistory}
+        />
+      ) : null}
     </div>
   );
 }

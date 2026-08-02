@@ -1,12 +1,24 @@
-import type { HltvMatchSnapshot, HltvMatchTeamPreview } from '../../../../shared/previewContracts';
+import type {
+  HltvMatchSnapshot,
+  HltvMatchTeamPreview,
+  HltvRoundPreview,
+} from '../../../../shared/previewContracts';
 import { useTranslation } from 'react-i18next';
+
+import { HltvRoundHistory } from './HltvRoundHistory';
 
 export function HltvPlayerStats({
   teams,
   playerStats,
+  currentMap,
+  teamSides,
+  roundHistory,
 }: {
   teams: [HltvMatchTeamPreview, HltvMatchTeamPreview];
   playerStats: HltvMatchSnapshot['playerStats'];
+  currentMap: HltvMatchSnapshot['currentMap'];
+  teamSides: HltvMatchSnapshot['teamSides'];
+  roundHistory: HltvRoundPreview[] | null | undefined;
 }) {
   const { t } = useTranslation();
   const hasPlayerStats = playerStats?.some((team) => team.length > 0);
@@ -22,6 +34,12 @@ export function HltvPlayerStats({
         <span>{t('hltv.playerStats')}</span>
         <span aria-hidden="true">⌄</span>
       </summary>
+      <HltvRoundHistory
+        teams={teams}
+        teamSides={teamSides}
+        roundHistory={roundHistory}
+        roundCount={currentMap ? getRoundCount(currentMap.score) : null}
+      />
       {hasPlayerStats && playerStats ? (
         <div className="reader-card__hltv-player-tables">
           {teams.map((team, teamIndex) => (
@@ -58,4 +76,9 @@ export function HltvPlayerStats({
       )}
     </details>
   );
+}
+
+function getRoundCount(score: [string, string]): number | null {
+  const count = Number(score[0]) + Number(score[1]);
+  return Number.isInteger(count) && count > 0 ? count : null;
 }

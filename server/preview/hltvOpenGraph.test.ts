@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  parseHltvScorebotLog,
   parseHltvScoreboardSnapshot,
   parseHltvScoreboardUpdate,
 } from './hltvScorebotParser.js';
@@ -146,6 +147,221 @@ describe('parseHltvScoreboard: external payloads', () => {
         [{ nickname: 'NAF', kills: 7, deaths: 3, assists: 2, adr: 91.3 }],
         [{ nickname: 'donk', kills: 5, deaths: 4, assists: 1, adr: 84 }],
       ],
+    });
+  });
+
+  it('extracts the native Scorebot match-history rows', () => {
+    const html = '<div class="mapholder"><div class="mapname">Dust2</div></div>';
+
+    expect(parseHltvScoreboardSnapshot({
+      mapName: 'de_dust2',
+      ctTeamId: 5973,
+      tTeamId: 7020,
+      ctTeamScore: 2,
+      tTeamScore: 1,
+      ctMatchHistory: {
+        firstHalf: [
+          { type: 'Lost', roundOrdinal: 1 },
+          { type: 'Bomb_Defused', roundOrdinal: 2 },
+        ],
+        secondHalf: [],
+      },
+      terroristMatchHistory: {
+        firstHalf: [
+          { type: 'Target_Bombed', roundOrdinal: 1 },
+          { type: 'Lost', roundOrdinal: 2 },
+        ],
+        secondHalf: [],
+      },
+      CT: [],
+      TERRORIST: [],
+    }, html, '5973')?.roundHistory).toEqual([
+      { round: 1, teamIndex: 1, outcome: 'bomb_exploded', half: 1 },
+      { round: 2, teamIndex: 0, outcome: 'bomb_defused', half: 1 },
+    ]);
+  });
+
+  it('keeps round winners with their team after the half-side swap', () => {
+    const html = '<div class="mapholder"><div class="mapname">Ancient</div></div>';
+
+    expect(parseHltvScoreboardSnapshot({
+      mapName: 'de_ancient',
+      // Team 7020 is CT now, but team 5973 started the map on CT.
+      ctTeamId: 7020,
+      tTeamId: 5973,
+      startingCt: 5973,
+      startingT: 7020,
+      ctTeamScore: 2,
+      tTeamScore: 2,
+      ctMatchHistory: {
+        firstHalf: [{ type: 'CTs_Win', roundOrdinal: 1 }],
+        secondHalf: [{ type: 'CTs_Win', roundOrdinal: 3 }],
+      },
+      terroristMatchHistory: {
+        firstHalf: [{ type: 'Target_Bombed', roundOrdinal: 2 }],
+        secondHalf: [{ type: 'Target_Bombed', roundOrdinal: 4 }],
+      },
+      CT: [],
+      TERRORIST: [],
+    }, html, '5973')?.roundHistory).toEqual([
+      { round: 1, teamIndex: 0, outcome: 'ct_win', half: 1 },
+      { round: 2, teamIndex: 1, outcome: 'bomb_exploded', half: 1 },
+      { round: 3, teamIndex: 1, outcome: 'ct_win', half: 2 },
+      { round: 4, teamIndex: 0, outcome: 'bomb_exploded', half: 2 },
+    ]);
+  });
+
+  it('maps Scorebot round history to the HLTV team order', () => {
+    const html = '<div class="mapholder"><div class="mapname">Dust2</div></div>';
+
+    expect(parseHltvScoreboardSnapshot({
+      mapName: 'de_dust2',
+      ctTeamId: 5973,
+      tTeamId: 7020,
+      ctTeamScore: 2,
+      tTeamScore: 1,
+      roundHistory: [
+        { round: 1, winner: 'T', winType: 'bomb_exploded' },
+        { round: 2, winner: 'CT', winType: 'ct_win' },
+      ],
+      CT: [],
+      TERRORIST: [],
+    }, html, '5973')?.roundHistory).toEqual([
+      { round: 1, teamIndex: 1, outcome: 'bomb_exploded' },
+      { round: 2, teamIndex: 0, outcome: 'ct_win' },
+    ]);
+  });
+
+  it('aligns a reversed one-round history with the live map score', () => {
+    const html = '<div class="mapholder"><div class="mapname">Nuke</div></div>';
+
+    expect(parseHltvScoreboardSnapshot({
+      mapName: 'de_nuke',
+      ctTeamId: 5973,
+      tTeamId: 7020,
+      ctTeamScore: 0,
+      tTeamScore: 1,
+      roundHistory: [
+        { round: 1, winner: 'CT', winType: 'ct_win' },
+      ],
+      CT: [],
+      TERRORIST: [],
+    }, html, '5973')?.roundHistory).toEqual([
+      { round: 1, teamIndex: 1, outcome: 'ct_win' },
+    ]);
+  });
+
+  it('normalizes a mismatched winner distribution to the live map score', () => {
+    const html = '<div class="mapholder"><div class="mapname">Nuke</div></div>';
+
+    expect(parseHltvScoreboardSnapshot({
+      mapName: 'de_nuke',
+      ctTeamId: 5973,
+      tTeamId: 7020,
+      ctTeamScore: 1,
+      tTeamScore: 2,
+      roundHistory: [
+        { round: 1, winner: 'CT', winType: 'ct_win' },
+        { round: 2, winner: 'CT', winType: 'ct_win' },
+        { round: 3, winner: 'CT', winType: 'ct_win' },
+      ],
+      CT: [],
+      TERRORIST: [],
+    }, html, '5973')?.roundHistory).toEqual([
+      { round: 1, teamIndex: 0, outcome: 'ct_win' },
+      { round: 2, teamIndex: 1, outcome: 'ct_win' },
+      { round: 3, teamIndex: 1, outcome: 'ct_win' },
+    ]);
+  });
+
+  it('extracts round results from Scorebot log events', () => {
+    expect(parseHltvScorebotLog({
+      log: [
+        {
+          RoundEnd: {
+            counterTerroristScore: 0,
+            terroristScore: 1,
+            winner: 'TERRORIST',
+            winType: 'Target_Bombed',
+          },
+        },
+        {
+          RoundEnd: {
+            counterTerroristScore: 1,
+            terroristScore: 1,
+            winner: 'CT',
+            winType: 'Target_Saved',
+          },
+        },
+        {
+          RoundEnd: {
+            counterTerroristScore: 1,
+            terroristScore: 2,
+            winner: 7020,
+            winType: 'Target_Defused',
+          },
+        },
+      ],
+    }, 5973, 5973, 7020)).toEqual([
+      { round: 1, teamIndex: 1, outcome: 'bomb_exploded' },
+      { round: 2, teamIndex: 0, outcome: 'stopwatch' },
+      { round: 3, teamIndex: 1, outcome: 'bomb_defused' },
+    ]);
+  });
+
+  it('parses HLTV round-history scoreboard icons from a map overview', () => {
+    const html = `
+      <div class="round-history">
+        <img src="/img/static/scoreboard/bomb_exploded.svg" alt="1-0">
+        <img src="/img/static/scoreboard/emptyHistory.svg" alt="">
+        <img src="/img/static/scoreboard/emptyHistory.svg" alt="">
+        <img src="/img/static/scoreboard/ct_win.svg" alt="1-1">
+      </div>
+    `;
+
+    expect(parseOpenGraph(
+      html,
+      new URL('https://www.hltv.org/matches/2396277/ww-vs-tdk-event'),
+    ).providerData).toMatchObject({
+      provider: 'hltv',
+      snapshot: {
+        roundHistory: [
+          { round: 1, teamIndex: 0, outcome: 'bomb_exploded' },
+          { round: 2, teamIndex: 1, outcome: 'ct_win' },
+        ],
+      },
+    });
+  });
+
+  it('does not carry completed-map round icons into a new 0:0 map', () => {
+    const html = `
+      <div class="timeAndEvent"><div class="countdown">LIVE</div></div>
+      <div class="mapholder">
+        <div class="mapname">Ancient</div>
+        <a class="results-stats" href="/stats/matches/mapstatsid/1">STATS</a>
+        <div class="round-history">
+          <img src="/img/static/scoreboard/ct_win.svg" alt="1-0">
+          <img src="/img/static/scoreboard/emptyHistory.svg" alt="">
+          <img src="/img/static/scoreboard/emptyHistory.svg" alt="">
+          <img src="/img/static/scoreboard/t_win.svg" alt="0-1">
+        </div>
+      </div>
+      <div class="mapholder">
+        <div class="mapname">Nuke</div>
+        <div class="results-team-score">0</div>
+        <div class="results-team-score">0</div>
+      </div>
+    `;
+
+    expect(parseOpenGraph(
+      html,
+      new URL('https://www.hltv.org/matches/2396277/ww-vs-tdk-event'),
+    ).providerData).toMatchObject({
+      provider: 'hltv',
+      snapshot: {
+        currentMap: { name: 'Nuke', score: ['0', '0'] },
+        roundHistory: null,
+      },
     });
   });
 

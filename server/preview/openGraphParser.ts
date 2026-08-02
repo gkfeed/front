@@ -8,6 +8,7 @@ import {
   parseHltvMatchStartsAt,
   parseHltvMatchStatus,
   parseHltvMatchTeams,
+  parseHltvRoundHistory,
 } from './hltvHtmlParser.js';
 import { parseRezkaOriginalCover, parseVkStructuredVideo } from './openGraphProviderParsers.js';
 
@@ -56,6 +57,7 @@ function parseHltvProviderData(html: string, pageUrl: URL): HltvProviderData {
       score: status === 'live' || status === 'over' ? parseHltvMatchScore(html) : null,
       currentMap: status === 'live' ? parseHltvCurrentMap(html) : null,
       completedMaps: parseHltvCompletedMaps(html),
+      roundHistory: parseHltvRoundHistory(html),
       playerStats: null,
       teamSides: null,
     },

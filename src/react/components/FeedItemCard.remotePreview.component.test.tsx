@@ -34,6 +34,31 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
+  it('renders Reddit-hosted videos from Open Graph metadata', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.reddit.com/r/example/comments/abc123/post/',
+      title: 'Reddit video',
+      description: null,
+      image: '/api/bff/reddit-preview-image?url=encoded',
+      video: 'https://v.redd.it/video123',
+      siteName: 'Reddit',
+      type: 'video',
+      providerData: null,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.reddit.com/r/example/comments/abc123/post/',
+      text: '<img src="https://share.redd.it/preview/post/abc123">',
+    }} />);
+
+    const video = await screen.findByLabelText('Video preview for Reddit video');
+    expect(video.tagName).toBe('VIDEO');
+    expect(video.getAttribute('src')).toBe('https://v.redd.it/video123');
+    expect(video.getAttribute('poster')).toBe('/api/bff/reddit-preview-image?url=encoded');
+    expect(video.closest('.reader-card--reddit-preview')).toBeNull();
+  });
+
   it('does not call the BFF when the feed content contains an image', () => {
     render(<FeedItemCard item={{ ...item, text: '<img src="https://example.com/feed-cover.jpg">' }} />);
 

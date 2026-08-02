@@ -27,6 +27,13 @@ describe('isOpenGraphPreview', () => {
       ...validPreview,
       providerData: { provider: 'hltv', snapshot: { ...validSnapshot, score: ['1', 0] } },
     })).toBe(false);
+    expect(isOpenGraphPreview({
+      ...validPreview,
+      providerData: {
+        provider: 'hltv',
+        snapshot: { ...validSnapshot, roundHistory: [{ round: 1, teamIndex: 2, outcome: 'ct_win' }] },
+      },
+    })).toBe(false);
     expect(isOpenGraphPreview({ ...validPreview, providerData: undefined })).toBe(false);
   });
 
