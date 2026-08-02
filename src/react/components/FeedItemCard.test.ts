@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeedItem } from '../types';
 import {
+  analyzeFeedItem,
   getFeedItemPreview,
   isHltvFeedItem,
   isInstagramFeedItem,
@@ -107,6 +108,15 @@ describe('getFeedItemPreview', () => {
   it('rejects unsafe embedded image sources', () => {
     expect(getFeedItemPreview(item({ text: '<img src="javascript:alert(1)">' }))).toBeNull();
     expect(getFeedItemPreview(item({ text: '<img src="data:text/html;base64,PHNjcmlwdD4=">' }))).toBeNull();
+  });
+});
+
+describe('Twitch feed items', () => {
+  it('recognizes Twitch channel links as Twitch providers', () => {
+    expect(analyzeFeedItem(item({ link: 'https://www.twitch.tv/some_channel' })).provider)
+      .toBe('twitch');
+    expect(analyzeFeedItem(item({ link: 'https://twitch.tv.example.org/some_channel' })).provider)
+      .toBe('generic');
   });
 });
 

@@ -62,15 +62,19 @@
 
   /* A 16:9 canvas is useful for media, but makes text-only cards awkwardly wide. */
   main:fullscreen .reader__item:has(.reader-card--youtube),
+  main:fullscreen .reader__item:has(.reader-card--twitch),
   main:fullscreen .reader__item:has(.reader-card--image-preview),
   main:fullscreen .reader__item:has(.reader-card--simple-image),
   main:-webkit-full-screen .reader__item:has(.reader-card--youtube),
+  main:-webkit-full-screen .reader__item:has(.reader-card--twitch),
   main:-webkit-full-screen .reader__item:has(.reader-card--image-preview),
   main:-webkit-full-screen .reader__item:has(.reader-card--simple-image),
   html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--youtube),
+  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--twitch),
   html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--image-preview),
   html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--simple-image),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--youtube),
+  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--twitch),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--image-preview),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--simple-image) {
     width: min(
@@ -83,8 +87,12 @@
   /* YouTube thumbnails are 16:9, so sizing the item from the available height
      also removes the empty side strips caused by a separately capped image. */
   main:fullscreen .reader-card--youtube .reader-card__preview > img,
+  main:fullscreen .reader-card--twitch .reader-card__preview > img,
   main:-webkit-full-screen .reader-card--youtube .reader-card__preview > img,
+  main:-webkit-full-screen .reader-card--twitch .reader-card__preview > img,
   html[data-reader-fullscreen="true"] main .reader-card--youtube .reader-card__preview > img,
+  html[data-reader-fullscreen="true"] main .reader-card--twitch .reader-card__preview > img,
+  main[data-reader-fullscreen="true"] .reader-card--twitch .reader-card__preview > img,
   main[data-reader-fullscreen="true"] .reader-card--youtube .reader-card__preview > img {
     max-height: none;
   }
@@ -198,7 +206,8 @@
     padding: 16px;
   }
 
-  .reader-card.reader-card--youtube {
+  .reader-card.reader-card--youtube,
+  .reader-card.reader-card--twitch {
     padding: 0;
   }
 

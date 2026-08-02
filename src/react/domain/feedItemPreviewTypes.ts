@@ -22,6 +22,7 @@ export type FeedItemProvider =
   | 'instagram'
   | 'liquipedia'
   | 'tiktok'
+  | 'twitch'
   | 'vk'
   | 'youtube';
 
@@ -31,6 +32,7 @@ export interface FeedItemAnalysis {
   provider: FeedItemProvider;
   localPreview: FeedItemPreview | null;
   youtubeVideoId: string | null;
+  twitchChannel: string | null;
 }
 
 export type FeedItemAnalyzer = (item: FeedItem) => FeedItemAnalysis;

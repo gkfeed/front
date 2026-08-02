@@ -6,7 +6,7 @@ import type {
 } from './feedItemPreviewTypes';
 import { getEmbeddedPreview } from './embeddedPreview';
 import { getFeedItemProviderFromUrl } from './feedItemProviders';
-import { getTwitchPreview } from './twitchPreview';
+import { getTwitchChannel, getTwitchPreview } from './twitchPreview';
 import { getVkVideoPreview } from './vkPreview';
 import {
   getYoutubeVideoId,
@@ -31,6 +31,7 @@ export function analyzeFeedItem(item: FeedItem): FeedItemAnalysis {
     provider: getFeedItemProviderFromUrl(item, url),
     localPreview: getFeedItemPreviewFromUrl(item, url),
     youtubeVideoId: url ? getYoutubeVideoId(url) : null,
+    twitchChannel: url ? getTwitchChannel(url) : null,
   };
 }
 

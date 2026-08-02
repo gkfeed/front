@@ -13,6 +13,7 @@ const feedItemProviderPolicies: Record<FeedItemProvider, FeedItemProviderPolicy>
   instagram: { remotePreview: true, previewMode: 'local-first', description: 'none', metadata: 'none' },
   liquipedia: { remotePreview: true, previewMode: 'local-first', description: 'none', metadata: 'none' },
   tiktok: { remotePreview: false, previewMode: 'tiktok-embed', description: 'none', metadata: 'none' },
+  twitch: { remotePreview: false, previewMode: 'local-first', description: 'none', metadata: 'none' },
   vk: { remotePreview: true, previewMode: 'local-first', description: 'vk', metadata: 'none' },
   youtube: { remotePreview: true, previewMode: 'local-first', description: 'none', metadata: 'none' },
 };

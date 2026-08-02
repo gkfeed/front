@@ -7,9 +7,11 @@ import {
   isVkHost,
 } from '../../../shared/urlRules';
 import { getYoutubeVideoId, parseUrl } from './feedItemUrls';
+import { getTwitchChannel } from './twitchPreview';
 
 export type FeedItemCardVariant =
   | { type: 'standard' }
+  | { type: 'twitch'; channel: string }
   | { type: 'youtube'; videoId: string }
   | { type: 'tiktok' }
   | { type: 'instagram'; media: 'photo' | 'video' }
@@ -23,9 +25,10 @@ export type FeedItemCardImagePreview =
 
 export type FeedItemCardPreviewDescriptor =
   | { type: 'media'; isShortVideo: boolean; isTikTok: boolean }
+  | { type: 'twitch'; channel: string }
   | { type: 'youtube'; videoId: string };
 
-export type FeedItemCardCopyDescriptor = 'none' | 'youtube' | 'simple-image' | 'standard';
+export type FeedItemCardCopyDescriptor = 'none' | 'youtube' | 'twitch' | 'simple-image' | 'standard';
 
 export type FeedItemCardPresentationDescriptor = {
   className: string;
@@ -38,6 +41,7 @@ export type FeedItemCardPresentationDescriptor = {
 
 type FeedItemCardVariantContext = {
   youtubeVideoId: string | null;
+  twitchChannel: string | null;
   isSimpleImage: boolean;
   isInstagramPhoto: boolean;
 };
@@ -104,6 +108,12 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
     resolveVariant: () => ({ type: 'tiktok' }),
     classNames: () => ['reader-card--short-video', 'reader-card--tiktok'],
   }),
+  twitch: createFeedItemProviderAdapter({
+    resolveVariant: ({ twitchChannel }) => twitchChannel
+      ? { type: 'twitch', channel: twitchChannel }
+      : { type: 'standard' },
+    classNames: (variant) => variant.type === 'twitch' ? ['reader-card--twitch'] : [],
+  }),
   vk: createFeedItemProviderAdapter({}),
   youtube: createFeedItemProviderAdapter({
     resolveVariant: ({ youtubeVideoId }) => youtubeVideoId
@@ -140,14 +150,18 @@ export function getFeedItemCardPresentationDescriptor({
     ].filter(Boolean).join(' '),
     preview: variant.type === 'youtube'
       ? { type: 'youtube', videoId: variant.videoId }
-      : { type: 'media', isShortVideo, isTikTok: adapter.isTikTok },
+      : variant.type === 'twitch'
+        ? { type: 'twitch', channel: variant.channel }
+        : { type: 'media', isShortVideo, isTikTok: adapter.isTikTok },
     copy: imagePreview.type !== 'none' || isShortVideo
       ? 'none'
       : variant.type === 'youtube'
-        ? 'youtube'
-        : variant.type === 'simple-image'
-          ? 'simple-image'
-          : 'standard',
+      ? 'youtube'
+        : variant.type === 'twitch'
+          ? 'twitch'
+          : variant.type === 'simple-image'
+            ? 'simple-image'
+            : 'standard',
     showInstagramIdentity: adapter.showInstagramIdentity,
     showHltvCountdown: adapter.supplementary === 'hltv',
     showTikTokComments: adapter.supplementary === 'tiktok',
@@ -193,6 +207,7 @@ export function getFeedItemProviderFromUrl(item: FeedItem, url: URL | null): Fee
   if (!url) return 'generic';
 
   if (getYoutubeVideoId(url)) return 'youtube';
+  if (getTwitchChannel(url)) return 'twitch';
   if (isTikTokVideoUrl(url)) return 'tiktok';
   if (isVkHost(url.hostname)) return 'vk';
   if (isHltvMatchUrl(url)) return 'hltv';

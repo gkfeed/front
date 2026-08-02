@@ -4,31 +4,23 @@ import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
 
-type YoutubePreviewProps = {
+type TwitchPreviewProps = {
+  channel: string;
   onPreviewError: () => void;
   preview: LocalizedFeedItemPreview | null;
-  title: string;
-  videoId: string;
 };
 
-export function YoutubePreview({
-  onPreviewError,
-  preview,
-  title,
-  videoId,
-}: YoutubePreviewProps) {
+export function TwitchPreview({ channel, onPreviewError, preview }: TwitchPreviewProps) {
   const { t } = useTranslation();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
-  const [isDoubleSpeed, setIsDoubleSpeed] = useState(true);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsPlayerOpen(false);
     setIsTheaterOpen(false);
-    setIsDoubleSpeed(true);
-  }, [videoId]);
+  }, [channel]);
 
   useEffect(() => {
     if (!isTheaterOpen) return;
@@ -71,21 +63,11 @@ export function YoutubePreview({
 
   if (isPlayerOpen) {
     return (
-      <YoutubePlayer
-        videoId={videoId}
-        title={title}
+      <TwitchPlayer
+        channel={channel}
         isTheaterOpen={isTheaterOpen}
-        isDoubleSpeed={isDoubleSpeed}
         shellRef={playerRef}
         onToggleTheater={() => setIsTheaterOpen((isOpen) => !isOpen)}
-        onTogglePlaybackSpeed={() => {
-          const nextIsDoubleSpeed = !isDoubleSpeed;
-          setIsDoubleSpeed(nextIsDoubleSpeed);
-          sendPlaybackRate(
-            playerRef.current?.querySelector<HTMLIFrameElement>('iframe') ?? null,
-            nextIsDoubleSpeed ? 2 : 1,
-          );
-        }}
       />
     );
   }
@@ -97,7 +79,7 @@ export function YoutubePreview({
           type="button"
           ref={triggerRef}
           className="reader-card__preview-trigger"
-          aria-label={t('preview.playVideo', { title })}
+          aria-label={t('preview.playTwitch', { channel })}
           onClick={() => {
             setIsPlayerOpen(true);
             setIsTheaterOpen(true);
@@ -118,34 +100,21 @@ export function YoutubePreview({
   );
 }
 
-type YoutubePlayerProps = {
-  videoId: string;
-  title: string;
+type TwitchPlayerProps = {
+  channel: string;
   isTheaterOpen: boolean;
-  isDoubleSpeed: boolean;
   onToggleTheater: () => void;
-  onTogglePlaybackSpeed: () => void;
   shellRef: RefObject<HTMLDivElement | null>;
 };
 
-function YoutubePlayer({
-  videoId,
-  title,
-  isTheaterOpen,
-  isDoubleSpeed,
-  onToggleTheater,
-  onTogglePlaybackSpeed,
-  shellRef,
-}: YoutubePlayerProps) {
+function TwitchPlayer({ channel, isTheaterOpen, onToggleTheater, shellRef }: TwitchPlayerProps) {
   const { t } = useTranslation();
-  const parameters = new URLSearchParams({ autoplay: '1', rel: '0', enablejsapi: '1' });
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    const sendCurrentPlaybackRate = () => sendPlaybackRate(iframeRef.current, isDoubleSpeed ? 2 : 1);
-    const retryTimers = [300, 1000].map((delay) => window.setTimeout(sendCurrentPlaybackRate, delay));
-    return () => retryTimers.forEach((timer) => window.clearTimeout(timer));
-  }, [isDoubleSpeed]);
+  const parameters = new URLSearchParams({
+    channel,
+    parent: window.location.hostname || 'localhost',
+    autoplay: 'true',
+  });
+  const playerTitle = t('preview.twitchPlayer', { channel });
 
   return (
     <div
@@ -156,19 +125,10 @@ function YoutubePlayer({
       ].filter(Boolean).join(' ')}
       role={isTheaterOpen ? 'dialog' : undefined}
       aria-modal={isTheaterOpen ? 'true' : undefined}
-      aria-label={isTheaterOpen ? (title || t('preview.youtubePlayer')) : undefined}
+      aria-label={isTheaterOpen ? playerTitle : undefined}
     >
       <div className="reader-card__player-stage">
         <div className="reader-card__player-toolbar">
-          <button
-            type="button"
-            className="reader-card__speed-toggle"
-            aria-label={t('preview.playbackSpeed', { speed: isDoubleSpeed ? '2x' : '1x' })}
-            aria-pressed={isDoubleSpeed}
-            onClick={onTogglePlaybackSpeed}
-          >
-            {isDoubleSpeed ? '2x' : '1x'}
-          </button>
           <button
             type="button"
             className="reader-card__theater-toggle"
@@ -182,26 +142,16 @@ function YoutubePlayer({
         </div>
         <div className="reader-card__preview reader-card__preview--player">
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
-            title={title || t('preview.youtubePlayer')}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            src={`https://player.twitch.tv/?${parameters}`}
+            title={playerTitle}
+            allow="autoplay; fullscreen"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
-            ref={iframeRef}
-            onLoad={() => sendPlaybackRate(iframeRef.current, isDoubleSpeed ? 2 : 1)}
           />
         </div>
       </div>
     </div>
   );
-}
-
-function sendPlaybackRate(iframe: HTMLIFrameElement | null, playbackRate: number): void {
-  iframe?.contentWindow?.postMessage(JSON.stringify({
-    event: 'command',
-    func: 'setPlaybackRate',
-    args: [playbackRate],
-  }), '*');
 }
 
 function getFocusableElements(container: HTMLElement | null): HTMLElement[] {

@@ -33,13 +33,15 @@
   border-radius: inherit;
 }
 
-.reader-card__youtube-copy {
+.reader-card__youtube-copy,
+.reader-card__twitch-copy {
   display: grid;
   gap: 9px;
   padding: 18px 20px 20px;
 }
 
-.reader-card--youtube .reader-card__title {
+.reader-card--youtube .reader-card__title,
+.reader-card--twitch .reader-card__title {
   max-width: none;
   font-size: clamp(1.08rem, 3.5vw, 1.35rem);
   letter-spacing: -0.018em;
@@ -53,6 +55,23 @@
   font-weight: 800;
   letter-spacing: 0.11em;
   text-transform: uppercase;
+}
+
+.reader-card__title-token {
+  padding-inline: 0.08em;
+  border-radius: 0.24em;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.reader-card__title-token--mention {
+  background: color-mix(in oklch, #60a5fa 22%, transparent);
+  color: color-mix(in oklch, #2563eb 82%, var(--color-ink-strong));
+}
+
+.reader-card__title-token--command {
+  background: color-mix(in oklch, #f59e0b 24%, transparent);
+  color: color-mix(in oklch, #c2410c 84%, var(--color-ink-strong));
 }
 
 .reader-card__meta {

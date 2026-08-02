@@ -1,10 +1,13 @@
 import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { hostnameOf } from './feedItemUrls';
 
-export function getTwitchPreview(url: URL): FeedItemPreview | null {
+export function getTwitchChannel(url: URL): string | null {
   if (hostnameOf(url) !== 'twitch.tv') return null;
+  return url.pathname.split('/').filter(Boolean)[0] ?? null;
+}
 
-  const channel = url.pathname.split('/').filter(Boolean)[0];
+export function getTwitchPreview(url: URL): FeedItemPreview | null {
+  const channel = getTwitchChannel(url);
   if (!channel) return null;
 
   return {
