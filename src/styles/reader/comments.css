@@ -10,6 +10,10 @@
   box-shadow: none;
 }
 
+.tiktok-comments:focus {
+  outline: none;
+}
+
 .tiktok-comments__description {
   display: grid;
   max-width: 60ch;
