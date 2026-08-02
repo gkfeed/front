@@ -16,7 +16,6 @@ export function ReaderReview({
   item,
   remainingCount,
   isDeleting,
-  deleteFailed,
   useCompactActions,
   reviewPanelRef,
   reviewActionsRef,
@@ -27,7 +26,6 @@ export function ReaderReview({
   item: FeedItem;
   remainingCount: number;
   isDeleting: boolean;
-  deleteFailed: boolean;
   useCompactActions: boolean;
   reviewPanelRef: RefObject<HTMLDivElement | null>;
   reviewActionsRef: RefObject<HTMLDivElement | null>;
@@ -73,11 +71,6 @@ export function ReaderReview({
         hidden={useCompactActions}
         {...reviewActions}
       />
-      {deleteFailed ? (
-        <p className="status status--error reader__error" role="alert">
-          {t('reader.deleteError')}
-        </p>
-      ) : null}
       <div className="reader__count-row">
         <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={onReset}>
           {t('reader.reset')}

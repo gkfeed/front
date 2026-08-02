@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ReaderReview } from '../components/ReaderReview';
 import { ReaderScroll } from '../components/ReaderScroll';
 import { ReaderFullscreenButton } from '../components/ReaderFullscreenButton';
+import type { FeedItemDeletion } from '../hooks/useFeedItemDeletion';
 import { useFeedReader } from '../hooks/useFeedReader';
 import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
@@ -24,13 +25,14 @@ export function ReaderPage() {
     items,
     currentItem,
     isLoading,
-    isDeleting,
+    isItemPending,
     loadFailed,
     loadError,
-    deleteFailed,
+    failedDeletions,
     remainingCount,
     keepItem,
     deleteItem,
+    retryDelete,
     resetReview,
     retryLoad,
   } = useFeedReader();
@@ -42,7 +44,7 @@ export function ReaderPage() {
   useReviewShortcuts({
     mode,
     currentItem,
-    isDeleting,
+    isDeleting: currentItem ? isItemPending(currentItem.id) : false,
     onKeep: keepItem,
     onDelete: deleteItem,
   });
@@ -55,6 +57,7 @@ export function ReaderPage() {
       </div>
       <section className="reader" aria-labelledby="reader-page-title">
         <h1 id="reader-page-title" className="sr-only">{t('pages.reader')}</h1>
+        <ReaderDeletionErrors deletions={failedDeletions} onRetry={retryDelete} />
         <p className="sr-only" aria-live="polite" aria-atomic="true">
           {mode === 'review' && currentItem
             ? t('reader.currentItemAnnouncement', {
@@ -83,8 +86,7 @@ export function ReaderPage() {
             key={currentItem.id}
             item={currentItem}
             remainingCount={remainingCount}
-            isDeleting={isDeleting}
-            deleteFailed={deleteFailed}
+            isDeleting={isItemPending(currentItem.id)}
             useCompactActions={useCompactActions}
             reviewPanelRef={reviewPanelRef}
             reviewActionsRef={reviewActionsRef}
@@ -102,12 +104,39 @@ export function ReaderPage() {
               <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={resetReview}>
                 {t('reader.reset')}
               </button>
+              <button type="button" className="secondary" onClick={retryLoad}>
+                {t('reader.checkAgain')}
+              </button>
             </div>
           </div>
         ) : null}
         {mode === 'scroll' && hasLoadedContent && items.length > 0 ? <ReaderScroll items={items} /> : null}
       </section>
     </>
+  );
+}
+
+function ReaderDeletionErrors({
+  deletions,
+  onRetry,
+}: {
+  deletions: FeedItemDeletion[];
+  onRetry: (itemId: number) => void;
+}) {
+  const { t } = useTranslation();
+  if (deletions.length === 0) return null;
+
+  return (
+    <div className="reader__deletion-errors" aria-label={t('reader.deletionErrors')}>
+      {deletions.map((deletion) => (
+        <div className="reader__deletion-error" role="alert" key={deletion.itemId}>
+          <p>{t('reader.deleteError', { title: deletion.title || t('feed.item') })}</p>
+          <button type="button" className="secondary" onClick={() => onRetry(deletion.itemId)}>
+            {t('reader.retryDelete')}
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }
 

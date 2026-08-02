@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { isNsfwLink } from '../domain/nsfw';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
@@ -11,8 +11,14 @@ export function useFeedReader() {
   const { credentials } = useAuth();
   const { nsfwMode } = useNsfwPreferences();
   const { loadedItems, status, error: loadError, isLoading, retry } = useFeedItems(credentials);
-  const { deleteItem: deleteRemoteItem, isDeleting, deleteFailed } = useFeedItemDeletion(credentials);
+  const {
+    deleteItem: deleteRemoteItem,
+    failedDeletions,
+    isItemPending,
+    retryItem,
+  } = useFeedItemDeletion(credentials);
   const [deletedItemIds, setDeletedItemIds] = useState<Set<number>>(() => new Set());
+  const [requeuedItemIds, setRequeuedItemIds] = useState<Set<number>>(() => new Set());
 
   const items = useMemo(
     () => loadedItems?.filter((item) => (
@@ -21,12 +27,24 @@ export function useFeedReader() {
     )),
     [deletedItemIds, loadedItems, nsfwMode],
   );
-  const reviewableIds = useMemo(
+  const visibleReviewableIds = useMemo(
     () => loadedItems
       ?.filter((item) => !deletedItemIds.has(item.id))
       .map((item) => item.id) ?? [],
     [deletedItemIds, loadedItems],
   );
+  const reviewableIds = useMemo(() => {
+    const requeued = visibleReviewableIds.filter((id) => requeuedItemIds.has(id));
+    return [
+      ...visibleReviewableIds.filter((id) => !requeuedItemIds.has(id)),
+      ...requeued,
+    ];
+  }, [requeuedItemIds, visibleReviewableIds]);
+
+  useEffect(() => {
+    if (loadedItems === undefined || requeuedItemIds.size === 0) return;
+    setRequeuedItemIds(new Set());
+  }, [loadedItems, requeuedItemIds.size]);
 
   const visibleItemIds = useMemo(() => new Set(items?.map((item) => item.id) ?? []), [items]);
   const { activeReviewIds, keep, remove, reset } = useReviewSession({
@@ -43,20 +61,35 @@ export function useFeedReader() {
     keep(currentItem.id);
   }, [currentItem, keep]);
 
-  const deleteCurrentItem = useCallback(async () => {
+  const deleteCurrentItem = useCallback(() => {
     if (!currentItem) return;
 
-    const deleted = await deleteRemoteItem(currentItem.id);
+    const deleted = deleteRemoteItem(currentItem.id, getItemTitle(currentItem));
     if (!deleted) return;
 
     setDeletedItemIds((ids) => new Set(ids).add(currentItem.id));
     remove(currentItem.id);
   }, [currentItem, deleteRemoteItem, remove]);
 
+  const retryFailedDeletion = useCallback((itemId: number) => {
+    retryItem(itemId);
+  }, [retryItem]);
+
   const retryLoad = useCallback(() => {
-    reset();
+    const failedIds = failedDeletions.map((operation) => operation.itemId);
+    if (failedIds.length > 0) {
+      const failedIdSet = new Set(failedIds);
+      setDeletedItemIds((ids) => {
+        const nextIds = new Set([...ids].filter((id) => !failedIdSet.has(id)));
+        return nextIds.size === ids.size ? ids : nextIds;
+      });
+      setRequeuedItemIds(failedIdSet);
+      reset([...reviewableIds, ...failedIds]);
+    } else {
+      reset();
+    }
     retry();
-  }, [reset, retry]);
+  }, [failedDeletions, reset, retry, reviewableIds]);
 
   const resetReview = useCallback(() => {
     reset();
@@ -66,14 +99,19 @@ export function useFeedReader() {
     items: items ?? [],
     currentItem,
     isLoading,
-    isDeleting,
+    isItemPending,
     loadFailed: status === 'error',
     loadError,
-    deleteFailed,
+    failedDeletions,
     remainingCount: activeReviewIds.length,
     keepItem,
     deleteItem: deleteCurrentItem,
+    retryDelete: retryFailedDeletion,
     resetReview,
     retryLoad,
   };
+}
+
+function getItemTitle(item: { title: string; text: string }): string {
+  return item.title.trim() || item.text.trim();
 }

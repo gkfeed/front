@@ -70,8 +70,8 @@ export function useReviewSession({
   const remove = useCallback((id: number) => {
     dispatchReview({ type: 'remove', id });
   }, []);
-  const reset = useCallback(() => {
-    dispatchReview({ type: 'reset', ids: reviewableIds });
+  const reset = useCallback((ids: number[] = reviewableIds) => {
+    dispatchReview({ type: 'reset', ids });
   }, [reviewableIds]);
 
   return { activeReviewIds, keep, remove, reset };
