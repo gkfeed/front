@@ -348,6 +348,7 @@ describe('FeedItemCard HLTV previews', () => {
     const liquidTable = screen.getByRole('table', { name: 'Liquid' });
     expect(liquidTable).toBeTruthy();
     expect(within(liquidTable).getByRole('columnheader', { name: 'Player' })).toBeTruthy();
+    expect(within(liquidTable).queryByRole('columnheader', { name: 'A' })).toBeNull();
     expect(within(liquidTable).getByTitle('Average damage per round')).toBeTruthy();
   });
 

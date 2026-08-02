@@ -31,7 +31,6 @@ export function HltvPlayerStats({
                 <tr>
                   <th scope="col">{t('hltv.player')}</th>
                   <th scope="col">K–D</th>
-                  <th scope="col"><abbr title={t('hltv.assists')}>A</abbr></th>
                   <th scope="col"><abbr title={t('hltv.averageDamage')}>ADR</abbr></th>
                 </tr>
               </thead>
@@ -45,7 +44,6 @@ export function HltvPlayerStats({
                   >
                     <th scope="row">{player.nickname}</th>
                     <td>{player.kills}–{player.deaths}</td>
-                    <td>{player.assists}</td>
                     <td>{player.adr.toFixed(1)}</td>
                   </tr>
                 ))}
