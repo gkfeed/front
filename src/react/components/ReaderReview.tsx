@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemPreview';
 import {
-  exitReaderFullscreen,
   isReaderFullscreen,
   setFallbackFullscreen,
 } from '../services/readerFullscreen';
@@ -48,16 +47,6 @@ export function ReaderReview({
     // reader's fallback is the reliable automatic mobile fullscreen mode.
     setFallbackFullscreen(true);
   }, [isMobileViewport, isShortVideo, item.id]);
-
-  useEffect(() => {
-    if (isShortVideo && isMobileViewport) return;
-    if (!isReaderFullscreen()) return;
-    void exitReaderFullscreen();
-  }, [isMobileViewport, isShortVideo]);
-
-  useEffect(() => () => {
-    if (isReaderFullscreen()) void exitReaderFullscreen();
-  }, []);
 
   return (
     <div

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
@@ -7,10 +8,15 @@ import { ReaderFullscreenButton } from '../components/ReaderFullscreenButton';
 import { useFeedReader } from '../hooks/useFeedReader';
 import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
+import { exitReaderFullscreen } from '../services/readerFullscreen';
 import { getReaderMode } from '../state/readerMode';
 import { getRequestErrorMessage } from '../services/authError';
 
 export function ReaderPage() {
+  useEffect(() => () => {
+    void exitReaderFullscreen();
+  }, []);
+
   const { t } = useTranslation();
   const { search } = useLocation();
   const mode = getReaderMode(search);

@@ -300,6 +300,41 @@ describe('ReaderPage', () => {
     });
   });
 
+  it('keeps fullscreen active when keeping the current item', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    const main = document.createElement('main');
+    document.body.append(main);
+    renderReader('/reader', 'blur', main);
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.keyDown(window, { key: 'f' });
+    await waitFor(() => expect(document.documentElement.dataset.readerFullscreen).toBe('true'));
+
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(document.documentElement.dataset.readerFullscreen).toBe('true');
+    expect(screen.getByRole('button', { name: 'Exit Reader fullscreen' })).toBeTruthy();
+  });
+
+  it('keeps fullscreen active when deleting the current item', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    vi.mocked(deleteFeedItemById).mockResolvedValue();
+    const main = document.createElement('main');
+    document.body.append(main);
+    renderReader('/reader', 'blur', main);
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.keyDown(window, { key: 'f' });
+    await waitFor(() => expect(document.documentElement.dataset.readerFullscreen).toBe('true'));
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(document.documentElement.dataset.readerFullscreen).toBe('true');
+    expect(screen.getByRole('button', { name: 'Exit Reader fullscreen' })).toBeTruthy();
+  });
+
   it('moves review actions to compact side buttons when they do not fit in the viewport', async () => {
     let viewportHeight = 600;
     vi.spyOn(window, 'innerHeight', 'get').mockImplementation(() => viewportHeight);
