@@ -79,28 +79,28 @@ describe('getFeedItemPreview', () => {
     expect(getFeedItemPreview(item({
       link: 'https://vk.com/video-123_456',
     }))).toMatchObject({
-      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hd=2&autoplay=1',
+      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hd=2&autoplay=0&muted=0',
       type: 'embed',
     });
 
     expect(getFeedItemPreview(item({
       link: 'https://vk.com/wall-123_789?z=clip-123_456',
     }))).toMatchObject({
-      src: 'https://vk.com/clip_ext.php?oid=-123&id=456&hd=2&autoplay=1',
+      src: 'https://vk.com/clip_ext.php?oid=-123&id=456&hd=2&autoplay=0&muted=0',
       type: 'embed',
     });
 
     expect(getFeedItemPreview(item({
       text: '<iframe src="https://vkvideo.ru/video_ext.php?oid=-123&amp;id=456&amp;hash=secret"></iframe>',
     }))).toMatchObject({
-      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hash=secret&autoplay=1',
+      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hash=secret&autoplay=0&muted=0',
       type: 'embed',
     });
 
     expect(getFeedItemPreview(item({
       link: 'https://vk.ru/video_ext.php?oid=-123&id=456&hash=secret',
     }))).toMatchObject({
-      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hash=secret&autoplay=1',
+      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hash=secret&autoplay=0&muted=0',
       type: 'embed',
     });
   });

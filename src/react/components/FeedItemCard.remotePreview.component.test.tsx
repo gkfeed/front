@@ -119,7 +119,7 @@ describe('FeedItemCard remote and feed previews', () => {
     const player = screen.getByTitle('Video preview for VK clip');
     expect(player.tagName).toBe('IFRAME');
     expect(player.getAttribute('src'))
-      .toBe('https://vk.com/video_ext.php?oid=-123&id=456&hd=2&autoplay=1');
+      .toBe('https://vk.com/video_ext.php?oid=-123&id=456&hd=2&autoplay=0&muted=0');
     expect(player.getAttribute('allow')).toContain('fullscreen');
   });
 
@@ -145,7 +145,7 @@ describe('FeedItemCard remote and feed previews', () => {
     const player = await screen.findByTitle('Video preview for Рифмы и Панчи');
     expect(player.tagName).toBe('IFRAME');
     expect(player.getAttribute('src')).toBe(
-      'https://vk.com/video_ext.php?oid=-28905875&id=456404323&hash=secret&autoplay=1',
+      'https://vk.com/video_ext.php?oid=-28905875&id=456404323&hash=secret&autoplay=0&muted=0',
     );
   });
 });

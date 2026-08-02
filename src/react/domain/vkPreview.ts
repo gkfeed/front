@@ -12,7 +12,8 @@ export function getVkVideoPreview(url: URL, title: string): FeedItemPreview | nu
     const embedUrl = new URL(url.href);
     embedUrl.protocol = 'https:';
     embedUrl.hostname = 'vk.com';
-    embedUrl.searchParams.set('autoplay', '1');
+    embedUrl.searchParams.set('autoplay', '0');
+    embedUrl.searchParams.set('muted', '0');
     return createVkPreview(embedUrl, title);
   }
 
@@ -23,7 +24,8 @@ export function getVkVideoPreview(url: URL, title: string): FeedItemPreview | nu
   embedUrl.searchParams.set('oid', ownerId!);
   embedUrl.searchParams.set('id', videoId!);
   embedUrl.searchParams.set('hd', '2');
-  embedUrl.searchParams.set('autoplay', '1');
+  embedUrl.searchParams.set('autoplay', '0');
+  embedUrl.searchParams.set('muted', '0');
 
   return createVkPreview(embedUrl, title);
 }
