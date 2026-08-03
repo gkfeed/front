@@ -10,6 +10,7 @@ import { TikTokComments } from './previews/TikTokComments';
 import { TwitchPreview } from './previews/TwitchPreview';
 import { TwitchTitle } from './TwitchTitle';
 import { YoutubePreview } from './previews/YoutubePreview';
+import { parseMatreshkaTitle } from '../domain/matreshkaTitle';
 
 export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
   const { t } = useTranslation();
@@ -52,10 +53,11 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
     );
   }
   if (preview.type === 'matreshka') {
+    const matreshkaTitle = parseMatreshkaTitle(item.title, item.text);
     return (
       <MatreshkaPreview
         videoId={preview.videoId}
-        title={item.text || item.title}
+        title={matreshkaTitle.title}
         preview={localizedPreview}
         onPreviewError={onPreviewError}
       />
@@ -133,9 +135,13 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
     );
   }
   if (descriptor.copy === 'matreshka') {
+    const matreshkaTitle = parseMatreshkaTitle(item.title, item.text);
     return (
       <div className="reader-card__copy reader-card__matreshka-copy">
-        <h2 className="reader-card__title">{item.text || item.title}</h2>
+        <h2 className="reader-card__title">{matreshkaTitle.title}</h2>
+        {matreshkaTitle.channel ? (
+          <p className="reader-card__channel">{matreshkaTitle.channel}</p>
+        ) : null}
       </div>
     );
   }
