@@ -19,6 +19,10 @@ test.describe('TikTok player on iPad-sized readers', () => {
       contentType: 'text/html',
       body: '<!doctype html><title>TikTok player</title>',
     }));
+    await page.route('https://example.com/poster.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="#a6e3a1"/></svg>',
+    }));
     await page.route('**/api/bff/tiktok-comments?**', (route) => route.fulfill({
       json: {
         comments: [],
@@ -120,6 +124,63 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(fullscreenBox!.width).toBeGreaterThan(regularBox!.width);
     expect(fullscreenBox!.height).toBeGreaterThan(regularBox!.height);
     expect(Math.abs(fullscreenBox!.width * 16 / 9 - fullscreenBox!.height)).toBeLessThan(1);
+  });
+
+  test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 21,
+          feed_id: 4,
+          link: 'https://example.com/poster.jpg',
+          title: 'A long image title that should wrap inside the fullscreen reader',
+          text: '',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+
+    await expect(page.locator('.reader-card__preview img')).toBeVisible();
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('#main').getByRole('button', { name: 'Exit Reader fullscreen' })).toBeVisible();
+
+    const bounds = await page.evaluate(() => {
+      const item = document.querySelector<HTMLElement>('.reader__item');
+      const actions = document.querySelector<HTMLElement>('.reader__actions');
+      const preview = document.querySelector<HTMLElement>('.reader-card__preview');
+      const previewBox = preview?.getBoundingClientRect();
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth,
+        itemRight: item?.getBoundingClientRect().right ?? 0,
+        actionsRight: actions?.getBoundingClientRect().right ?? 0,
+        itemLeft: item?.getBoundingClientRect().left ?? 0,
+        actionsLeft: actions?.getBoundingClientRect().left ?? 0,
+        itemWidth: item?.getBoundingClientRect().width ?? 0,
+        actionsWidth: actions?.getBoundingClientRect().width ?? 0,
+        cardWidth: document.querySelector<HTMLElement>('.reader-card')?.getBoundingClientRect().width ?? 0,
+        previewWidth: previewBox?.width ?? 0,
+        imageWidth: document.querySelector<HTMLElement>('.reader-card__preview img')?.getBoundingClientRect().width ?? 0,
+        imageRight: document.querySelector<HTMLElement>('.reader-card__preview img')?.getBoundingClientRect().right ?? 0,
+        previewRight: previewBox?.right ?? 0,
+        actionsBottom: actions?.getBoundingClientRect().bottom ?? 0,
+        viewportHeight: window.innerHeight,
+        previewCenter: previewBox ? previewBox.left + previewBox.width / 2 : 0,
+      };
+    });
+
+    expect(bounds.documentWidth).toBeLessThanOrEqual(bounds.viewportWidth);
+    expect(bounds.itemRight).toBeLessThanOrEqual(bounds.viewportWidth);
+    expect(bounds.actionsRight).toBeLessThanOrEqual(bounds.viewportWidth);
+    expect(Math.abs(bounds.itemWidth - bounds.actionsWidth)).toBeLessThan(1);
+    expect(Math.abs(bounds.itemLeft - bounds.actionsLeft)).toBeLessThan(1);
+    expect(Math.abs(bounds.itemWidth - bounds.cardWidth)).toBeLessThan(1);
+    expect(Math.abs(bounds.cardWidth - bounds.previewWidth)).toBeLessThan(1);
+    expect(bounds.imageRight).toBeLessThanOrEqual(bounds.previewRight + 1);
+    expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
+    expect(Math.abs(bounds.previewCenter - bounds.viewportWidth / 2)).toBeLessThan(1);
   });
 
   test('reflows controls after rotating from landscape to portrait', async ({ page }) => {

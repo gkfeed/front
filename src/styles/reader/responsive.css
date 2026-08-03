@@ -77,11 +77,7 @@
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--twitch),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--image-preview),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--simple-image) {
-    width: min(
-      100%,
-      1440px,
-      max(320px, calc((100dvh - 330px) * 16 / 9))
-    );
+    width: min(100%, 960px);
   }
 
   /* YouTube thumbnails are 16:9, so sizing the item from the available height
@@ -105,7 +101,7 @@
   html[data-reader-fullscreen="true"] main .reader-card--simple-image,
   main[data-reader-fullscreen="true"] .reader-card--image-preview,
   main[data-reader-fullscreen="true"] .reader-card--simple-image {
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
     justify-self: center;
   }
@@ -118,7 +114,7 @@
   html[data-reader-fullscreen="true"] main .reader-card--simple-image .reader-card__preview,
   main[data-reader-fullscreen="true"] .reader-card--image-preview .reader-card__preview,
   main[data-reader-fullscreen="true"] .reader-card--simple-image .reader-card__preview {
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
   }
 
@@ -130,7 +126,7 @@
   html[data-reader-fullscreen="true"] main .reader-card--simple-image .reader-card__preview > img,
   main[data-reader-fullscreen="true"] .reader-card--image-preview .reader-card__preview > img,
   main[data-reader-fullscreen="true"] .reader-card--simple-image .reader-card__preview > img {
-    width: auto;
+    width: 100%;
     max-width: 100%;
     max-height: calc(100dvh - 300px);
     margin-inline: auto;
@@ -536,7 +532,7 @@ html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--instagr
 main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--image-preview),
 main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--simple-image),
 main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--instagram-photo) {
-  width: min(100%, 1600px);
+  width: min(100%, 960px);
 }
 
 main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
@@ -592,11 +588,7 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
   html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image),
   main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
   main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image) {
-    width: min(
-      100%,
-      1600px,
-      max(320px, calc((100dvh - 330px) * 16 / 9))
-    );
+    width: min(100%, 960px);
   }
 }
 
@@ -604,16 +596,12 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
    browsers whose fullscreen pseudo-class is limited. */
 @media (min-width: 641px) {
   .reader__item--fullscreen:not(.reader__item--short-video) {
-    width: min(100%, 1280px);
+    width: min(100%, 960px);
     max-width: none;
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video):has(.reader-card--image-preview, .reader-card--simple-image) {
-    width: min(
-      100%,
-      1440px,
-      max(320px, calc((100dvh - 300px) * 16 / 9))
-    );
+    width: min(100%, 960px);
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card {
@@ -659,7 +647,7 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
     --reader-fullscreen-padding-y: max(28px, calc(env(safe-area-inset-top) + 20px));
     --reader-fullscreen-count-height: 34px;
     min-height: 0;
-    height: max(
+    --reader-fullscreen-content-height: max(
       0px,
       calc(
         100dvh
@@ -669,8 +657,12 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
         - (2 * var(--reader-fullscreen-gap))
       )
     );
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
     gap: var(--reader-fullscreen-gap);
-    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-rows: auto auto auto;
+    min-width: 0;
+    justify-self: center;
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader__actions[hidden]) {
@@ -679,28 +671,70 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
 
   .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview) {
     min-height: 0;
-    height: 100%;
-    grid-template-rows: minmax(0, 1fr) auto;
-    overflow: hidden;
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
+    grid-template-rows: auto auto;
+    min-width: 0;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader__actions,
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader__count-row {
+    width: 100%;
+    min-width: 0;
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
   .reader-card__preview {
     min-height: 0;
-    height: 100%;
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
   .reader-card__preview > img,
   .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
-  .reader-card__preview > video,
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
-  .reader-card__preview > iframe {
+  .reader-card__preview > video {
     width: 100%;
-    height: 100%;
+    height: auto;
     max-width: none;
-    max-height: none;
+    max-height: max(0px, calc(var(--reader-fullscreen-content-height) - 180px));
     object-fit: contain;
+  }
+
+  /* Portrait image cards should size to the image instead of leaving wide
+     side gutters inside a fullscreen card. */
+  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card > .reader-card__preview > img) {
+    width: min(100%, 960px);
+    max-width: none;
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(> .reader-card__preview > img) {
+    width: 100%;
+    max-width: none;
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(> .reader-card__preview > img)
+  > .reader-card__preview {
+    width: 100%;
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(> .reader-card__preview > img)
+  > .reader-card__preview > img {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card > .reader-card__preview > img)
+  .reader-card__copy {
+    width: 100%;
+    max-width: 100%;
+    justify-self: center;
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video) .reader-card__copy {
