@@ -28,14 +28,21 @@ export function YoutubePreview({
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
   const [isDoubleSpeed, setIsDoubleSpeed] = useState(true);
   const [resumeProgress, setResumeProgress] = useState(() => readYoutubeProgress(videoId));
+  const [isPlaying, setIsPlaying] = useState(() => resumeProgress === null);
+  const isPlayingRef = useRef(isPlaying);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
+  isPlayingRef.current = isPlaying;
 
   useEffect(() => {
     setIsPlayerOpen(false);
     setIsTheaterOpen(false);
     setIsDoubleSpeed(true);
-    setResumeProgress(readYoutubeProgress(videoId));
+    const nextResumeProgress = readYoutubeProgress(videoId);
+    setResumeProgress(nextResumeProgress);
+    const nextIsPlaying = nextResumeProgress === null;
+    isPlayingRef.current = nextIsPlaying;
+    setIsPlaying(nextIsPlaying);
   }, [videoId]);
 
   useEffect(() => {
@@ -46,6 +53,22 @@ export function YoutubePreview({
       if (event.key === 'Escape') {
         event.preventDefault();
         setIsTheaterOpen(false);
+        return;
+      }
+      if (event.key === ' ' || event.code === 'Space') {
+        const iframe = playerRef.current?.querySelector<HTMLIFrameElement>('iframe') ?? null;
+        // Space pressed while the iframe is focused is handled by YouTube's
+        // native controls. Events from a cross-origin iframe do not bubble to
+        // this window listener.
+        if (document.activeElement === iframe) return;
+        event.preventDefault();
+        const nextIsPlaying = !isPlayingRef.current;
+        isPlayingRef.current = nextIsPlaying;
+        setIsPlaying(nextIsPlaying);
+        sendPlayerCommand(
+          iframe,
+          nextIsPlaying ? 'playVideo' : 'pauseVideo',
+        );
         return;
       }
       if (event.key !== 'Tab') return;
@@ -65,7 +88,9 @@ export function YoutubePreview({
     const playerElement = playerRef.current;
     const triggerElement = triggerRef.current;
     window.addEventListener('keydown', handleKeyDown);
-    playerElement?.querySelector<HTMLElement>('button, iframe')?.focus();
+    // Keep keyboard playback controls in the YouTube iframe. Focusing the
+    // speed button makes Space activate the 1x/2x toggle instead.
+    playerElement?.querySelector<HTMLIFrameElement>('iframe')?.focus();
     return () => {
       document.documentElement.classList.remove('reader-theater-open');
       window.removeEventListener('keydown', handleKeyDown);
@@ -86,6 +111,10 @@ export function YoutubePreview({
         isDoubleSpeed={isDoubleSpeed}
         resumePosition={resumeProgress?.position ?? null}
         shellRef={playerRef}
+        onPlaybackStateChange={(nextIsPlaying) => {
+          isPlayingRef.current = nextIsPlaying;
+          setIsPlaying(nextIsPlaying);
+        }}
         onToggleTheater={() => setIsTheaterOpen((isOpen) => !isOpen)}
         onTogglePlaybackSpeed={() => {
           const nextIsDoubleSpeed = !isDoubleSpeed;
@@ -133,6 +162,7 @@ type YoutubePlayerProps = {
   isTheaterOpen: boolean;
   isDoubleSpeed: boolean;
   resumePosition: number | null;
+  onPlaybackStateChange: (isPlaying: boolean) => void;
   onToggleTheater: () => void;
   onTogglePlaybackSpeed: () => void;
   shellRef: RefObject<HTMLDivElement | null>;
@@ -144,6 +174,7 @@ function YoutubePlayer({
   isTheaterOpen,
   isDoubleSpeed,
   resumePosition,
+  onPlaybackStateChange,
   onToggleTheater,
   onTogglePlaybackSpeed,
   shellRef,
@@ -156,12 +187,14 @@ function YoutubePlayer({
   });
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const youtubePlayerRef = useRef<YoutubePlayer | null>(null);
+  const onPlaybackStateChangeRef = useRef(onPlaybackStateChange);
   const isDoubleSpeedRef = useRef(isDoubleSpeed);
   const resumeRequestedRef = useRef(false);
   const canPersistProgressRef = useRef(resumePosition === null);
   isDoubleSpeedRef.current = isDoubleSpeed;
   const [isResumeAvailable, setIsResumeAvailable] = useState(resumePosition !== null);
   const [isResumeRequested, setIsResumeRequested] = useState(false);
+  onPlaybackStateChangeRef.current = onPlaybackStateChange;
 
   useEffect(() => {
     setIsResumeAvailable(resumePosition !== null);
@@ -205,6 +238,7 @@ function YoutubePlayer({
     };
 
     const handleStateChange = (event: YoutubePlayerStateChangeEvent) => {
+      onPlaybackStateChangeRef.current(event.data === 1);
       if (event.data === 1) {
         canPersistProgressRef.current = true;
         setIsResumeAvailable(false);

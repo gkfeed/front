@@ -119,6 +119,14 @@ describe('FeedItemCard YouTube and general states', () => {
     const resumeButton = screen.getByRole('button', { name: 'Continue from 1:48' });
     expect(resumeButton.nextElementSibling?.textContent).toBe('2x');
 
+    const speedToggle = screen.getByRole('button', { name: 'Playback speed: 2x' });
+    speedToggle.focus();
+    fireEvent.keyDown(speedToggle, { key: ' ' });
+    expect(postMessage).toHaveBeenCalledWith(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+      '*',
+    );
+
     fireEvent.click(resumeButton);
 
     expect(postMessage).toHaveBeenCalledWith(
@@ -170,6 +178,17 @@ describe('FeedItemCard YouTube and general states', () => {
     });
     act(() => stateChangeHandler({ data: 2, target: player }));
 
+    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    const speedToggle = screen.getByRole('button', { name: 'Playback speed: 2x' });
+    speedToggle.focus();
+    fireEvent.keyDown(speedToggle, { key: ' ' });
+
+    expect(postMessage).toHaveBeenCalledWith(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+      '*',
+    );
+
     expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
       .toMatchObject({ position: 108, duration: 3600 });
   });
@@ -218,6 +237,18 @@ describe('FeedItemCard YouTube and general states', () => {
       .toMatchObject({ position: 108, duration: 3600 });
   });
 
+  it('focuses the video in theater mode so Space controls playback', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+
+    expect(document.activeElement).toBe(screen.getByTitle('Story'));
+    expect(screen.getByRole('button', { name: 'Playback speed: 2x' }).getAttribute('aria-pressed'))
+      .toBe('true');
+  });
 
   it('toggles YouTube playback speed from the default 2x setting', () => {
     render(<FeedItemCard item={{
