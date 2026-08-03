@@ -8,6 +8,7 @@ export type FullscreenElement = HTMLElement & {
 };
 
 export const FALLBACK_FULLSCREEN_EVENT = 'readerfullscreenchange';
+let automaticFallbackFullscreen = false;
 
 export function getFullscreenElement(): Element | null {
   const fullscreenDocument = document as FullscreenDocument;
@@ -25,9 +26,19 @@ export function setNativeFullscreenAttribute(main: HTMLElement | null, enabled: 
 }
 
 export function setFallbackFullscreen(enabled: boolean): void {
+  if (!enabled) automaticFallbackFullscreen = false;
   if (enabled) document.documentElement.dataset.readerFullscreen = 'true';
   else delete document.documentElement.dataset.readerFullscreen;
   document.dispatchEvent(new Event(FALLBACK_FULLSCREEN_EVENT));
+}
+
+export function setAutomaticFallbackFullscreen(enabled: boolean): void {
+  automaticFallbackFullscreen = enabled;
+  setFallbackFullscreen(enabled);
+}
+
+export function isAutomaticFallbackFullscreen(): boolean {
+  return automaticFallbackFullscreen;
 }
 
 export function rememberReviewActionsSize(main: HTMLElement): void {
@@ -44,8 +55,10 @@ export function clearReviewActionsSize(main: HTMLElement | null): void {
 
 export function isReaderFullscreen(): boolean {
   const main = getMainElement();
-  return document.documentElement.dataset.readerFullscreen === 'true'
-    || getFullscreenElement() === main;
+  return main !== null && (
+    document.documentElement.dataset.readerFullscreen === 'true'
+    || getFullscreenElement() === main
+  );
 }
 
 export async function exitReaderFullscreen(): Promise<void> {

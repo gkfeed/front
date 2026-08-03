@@ -1,0 +1,42 @@
+@media (max-width: 640px) {
+  body:has(.reader__item--short-video) .reader__fullscreen-toolbar {
+    right: max(12px, env(safe-area-inset-right));
+  }
+
+  .reader__mobile-shortcuts {
+    position: fixed;
+    z-index: 14;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(18px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    pointer-events: auto;
+  }
+
+  .reader__mobile-shortcuts button,
+  .reader__mobile-shortcuts a {
+    display: grid;
+    min-width: 44px;
+    min-height: 40px;
+    place-items: center;
+    padding: 8px 12px;
+    border: 1px solid color-mix(in oklch, var(--color-page) 76%, black);
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--color-page) 84%, transparent);
+    color: var(--color-ink-inverse);
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
+    box-shadow: 0 5px 18px rgb(0 0 0 / 24%);
+    backdrop-filter: blur(12px);
+  }
+
+  .reader__mobile-shortcuts button:focus-visible,
+  .reader__mobile-shortcuts a:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}

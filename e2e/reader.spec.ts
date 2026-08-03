@@ -63,6 +63,8 @@ test.describe('TikTok player on iPad-sized readers', () => {
 
     await expect(page.getByRole('button', { name: 'Exit Reader fullscreen' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'More review actions' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Scroll view' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open original' })).toBeVisible();
   });
 
   test('uses the available height in landscape', async ({ page }) => {

@@ -249,7 +249,15 @@ describe('ReaderPage', () => {
     expect(screen.queryByLabelText('More review actions')).toBeNull();
     expect(screen.getByRole('button', { name: 'Keep item' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Delete item' })).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Scroll view' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Open original' }).getAttribute('href'))
+      .toBe('https://www.tiktok.com/@creator/video/123');
+    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scroll view' }));
+
+    expect(screen.queryByLabelText('Review controls')).toBeNull();
+    expect(screen.getByTitle('Video preview for Short video')).toBeTruthy();
   });
 
   it.each([
@@ -276,6 +284,35 @@ describe('ReaderPage', () => {
 
     expect(await screen.findByRole('button', { name: 'Exit Reader fullscreen' })).toBeTruthy();
     expect(document.documentElement.dataset.readerFullscreen).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scroll view' }));
+    await waitFor(() => expect(document.documentElement.dataset.readerFullscreen).toBeUndefined());
+  });
+
+  it('updates automatic fullscreen when the viewport crosses the mobile breakpoint', async () => {
+    let viewportWidth = 1024;
+    vi.spyOn(window, 'innerWidth', 'get').mockImplementation(() => viewportWidth);
+    vi.mocked(getFeedItems).mockResolvedValue([{
+      id: 20,
+      feedId: 4,
+      link: 'https://www.tiktok.com/@creator/video/123',
+      title: 'Short video',
+      text: '',
+    }]);
+    const main = document.createElement('main');
+    document.body.append(main);
+    renderReader('/reader', 'blur', main);
+
+    expect(await screen.findByTitle('Video preview for Short video')).toBeTruthy();
+    expect(document.documentElement.dataset.readerFullscreen).toBeUndefined();
+
+    viewportWidth = 390;
+    fireEvent(window, new Event('resize'));
+    await waitFor(() => expect(document.documentElement.dataset.readerFullscreen).toBe('true'));
+
+    viewportWidth = 1024;
+    fireEvent(window, new Event('resize'));
+    await waitFor(() => expect(document.documentElement.dataset.readerFullscreen).toBeUndefined());
   });
 
   it('toggles fullscreen with the f keyboard shortcut', async () => {

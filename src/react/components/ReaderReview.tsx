@@ -5,8 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemPreview';
 import {
   FALLBACK_FULLSCREEN_EVENT,
+  exitReaderFullscreen,
+  getMainElement,
+  isAutomaticFallbackFullscreen,
   isReaderFullscreen,
-  setFallbackFullscreen,
+  setAutomaticFallbackFullscreen,
 } from '../services/readerFullscreen';
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
@@ -23,6 +26,7 @@ export function ReaderReview({
   onKeep,
   onDelete,
   onReset,
+  onShowScroll,
 }: {
   item: FeedItem;
   remainingCount: number;
@@ -33,11 +37,12 @@ export function ReaderReview({
   onKeep: () => void;
   onDelete: () => void;
   onReset: () => void;
+  onShowScroll: () => void;
 }) {
   const { t } = useTranslation();
   const isShortVideo = isShortVideoFeedItem(item);
   const isTikTok = isTikTokFeedItem(item);
-  const isMobileViewport = typeof window !== 'undefined' && window.innerWidth <= 640;
+  const [isMobileViewport, setIsMobileViewport] = useState(getIsMobileViewport);
   const [isFullscreen, setIsFullscreen] = useState(isReaderFullscreen);
   const reviewActions = { isDeleting, onKeep, onDelete };
 
@@ -56,11 +61,27 @@ export function ReaderReview({
   }, []);
 
   useEffect(() => {
-    if (!isShortVideo || !isMobileViewport || isReaderFullscreen()) return;
+    if (!isShortVideo || !isMobileViewport || !getMainElement() || isReaderFullscreen()) return;
     // Native fullscreen requires a user gesture in Chromium and Safari. The
     // reader's fallback is the reliable automatic mobile fullscreen mode.
-    setFallbackFullscreen(true);
+    setAutomaticFallbackFullscreen(true);
   }, [isMobileViewport, isShortVideo, item.id]);
+
+  useEffect(() => {
+    if (isShortVideo && isMobileViewport) return;
+    if (!isAutomaticFallbackFullscreen() || !isReaderFullscreen()) return;
+    void exitReaderFullscreen();
+  }, [isMobileViewport, isShortVideo]);
+
+  useEffect(() => {
+    const updateViewport = () => setIsMobileViewport(getIsMobileViewport());
+    window.addEventListener('resize', updateViewport);
+    window.visualViewport?.addEventListener('resize', updateViewport);
+    return () => {
+      window.removeEventListener('resize', updateViewport);
+      window.visualViewport?.removeEventListener('resize', updateViewport);
+    };
+  }, []);
 
   return (
     <div
@@ -79,7 +100,10 @@ export function ReaderReview({
       <FeedItemCard key={item.id} item={item} />
       {isShortVideo ? (
         <ReaderMobileRail
+          item={item}
+          isTikTok={isTikTok}
           {...reviewActions}
+          onShowScroll={onShowScroll}
         />
       ) : null}
       {useCompactActions ? <CompactReviewActions {...reviewActions} /> : null}
@@ -96,4 +120,8 @@ export function ReaderReview({
       </div>
     </div>
   );
+}
+
+function getIsMobileViewport(): boolean {
+  return typeof window !== 'undefined' && window.innerWidth <= 640;
 }

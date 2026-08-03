@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { ReaderReview } from '../components/ReaderReview';
@@ -9,8 +9,9 @@ import type { FeedItemDeletion } from '../hooks/useFeedItemDeletion';
 import { useFeedReader } from '../hooks/useFeedReader';
 import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
-import { exitReaderFullscreen } from '../services/readerFullscreen';
+import { exitReaderFullscreen, isAutomaticFallbackFullscreen } from '../services/readerFullscreen';
 import { getReaderMode } from '../state/readerMode';
+import type { ReaderMode } from '../state/readerMode';
 import { getRequestErrorMessage } from '../services/authError';
 
 export function ReaderPage() {
@@ -20,7 +21,12 @@ export function ReaderPage() {
 
   const { t } = useTranslation();
   const { search } = useLocation();
+  const [, setSearchParams] = useSearchParams();
   const mode = getReaderMode(search);
+  useEffect(() => {
+    if (mode === 'review' || !isAutomaticFallbackFullscreen()) return;
+    void exitReaderFullscreen();
+  }, [mode]);
   const {
     items,
     currentItem,
@@ -49,6 +55,15 @@ export function ReaderPage() {
     onDelete: deleteItem,
   });
   const hasLoadedContent = !isLoading && !loadFailed;
+
+  function setMode(nextMode: ReaderMode) {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      if (nextMode === 'review') nextParams.delete('view');
+      else nextParams.set('view', nextMode);
+      return nextParams;
+    });
+  }
 
   return (
     <>
@@ -93,6 +108,7 @@ export function ReaderPage() {
             onKeep={keepItem}
             onDelete={deleteItem}
             onReset={resetReview}
+            onShowScroll={() => setMode('scroll')}
           />
         ) : null}
         {mode === 'review' && hasLoadedContent && items.length > 0 && !currentItem ? (
