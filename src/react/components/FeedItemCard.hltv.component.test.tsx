@@ -86,7 +86,7 @@ describe('FeedItemCard HLTV previews', () => {
     expect(screen.getByText('Spirit')).toBeTruthy();
     expect(screen.getByText('MOUZ')).toBeTruthy();
     expect(screen.queryByAltText(/Spirit vs MOUZ at/)).toBeNull();
-    expect(screen.getByText(/^Starts in /)).toBeTruthy();
+    expect(screen.getByText(/^Starts in /).closest('.reader-card__hltv-live-card')).toBeTruthy();
   });
 
   it('does not show an HLTV countdown after the match start', async () => {
@@ -160,6 +160,49 @@ describe('FeedItemCard HLTV previews', () => {
     })).toBeTruthy();
     expect(screen.getByText('1 : 2')).toBeTruthy();
     expect(screen.queryByAltText('Preview for Liquid vs Spirit')).toBeNull();
+  });
+
+  it('shows player ratings for a completed HLTV match', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+      description: null,
+      image: null,
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      providerData: {
+        provider: 'hltv',
+        snapshot: {
+          startsAt: '2026-07-23T18:05:00.000Z',
+          teams: [
+            { name: 'Liquid', logo: null },
+            { name: 'Spirit', logo: null },
+          ],
+          status: 'over',
+          score: ['0', '2'],
+          currentMap: null,
+          completedMaps: [],
+          playerStats: [
+            [{ nickname: 'NAF', kills: 16, deaths: 31, adr: 54.5, rating: 0.6 }],
+            [{ nickname: 'donk', kills: 40, deaths: 22, adr: 102.4, rating: 1.58 }],
+          ],
+          teamSides: null,
+        },
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.hltv.org/matches/2396006/liquid-vs-spirit-event',
+      title: 'Liquid vs Spirit',
+    }} />);
+
+    const summary = await screen.findByText('Player stats');
+    expect(summary.closest('details')?.open).toBe(true);
+    expect(screen.getByText('donk')).toBeTruthy();
+    expect(screen.getByText('1.58')).toBeTruthy();
+    expect(screen.getAllByRole('columnheader', { name: 'Rating' })).toHaveLength(2);
   });
 
   it('converts a generated HLTV image into the live matchup format', async () => {

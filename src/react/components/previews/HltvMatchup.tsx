@@ -2,6 +2,7 @@ import type { HltvMatchSnapshot, HltvMatchTeamPreview } from '../../../../shared
 import { useTranslation } from 'react-i18next';
 
 import { getHltvMatchupAccessibilityData } from './hltvMatchupAccessibility';
+import { HltvCountdown } from './HltvCountdown';
 import { HltvPlayerStats } from './HltvPlayerStats';
 import { HltvMatchupScore } from './HltvMatchupScore';
 
@@ -17,6 +18,7 @@ export function HltvMatchup({
   const { t } = useTranslation();
   const { score, status, currentMap, completedMaps, playerStats, teamSides } = snapshot;
   const isLive = status === 'live';
+  const isCompleted = status === 'over';
   const accessibility = getHltvMatchupAccessibilityData({
     teams,
     score,
@@ -69,13 +71,15 @@ export function HltvMatchup({
         />
         <HltvMatchupTeam team={teams[1]} />
       </a>
-      {isLive ? (
+      {snapshot.startsAt ? <HltvCountdown startsAt={snapshot.startsAt} /> : null}
+      {isLive || (isCompleted && playerStats?.some((team) => team.length > 0)) ? (
         <HltvPlayerStats
           teams={teams}
           playerStats={playerStats}
-          currentMap={currentMap}
+          currentMap={isLive ? currentMap : null}
           teamSides={teamSides}
-          roundHistory={snapshot.roundHistory}
+          roundHistory={isLive ? snapshot.roundHistory : null}
+          isFinal={isCompleted}
         />
       ) : null}
     </div>

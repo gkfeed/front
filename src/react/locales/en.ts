@@ -218,6 +218,7 @@ const en = {
     sideSwap: 'Side swap after round 12',
     playerStats: 'Player stats',
     player: 'Player',
+    rating: 'Rating',
     assists: 'Assists',
     averageDamage: 'Average damage per round',
     waiting: 'Waiting for player stats…',

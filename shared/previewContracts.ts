@@ -17,8 +17,9 @@ export interface HltvPlayerStatsPreview {
   nickname: string;
   kills: number;
   deaths: number;
-  assists: number;
+  assists?: number;
   adr: number;
+  rating?: number;
 }
 
 export type HltvMatchPlayerStatsPreview = [

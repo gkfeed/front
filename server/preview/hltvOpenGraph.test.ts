@@ -100,6 +100,42 @@ describe('parseOpenGraph: HLTV provider', () => {
       },
     });
   });
+
+  it('extracts aggregate player stats and ratings from a completed match', () => {
+    const playerTable = (team: string, nickname: string, kills: number, deaths: number, adr: number, rating: number) => `
+      <table class="table totalstats">
+        <caption>${team}</caption>
+        <tbody>
+          <tr>
+            <td class="players"><a href="/player/1/${nickname}"><span class="player-nick">${nickname}</span></a></td>
+            <td class="kd text-center traditional-data">${kills}-${deaths}</td>
+            <td class="adr text-center traditional-data">${adr}</td>
+            <td class="rating text-center ratingPositive">${rating}</td>
+          </tr>
+        </tbody>
+      </table>`;
+    const html = `
+      <div class="timeAndEvent"><div class="countdown">Match over</div></div>
+      ${playerTable('Alpha', 'alpha', 40, 22, 102.4, 1.58)}
+      ${playerTable('Bravo', 'bravo', 22, 40, 64.5, 0.72)}
+      ${playerTable('Alpha map', 'map-alpha', 20, 10, 100, 1.5)}
+      ${playerTable('Bravo map', 'map-bravo', 10, 20, 60, 0.8)}
+    `;
+
+    expect(parseOpenGraph(
+      html,
+      new URL('https://www.hltv.org/matches/2396006/alpha-vs-bravo'),
+    ).providerData).toMatchObject({
+      provider: 'hltv',
+      snapshot: {
+        status: 'over',
+        playerStats: [
+          [{ nickname: 'alpha', kills: 40, deaths: 22, adr: 102.4, rating: 1.58 }],
+          [{ nickname: 'bravo', kills: 22, deaths: 40, adr: 64.5, rating: 0.72 }],
+        ],
+      },
+    });
+  });
 });
 
 describe('parseHltvScoreboard: external payloads', () => {

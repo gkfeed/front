@@ -13,12 +13,14 @@ export function HltvPlayerStats({
   currentMap,
   teamSides,
   roundHistory,
+  isFinal = false,
 }: {
   teams: [HltvMatchTeamPreview, HltvMatchTeamPreview];
   playerStats: HltvMatchSnapshot['playerStats'];
   currentMap: HltvMatchSnapshot['currentMap'];
   teamSides: HltvMatchSnapshot['teamSides'];
   roundHistory: HltvRoundPreview[] | null | undefined;
+  isFinal?: boolean;
 }) {
   const { t } = useTranslation();
   const hasPlayerStats = playerStats?.some((team) => team.length > 0);
@@ -27,9 +29,15 @@ export function HltvPlayerStats({
     (best, player) => !best || player.adr > best.adr ? player : best,
     null,
   );
+  const bestRatingPlayer = allPlayers.reduce<typeof allPlayers[number] | null>(
+    (best, player) => player.rating !== undefined && (!best || (best.rating ?? -Infinity) < player.rating)
+      ? player
+      : best,
+    null,
+  );
 
   return (
-    <details className="reader-card__hltv-player-stats">
+    <details className="reader-card__hltv-player-stats" open={isFinal}>
       <summary>
         <span>{t('hltv.playerStats')}</span>
         <span aria-hidden="true">⌄</span>
@@ -50,19 +58,22 @@ export function HltvPlayerStats({
                   <th scope="col">{t('hltv.player')}</th>
                   <th scope="col">K–D</th>
                   <th scope="col"><abbr title={t('hltv.averageDamage')}>ADR</abbr></th>
+                  <th scope="col">{t('hltv.rating')}</th>
                 </tr>
               </thead>
               <tbody>
                 {playerStats[teamIndex]!.map((player) => (
                   <tr
                     key={player.nickname}
-                    className={player === bestAdrPlayer
-                      ? 'reader-card__hltv-player-row--best-adr'
-                      : undefined}
+                    className={[
+                      player === bestAdrPlayer ? 'reader-card__hltv-player-row--best-adr' : '',
+                      player === bestRatingPlayer ? 'reader-card__hltv-player-row--best-rating' : '',
+                    ].filter(Boolean).join(' ') || undefined}
                   >
                     <th scope="row">{player.nickname}</th>
                     <td>{player.kills}–{player.deaths}</td>
                     <td>{player.adr.toFixed(1)}</td>
+                    <td>{player.rating?.toFixed(2) ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>

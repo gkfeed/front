@@ -70,8 +70,12 @@ function isHltvPlayerStats(value: unknown): boolean {
   if (!isRecord(value)) return false;
   const object = value;
   return typeof object.nickname === 'string'
-    && [object.kills, object.deaths, object.assists, object.adr]
-      .every((number) => typeof number === 'number' && Number.isFinite(number));
+    && [object.kills, object.deaths, object.adr]
+      .every((number) => typeof number === 'number' && Number.isFinite(number))
+    && (object.assists === undefined
+      || typeof object.assists === 'number' && Number.isFinite(object.assists))
+    && (object.rating === undefined
+      || typeof object.rating === 'number' && Number.isFinite(object.rating));
 }
 
 function isHltvMap(value: unknown): boolean {
