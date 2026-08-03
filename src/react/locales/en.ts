@@ -191,6 +191,7 @@ const en = {
     twitchPreview: '{{channel}} Twitch preview',
     vkVideo: 'VK video preview',
     playVideo: 'Play video {{title}}',
+    continueVideo: 'Continue from {{position}}',
     playTwitch: 'Play {{channel}} on Twitch',
     playbackSpeed: 'Playback speed: {{speed}}',
     enterTheater: 'Enter theater mode',

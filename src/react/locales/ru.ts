@@ -199,6 +199,7 @@ const ru = {
     twitchPreview: 'Предпросмотр Twitch: {{channel}}',
     vkVideo: 'Предпросмотр видео VK',
     playVideo: 'Воспроизвести видео: {{title}}',
+    continueVideo: 'Продолжить с {{position}}',
     playTwitch: 'Воспроизвести {{channel}} на Twitch',
     playbackSpeed: 'Скорость воспроизведения: {{speed}}',
     enterTheater: 'Войти в театральный режим',

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import { readYoutubeProgress, writeYoutubeProgress } from '../../services/youtubeProgress';
 
 type YoutubePreviewProps = {
   onPreviewError: () => void;
@@ -21,6 +22,7 @@ export function YoutubePreview({
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
   const [isDoubleSpeed, setIsDoubleSpeed] = useState(true);
+  const [resumeProgress, setResumeProgress] = useState(() => readYoutubeProgress(videoId));
   const triggerRef = useRef<HTMLButtonElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
 
@@ -28,6 +30,7 @@ export function YoutubePreview({
     setIsPlayerOpen(false);
     setIsTheaterOpen(false);
     setIsDoubleSpeed(true);
+    setResumeProgress(readYoutubeProgress(videoId));
   }, [videoId]);
 
   useEffect(() => {
@@ -76,6 +79,7 @@ export function YoutubePreview({
         title={title}
         isTheaterOpen={isTheaterOpen}
         isDoubleSpeed={isDoubleSpeed}
+        resumePosition={resumeProgress?.position ?? null}
         shellRef={playerRef}
         onToggleTheater={() => setIsTheaterOpen((isOpen) => !isOpen)}
         onTogglePlaybackSpeed={() => {
@@ -123,6 +127,7 @@ type YoutubePlayerProps = {
   title: string;
   isTheaterOpen: boolean;
   isDoubleSpeed: boolean;
+  resumePosition: number | null;
   onToggleTheater: () => void;
   onTogglePlaybackSpeed: () => void;
   shellRef: RefObject<HTMLDivElement | null>;
@@ -133,6 +138,7 @@ function YoutubePlayer({
   title,
   isTheaterOpen,
   isDoubleSpeed,
+  resumePosition,
   onToggleTheater,
   onTogglePlaybackSpeed,
   shellRef,
@@ -140,12 +146,78 @@ function YoutubePlayer({
   const { t } = useTranslation();
   const parameters = new URLSearchParams({ autoplay: '1', rel: '0', enablejsapi: '1' });
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeId = useId().replaceAll(':', '');
+  const [isResumeAvailable, setIsResumeAvailable] = useState(resumePosition !== null);
+  const [isResumeRequested, setIsResumeRequested] = useState(false);
+
+  useEffect(() => {
+    setIsResumeAvailable(resumePosition !== null);
+    setIsResumeRequested(false);
+  }, [resumePosition]);
 
   useEffect(() => {
     const sendCurrentPlaybackRate = () => sendPlaybackRate(iframeRef.current, isDoubleSpeed ? 2 : 1);
     const retryTimers = [300, 1000].map((delay) => window.setTimeout(sendCurrentPlaybackRate, delay));
     return () => retryTimers.forEach((timer) => window.clearTimeout(timer));
   }, [isDoubleSpeed]);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const latestProgressRef = {
+      current: { position: undefined as number | undefined, duration: undefined as number | undefined },
+    };
+    let lastPersistedAt = 0;
+
+    const persistProgress = (force = false) => {
+      const latestProgress = latestProgressRef.current;
+      if (latestProgress.position === undefined || latestProgress.duration === undefined) return;
+      const now = Date.now();
+      if (!force && now - lastPersistedAt < 4000) return;
+      writeYoutubeProgress(videoId, latestProgress.position, latestProgress.duration);
+      lastPersistedAt = now;
+    };
+
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      if (event.source !== iframe.contentWindow || !isYoutubeMessageOrigin(event.origin)) return;
+      const message = parseYoutubeMessage(event.data);
+      if (!message) return;
+
+      if (message.event === 'infoDelivery') {
+        if (message.currentTime !== undefined) latestProgressRef.current.position = message.currentTime;
+        if (message.duration !== undefined) latestProgressRef.current.duration = message.duration;
+      }
+
+      if ((message.event === 'onStateChange' || message.event === 'infoDelivery')
+        && (message.state === 0 || message.state === 2)) {
+        persistProgress(true);
+      }
+    };
+
+    const persistWhenHidden = () => {
+      if (document.visibilityState === 'hidden') persistProgress(true);
+    };
+    const persistOnPageHide = () => persistProgress(true);
+    const progressTimer = window.setInterval(() => persistProgress(), 5000);
+
+    window.addEventListener('message', handleMessage);
+    window.addEventListener('pagehide', persistOnPageHide);
+    document.addEventListener('visibilitychange', persistWhenHidden);
+    return () => {
+      window.clearInterval(progressTimer);
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('pagehide', persistOnPageHide);
+      document.removeEventListener('visibilitychange', persistWhenHidden);
+      persistProgress(true);
+    };
+  }, [videoId]);
+
+  useEffect(() => {
+    if (!isResumeRequested || resumePosition === null) return;
+    sendPlayerCommand(iframeRef.current, 'seekTo', [resumePosition, true]);
+    sendPlayerCommand(iframeRef.current, 'playVideo');
+  }, [isResumeRequested, resumePosition]);
 
   return (
     <div
@@ -160,6 +232,19 @@ function YoutubePlayer({
     >
       <div className="reader-card__player-stage">
         <div className="reader-card__player-toolbar">
+          {isResumeAvailable && resumePosition !== null ? (
+            <button
+              type="button"
+              className="reader-card__resume-toggle"
+              aria-label={t('preview.continueVideo', { position: formatYoutubeTime(resumePosition) })}
+              onClick={() => {
+                setIsResumeAvailable(false);
+                setIsResumeRequested(true);
+              }}
+            >
+              {t('preview.continueVideo', { position: formatYoutubeTime(resumePosition) })}
+            </button>
+          ) : null}
           <button
             type="button"
             className="reader-card__speed-toggle"
@@ -182,13 +267,21 @@ function YoutubePlayer({
         </div>
         <div className="reader-card__preview reader-card__preview--player">
           <iframe
+            id={iframeId}
             src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
             title={title || t('preview.youtubePlayer')}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
             ref={iframeRef}
-            onLoad={() => sendPlaybackRate(iframeRef.current, isDoubleSpeed ? 2 : 1)}
+            onLoad={() => {
+              initializeYoutubePlayer(iframeRef.current, iframeId);
+              sendPlaybackRate(iframeRef.current, isDoubleSpeed ? 2 : 1);
+              if (isResumeRequested && resumePosition !== null) {
+                sendPlayerCommand(iframeRef.current, 'seekTo', [resumePosition, true]);
+                sendPlayerCommand(iframeRef.current, 'playVideo');
+              }
+            }}
           />
         </div>
       </div>
@@ -197,11 +290,93 @@ function YoutubePlayer({
 }
 
 function sendPlaybackRate(iframe: HTMLIFrameElement | null, playbackRate: number): void {
+  sendPlayerCommand(iframe, 'setPlaybackRate', [playbackRate]);
+}
+
+function sendPlayerCommand(
+  iframe: HTMLIFrameElement | null,
+  func: 'playVideo' | 'pauseVideo' | 'setPlaybackRate' | 'seekTo',
+  args: unknown[] = [],
+): void {
   iframe?.contentWindow?.postMessage(JSON.stringify({
     event: 'command',
-    func: 'setPlaybackRate',
-    args: [playbackRate],
+    func,
+    args,
   }), '*');
+}
+
+function initializeYoutubePlayer(iframe: HTMLIFrameElement | null, iframeId: string): void {
+  const target = iframe?.contentWindow;
+  if (!target) return;
+
+  target.postMessage(JSON.stringify({
+    event: 'listening',
+    id: iframeId,
+    channel: 'gkfeed',
+    version: 3,
+  }), '*');
+  target.postMessage(JSON.stringify({
+    event: 'command',
+    func: 'addEventListener',
+    args: ['onStateChange'],
+    id: iframeId,
+    channel: 'gkfeed',
+  }), '*');
+}
+
+function parseYoutubeMessage(value: unknown): {
+  event: string;
+  currentTime?: number;
+  duration?: number;
+  state?: number;
+} | null {
+  const parsed = typeof value === 'string' ? parseJson(value) : value;
+  if (!parsed || typeof parsed !== 'object') return null;
+  const message = parsed as Record<string, unknown>;
+  if (typeof message.event !== 'string') return null;
+
+  const info = message.info && typeof message.info === 'object'
+    ? message.info as Record<string, unknown>
+    : null;
+  const currentTime = getFiniteNumber(info?.currentTime);
+  const duration = getFiniteNumber(info?.duration);
+  const state = getFiniteNumber(message.state)
+    ?? getFiniteNumber(message.info)
+    ?? getFiniteNumber(info?.playerState);
+
+  return {
+    event: message.event,
+    currentTime,
+    duration,
+    state,
+  };
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function getFiniteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function isYoutubeMessageOrigin(origin: string): boolean {
+  return origin === 'https://www.youtube-nocookie.com' || origin === 'https://www.youtube.com';
+}
+
+function formatYoutubeTime(seconds: number): string {
+  const totalSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  }
+  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
 function getFocusableElements(container: HTMLElement | null): HTMLElement[] {

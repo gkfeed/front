@@ -1,13 +1,30 @@
 // @vitest-environment jsdom
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NsfwPreferencesContext } from '../state/nsfwPreferencesContext';
 import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 
 describe('FeedItemCard YouTube and general states', () => {
+  const youtubeStorage = new Map<string, string>();
+
+  beforeEach(() => {
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (key: string) => youtubeStorage.get(key) ?? null,
+        removeItem: (key: string) => youtubeStorage.delete(key),
+        setItem: (key: string, value: string) => youtubeStorage.set(key, value),
+      },
+    });
+  });
+
+  afterEach(() => {
+    youtubeStorage.clear();
+  });
+
   it('blurs supported NSFW sources by default', () => {
     const { container, rerender } = render(<FeedItemCard item={{
       ...item,
@@ -73,6 +90,78 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(screen.getByRole('button', { name: 'Exit theater mode' }).getAttribute('aria-pressed')).toBe('true');
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
   });
+
+  it('offers to continue a YouTube video from its saved position', () => {
+    window.localStorage.setItem('gkfeed.youtube-progress.v1.abc123xyz', JSON.stringify({
+      position: 108,
+      duration: 3600,
+      updatedAt: Date.now(),
+    }));
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+
+    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    const resumeButton = screen.getByRole('button', { name: 'Continue from 1:48' });
+    expect(resumeButton.nextElementSibling?.textContent).toBe('2x');
+
+    fireEvent.click(resumeButton);
+
+    expect(postMessage).toHaveBeenCalledWith(
+      JSON.stringify({ event: 'command', func: 'seekTo', args: [108, true] }),
+      '*',
+    );
+    expect(postMessage).toHaveBeenCalledWith(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+      '*',
+    );
+    expect(screen.queryByRole('button', { name: 'Continue from 1:48' })).toBeNull();
+  });
+
+  it('stores YouTube progress when the player pauses', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
+    const source = iframe.contentWindow;
+    const durationDelivery = new MessageEvent('message', {
+      data: JSON.stringify({
+        event: 'infoDelivery',
+        info: { duration: 3600 },
+      }),
+      origin: 'https://www.youtube-nocookie.com',
+      source,
+    });
+    const positionDelivery = new MessageEvent('message', {
+      data: JSON.stringify({
+        event: 'infoDelivery',
+        info: { currentTime: 108 },
+      }),
+      origin: 'https://www.youtube-nocookie.com',
+      source,
+    });
+    const paused = new MessageEvent('message', {
+      data: JSON.stringify({ event: 'onStateChange', info: 2 }),
+      origin: 'https://www.youtube-nocookie.com',
+      source,
+    });
+
+    window.dispatchEvent(durationDelivery);
+    window.dispatchEvent(positionDelivery);
+    window.dispatchEvent(paused);
+
+    expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
+      .toMatchObject({ position: 108, duration: 3600 });
+  });
+
 
   it('toggles YouTube playback speed from the default 2x setting', () => {
     render(<FeedItemCard item={{
