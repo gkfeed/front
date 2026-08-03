@@ -44,7 +44,7 @@ export function resolveFeedItemCardMetadata({
   visiblePreview: FeedItemPreview | null;
   remoteItemPreview: FeedItemPreview | null;
 }): FeedItemCardMetadata {
-  const { hostname, provider, twitchChannel, youtubeVideoId } = analysis;
+  const { hostname, provider, matreshkaVideoId, twitchChannel, youtubeVideoId } = analysis;
   const adapter = getFeedItemProviderAdapter(provider);
   const policy = getFeedItemProviderPolicy(provider);
   const isNsfw = isNsfwLink(item.link);
@@ -79,6 +79,7 @@ export function resolveFeedItemCardMetadata({
     variant: adapter.resolveVariant({
       youtubeVideoId,
       twitchChannel,
+      matreshkaVideoId,
       isSimpleImage,
       isInstagramPhoto: adapter.showInstagramIdentity && isImagePreview(visiblePreview),
     }),

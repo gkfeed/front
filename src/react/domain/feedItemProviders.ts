@@ -6,11 +6,12 @@ import {
   isTikTokVideoUrl,
   isVkHost,
 } from '../../../shared/urlRules';
-import { getYoutubeVideoId, parseUrl } from './feedItemUrls';
+import { getMatreshkaVideoId, getYoutubeVideoId, parseUrl } from './feedItemUrls';
 import { getTwitchChannel } from './twitchPreview';
 
 export type FeedItemCardVariant =
   | { type: 'standard' }
+  | { type: 'matreshka'; videoId: string }
   | { type: 'twitch'; channel: string }
   | { type: 'youtube'; videoId: string }
   | { type: 'tiktok' }
@@ -25,10 +26,11 @@ export type FeedItemCardImagePreview =
 
 export type FeedItemCardPreviewDescriptor =
   | { type: 'media'; isShortVideo: boolean; isTikTok: boolean }
+  | { type: 'matreshka'; videoId: string }
   | { type: 'twitch'; channel: string }
   | { type: 'youtube'; videoId: string };
 
-export type FeedItemCardCopyDescriptor = 'none' | 'youtube' | 'twitch' | 'simple-image' | 'standard';
+export type FeedItemCardCopyDescriptor = 'none' | 'youtube' | 'twitch' | 'matreshka' | 'simple-image' | 'standard';
 
 export type FeedItemCardPresentationDescriptor = {
   className: string;
@@ -42,6 +44,7 @@ export type FeedItemCardPresentationDescriptor = {
 type FeedItemCardVariantContext = {
   youtubeVideoId: string | null;
   twitchChannel: string | null;
+  matreshkaVideoId: string | null;
   isSimpleImage: boolean;
   isInstagramPhoto: boolean;
 };
@@ -101,6 +104,12 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
     resolveVariant: () => ({ type: 'liquipedia' }),
     classNames: () => ['reader-card--liquipedia'],
   }),
+  matreshka: createFeedItemProviderAdapter({
+    resolveVariant: ({ matreshkaVideoId }) => matreshkaVideoId
+      ? { type: 'matreshka', videoId: matreshkaVideoId }
+      : { type: 'standard' },
+    classNames: (variant) => variant.type === 'matreshka' ? ['reader-card--matreshka'] : [],
+  }),
   tiktok: createFeedItemProviderAdapter({
     supplementary: 'tiktok',
     isShortVideo: true,
@@ -148,15 +157,19 @@ export function getFeedItemCardPresentationDescriptor({
         : '',
       imagePreview.type === 'hltv' ? 'reader-card--hltv-preview' : '',
     ].filter(Boolean).join(' '),
-    preview: variant.type === 'youtube'
-      ? { type: 'youtube', videoId: variant.videoId }
-      : variant.type === 'twitch'
+    preview: variant.type === 'matreshka'
+      ? { type: 'matreshka', videoId: variant.videoId }
+      : variant.type === 'youtube'
+        ? { type: 'youtube', videoId: variant.videoId }
+        : variant.type === 'twitch'
         ? { type: 'twitch', channel: variant.channel }
         : { type: 'media', isShortVideo, isTikTok: adapter.isTikTok },
     copy: imagePreview.type !== 'none' || isShortVideo
       ? 'none'
+      : variant.type === 'matreshka'
+      ? 'matreshka'
       : variant.type === 'youtube'
-      ? 'youtube'
+        ? 'youtube'
         : variant.type === 'twitch'
           ? 'twitch'
           : variant.type === 'simple-image'
@@ -206,6 +219,7 @@ export function getFeedItemProviderFromUrl(item: FeedItem, url: URL | null): Fee
 
   if (!url) return 'generic';
 
+  if (getMatreshkaVideoId(url)) return 'matreshka';
   if (getYoutubeVideoId(url)) return 'youtube';
   if (getTwitchChannel(url)) return 'twitch';
   if (isTikTokVideoUrl(url)) return 'tiktok';

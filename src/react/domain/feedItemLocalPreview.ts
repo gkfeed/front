@@ -9,6 +9,7 @@ import { getFeedItemProviderFromUrl } from './feedItemProviders';
 import { getTwitchChannel, getTwitchPreview } from './twitchPreview';
 import { getVkVideoPreview } from './vkPreview';
 import {
+  getMatreshkaVideoId,
   getYoutubeVideoId,
   hostnameOf,
   isDirectImage,
@@ -33,6 +34,7 @@ export function analyzeFeedItem(item: FeedItem): FeedItemAnalysis {
     localPreview: getFeedItemPreviewFromUrl(item, url),
     youtubeVideoId: url ? getYoutubeVideoId(url) : null,
     twitchChannel: url ? getTwitchChannel(url) : null,
+    matreshkaVideoId: url ? getMatreshkaVideoId(url) : null,
   };
 }
 

@@ -1,5 +1,6 @@
 .reader-card--youtube,
-.reader-card--twitch {
+.reader-card--twitch,
+.reader-card--matreshka {
   position: relative;
   gap: 0;
   min-height: 0;
@@ -30,7 +31,8 @@
 }
 
 .reader-card--youtube .reader-card__preview,
-.reader-card--twitch .reader-card__preview {
+.reader-card--twitch .reader-card__preview,
+.reader-card--matreshka .reader-card__preview {
   border: 0;
   border-radius: 0;
 }

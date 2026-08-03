@@ -124,6 +124,32 @@ describe('Twitch feed items', () => {
   });
 });
 
+describe('Matreshka feed items', () => {
+  it('recognizes canonical and embed Matreshka video links only', () => {
+    expect(analyzeFeedItem(item({
+      link: 'https://matreshka.tv/video/LHAN5jgduhC',
+    }))).toMatchObject({
+      provider: 'matreshka',
+      matreshkaVideoId: 'LHAN5jgduhC',
+    });
+    expect(analyzeFeedItem(item({
+      link: 'https://www.matreshka.tv/embed/video/mQJAs3oSzfQ',
+    })).provider).toBe('matreshka');
+    expect(analyzeFeedItem(item({
+      link: 'https://matreshka.tv.example.org/video/LHAN5jgduhC',
+    })).provider).toBe('generic');
+    expect(analyzeFeedItem(item({
+      link: 'https://matreshka.tv/channel/LHAN5jgduhC',
+    })).provider).toBe('generic');
+    expect(analyzeFeedItem(item({
+      link: 'http://matreshka.tv/video/LHAN5jgduhC',
+    })).provider).toBe('generic');
+    expect(analyzeFeedItem(item({
+      link: 'https://user:password@matreshka.tv/video/LHAN5jgduhC',
+    })).provider).toBe('generic');
+  });
+});
+
 describe('isTikTokFeedItem', () => {
   it('recognizes TikTok links without matching lookalike domains', () => {
     expect(isTikTokFeedItem(item({ link: 'https://www.tiktok.com/@creator/video/123' }))).toBe(true);

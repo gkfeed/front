@@ -14,6 +14,7 @@ export type FeedItemPreviewAlt =
   | { kind: 'youtube'; title: string | null }
   | { kind: 'tiktok'; title: string | null }
   | { kind: 'twitch'; channel: string }
+  | { kind: 'matreshka'; title: string | null }
   | { kind: 'vk'; title: string | null };
 
 export type FeedItemProvider =
@@ -21,6 +22,7 @@ export type FeedItemProvider =
   | 'hltv'
   | 'instagram'
   | 'liquipedia'
+  | 'matreshka'
   | 'tiktok'
   | 'twitch'
   | 'vk'
@@ -33,6 +35,7 @@ export interface FeedItemAnalysis {
   localPreview: FeedItemPreview | null;
   youtubeVideoId: string | null;
   twitchChannel: string | null;
+  matreshkaVideoId: string | null;
 }
 
 export type FeedItemAnalyzer = (item: FeedItem) => FeedItemAnalysis;

@@ -5,6 +5,7 @@ import { localizeFeedItemPreview } from './previewLocalization';
 import { HltvCountdown, HltvMatchup } from './previews/HltvMatch';
 import { FeedItemMedia } from './previews/FeedItemMedia';
 import { LiquipediaMatch } from './previews/LiquipediaMatch';
+import { MatreshkaPreview } from './previews/MatreshkaPreview';
 import { TikTokComments } from './previews/TikTokComments';
 import { TwitchPreview } from './previews/TwitchPreview';
 import { TwitchTitle } from './TwitchTitle';
@@ -43,6 +44,16 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
   if (preview.type === 'youtube') {
     return (
       <YoutubePreview
+        videoId={preview.videoId}
+        title={item.text || item.title}
+        preview={localizedPreview}
+        onPreviewError={onPreviewError}
+      />
+    );
+  }
+  if (preview.type === 'matreshka') {
+    return (
+      <MatreshkaPreview
         videoId={preview.videoId}
         title={item.text || item.title}
         preview={localizedPreview}
@@ -118,6 +129,13 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
     return (
       <div className="reader-card__twitch-copy">
         <h2 className="reader-card__title"><TwitchTitle text={streamTitle} /></h2>
+      </div>
+    );
+  }
+  if (descriptor.copy === 'matreshka') {
+    return (
+      <div className="reader-card__copy reader-card__matreshka-copy">
+        <h2 className="reader-card__title">{item.text || item.title}</h2>
       </div>
     );
   }

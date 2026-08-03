@@ -51,3 +51,16 @@ export function getYoutubeVideoId(url: URL): string | null {
 
   return videoId && /^[\w-]{6,}$/.test(videoId) ? videoId : null;
 }
+
+export function getMatreshkaVideoId(url: URL): string | null {
+  if (
+    url.protocol !== 'https:'
+    || hostnameOf(url) !== 'matreshka.tv'
+    || url.username
+    || url.password
+    || url.port
+  ) return null;
+
+  const videoId = url.pathname.match(/^\/(?:video|embed\/video)\/([A-Za-z0-9_-]{1,64})\/?$/i)?.[1] ?? null;
+  return videoId;
+}
