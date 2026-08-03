@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NsfwPreferencesContext } from '../state/nsfwPreferencesContext';
+import type { YoutubePlayer, YoutubePlayerStateChangeEvent } from '../services/youtubeIframeApi';
 import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 
@@ -19,10 +20,18 @@ describe('FeedItemCard YouTube and general states', () => {
         setItem: (key: string, value: string) => youtubeStorage.set(key, value),
       },
     });
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: undefined,
+    });
   });
 
   afterEach(() => {
     youtubeStorage.clear();
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: undefined,
+    });
   });
 
   it('blurs supported NSFW sources by default', () => {
@@ -123,40 +132,87 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(screen.queryByRole('button', { name: 'Continue from 1:48' })).toBeNull();
   });
 
-  it('stores YouTube progress when the player pauses', () => {
+  it('stores YouTube progress when the player pauses', async () => {
+    let stateChangeHandler: (event: YoutubePlayerStateChangeEvent) => void = () => undefined;
+    const player: YoutubePlayer = {
+      getCurrentTime: () => 108,
+      getDuration: () => 3600,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: {
+            onReady: (event: { target: YoutubePlayer }) => void;
+            onStateChange: (event: YoutubePlayerStateChangeEvent) => void;
+          };
+        }) {
+          stateChangeHandler = options.events.onStateChange;
+          options.events.onReady({ target: player });
+          return player;
+        }),
+      },
+    });
+
     render(<FeedItemCard item={{
       ...item,
       link: 'https://www.youtube.com/watch?v=abc123xyz',
     }} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
-    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
-    const source = iframe.contentWindow;
-    const durationDelivery = new MessageEvent('message', {
-      data: JSON.stringify({
-        event: 'infoDelivery',
-        info: { duration: 3600 },
-      }),
-      origin: 'https://www.youtube-nocookie.com',
-      source,
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
     });
-    const positionDelivery = new MessageEvent('message', {
-      data: JSON.stringify({
-        event: 'infoDelivery',
-        info: { currentTime: 108 },
-      }),
-      origin: 'https://www.youtube-nocookie.com',
-      source,
-    });
-    const paused = new MessageEvent('message', {
-      data: JSON.stringify({ event: 'onStateChange', info: 2 }),
-      origin: 'https://www.youtube-nocookie.com',
-      source,
+    act(() => stateChangeHandler({ data: 2, target: player }));
+
+    expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
+      .toMatchObject({ position: 108, duration: 3600 });
+  });
+
+  it('does not overwrite saved progress before the user chooses how to resume', async () => {
+    window.localStorage.setItem('gkfeed.youtube-progress.v1.abc123xyz', JSON.stringify({
+      position: 108,
+      duration: 3600,
+      updatedAt: Date.now(),
+    }));
+    const player: YoutubePlayer = {
+      getCurrentTime: () => 0,
+      getDuration: () => 3600,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: { onReady: (event: { target: YoutubePlayer }) => void };
+        }) {
+          options.events.onReady({ target: player });
+          return player;
+        }),
+      },
     });
 
-    window.dispatchEvent(durationDelivery);
-    window.dispatchEvent(positionDelivery);
-    window.dispatchEvent(paused);
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
+    expect(iframe.getAttribute('src')).toContain('autoplay=0');
+    window.dispatchEvent(new Event('pagehide'));
 
     expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
       .toMatchObject({ position: 108, duration: 3600 });

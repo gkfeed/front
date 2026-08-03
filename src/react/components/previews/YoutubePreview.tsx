@@ -1,8 +1,13 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import {
+  loadYoutubeIframeApi,
+  type YoutubePlayer,
+  type YoutubePlayerStateChangeEvent,
+} from '../../services/youtubeIframeApi';
 import { readYoutubeProgress, writeYoutubeProgress } from '../../services/youtubeProgress';
 
 type YoutubePreviewProps = {
@@ -144,15 +149,25 @@ function YoutubePlayer({
   shellRef,
 }: YoutubePlayerProps) {
   const { t } = useTranslation();
-  const parameters = new URLSearchParams({ autoplay: '1', rel: '0', enablejsapi: '1' });
+  const parameters = new URLSearchParams({
+    autoplay: resumePosition === null ? '1' : '0',
+    rel: '0',
+    enablejsapi: '1',
+  });
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const iframeId = useId().replaceAll(':', '');
+  const youtubePlayerRef = useRef<YoutubePlayer | null>(null);
+  const isDoubleSpeedRef = useRef(isDoubleSpeed);
+  const resumeRequestedRef = useRef(false);
+  const canPersistProgressRef = useRef(resumePosition === null);
+  isDoubleSpeedRef.current = isDoubleSpeed;
   const [isResumeAvailable, setIsResumeAvailable] = useState(resumePosition !== null);
   const [isResumeRequested, setIsResumeRequested] = useState(false);
 
   useEffect(() => {
     setIsResumeAvailable(resumePosition !== null);
     setIsResumeRequested(false);
+    resumeRequestedRef.current = false;
+    canPersistProgressRef.current = resumePosition === null;
   }, [resumePosition]);
 
   useEffect(() => {
@@ -169,8 +184,11 @@ function YoutubePlayer({
       current: { position: undefined as number | undefined, duration: undefined as number | undefined },
     };
     let lastPersistedAt = 0;
+    let isDisposed = false;
+    let isPlayerAttached = false;
 
     const persistProgress = (force = false) => {
+      if (!canPersistProgressRef.current) return;
       const latestProgress = latestProgressRef.current;
       if (latestProgress.position === undefined || latestProgress.duration === undefined) return;
       const now = Date.now();
@@ -179,20 +197,49 @@ function YoutubePlayer({
       lastPersistedAt = now;
     };
 
-    const handleMessage = (event: MessageEvent<unknown>) => {
-      if (event.source !== iframe.contentWindow || !isYoutubeMessageOrigin(event.origin)) return;
-      const message = parseYoutubeMessage(event.data);
-      if (!message) return;
+    const sampleProgress = (player: YoutubePlayer) => {
+      const position = player.getCurrentTime();
+      const duration = player.getDuration();
+      if (Number.isFinite(position)) latestProgressRef.current.position = position;
+      if (Number.isFinite(duration) && duration > 0) latestProgressRef.current.duration = duration;
+    };
 
-      if (message.event === 'infoDelivery') {
-        if (message.currentTime !== undefined) latestProgressRef.current.position = message.currentTime;
-        if (message.duration !== undefined) latestProgressRef.current.duration = message.duration;
+    const handleStateChange = (event: YoutubePlayerStateChangeEvent) => {
+      if (event.data === 1) {
+        canPersistProgressRef.current = true;
+        setIsResumeAvailable(false);
       }
+      sampleProgress(event.target);
+      if (event.data === 0 || event.data === 2) persistProgress(true);
+    };
 
-      if ((message.event === 'onStateChange' || message.event === 'infoDelivery')
-        && (message.state === 0 || message.state === 2)) {
-        persistProgress(true);
-      }
+    const attachPlayer = () => {
+      if (isDisposed || isPlayerAttached) return;
+      isPlayerAttached = true;
+
+      void loadYoutubeIframeApi()
+        .then((api) => {
+          if (isDisposed || !iframe.isConnected) return;
+          const player = new api.Player(iframe, {
+            events: {
+              onReady: ({ target }) => {
+                if (isDisposed) return;
+                youtubePlayerRef.current = target;
+                target.setPlaybackRate(isDoubleSpeedRef.current ? 2 : 1);
+                sampleProgress(target);
+                if (resumeRequestedRef.current && resumePosition !== null) {
+                  target.seekTo(resumePosition, true);
+                  target.playVideo();
+                }
+              },
+              onStateChange: handleStateChange,
+            },
+          });
+          youtubePlayerRef.current = player;
+        })
+        .catch(() => {
+          // Keep the embedded player usable if the optional API cannot load.
+        });
     };
 
     const persistWhenHidden = () => {
@@ -201,22 +248,34 @@ function YoutubePlayer({
     const persistOnPageHide = () => persistProgress(true);
     const progressTimer = window.setInterval(() => persistProgress(), 5000);
 
-    window.addEventListener('message', handleMessage);
+    iframe.addEventListener('load', attachPlayer);
+    attachPlayer();
     window.addEventListener('pagehide', persistOnPageHide);
     document.addEventListener('visibilitychange', persistWhenHidden);
     return () => {
+      isDisposed = true;
       window.clearInterval(progressTimer);
-      window.removeEventListener('message', handleMessage);
+      iframe.removeEventListener('load', attachPlayer);
       window.removeEventListener('pagehide', persistOnPageHide);
       document.removeEventListener('visibilitychange', persistWhenHidden);
       persistProgress(true);
+      youtubePlayerRef.current?.destroy();
+      youtubePlayerRef.current = null;
     };
-  }, [videoId]);
+  }, [resumePosition, videoId]);
 
   useEffect(() => {
     if (!isResumeRequested || resumePosition === null) return;
-    sendPlayerCommand(iframeRef.current, 'seekTo', [resumePosition, true]);
-    sendPlayerCommand(iframeRef.current, 'playVideo');
+    resumeRequestedRef.current = true;
+    canPersistProgressRef.current = true;
+    const player = youtubePlayerRef.current;
+    if (player) {
+      player.seekTo(resumePosition, true);
+      player.playVideo();
+    } else {
+      sendPlayerCommand(iframeRef.current, 'seekTo', [resumePosition, true]);
+      sendPlayerCommand(iframeRef.current, 'playVideo');
+    }
   }, [isResumeRequested, resumePosition]);
 
   return (
@@ -267,21 +326,12 @@ function YoutubePlayer({
         </div>
         <div className="reader-card__preview reader-card__preview--player">
           <iframe
-            id={iframeId}
             src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
             title={title || t('preview.youtubePlayer')}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
             ref={iframeRef}
-            onLoad={() => {
-              initializeYoutubePlayer(iframeRef.current, iframeId);
-              sendPlaybackRate(iframeRef.current, isDoubleSpeed ? 2 : 1);
-              if (isResumeRequested && resumePosition !== null) {
-                sendPlayerCommand(iframeRef.current, 'seekTo', [resumePosition, true]);
-                sendPlayerCommand(iframeRef.current, 'playVideo');
-              }
-            }}
           />
         </div>
       </div>
@@ -303,69 +353,6 @@ function sendPlayerCommand(
     func,
     args,
   }), '*');
-}
-
-function initializeYoutubePlayer(iframe: HTMLIFrameElement | null, iframeId: string): void {
-  const target = iframe?.contentWindow;
-  if (!target) return;
-
-  target.postMessage(JSON.stringify({
-    event: 'listening',
-    id: iframeId,
-    channel: 'gkfeed',
-    version: 3,
-  }), '*');
-  target.postMessage(JSON.stringify({
-    event: 'command',
-    func: 'addEventListener',
-    args: ['onStateChange'],
-    id: iframeId,
-    channel: 'gkfeed',
-  }), '*');
-}
-
-function parseYoutubeMessage(value: unknown): {
-  event: string;
-  currentTime?: number;
-  duration?: number;
-  state?: number;
-} | null {
-  const parsed = typeof value === 'string' ? parseJson(value) : value;
-  if (!parsed || typeof parsed !== 'object') return null;
-  const message = parsed as Record<string, unknown>;
-  if (typeof message.event !== 'string') return null;
-
-  const info = message.info && typeof message.info === 'object'
-    ? message.info as Record<string, unknown>
-    : null;
-  const currentTime = getFiniteNumber(info?.currentTime);
-  const duration = getFiniteNumber(info?.duration);
-  const state = getFiniteNumber(message.state)
-    ?? getFiniteNumber(message.info)
-    ?? getFiniteNumber(info?.playerState);
-
-  return {
-    event: message.event,
-    currentTime,
-    duration,
-    state,
-  };
-}
-
-function parseJson(value: string): unknown {
-  try {
-    return JSON.parse(value) as unknown;
-  } catch {
-    return null;
-  }
-}
-
-function getFiniteNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function isYoutubeMessageOrigin(origin: string): boolean {
-  return origin === 'https://www.youtube-nocookie.com' || origin === 'https://www.youtube.com';
 }
 
 function formatYoutubeTime(seconds: number): string {
