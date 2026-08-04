@@ -191,6 +191,8 @@ function YoutubePlayer({
   const isDoubleSpeedRef = useRef(isDoubleSpeed);
   const resumeRequestedRef = useRef(false);
   const canPersistProgressRef = useRef(resumePosition === null);
+  const currentTimeRef = useRef<number | null>(resumePosition);
+  const durationRef = useRef<number | null>(null);
   isDoubleSpeedRef.current = isDoubleSpeed;
   const [isResumeAvailable, setIsResumeAvailable] = useState(resumePosition !== null);
   const [isResumeRequested, setIsResumeRequested] = useState(false);
@@ -220,8 +222,20 @@ function YoutubePlayer({
     let isDisposed = false;
     let isPlayerAttached = false;
 
-    const persistProgress = (force = false) => {
-      if (!canPersistProgressRef.current) return;
+    const sampleProgress = (player: YoutubePlayer): boolean => {
+      const position = player.getCurrentTime();
+      const duration = player.getDuration();
+      if (!Number.isFinite(position) || !Number.isFinite(duration) || duration <= 0) return false;
+      currentTimeRef.current = position;
+      durationRef.current = duration;
+      latestProgressRef.current.position = position;
+      latestProgressRef.current.duration = duration;
+      return true;
+    };
+
+    const persistProgress = (force = false, player = youtubePlayerRef.current) => {
+      if (!canPersistProgressRef.current || !player) return;
+      if (!sampleProgress(player)) return;
       const latestProgress = latestProgressRef.current;
       if (latestProgress.position === undefined || latestProgress.duration === undefined) return;
       const now = Date.now();
@@ -230,21 +244,18 @@ function YoutubePlayer({
       lastPersistedAt = now;
     };
 
-    const sampleProgress = (player: YoutubePlayer) => {
-      const position = player.getCurrentTime();
-      const duration = player.getDuration();
-      if (Number.isFinite(position)) latestProgressRef.current.position = position;
-      if (Number.isFinite(duration) && duration > 0) latestProgressRef.current.duration = duration;
-    };
-
     const handleStateChange = (event: YoutubePlayerStateChangeEvent) => {
+      if (isDisposed) return;
       onPlaybackStateChangeRef.current(event.data === 1);
       if (event.data === 1) {
         canPersistProgressRef.current = true;
         setIsResumeAvailable(false);
       }
-      sampleProgress(event.target);
-      if (event.data === 0 || event.data === 2) persistProgress(true);
+      if (event.data === 0 || event.data === 2) {
+        persistProgress(true, event.target);
+      } else {
+        sampleProgress(event.target);
+      }
     };
 
     const attachPlayer = () => {

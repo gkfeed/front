@@ -12,6 +12,7 @@ describe('FeedItemCard YouTube and general states', () => {
   const youtubeStorage = new Map<string, string>();
 
   beforeEach(() => {
+    youtubeStorage.clear();
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
       value: {
@@ -188,6 +189,177 @@ describe('FeedItemCard YouTube and general states', () => {
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
       '*',
     );
+
+    expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
+      .toMatchObject({ position: 108, duration: 3600 });
+  });
+
+  it('refreshes YouTube progress before saving on pagehide during playback', async () => {
+    let currentTime = 108;
+    let duration = 3600;
+    const getCurrentTime = vi.fn(() => currentTime);
+    const player: YoutubePlayer = {
+      getCurrentTime,
+      getDuration: () => duration,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: { onReady: (event: { target: YoutubePlayer }) => void };
+        }) {
+          options.events.onReady({ target: player });
+          return player;
+        }),
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    currentTime = 246;
+    duration = 7200;
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
+      .toMatchObject({ position: 246, duration: 7200 });
+    expect(getCurrentTime).toHaveBeenCalledTimes(2);
+  });
+
+  it('refreshes YouTube progress before the periodic save during playback', async () => {
+    vi.useFakeTimers();
+    let currentTime = 108;
+    const player: YoutubePlayer = {
+      getCurrentTime: () => currentTime,
+      getDuration: () => 3600,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: { onReady: (event: { target: YoutubePlayer }) => void };
+        }) {
+          options.events.onReady({ target: player });
+          return player;
+        }),
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    currentTime = 246;
+    act(() => vi.advanceTimersByTime(5000));
+
+    expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
+      .toMatchObject({ position: 246, duration: 3600 });
+  });
+
+  it('refreshes YouTube progress before saving when the player unmounts during playback', async () => {
+    let currentTime = 108;
+    const player: YoutubePlayer = {
+      getCurrentTime: () => currentTime,
+      getDuration: () => 3600,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: { onReady: (event: { target: YoutubePlayer }) => void };
+        }) {
+          options.events.onReady({ target: player });
+          return player;
+        }),
+      },
+    });
+
+    const view = render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    currentTime = 312;
+    view.unmount();
+
+    expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
+      .toMatchObject({ position: 312, duration: 3600 });
+  });
+
+  it('ignores state changes from a YouTube player after it unmounts', async () => {
+    let currentTime = 108;
+    let stateChangeHandler: (event: YoutubePlayerStateChangeEvent) => void = () => undefined;
+    const player: YoutubePlayer = {
+      getCurrentTime: () => currentTime,
+      getDuration: () => 3600,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: {
+            onReady: (event: { target: YoutubePlayer }) => void;
+            onStateChange: (event: YoutubePlayerStateChangeEvent) => void;
+          };
+        }) {
+          stateChangeHandler = options.events.onStateChange;
+          options.events.onReady({ target: player });
+          return player;
+        }),
+      },
+    });
+
+    const view = render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    view.unmount();
+
+    currentTime = 312;
+    act(() => stateChangeHandler({ data: 2, target: player }));
 
     expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
       .toMatchObject({ position: 108, duration: 3600 });

@@ -13,13 +13,11 @@ export function readYoutubeProgress(videoId: string): YoutubeProgress | null {
   if (!storage) return null;
 
   try {
-    const rawValue = storage.getItem(getYoutubeProgressStorageKey(videoId));
-    if (!rawValue) return null;
-    const parsed: unknown = JSON.parse(rawValue);
-    if (!isProgress(parsed)) return null;
-    if (parsed.position < MINIMUM_RESUME_SECONDS) return null;
-    if (parsed.position >= parsed.duration - COMPLETION_END_MARGIN_SECONDS) return null;
-    return parsed;
+    const progress = readStoredProgress(storage, getYoutubeProgressStorageKey(videoId));
+    if (!progress) return null;
+    if (progress.position < MINIMUM_RESUME_SECONDS) return null;
+    if (progress.position >= progress.duration - COMPLETION_END_MARGIN_SECONDS) return null;
+    return progress;
   } catch {
     return null;
   }
@@ -35,6 +33,8 @@ export function writeYoutubeProgress(
 
   try {
     const storageKey = getYoutubeProgressStorageKey(videoId);
+    const storedProgress = readStoredProgress(storage, storageKey);
+    if (storedProgress && position < storedProgress.position) return;
     if (
       position < MINIMUM_RESUME_SECONDS
       || position >= duration
@@ -56,6 +56,13 @@ export function writeYoutubeProgress(
 
 function getYoutubeProgressStorageKey(videoId: string): string {
   return `${YOUTUBE_PROGRESS_STORAGE_PREFIX}.${encodeURIComponent(videoId)}`;
+}
+
+function readStoredProgress(storage: Storage, storageKey: string): YoutubeProgress | null {
+  const rawValue = storage.getItem(storageKey);
+  if (!rawValue) return null;
+  const parsed: unknown = JSON.parse(rawValue);
+  return isProgress(parsed) ? parsed : null;
 }
 
 function isProgress(value: unknown): value is YoutubeProgress {
