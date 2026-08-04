@@ -89,12 +89,12 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
 }
 
 export function FeedItemCardSupplementary({ model }: { model: FeedItemCardModel }) {
-  const { item, isPreviewPending, descriptor, hltvSnapshot } = model;
+  const { item, isPreviewPending, descriptor, hltvMatchTeams, hltvSnapshot } = model;
   if (isPreviewPending) return null;
 
   return (
     <>
-      {descriptor.showHltvCountdown && hltvSnapshot?.startsAt ? (
+      {descriptor.showHltvCountdown && !hltvMatchTeams && hltvSnapshot?.startsAt ? (
         <HltvCountdown startsAt={hltvSnapshot.startsAt} />
       ) : null}
       {descriptor.showTikTokComments ? <TikTokComments item={item} /> : null}
