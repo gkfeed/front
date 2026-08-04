@@ -35,4 +35,22 @@ describe('preview use cases', () => {
     expect(ports.fetchTikTokComments).toHaveBeenCalledWith('https://tiktok.com/video', context);
     expect(ports.fetchRedditPreviewImage).toHaveBeenCalledWith('https://reddit.com/image', context);
   });
+
+  it('applies the concurrency policy around every provider port', async () => {
+    const ports: PreviewPorts = {
+      fetchOpenGraph: vi.fn().mockResolvedValue({}),
+      fetchLiquipediaMatch: vi.fn().mockResolvedValue({}),
+      fetchTikTokComments: vi.fn().mockResolvedValue({}),
+      fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
+    };
+    const limit = vi.fn(<T>(load: () => Promise<T>) => load());
+    const useCases = createPreviewUseCases(ports, limit);
+
+    await useCases.openGraph('https://example.com', context);
+    await useCases.liquipediaMatch('https://liquipedia.net', context);
+    await useCases.tiktokComments('https://tiktok.com/video', context);
+    await useCases.redditPreviewImage('https://reddit.com/image', context);
+
+    expect(limit).toHaveBeenCalledTimes(4);
+  });
 });

@@ -55,8 +55,49 @@ describe('BFF HTTP router', () => {
       new URL('http://localhost/api/bff/open-graph'),
       response,
     )).rejects.toMatchObject<PreviewError>({
-      status: 400,
-      code: 'missing_url',
+      kind: 'missing_url',
     });
+  });
+
+  it('serves Reddit preview images through the HTTP adapter', async () => {
+    const response = createResponse();
+    const useCases = createUseCases();
+    const body = new Uint8Array([1, 2]);
+
+    vi.mocked(useCases.redditPreviewImage).mockResolvedValue({
+      body,
+      contentType: 'image/webp',
+    });
+
+    await expect(handleBffRequest(
+      new URL('http://localhost/api/bff/reddit-preview-image?url=https%3A%2F%2Fshare.redd.it%2Fpreview%2Fpost%2Fabc'),
+      response,
+      undefined,
+      useCases,
+    )).resolves.toBe(true);
+
+    expect(useCases.redditPreviewImage).toHaveBeenCalledWith(
+      'https://share.redd.it/preview/post/abc',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(response.writeHead).toHaveBeenCalledWith(200, {
+      'cache-control': 'public, max-age=3600',
+      'content-length': 2,
+      'content-type': 'image/webp',
+      'x-content-type-options': 'nosniff',
+    });
+    expect(response.end).toHaveBeenCalledWith(body);
+  });
+
+  it('does not claim unrelated routes', async () => {
+    const response = createResponse();
+
+    await expect(handleBffRequest(
+      new URL('http://localhost/api/other'),
+      response,
+    )).resolves.toBe(false);
+
+    expect(response.writeHead).not.toHaveBeenCalled();
+    expect(response.end).not.toHaveBeenCalled();
   });
 });

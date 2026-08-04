@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { deleteFeedItemById } from '../services/feeds';
+import { deleteFeedItem } from '../features/feeds/feedUseCases';
 import type { Credentials } from '../types';
 
 export type FeedItemDeletionStatus = 'pending' | 'failed';
@@ -41,7 +41,7 @@ export function useFeedItemDeletion(credentials: Credentials | null) {
         if (!operation || operation.status !== 'pending') continue;
 
         try {
-          await deleteFeedItemById(itemId, credentials);
+          await deleteFeedItem(itemId, credentials);
           if (operationsRef.current.get(itemId) === operation) {
             operationsRef.current.delete(itemId);
             publishOperations();

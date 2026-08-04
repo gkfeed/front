@@ -5,11 +5,11 @@ export function parsePublicHttpUrl(value: string): URL {
   try {
     url = new URL(value);
   } catch {
-    throw new PreviewError('A valid URL is required', 400, 'invalid_url');
+    throw new PreviewError('A valid URL is required', 'invalid_url');
   }
 
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) {
-    throw new PreviewError('Only public HTTP and HTTPS URLs are allowed', 400, 'invalid_url');
+    throw new PreviewError('Only public HTTP and HTTPS URLs are allowed', 'invalid_url');
   }
   return url;
 }

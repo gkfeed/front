@@ -29,36 +29,30 @@ const TIKTOK_JSON_ERRORS: Record<TikTokJsonSource, {
   comments: {
     tooLarge: () => new PreviewError(
       'The comments response was too large',
-      502,
       'comments_too_large',
     ),
     invalidJson: () => new PreviewError(
       'The comments provider returned invalid data',
-      502,
       'invalid_comments',
     ),
   },
   details: {
     tooLarge: () => new PreviewError(
       'The TikTok details response was too large',
-      502,
       'details_too_large',
     ),
     invalidJson: () => new PreviewError(
       'The TikTok details provider returned invalid data',
-      502,
       'invalid_details',
     ),
   },
   oembed: {
     tooLarge: () => new PreviewError(
       'The TikTok oEmbed response was too large',
-      502,
       'oembed_too_large',
     ),
     invalidJson: () => new PreviewError(
       'The TikTok oEmbed provider returned invalid data',
-      502,
       'invalid_oembed',
     ),
   },
@@ -91,10 +85,10 @@ export async function fetchTikTokComments(
     const message = error instanceof PublicHttpError && error.reason === 'timeout'
       ? 'TikTok comments took too long to respond'
       : 'TikTok comments could not be fetched';
-    throw new PreviewError(message, 502, 'comments_fetch_failed');
+    throw new PreviewError(message, 'comments_fetch_failed');
   }
 
-  if (!body) throw new PreviewError('The comments provider returned an error', 502, 'comments_upstream_error');
+  if (!body) throw new PreviewError('The comments provider returned an error', 'comments_upstream_error');
   return {
     comments: parseTikTokComments(body.value),
     ...await detailsPromise,

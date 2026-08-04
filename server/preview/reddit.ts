@@ -11,7 +11,7 @@ export interface PreviewImage {
 export async function fetchRedditPreviewImage(input: string, context?: RequestContext): Promise<PreviewImage> {
   const url = parsePublicHttpUrl(input);
   if (url.hostname.toLowerCase() !== 'share.redd.it' || !url.pathname.startsWith('/preview/post/')) {
-    throw new PreviewError('Only Reddit preview images can be proxied', 400, 'invalid_reddit_preview');
+    throw new PreviewError('Only Reddit preview images can be proxied', 'invalid_reddit_preview');
   }
 
   const { response, contentType } = await fetchImageResponse(url, context);

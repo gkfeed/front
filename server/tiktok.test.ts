@@ -27,21 +27,21 @@ describe('fetchTikTokComments', () => {
     requestPublicHttp.mockImplementation(async () => jsonResponse('{}', 503));
 
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
-      .rejects.toMatchObject({ code: 'comments_upstream_error', status: 502 });
+      .rejects.toMatchObject({ kind: 'comments_upstream_error' });
   });
 
   it('preserves invalid JSON and response-size errors from the comments provider', async () => {
     requestPublicHttp.mockImplementation(async () => jsonResponse('not-json'));
 
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
-      .rejects.toMatchObject({ code: 'invalid_comments', status: 502 });
+      .rejects.toMatchObject({ kind: 'invalid_comments' });
   });
 
   it('maps a provider timeout to a fetch error', async () => {
     requestPublicHttp.mockRejectedValue(new PublicHttpError('timeout'));
 
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
-      .rejects.toMatchObject({ code: 'comments_fetch_failed', status: 502 });
+      .rejects.toMatchObject({ kind: 'comments_fetch_failed' });
   });
 });
 

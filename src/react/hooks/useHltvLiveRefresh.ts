@@ -7,8 +7,10 @@ import {
 } from 'react';
 
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
-import { getOpenGraphPreview } from '../services/openGraph';
-import { mergeHltvLiveData } from '../services/remotePreview';
+import {
+  getOpenGraphPreview,
+  mergeHltvLiveData,
+} from '../features/preview/previewUseCases';
 import type { RemotePreview } from '../domain/feedItemCardContracts';
 import { useAsyncResource } from './useAsyncResource';
 

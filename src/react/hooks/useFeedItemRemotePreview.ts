@@ -9,7 +9,7 @@ import {
 import {
   EMPTY_REMOTE_PREVIEW,
   loadRemotePreview,
-} from '../services/remotePreview';
+} from '../features/preview/previewUseCases';
 import type { RemotePreview } from '../domain/feedItemCardContracts';
 import { useHltvLiveRefresh } from './useHltvLiveRefresh';
 import { useAsyncResource } from './useAsyncResource';

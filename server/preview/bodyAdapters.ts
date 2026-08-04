@@ -79,7 +79,7 @@ export const MAX_METADATA_RESPONSE_BYTES = 256_000;
 export const MAX_IMAGE_RESPONSE_BYTES = 10_000_000;
 
 export function responseTooLarge(): PreviewError {
-  return new PreviewError('The remote page is too large to preview', 422, 'response_too_large');
+  return new PreviewError('The remote page is too large to preview', 'response_too_large');
 }
 
 function rejectDeclaredLength(
@@ -119,5 +119,5 @@ function readWithContext<T>(
 }
 
 function imageTooLarge(): PreviewError {
-  return new PreviewError('The Reddit preview image is too large', 422, 'image_too_large');
+  return new PreviewError('The Reddit preview image is too large', 'image_too_large');
 }

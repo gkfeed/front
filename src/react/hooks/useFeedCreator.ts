@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { createFeed, createFeedFromUrl } from '../services/feeds';
+import { createFeed, createFeedFromUrl } from '../features/feeds/feedUseCases';
 import { useAuth } from '../state/useAuth';
 import {
   EMPTY_FEED,

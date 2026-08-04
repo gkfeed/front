@@ -71,7 +71,7 @@ describe('fetchHltvHtml', () => {
     fetchPublicResponse.mockResolvedValue(response);
 
     await expect(fetchHltvHtml(new URL('https://www.hltv.org/matches/1/example')))
-      .rejects.toMatchObject({ code: 'response_too_large', status: 422 });
+      .rejects.toMatchObject({ kind: 'response_too_large' });
     expect(response.body.destroyed).toBe(true);
     expect(fetchHltvScorebotSnapshot).not.toHaveBeenCalled();
   });
@@ -81,7 +81,6 @@ describe('fetchHltvHtml', () => {
     const html = '<meta property="og:title" content="Spirit vs FaZe">';
     fetchPublicResponse.mockRejectedValue(new PreviewError(
       'The HLTV page returned HTTP 403',
-      502,
       'upstream_error',
     ));
     mkdtemp.mockResolvedValue('/tmp/gkfeed-hltv-test');

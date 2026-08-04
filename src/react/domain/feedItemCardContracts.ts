@@ -9,17 +9,68 @@ import type {
   FeedItemPreview,
   FeedItemAnalysis,
 } from './feedItemPreviewTypes';
-import type {
-  FeedItemCardImagePreview,
-  FeedItemCardPresentationDescriptor,
-  FeedItemCardVariant,
-} from './feedItemProviders';
 
 export type NsfwMode = 'show' | 'blur' | 'hide';
 
 export type RemotePreview = {
   liquipediaMatch: LiquipediaMatchPreview | null;
   openGraphPreview: OpenGraphPreview | null;
+};
+
+export type FeedItemCardVariant =
+  | { type: 'standard' }
+  | { type: 'matreshka'; videoId: string }
+  | { type: 'twitch'; channel: string }
+  | { type: 'youtube'; videoId: string }
+  | { type: 'tiktok' }
+  | { type: 'instagram'; media: 'photo' | 'video' }
+  | { type: 'liquipedia' }
+  | { type: 'simple-image' };
+
+export type FeedItemCardImagePreview =
+  | { type: 'none' }
+  | { type: 'generated'; source: 'reddit' | 'other' }
+  | { type: 'hltv' };
+
+export type FeedItemCardPreviewDescriptor =
+  | { type: 'media'; isShortVideo: boolean; isTikTok: boolean }
+  | { type: 'matreshka'; videoId: string }
+  | { type: 'twitch'; channel: string }
+  | { type: 'youtube'; videoId: string };
+
+export type FeedItemCardCopyDescriptor =
+  | 'none'
+  | 'youtube'
+  | 'twitch'
+  | 'matreshka'
+  | 'simple-image'
+  | 'standard';
+
+export type FeedItemCardPresentationDescriptor = {
+  className: string;
+  preview: FeedItemCardPreviewDescriptor;
+  copy: FeedItemCardCopyDescriptor;
+  showInstagramIdentity: boolean;
+  showHltvCountdown: boolean;
+  showTikTokComments: boolean;
+};
+
+export type FeedItemCardVariantContext = {
+  youtubeVideoId: string | null;
+  twitchChannel: string | null;
+  matreshkaVideoId: string | null;
+  isSimpleImage: boolean;
+  isInstagramPhoto: boolean;
+};
+
+export type FeedItemProviderAdapter = {
+  supplementary: 'none' | 'hltv' | 'tiktok';
+  isShortVideo: boolean;
+  isTikTok: boolean;
+  showInstagramIdentity: boolean;
+  supportsSimpleImage: boolean;
+  resolveVariant: (context: FeedItemCardVariantContext) => FeedItemCardVariant;
+  classNames: (variant: FeedItemCardVariant) => readonly string[];
 };
 
 export type FeedItemCardMetadata = {

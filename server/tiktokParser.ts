@@ -19,7 +19,7 @@ export type TikTokDetails = {
 
 export function parseTikTokComments(value: unknown): TikTokComment[] {
   if (!isRecord(value) || value.code !== 0 || !isRecord(value.data) || !Array.isArray(value.data.comments)) {
-    throw new PreviewError('The comments provider returned invalid data', 502, 'invalid_comments');
+    throw new PreviewError('The comments provider returned invalid data', 'invalid_comments');
   }
 
   return value.data.comments.slice(0, 10).flatMap((comment) => {
@@ -97,5 +97,5 @@ function safeHttpUrl(value: string): string | null {
 }
 
 function invalidTikTokUrl(): never {
-  throw new PreviewError('A valid TikTok video URL is required', 400, 'invalid_tiktok_url');
+  throw new PreviewError('A valid TikTok video URL is required', 'invalid_tiktok_url');
 }

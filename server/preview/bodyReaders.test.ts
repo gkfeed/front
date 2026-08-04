@@ -34,7 +34,7 @@ describe('body readers', () => {
     const response = responseFrom([Buffer.from('abc'), Buffer.from('def')]);
 
     await expect(readLimitedBytes(response, 5)).rejects.toMatchObject({
-      code: 'image_too_large',
+      kind: 'image_too_large',
     });
     expect(response.body.destroyed).toBe(true);
   });

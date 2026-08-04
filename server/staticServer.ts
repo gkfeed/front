@@ -11,19 +11,21 @@ export async function serveFrontend(
   pathname: string,
   headOnly: boolean,
   response: ServerResponse,
+  root = staticRoot,
 ): Promise<void> {
+  const resolvedRoot = resolve(root);
   let decodedPath: string;
   try {
     decodedPath = decodeURIComponent(pathname);
   } catch {
-    throw new PreviewError('Invalid path', 400, 'invalid_path');
+    throw new PreviewError('Invalid path', 'invalid_path');
   }
 
-  const requestedFile = resolve(staticRoot, `.${decodedPath}`);
-  const safeFile = requestedFile.startsWith(`${staticRoot}/`)
+  const requestedFile = resolve(resolvedRoot, `.${decodedPath}`);
+  const safeFile = requestedFile.startsWith(`${resolvedRoot}/`)
     ? requestedFile
-    : resolve(staticRoot, 'index.html');
-  const file = await isFile(safeFile) ? safeFile : resolve(staticRoot, 'index.html');
+    : resolve(resolvedRoot, 'index.html');
+  const file = await isFile(safeFile) ? safeFile : resolve(resolvedRoot, 'index.html');
   const fileStat = await stat(file);
 
   response.writeHead(200, {

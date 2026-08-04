@@ -4,6 +4,22 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+// The frontend currently has no path aliases; these are the relative import
+// depths used by the existing root-level and one-level nested feature folders.
+const relativeLayerImports = (layer) => [
+  `../${layer}`,
+  `../${layer}/**`,
+  `../../${layer}`,
+  `../../${layer}/**`,
+  `../../../${layer}`,
+  `../../../${layer}/**`,
+];
+
+const restrictLayerImport = (layer, message) => ({
+  group: relativeLayerImports(layer),
+  message,
+});
+
 export default tseslint.config(
   {
     ignores: [
@@ -60,30 +76,12 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
-          {
-            group: ['../services/**', '../../services/**', '../../../services/**'],
-            message: 'The domain layer must not depend on services. Use a domain contract or application port.',
-          },
-          {
-            group: ['../state/**', '../../state/**', '../../../state/**'],
-            message: 'The domain layer must not depend on state. Pass state values through a domain contract.',
-          },
-          {
-            group: ['../hooks/**', '../../hooks/**', '../../../hooks/**'],
-            message: 'The domain layer must not depend on React hooks.',
-          },
-          {
-            group: ['../components/**', '../../components/**', '../../../components/**'],
-            message: 'The domain layer must not depend on presentation components.',
-          },
-          {
-            group: ['../pages/**', '../../pages/**', '../../../pages/**'],
-            message: 'The domain layer must not depend on pages.',
-          },
-          {
-            group: ['../features/**', '../../features/**', '../../../features/**'],
-            message: 'The domain layer must not depend on application features.',
-          },
+          restrictLayerImport('services', 'The domain layer must not depend on services. Use a domain contract or application port.'),
+          restrictLayerImport('state', 'The domain layer must not depend on state. Pass state values through a domain contract.'),
+          restrictLayerImport('hooks', 'The domain layer must not depend on React hooks.'),
+          restrictLayerImport('components', 'The domain layer must not depend on presentation components.'),
+          restrictLayerImport('pages', 'The domain layer must not depend on pages.'),
+          restrictLayerImport('features', 'The domain layer must not depend on application features.'),
         ],
       }],
     },
@@ -94,22 +92,11 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
-          {
-            group: ['../state/**', '../../state/**', '../../../state/**'],
-            message: 'Services must not depend on UI state.',
-          },
-          {
-            group: ['../hooks/**', '../../hooks/**', '../../../hooks/**'],
-            message: 'Services must not depend on React hooks.',
-          },
-          {
-            group: ['../components/**', '../../components/**', '../../../components/**'],
-            message: 'Services must not depend on presentation components.',
-          },
-          {
-            group: ['../pages/**', '../../pages/**', '../../../pages/**'],
-            message: 'Services must not depend on pages.',
-          },
+          restrictLayerImport('state', 'Services must not depend on UI state.'),
+          restrictLayerImport('hooks', 'Services must not depend on React hooks.'),
+          restrictLayerImport('components', 'Services must not depend on presentation components.'),
+          restrictLayerImport('pages', 'Services must not depend on pages.'),
+          restrictLayerImport('features', 'Services must not depend on application features.'),
         ],
       }],
     },
@@ -120,22 +107,10 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
-          {
-            group: ['../hooks/**', '../../hooks/**', '../../../hooks/**'],
-            message: 'State must not depend on React hooks.',
-          },
-          {
-            group: ['../components/**', '../../components/**', '../../../components/**'],
-            message: 'State must not depend on presentation components.',
-          },
-          {
-            group: ['../pages/**', '../../pages/**', '../../../pages/**'],
-            message: 'State must not depend on pages.',
-          },
-          {
-            group: ['../services/**', '../../services/**', '../../../services/**'],
-            message: 'State must use an application or feature authentication use case instead of services.',
-          },
+          restrictLayerImport('hooks', 'State must not depend on React hooks.'),
+          restrictLayerImport('components', 'State must not depend on presentation components.'),
+          restrictLayerImport('pages', 'State must not depend on pages.'),
+          restrictLayerImport('services', 'State must use an application or feature authentication use case instead of services.'),
         ],
       }],
     },
@@ -146,14 +121,8 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
-          {
-            group: ['../components/**', '../../components/**', '../../../components/**'],
-            message: 'Hooks must not depend on presentation components.',
-          },
-          {
-            group: ['../pages/**', '../../pages/**', '../../../pages/**'],
-            message: 'Hooks must not depend on pages.',
-          },
+          restrictLayerImport('components', 'Hooks must not depend on presentation components.'),
+          restrictLayerImport('pages', 'Hooks must not depend on pages.'),
         ],
       }],
     },
@@ -164,14 +133,8 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
-          {
-            group: ['../components/**', '../../components/**', '../../../components/**'],
-            message: 'Features must not depend on presentation components.',
-          },
-          {
-            group: ['../pages/**', '../../pages/**', '../../../pages/**'],
-            message: 'Features must not depend on pages.',
-          },
+          restrictLayerImport('components', 'Features must not depend on presentation components.'),
+          restrictLayerImport('pages', 'Features must not depend on pages.'),
         ],
       }],
     },
@@ -182,10 +145,7 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
-          {
-            group: ['../services/**', '../../services/**', '../../../services/**'],
-            message: 'Move service calls behind an application or feature use case.',
-          },
+          restrictLayerImport('services', 'Move service calls behind an application or feature use case.'),
         ],
       }],
     },

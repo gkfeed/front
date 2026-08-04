@@ -40,7 +40,7 @@ export async function fetchHtmlResponse(
   const contentType = firstHeader(response.headers['content-type'])?.toLowerCase() ?? '';
   if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
     discardResponseBody(response.body);
-    throw new PreviewError('The URL does not point to an HTML page', 422, 'not_html');
+    throw new PreviewError('The URL does not point to an HTML page', 'not_html');
   }
   return { response, contentType };
 }
@@ -66,7 +66,7 @@ export async function fetchImageResponse(input: URL, context?: RequestContext): 
     ?.split(';')[0]?.trim().toLowerCase() ?? '';
   if (!contentType.startsWith('image/')) {
     discardResponseBody(response.body);
-    throw new PreviewError('Reddit did not return an image', 502, 'invalid_image');
+    throw new PreviewError('Reddit did not return an image', 'invalid_image');
   }
   return { response, contentType };
 }
@@ -140,6 +140,6 @@ async function readPreviewBody<T>(
     const message = error instanceof PublicHttpError && error.reason === 'timeout'
       ? messages.timeoutMessage
       : messages.failureMessage;
-    throw new PreviewError(message, 502, messages.code);
+    throw new PreviewError(message, messages.code);
   }
 }

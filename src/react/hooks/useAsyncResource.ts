@@ -5,7 +5,7 @@ import {
   createTimeoutSignal,
   DEFAULT_REQUEST_TIMEOUT_MS,
   isAbortError,
-} from '../services/requestTimeout';
+} from '../features/runtime/requestTimeout';
 
 export type AsyncResourceStatus = 'idle' | 'loading' | 'success' | 'error';
 

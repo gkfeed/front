@@ -22,7 +22,7 @@ describe('fetchPublicResponse', () => {
     requestPublicHttp.mockResolvedValue(response(302, 'file:///etc/passwd', body));
 
     await expect(fetchPublicResponse(new URL('https://example.com/'), options()))
-      .rejects.toMatchObject({ code: 'invalid_redirect' });
+      .rejects.toMatchObject({ kind: 'invalid_redirect' });
     expect(body.destroyed).toBe(true);
   });
 
@@ -31,7 +31,7 @@ describe('fetchPublicResponse', () => {
     requestPublicHttp.mockResolvedValue(response(503, undefined, body));
 
     await expect(fetchPublicResponse(new URL('https://example.com/'), options()))
-      .rejects.toMatchObject({ code: 'upstream_error' });
+      .rejects.toMatchObject({ kind: 'upstream_error' });
     expect(body.destroyed).toBe(true);
   });
 
@@ -41,7 +41,7 @@ describe('fetchPublicResponse', () => {
       .mockRejectedValueOnce(new PublicHttpError('private'));
 
     await expect(fetchPublicResponse(new URL('https://example.com/'), options()))
-      .rejects.toMatchObject({ code: 'private_url', status: 403 });
+      .rejects.toMatchObject({ kind: 'private_url' });
     expect(requestPublicHttp).toHaveBeenNthCalledWith(
       2,
       new URL('http://127.0.0.1/private'),
@@ -53,7 +53,7 @@ describe('fetchPublicResponse', () => {
     requestPublicHttp.mockResolvedValue(response(302, 'file:///etc/passwd'));
 
     await expect(fetchPublicResponse(new URL('https://example.com/'), options()))
-      .rejects.toMatchObject({ code: 'invalid_redirect', status: 502 });
+      .rejects.toMatchObject({ kind: 'invalid_redirect' });
     expect(requestPublicHttp).toHaveBeenCalledTimes(1);
   });
 
@@ -61,7 +61,7 @@ describe('fetchPublicResponse', () => {
     requestPublicHttp.mockResolvedValue(response(302, 'https://[invalid-host'));
 
     await expect(fetchPublicResponse(new URL('https://example.com/'), options()))
-      .rejects.toMatchObject({ code: 'invalid_redirect', status: 502 });
+      .rejects.toMatchObject({ kind: 'invalid_redirect' });
   });
 });
 

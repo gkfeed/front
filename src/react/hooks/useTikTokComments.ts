@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import {
   fetchTikTokComments,
   type TikTokCommentsResult,
-} from '../services/tiktokComments';
+} from '../features/preview/previewUseCases';
 import { useAsyncResource } from './useAsyncResource';
 
 export type TikTokCommentsLoadStatus = 'idle' | 'loading' | 'success' | 'error';

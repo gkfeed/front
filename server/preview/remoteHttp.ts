@@ -53,7 +53,6 @@ export async function fetchPublicResponse(
       throwPublicUrlError(error);
       throw new PreviewError(
         options.fetchFailedMessage(error instanceof PublicHttpError && error.reason === 'timeout'),
-        502,
         options.fetchFailedCode,
       );
     }
@@ -61,21 +60,21 @@ export async function fetchPublicResponse(
     if (isRedirect(response.status)) {
       discardResponseBody(response.body);
       const location = firstHeader(response.headers.location);
-      if (!location) throw new PreviewError(options.invalidRedirectMessage, 502, 'invalid_redirect');
+      if (!location) throw new PreviewError(options.invalidRedirectMessage, 'invalid_redirect');
       if (redirects === maxRedirects) {
-        throw new PreviewError(options.tooManyRedirectsMessage, 502, 'too_many_redirects');
+        throw new PreviewError(options.tooManyRedirectsMessage, 'too_many_redirects');
       }
       let redirectedUrl: URL;
       try {
         redirectedUrl = new URL(location, url);
       } catch {
-        throw new PreviewError(options.invalidRedirectMessage, 502, 'invalid_redirect');
+        throw new PreviewError(options.invalidRedirectMessage, 'invalid_redirect');
       }
       try {
         url = parsePublicHttpUrl(redirectedUrl.href);
       } catch (error) {
-        if (error instanceof PreviewError && error.code === 'invalid_url') {
-          throw new PreviewError(options.invalidRedirectMessage, 502, 'invalid_redirect');
+        if (error instanceof PreviewError && error.kind === 'invalid_url') {
+          throw new PreviewError(options.invalidRedirectMessage, 'invalid_redirect');
         }
         throw error;
       }
@@ -86,7 +85,6 @@ export async function fetchPublicResponse(
       discardResponseBody(response.body);
       throw new PreviewError(
         options.upstreamMessage(response.status),
-        502,
         options.upstreamCode ?? 'upstream_error',
       );
     }
@@ -94,15 +92,15 @@ export async function fetchPublicResponse(
     return response;
   }
 
-  throw new PreviewError(options.tooManyRedirectsMessage, 502, 'too_many_redirects');
+  throw new PreviewError(options.tooManyRedirectsMessage, 'too_many_redirects');
 }
 
 export function throwPublicUrlError(error: unknown): void {
   if (!(error instanceof PublicHttpError)) return;
   if (error.reason === 'private') {
-    throw new PreviewError('Private or local network URLs are not allowed', 403, 'private_url');
+    throw new PreviewError('Private or local network URLs are not allowed', 'private_url');
   }
   if (error.reason === 'unresolvable') {
-    throw new PreviewError('The URL hostname could not be resolved', 422, 'unresolvable_host');
+    throw new PreviewError('The URL hostname could not be resolved', 'unresolvable_host');
   }
 }

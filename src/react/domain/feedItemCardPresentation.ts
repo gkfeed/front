@@ -22,7 +22,7 @@ export type {
   FeedItemCardImagePreview,
   FeedItemCardPresentationDescriptor,
   FeedItemCardVariant,
-} from './feedItemProviders';
+} from './feedItemCardContracts';
 
 export { shouldLoadRemotePreview } from './feedItemCardPreviewResolution';
 

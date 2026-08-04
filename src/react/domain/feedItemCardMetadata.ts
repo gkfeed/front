@@ -1,13 +1,15 @@
 import { isRedditUrl, type FeedItemPreview } from './feedItemPreview';
 import { getFeedItemDescription } from './feedItemDescription';
-import {
-  getFeedItemProviderAdapter,
-  type FeedItemCardImagePreview,
-} from './feedItemProviders';
+import { getFeedItemProviderAdapter } from './feedItemProviders';
 import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import { isNsfwLink } from './nsfw';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
-import type { FeedItemCardMetadata, NsfwMode, RemotePreview } from './feedItemCardContracts';
+import type {
+  FeedItemCardImagePreview,
+  FeedItemCardMetadata,
+  NsfwMode,
+  RemotePreview,
+} from './feedItemCardContracts';
 import type { FeedItem } from '../types';
 
 export type { FeedItemCardMetadata } from './feedItemCardContracts';

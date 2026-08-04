@@ -40,7 +40,7 @@ export async function fetchHltvHtml(url: URL, context?: RequestContext): Promise
       return fetchHltvHtmlWithAria2c(url, context);
     }
     if (error instanceof PreviewError) throw error;
-    throw new PreviewError('The HLTV page could not be fetched', 502, 'fetch_failed');
+    throw new PreviewError('The HLTV page could not be fetched', 'fetch_failed');
   }
 }
 
@@ -92,7 +92,7 @@ async function fetchHltvHtmlWithAria2c(url: URL, context?: RequestContext): Prom
   try {
     const timeoutMs = context?.remainingMs(REMOTE_REQUEST_TIMEOUT_MS) ?? REMOTE_REQUEST_TIMEOUT_MS;
     if (timeoutMs <= 0 || context?.signal.aborted) {
-      throw new PreviewError('The HLTV page took too long to respond', 502, 'fetch_failed');
+      throw new PreviewError('The HLTV page took too long to respond', 'fetch_failed');
     }
     await execFileAsync('aria2c', [
       '--quiet=true',
@@ -130,7 +130,7 @@ async function fetchHltvHtmlWithAria2c(url: URL, context?: RequestContext): Prom
     };
   } catch (error) {
     if (error instanceof PreviewError) throw error;
-    throw new PreviewError('The HLTV page could not be fetched', 502, 'fetch_failed');
+    throw new PreviewError('The HLTV page could not be fetched', 'fetch_failed');
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -138,8 +138,7 @@ async function fetchHltvHtmlWithAria2c(url: URL, context?: RequestContext): Prom
 
 function isHltvAccessDenied(error: unknown): boolean {
   return error instanceof PreviewError
-    && error.code === 'upstream_error'
-    && error.status === 502
+    && error.kind === 'upstream_error'
     && /\bHTTP 403\b/.test(error.message);
 }
 

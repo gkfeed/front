@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react';
 
 import { useAsyncLoad } from './useAsyncLoad';
-import { isNotFoundError } from '../services/authError';
-import { deleteFeedById, getFeedById } from '../services/feeds';
+import { isNotFoundError } from '../features/requestError';
+import {
+  deleteFeed as deleteFeedUseCase,
+  isFeedNotFoundError,
+  loadFeed,
+} from '../features/feeds/feedUseCases';
 import { useAuth } from '../state/useAuth';
-import type { Credentials, Feed } from '../types';
 
 type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
 export type FeedLoadStatus = 'loading' | 'success' | 'error' | 'not-found';
@@ -24,7 +27,7 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     error: loadError,
     retry: retryLoad,
   } = useAsyncLoad(load);
-  const loadStatus: FeedLoadStatus = (loadError instanceof FeedNotFoundError || isNotFoundError(loadError))
+  const loadStatus: FeedLoadStatus = (isFeedNotFoundError(loadError) || isNotFoundError(loadError))
     ? 'not-found'
     : asyncLoadStatus;
   const isDeleting = deleteState === 'deleting';
@@ -35,7 +38,7 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     setDeleteState('deleting');
 
     try {
-      await deleteFeedById(feedId, credentials);
+      await deleteFeedUseCase(feedId, credentials);
       onDeleted();
     } catch {
       setDeleteState('error');
@@ -61,20 +64,6 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     deleteFeed,
   };
 }
-
-async function loadFeed(
-  feedId: number | null,
-  credentials: Credentials | null,
-  signal?: AbortSignal,
-): Promise<Feed> {
-  if (feedId === null) throw new FeedNotFoundError();
-
-  const feed = await getFeedById(feedId, credentials, signal);
-  if (!feed) throw new FeedNotFoundError();
-  return feed;
-}
-
-class FeedNotFoundError extends Error {}
 
 function parseFeedId(feedIdParam: string | undefined): number | null {
   const feedId = Number(feedIdParam);
