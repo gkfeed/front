@@ -1,34 +1,31 @@
 import type { ServerResponse } from 'node:http';
 
+import { previewUseCases, type PreviewUseCases } from './application/previewUseCases.js';
 import { sendJson } from './httpResponse.js';
 import { PreviewError } from './preview/errors.js';
-import { fetchLiquipediaMatch } from './preview/liquipedia.js';
-import { fetchOpenGraph } from './preview/openGraph.js';
-import { fetchRedditPreviewImage } from './preview/reddit.js';
-import { withPreviewLimit } from './preview/previewLimiter.js';
-import { fetchTikTokComments } from './tiktok.js';
 import { createDetachedRequestContext, type RequestContext } from './requestContext.js';
 
-const JSON_PREVIEW_ROUTES: Record<string, (input: string, context: RequestContext) => Promise<unknown>> = {
-  '/api/bff/open-graph': fetchOpenGraph,
-  '/api/bff/liquipedia-match': fetchLiquipediaMatch,
-  '/api/bff/tiktok-comments': fetchTikTokComments,
+const JSON_PREVIEW_ROUTES: Record<string, keyof Pick<PreviewUseCases, 'openGraph' | 'liquipediaMatch' | 'tiktokComments'>> = {
+  '/api/bff/open-graph': 'openGraph',
+  '/api/bff/liquipedia-match': 'liquipediaMatch',
+  '/api/bff/tiktok-comments': 'tiktokComments',
 };
 
 export async function handleBffRequest(
   requestUrl: URL,
   response: ServerResponse,
   context?: RequestContext,
+  useCases: PreviewUseCases = previewUseCases,
 ): Promise<boolean> {
   const requestContext = context ?? createDetachedRequestContext();
-  const jsonLoader = JSON_PREVIEW_ROUTES[requestUrl.pathname];
-  if (jsonLoader) {
-    await handleJsonPreview(requestUrl, response, jsonLoader, requestContext);
+  const useCaseName = JSON_PREVIEW_ROUTES[requestUrl.pathname];
+  if (useCaseName) {
+    await handleJsonPreview(requestUrl, response, useCases[useCaseName], requestContext);
     return true;
   }
 
   if (requestUrl.pathname === '/api/bff/reddit-preview-image') {
-    const image = await withPreviewLimit(() => fetchRedditPreviewImage(getPreviewInput(requestUrl), requestContext));
+    const image = await useCases.redditPreviewImage(getPreviewInput(requestUrl), requestContext);
     response.writeHead(200, {
       'cache-control': 'public, max-age=3600',
       'content-length': image.body.byteLength,
@@ -48,7 +45,7 @@ async function handleJsonPreview<T>(
   load: (input: string, context: RequestContext) => Promise<T>,
   context: RequestContext,
 ): Promise<void> {
-  const result = await withPreviewLimit(() => load(getPreviewInput(requestUrl), context));
+  const result = await load(getPreviewInput(requestUrl), context);
   sendJson(response, 200, result);
 }
 

@@ -1,13 +1,10 @@
-import { useCallback, useDeferredValue, useMemo, useState, useTransition } from 'react';
+import { useDeferredValue, useMemo, useState, useTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
-import { useAsyncLoad } from '../hooks/useAsyncLoad';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { getAllFeeds } from '../services/feeds';
-import { getRequestErrorMessage } from '../services/authError';
-import { useAuth } from '../state/useAuth';
-import type { Credentials, Feed } from '../types';
+import { useFeedsList } from '../features/feeds/useFeedsList';
+import type { Feed } from '../types';
 import { FeedCard } from './FeedCard';
 
 const SEARCH_DEBOUNCE_MS = 80;
@@ -15,13 +12,12 @@ const SKELETON_ITEMS = [1, 2, 3] as const;
 
 export function FeedsList() {
   const { t } = useTranslation();
-  const { credentials } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [draftSearchTerm, setDraftSearchTerm] = useState(searchTerm);
   const [, startSearchTransition] = useTransition();
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const settledSearchTerm = useDebouncedValue(deferredSearchTerm, SEARCH_DEBOUNCE_MS);
-  const { feeds, errorMessage, isLoading, retry } = useFeeds(credentials);
+  const { feeds, errorMessage, isLoading, retry } = useFeedsList(t);
   const displayQuery = settledSearchTerm.trim();
   const normalizedQuery = displayQuery.toLowerCase();
   const filteredFeeds = useMemo(() => filterFeeds(feeds, normalizedQuery), [feeds, normalizedQuery]);
@@ -85,19 +81,6 @@ function getResultsAnnouncement(count: number, query: string, t: (key: string, o
   if (!query) return t('feed.showing', { count });
   if (count === 0) return t('feed.noResults', { query });
   return t('feed.found', { count, query });
-}
-
-function useFeeds(credentials: Credentials | null) {
-  const { t } = useTranslation();
-  const load = useCallback((signal: AbortSignal) => getAllFeeds(credentials, signal), [credentials]);
-  const { result: feeds = [], error, isLoading, retry } = useAsyncLoad(load);
-
-  return {
-    feeds,
-    errorMessage: error ? getRequestErrorMessage(error, t, 'feed.unableConnection') : '',
-    isLoading,
-    retry,
-  };
 }
 
 function filterFeeds(feeds: Feed[], normalizedQuery: string): Feed[] {

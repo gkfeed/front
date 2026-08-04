@@ -9,9 +9,9 @@ import type { FeedItemDeletion } from '../hooks/useFeedItemDeletion';
 import { useFeedReader } from '../hooks/useFeedReader';
 import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
-import { exitReaderFullscreen, isAutomaticFallbackFullscreen } from '../services/readerFullscreen';
+import { exitReaderFullscreen, isAutomaticFallbackFullscreen } from '../features/reader/readerFullscreen';
 import { getReaderMode } from '../state/readerMode';
-import { getRequestErrorMessage } from '../services/authError';
+import { getRequestErrorMessage } from '../features/requestError';
 
 export function ReaderPage() {
   useEffect(() => () => {

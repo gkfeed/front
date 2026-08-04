@@ -8,8 +8,8 @@ import {
 import { getFeedItemDescription } from './feedItemDescription';
 import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
+import type { RemotePreview } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
-import type { RemotePreview } from '../services/remotePreview';
 
 export type FeedItemCardPreviewResolution = {
   preview: FeedItemPreview | null;

@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router';
 import { FeedCard } from '../components/FeedCard';
 import { useFeed } from '../hooks/useFeed';
 import type { FeedDeleteStatus } from '../hooks/useFeed';
-import { getRequestErrorMessage } from '../services/authError';
+import { getRequestErrorMessage } from '../features/requestError';
 
 export function FeedPage() {
   const { t } = useTranslation();

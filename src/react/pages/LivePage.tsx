@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TwitchTitle } from '../components/TwitchTitle';
@@ -7,19 +7,14 @@ import {
   getTwitchChannel as getTwitchChannelFromUrl,
   getTwitchStreamTitle,
 } from '../domain/twitchPreview';
-import { useAsyncLoad } from '../hooks/useAsyncLoad';
-import { getLiveTwitchItems } from '../services/twitch';
-import { getRequestErrorMessage } from '../services/authError';
-import { useAuth } from '../state/useAuth';
+import { useLiveTwitchStreams } from '../features/live/useLiveTwitchStreams';
 import type { FeedItem } from '../types';
 
 export function LivePage() {
   const { t } = useTranslation();
-  const { credentials } = useAuth();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
-  const load = useCallback((signal: AbortSignal) => getLiveTwitchItems(credentials, signal), [credentials]);
-  const { result: items, status, error, isLoading, retry } = useAsyncLoad(load);
+  const { result: items, status, errorMessage, isLoading, retry } = useLiveTwitchStreams(t);
   const selectedItem = items?.find((item) => item.id === selectedId) ?? items?.[0];
 
   function selectChannel(id: number) {
@@ -41,7 +36,7 @@ export function LivePage() {
       {status === 'error' ? (
         <div className="live__state" role="alert">
           <h2>{t('live.checkErrorTitle')}</h2>
-          <p>{getRequestErrorMessage(error, t, 'live.checkErrorText')}</p>
+          <p>{errorMessage}</p>
           <button type="button" className="secondary" onClick={retry}>{t('live.tryAgain')}</button>
         </div>
       ) : null}

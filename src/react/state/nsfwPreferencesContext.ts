@@ -1,6 +1,8 @@
 import { createContext } from 'react';
 
-export type NsfwMode = 'show' | 'blur' | 'hide';
+import type { NsfwMode } from '../domain/feedItemCardContracts';
+
+export type { NsfwMode } from '../domain/feedItemCardContracts';
 
 export type NsfwPreferencesValue = {
   nsfwMode: NsfwMode;

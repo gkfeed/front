@@ -1,3 +1,5 @@
+export type { NsfwMode } from './feedItemCardContracts';
+
 const NSFW_HOST_LABELS = new Set(['porno365', 'pornhub']);
 
 export function isNsfwLink(link: string): boolean {

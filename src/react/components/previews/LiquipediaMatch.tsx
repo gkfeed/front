@@ -1,7 +1,7 @@
 import type {
   LiquipediaMatchPreview,
   LiquipediaMatchTeam,
-} from '../../services/liquipedia';
+} from '../../../../shared/previewContracts';
 import { useTranslation } from 'react-i18next';
 
 export function LiquipediaMatch({ match }: { match: LiquipediaMatchPreview }) {

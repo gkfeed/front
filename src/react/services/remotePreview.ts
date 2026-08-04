@@ -1,13 +1,11 @@
-import type { HltvMatchSnapshot, OpenGraphPreview } from './openGraph';
+import type { HltvMatchSnapshot, OpenGraphPreview } from '../../../shared/previewContracts';
 import { BffHttpError, BffResponseError } from './bffClient';
-import { getLiquipediaMatchPreview, type LiquipediaMatchPreview } from './liquipedia';
+import { getLiquipediaMatchPreview } from './liquipedia';
 import { getOpenGraphPreview } from './openGraph';
 import { loadQueuedPreview } from './previewQueue';
+import type { RemotePreview } from '../domain/feedItemCardContracts';
 
-export type RemotePreview = {
-  liquipediaMatch: LiquipediaMatchPreview | null;
-  openGraphPreview: OpenGraphPreview | null;
-};
+export type { RemotePreview } from '../domain/feedItemCardContracts';
 
 export const EMPTY_REMOTE_PREVIEW: RemotePreview = {
   liquipediaMatch: null,

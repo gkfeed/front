@@ -9,8 +9,8 @@ import {
 import {
   EMPTY_REMOTE_PREVIEW,
   loadRemotePreview,
-  type RemotePreview,
 } from '../services/remotePreview';
+import type { RemotePreview } from '../domain/feedItemCardContracts';
 import { useHltvLiveRefresh } from './useHltvLiveRefresh';
 import { useAsyncResource } from './useAsyncResource';
 import { usePreviewVisibility } from './usePreviewVisibility';

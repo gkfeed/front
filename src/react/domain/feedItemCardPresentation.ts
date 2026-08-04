@@ -1,47 +1,28 @@
-import type { HltvMatchSnapshot, OpenGraphPreview } from '../../../shared/previewContracts';
-
 import {
   getFeedItemCardPresentationDescriptor,
-  type FeedItemCardImagePreview,
-  type FeedItemCardPresentationDescriptor,
-  type FeedItemCardVariant,
 } from './feedItemProviders';
 import { resolveFeedItemCardMetadata } from './feedItemCardMetadata';
 import {
   resolveFeedItemCardPreviews,
 } from './feedItemCardPreviewResolution';
 import { resolveVisibleFeedItemCardPreview } from './feedItemCardPreviewVisibility';
-import type { FeedItemPreview } from './feedItemPreview';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
+import type {
+  FeedItemCardPresentation,
+  NsfwMode,
+  RemotePreview,
+} from './feedItemCardContracts';
 import type { FeedItem } from '../types';
-import type { NsfwMode } from '../state/nsfwPreferencesContext';
-import type { RemotePreview } from '../services/remotePreview';
+
+export type {
+  FeedItemCardPresentation,
+} from './feedItemCardContracts';
 
 export type {
   FeedItemCardImagePreview,
   FeedItemCardPresentationDescriptor,
   FeedItemCardVariant,
 } from './feedItemProviders';
-
-export type FeedItemCardPresentation = {
-  item: FeedItem;
-  hostname: string | null;
-  provider: FeedItemAnalysis['provider'];
-  descriptor: FeedItemCardPresentationDescriptor;
-  variant: FeedItemCardVariant;
-  imagePreview: FeedItemCardImagePreview;
-  openGraphPreview: OpenGraphPreview | null;
-  liquipediaMatch: RemotePreview['liquipediaMatch'];
-  preview: FeedItemPreview | null;
-  visiblePreview: FeedItemPreview | null;
-  description: string | null;
-  isNsfw: boolean;
-  shouldBlurNsfw: boolean;
-  shouldHideNsfw: boolean;
-  hltvMatchTeams: HltvMatchSnapshot['teams'];
-  hltvSnapshot: HltvMatchSnapshot | null;
-  hltvImageScore: [string, string] | null;
-};
 
 export { shouldLoadRemotePreview } from './feedItemCardPreviewResolution';
 

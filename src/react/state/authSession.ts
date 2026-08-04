@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { validateCredentials } from '../services/auth';
-import { isAuthenticationError } from '../services/authError';
+import { isAuthenticationError, validateCredentials } from '../features/auth/authentication';
 import type { Credentials } from '../types';
 import type { AuthContextValue, AuthStatus } from './authContext';
 import {

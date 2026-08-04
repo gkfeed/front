@@ -1,4 +1,3 @@
-import type { FeedItemCardPresentation } from './feedItemCardPresentation';
 import { isRedditUrl, type FeedItemPreview } from './feedItemPreview';
 import { getFeedItemDescription } from './feedItemDescription';
 import {
@@ -8,26 +7,10 @@ import {
 import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import { isNsfwLink } from './nsfw';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
+import type { FeedItemCardMetadata, NsfwMode, RemotePreview } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
-import type { NsfwMode } from '../state/nsfwPreferencesContext';
-import type { RemotePreview } from '../services/remotePreview';
 
-export type FeedItemCardMetadata = Pick<
-  FeedItemCardPresentation,
-  | 'hostname'
-  | 'provider'
-  | 'variant'
-  | 'imagePreview'
-  | 'openGraphPreview'
-  | 'liquipediaMatch'
-  | 'description'
-  | 'isNsfw'
-  | 'shouldBlurNsfw'
-  | 'shouldHideNsfw'
-  | 'hltvMatchTeams'
-  | 'hltvSnapshot'
-  | 'hltvImageScore'
->;
+export type { FeedItemCardMetadata } from './feedItemCardContracts';
 
 export function resolveFeedItemCardMetadata({
   item,

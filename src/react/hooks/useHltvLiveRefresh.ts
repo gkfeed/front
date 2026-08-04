@@ -6,11 +6,10 @@ import {
   type SetStateAction,
 } from 'react';
 
-import { getOpenGraphPreview, type OpenGraphPreview } from '../services/openGraph';
-import {
-  mergeHltvLiveData,
-  type RemotePreview,
-} from '../services/remotePreview';
+import type { OpenGraphPreview } from '../../../shared/previewContracts';
+import { getOpenGraphPreview } from '../services/openGraph';
+import { mergeHltvLiveData } from '../services/remotePreview';
+import type { RemotePreview } from '../domain/feedItemCardContracts';
 import { useAsyncResource } from './useAsyncResource';
 
 const HLTV_LIVE_REFRESH_MS = 30_000;
