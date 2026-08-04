@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 
 import { FeedCard } from '../components/FeedCard';
-import { useFeed } from '../hooks/useFeed';
-import type { FeedDeleteStatus } from '../hooks/useFeed';
+import {
+  useFeedPageModel,
+  type FeedDeleteStatus,
+} from '../features/feeds/useFeedPageModel';
 import { getRequestErrorMessage } from '../features/requestError';
 
 export function FeedPage() {
@@ -22,7 +24,7 @@ export function FeedPage() {
     cancelDelete,
     deleteFeed,
     retryLoad,
-  } = useFeed(id, handleDeleted);
+  } = useFeedPageModel(id, handleDeleted);
 
   let content: ReactNode = null;
 

@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
+import { HttpRequestError } from './http/httpErrors.js';
 import { toHttpErrorResponse } from './httpErrorMapping.js';
 import { PreviewError } from './preview/errors.js';
 
 describe('HTTP error mapping', () => {
+  it('maps request errors without treating them as provider failures', () => {
+    expect(toHttpErrorResponse(new HttpRequestError('Missing URL', 'missing_url', 400))).toEqual({
+      status: 400,
+      code: 'missing_url',
+      message: 'Missing URL',
+    });
+  });
+
   it('maps internal provider kinds to public HTTP responses at the boundary', () => {
     expect(toHttpErrorResponse(new PreviewError('Bad URL', 'invalid_url'))).toEqual({
       status: 400,

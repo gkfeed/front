@@ -1,0 +1,55 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router';
+
+import { useFeedReader } from '../../hooks/useFeedReader';
+import { useReviewActionsLayout } from '../../hooks/useReviewActionsLayout';
+import { useReviewShortcuts } from '../../hooks/useReviewShortcuts';
+import { getRequestErrorMessage } from '../requestError';
+import {
+  exitReaderFullscreen,
+  isAutomaticFallbackFullscreen,
+} from './readerFullscreen';
+import { getReaderMode } from './readerMode';
+
+type Translator = (key: string) => string;
+
+export function useReaderPageModel(t: Translator) {
+  const { search } = useLocation();
+  const mode = getReaderMode(search);
+
+  useEffect(() => () => {
+    void exitReaderFullscreen();
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'review' || !isAutomaticFallbackFullscreen()) return;
+    void exitReaderFullscreen();
+  }, [mode]);
+
+  const reader = useFeedReader();
+  const {
+    panelRef: reviewPanelRef,
+    actionsRef: reviewActionsRef,
+    useCompactActions,
+  } = useReviewActionsLayout(mode, reader.currentItem);
+
+  useReviewShortcuts({
+    mode,
+    currentItem: reader.currentItem,
+    isDeleting: reader.currentItem ? reader.isItemPending(reader.currentItem.id) : false,
+    onKeep: reader.keepItem,
+    onDelete: reader.deleteItem,
+  });
+
+  return {
+    ...reader,
+    mode,
+    reviewPanelRef,
+    reviewActionsRef,
+    useCompactActions,
+    hasLoadedContent: !reader.isLoading && !reader.loadFailed,
+    loadErrorMessage: reader.loadFailed
+      ? getRequestErrorMessage(reader.loadError, t, 'reader.loadError')
+      : '',
+  };
+}

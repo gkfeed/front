@@ -3,7 +3,7 @@ import { stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { extname, resolve } from 'node:path';
 
-import { PreviewError } from './preview/errors.js';
+import { HttpRequestError } from './http/httpErrors.js';
 
 const staticRoot = resolve(process.cwd(), 'dist');
 
@@ -18,7 +18,7 @@ export async function serveFrontend(
   try {
     decodedPath = decodeURIComponent(pathname);
   } catch {
-    throw new PreviewError('Invalid path', 'invalid_path');
+    throw new HttpRequestError('Invalid path', 'invalid_path', 400);
   }
 
   const requestedFile = resolve(resolvedRoot, `.${decodedPath}`);

@@ -1,26 +1,22 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TwitchTitle } from '../components/TwitchTitle';
-import { getFeedItemPreview } from '../domain/feedItemPreview';
-import {
-  getTwitchChannel as getTwitchChannelFromUrl,
-  getTwitchStreamTitle,
-} from '../domain/twitchPreview';
-import { useLiveTwitchStreams } from '../features/live/useLiveTwitchStreams';
-import type { FeedItem } from '../types';
+import { useLivePageModel } from '../features/live/useLivePageModel';
+import type { LiveStreamViewModel } from '../features/live/liveViewModel';
 
 export function LivePage() {
   const { t } = useTranslation();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [playingId, setPlayingId] = useState<number | null>(null);
-  const { result: items, status, errorMessage, isLoading, retry } = useLiveTwitchStreams(t);
-  const selectedItem = items?.find((item) => item.id === selectedId) ?? items?.[0];
-
-  function selectChannel(id: number) {
-    setSelectedId(id);
-    setPlayingId(null);
-  }
+  const {
+    streams,
+    selectedStream,
+    playingId,
+    status,
+    errorMessage,
+    isLoading,
+    retry,
+    selectChannel,
+    playChannel,
+  } = useLivePageModel(t);
 
   return (
     <section className="live" aria-labelledby="live-page-title">
@@ -41,7 +37,7 @@ export function LivePage() {
         </div>
       ) : null}
 
-      {!isLoading && items?.length === 0 ? (
+      {!isLoading && streams?.length === 0 ? (
         <div className="live__state">
           <h2>{t('live.noOne')}</h2>
           <p>{t('live.offline')}</p>
@@ -49,40 +45,37 @@ export function LivePage() {
         </div>
       ) : null}
 
-      {items?.length && selectedItem ? (
+      {streams?.length && selectedStream ? (
         <div className="live__layout">
           <div className="live__stream-card">
             <TwitchPreview
-              item={selectedItem}
-              isPlaying={playingId === selectedItem.id}
-              onPlay={() => setPlayingId(selectedItem.id)}
+              stream={selectedStream}
+              isPlaying={playingId === selectedStream.item.id}
+              onPlay={() => playChannel(selectedStream.item)}
             />
             <div className="live__stream-copy">
               <h2 className="live__stream-title">
-                <TwitchTitle
-                  text={getTwitchStreamTitle(selectedItem.title, getTwitchChannel(selectedItem))}
-                />
+                <TwitchTitle text={selectedStream.title} />
               </h2>
             </div>
           </div>
           <div className="live__channels">
             <p className="sr-only" role="status">
-              {t('live.stream', { count: items.length })}
+              {t('live.stream', { count: streams.length })}
             </p>
             <ul aria-label={t('live.channels')}>
-              {items.map((item) => {
-                const channel = getTwitchChannel(item);
-                const selected = item.id === selectedItem.id;
+              {streams.map((stream) => {
+                const selected = stream.item.id === selectedStream.item.id;
 
                 return (
-                  <li key={item.id}>
+                  <li key={stream.item.id}>
                     <button
                       type="button"
                       aria-pressed={selected}
-                      onClick={() => selectChannel(item.id)}
+                      onClick={() => selectChannel(stream.item.id)}
                     >
                       <span className="live__channel-dot" aria-hidden="true" />
-                      <span>{channel}</span>
+                      <span>{stream.channel}</span>
                     </button>
                   </li>
                 );
@@ -96,15 +89,14 @@ export function LivePage() {
 }
 
 type TwitchPreviewProps = {
-  item: FeedItem;
+  stream: LiveStreamViewModel;
   isPlaying: boolean;
   onPlay: () => void;
 };
 
-function TwitchPreview({ item, isPlaying, onPlay }: TwitchPreviewProps) {
+function TwitchPreview({ stream, isPlaying, onPlay }: TwitchPreviewProps) {
   const { t } = useTranslation();
-  const channel = getTwitchChannel(item);
-  const preview = getFeedItemPreview(item);
+  const { channel, preview } = stream;
 
   if (isPlaying) {
     const parameters = new URLSearchParams({
@@ -136,12 +128,4 @@ function TwitchPreview({ item, isPlaying, onPlay }: TwitchPreviewProps) {
       <span className="live__play" aria-hidden="true">▶</span>
     </button>
   );
-}
-
-function getTwitchChannel(item: FeedItem): string {
-  try {
-    return getTwitchChannelFromUrl(new URL(item.link)) ?? item.title;
-  } catch {
-    return item.title;
-  }
 }

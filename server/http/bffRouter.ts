@@ -1,15 +1,21 @@
 import type { ServerResponse } from 'node:http';
 
 import { sendJson } from '../httpResponse.js';
-import type { PreviewUseCases } from '../application/previewPorts.js';
+import type { PreviewUseCases } from '../application/previewUseCases.js';
 import { createDetachedRequestContext, type RequestContext } from '../requestContext.js';
 import { getRequiredPreviewUrl } from './previewQuery.js';
 import { sendPreviewImage } from './previewResponse.js';
 
-const JSON_PREVIEW_ROUTES: Record<string, keyof Pick<PreviewUseCases, 'openGraph' | 'liquipediaMatch' | 'tiktokComments'>> = {
-  '/api/bff/open-graph': 'openGraph',
-  '/api/bff/liquipedia-match': 'liquipediaMatch',
-  '/api/bff/tiktok-comments': 'tiktokComments',
+type JsonPreviewHandler = (
+  useCases: PreviewUseCases,
+  input: string,
+  context: RequestContext,
+) => Promise<unknown>;
+
+const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewHandler> = {
+  '/api/bff/open-graph': (useCases, input, context) => useCases.openGraph(input, context),
+  '/api/bff/liquipedia-match': (useCases, input, context) => useCases.liquipediaMatch(input, context),
+  '/api/bff/tiktok-comments': (useCases, input, context) => useCases.tiktokComments(input, context),
 };
 
 export async function routeBffRequest(
@@ -19,10 +25,14 @@ export async function routeBffRequest(
   useCases: PreviewUseCases,
 ): Promise<boolean> {
   const requestContext = context ?? createDetachedRequestContext();
-  const useCaseName = JSON_PREVIEW_ROUTES[requestUrl.pathname];
-  if (useCaseName) {
-    const load = useCases[useCaseName] as (input: string, context: RequestContext) => Promise<unknown>;
-    await handleJsonPreview(requestUrl, response, load, requestContext);
+  const jsonPreviewHandler = JSON_PREVIEW_ROUTES[requestUrl.pathname];
+  if (jsonPreviewHandler) {
+    await handleJsonPreview(
+      requestUrl,
+      response,
+      (input, context) => jsonPreviewHandler(useCases, input, context),
+      requestContext,
+    );
     return true;
   }
 

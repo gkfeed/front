@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import type { FeedItemProvider } from '../../domain/feedItemPreviewTypes';
 import {
   EmptyRenderer,
@@ -16,7 +17,7 @@ import {
   type FeedItemCardProviderRenderer,
 } from './feedItemCardProviderRenderers';
 
-const feedItemCardProviderRenderers: Record<FeedItemProvider, FeedItemCardProviderRenderer> = {
+const feedItemCardProviderRenderers = {
   generic: createRenderer({
     Preview: FeedItemMediaPreview,
     Copy: StandardCopy,
@@ -53,19 +54,32 @@ const feedItemCardProviderRenderers: Record<FeedItemProvider, FeedItemCardProvid
     Preview: YoutubeVideoPreview,
     Copy: YoutubeCopy,
   }),
-};
+} satisfies Readonly<Record<FeedItemProvider, FeedItemCardProviderRenderer>>;
 
-export function getFeedItemCardProviderRenderer(provider: FeedItemProvider) {
+export function getFeedItemCardProviderRenderer(
+  provider: FeedItemProvider,
+): FeedItemCardProviderRenderer {
   return feedItemCardProviderRenderers[provider];
 }
 
 function createRenderer(
   overrides: Partial<FeedItemCardProviderRenderer>,
 ): FeedItemCardProviderRenderer {
+  const Copy = overrides.Copy ?? EmptyRenderer;
+
   return {
-    Preview: EmptyRenderer,
-    Supplementary: EmptyRenderer,
-    Copy: EmptyRenderer,
     ...overrides,
+    Preview: overrides.Preview ?? EmptyRenderer,
+    Supplementary: overrides.Supplementary ?? EmptyRenderer,
+    Copy: withCopyVisibility(Copy),
+  };
+}
+
+function withCopyVisibility(
+  Renderer: FeedItemCardProviderRenderer['Copy'],
+): FeedItemCardProviderRenderer['Copy'] {
+  return (props) => {
+    if (props.model.descriptor.copy === 'none') return null;
+    return createElement(Renderer, props);
   };
 }

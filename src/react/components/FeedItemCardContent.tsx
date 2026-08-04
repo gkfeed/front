@@ -9,7 +9,7 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
   const localizedPreview = model.visiblePreview
     ? localizeFeedItemPreview(model.visiblePreview, t)
     : null;
-  const Renderer = getFeedItemCardProviderRenderer(model.provider).Preview;
+  const { Preview: Renderer } = getFeedItemCardProviderRenderer(model.provider);
 
   if (model.isPreviewPending) {
     return <div className="reader-card__preview-placeholder" role="status" aria-label={t('preview.loading')} />;
@@ -25,7 +25,7 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
 }
 
 export function FeedItemCardSupplementary({ model }: { model: FeedItemCardModel }) {
-  const Renderer = getFeedItemCardProviderRenderer(model.provider).Supplementary;
+  const { Supplementary: Renderer } = getFeedItemCardProviderRenderer(model.provider);
   if (model.isPreviewPending) return null;
 
   return <Renderer model={model} localizedPreview={null} displayHostname="" />;
@@ -33,8 +33,8 @@ export function FeedItemCardSupplementary({ model }: { model: FeedItemCardModel 
 
 export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
   const { t } = useTranslation();
-  const Renderer = getFeedItemCardProviderRenderer(model.provider).Copy;
-  if (model.isPreviewPending || model.descriptor.copy === 'none') return null;
+  const { Copy: Renderer } = getFeedItemCardProviderRenderer(model.provider);
+  if (model.isPreviewPending) return null;
 
   return (
     <Renderer

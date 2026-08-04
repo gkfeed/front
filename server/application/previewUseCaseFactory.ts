@@ -2,8 +2,8 @@ import type {
   PreviewConcurrencyLimiter,
   PreviewPort,
   PreviewPorts,
-  PreviewUseCases,
 } from './previewPorts.js';
+import type { PreviewUseCases } from './previewContracts.js';
 
 export function createPreviewUseCases(
   ports: PreviewPorts,

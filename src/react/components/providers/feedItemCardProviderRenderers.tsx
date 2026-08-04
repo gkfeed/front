@@ -126,7 +126,10 @@ export function TikTokSupplementary({ model }: FeedItemCardProviderRendererProps
   return <TikTokComments item={model.item} />;
 }
 
-export function YoutubeCopy({ model }: FeedItemCardProviderRendererProps) {
+export function YoutubeCopy(props: FeedItemCardProviderRendererProps) {
+  if (props.model.variant.type !== 'youtube') return <StandardCopy {...props} />;
+
+  const { model } = props;
   return (
     <div className="reader-card__copy reader-card__youtube-copy">
       <h2 className="reader-card__title">{model.item.text || model.item.title}</h2>
@@ -135,7 +138,10 @@ export function YoutubeCopy({ model }: FeedItemCardProviderRendererProps) {
   );
 }
 
-export function TwitchCopy({ model }: FeedItemCardProviderRendererProps) {
+export function TwitchCopy(props: FeedItemCardProviderRendererProps) {
+  if (props.model.variant.type !== 'twitch') return <StandardCopy {...props} />;
+
+  const { model } = props;
   const streamTitle = model.variant.type === 'twitch'
     ? getTwitchStreamTitle(model.item.title, model.variant.channel)
     : model.item.title || model.item.text;
@@ -147,7 +153,10 @@ export function TwitchCopy({ model }: FeedItemCardProviderRendererProps) {
   );
 }
 
-export function MatreshkaCopy({ model }: FeedItemCardProviderRendererProps) {
+export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
+  if (props.model.variant.type !== 'matreshka') return <StandardCopy {...props} />;
+
+  const { model } = props;
   const matreshkaTitle = parseMatreshkaTitle(model.item.title, model.item.text);
   return (
     <div className="reader-card__copy reader-card__matreshka-copy">

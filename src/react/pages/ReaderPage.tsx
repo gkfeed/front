@@ -1,37 +1,19 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { ReaderReview } from '../components/ReaderReview';
 import { ReaderScroll } from '../components/ReaderScroll';
 import { ReaderFullscreenButton } from '../components/ReaderFullscreenButton';
 import type { FeedItemDeletion } from '../hooks/useFeedItemDeletion';
-import { useFeedReader } from '../hooks/useFeedReader';
-import { useReviewActionsLayout } from '../hooks/useReviewActionsLayout';
-import { useReviewShortcuts } from '../hooks/useReviewShortcuts';
-import { exitReaderFullscreen, isAutomaticFallbackFullscreen } from '../features/reader/readerFullscreen';
-import { getReaderMode } from '../state/readerMode';
-import { getRequestErrorMessage } from '../features/requestError';
+import { useReaderPageModel } from '../features/reader/useReaderPageModel';
 
 export function ReaderPage() {
-  useEffect(() => () => {
-    void exitReaderFullscreen();
-  }, []);
-
   const { t } = useTranslation();
-  const { search } = useLocation();
-  const mode = getReaderMode(search);
-  useEffect(() => {
-    if (mode === 'review' || !isAutomaticFallbackFullscreen()) return;
-    void exitReaderFullscreen();
-  }, [mode]);
   const {
     items,
     currentItem,
     isLoading,
     isItemPending,
     loadFailed,
-    loadError,
     failedDeletions,
     remainingCount,
     keepItem,
@@ -39,20 +21,13 @@ export function ReaderPage() {
     retryDelete,
     resetReview,
     retryLoad,
-  } = useFeedReader();
-  const {
-    panelRef: reviewPanelRef,
-    actionsRef: reviewActionsRef,
-    useCompactActions,
-  } = useReviewActionsLayout(mode, currentItem);
-  useReviewShortcuts({
     mode,
-    currentItem,
-    isDeleting: currentItem ? isItemPending(currentItem.id) : false,
-    onKeep: keepItem,
-    onDelete: deleteItem,
-  });
-  const hasLoadedContent = !isLoading && !loadFailed;
+    reviewPanelRef,
+    reviewActionsRef,
+    useCompactActions,
+    hasLoadedContent,
+    loadErrorMessage,
+  } = useReaderPageModel(t);
 
   return (
     <>
@@ -73,7 +48,7 @@ export function ReaderPage() {
         {isLoading ? <ReaderLoading /> : null}
         {loadFailed ? (
           <div className="reader__state" role="alert">
-            <p>{getRequestErrorMessage(loadError, t, 'reader.loadError')}</p>
+            <p>{loadErrorMessage}</p>
             <button type="button" className="secondary" onClick={retryLoad}>{t('live.tryAgain')}</button>
           </div>
         ) : null}

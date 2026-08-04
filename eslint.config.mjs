@@ -4,21 +4,74 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-// The frontend currently has no path aliases; these are the relative import
-// depths used by the existing root-level and one-level nested feature folders.
-const relativeLayerImports = (layer) => [
-  `../${layer}`,
-  `../${layer}/**`,
-  `../../${layer}`,
-  `../../${layer}/**`,
-  `../../../${layer}`,
-  `../../../${layer}/**`,
-];
+const frontendLayers = ['domain', 'services', 'state', 'hooks', 'features', 'components', 'pages'];
 
+// Features currently contain both application use cases and feature-specific
+// hooks. Keep that transition explicit while preventing presentation layers
+// from reaching infrastructure directly.
+const allowedLayerDependencies = {
+  domain: ['domain'],
+  services: ['domain', 'services'],
+  state: ['domain', 'features', 'state'],
+  hooks: ['domain', 'features', 'hooks', 'state'],
+  features: ['domain', 'features', 'hooks', 'services', 'state'],
+  components: ['components', 'domain', 'features', 'hooks', 'state'],
+  pages: ['components', 'domain', 'features', 'hooks', 'pages', 'state'],
+};
+
+const boundaryMessages = {
+  domain: {
+    services: 'The domain layer must not depend on services. Use a domain contract or application port.',
+    state: 'The domain layer must not depend on state. Pass state values through a domain contract.',
+    hooks: 'The domain layer must not depend on React hooks.',
+    features: 'The domain layer must not depend on application features.',
+    components: 'The domain layer must not depend on presentation components.',
+    pages: 'The domain layer must not depend on pages.',
+  },
+  services: {
+    state: 'Services must not depend on UI state.',
+    hooks: 'Services must not depend on React hooks.',
+    features: 'Services must not depend on application features.',
+    components: 'Services must not depend on presentation components.',
+    pages: 'Services must not depend on pages.',
+  },
+  state: {
+    hooks: 'State must not depend on React hooks.',
+    services: 'State must use an application or feature authentication use case instead of services.',
+    components: 'State must not depend on presentation components.',
+    pages: 'State must not depend on pages.',
+  },
+  hooks: {
+    services: 'Hooks must call application or feature use cases instead of services.',
+    components: 'Hooks must not depend on presentation components.',
+    pages: 'Hooks must not depend on pages.',
+  },
+  features: {
+    components: 'Features must not depend on presentation components.',
+    pages: 'Features must not depend on pages.',
+  },
+  components: {
+    services: 'Move service calls behind an application or feature use case.',
+    pages: 'Components must not depend on pages.',
+  },
+  pages: {
+    services: 'Move service calls behind an application or feature use case.',
+  },
+};
+
+// Import sources are relative today and feature folders can be nested. A
+// regex keeps the boundary effective if another nested folder is introduced.
 const restrictLayerImport = (layer, message) => ({
-  group: relativeLayerImports(layer),
+  regex: `^(?:\\.\\./)+${layer}(?:/|$)`,
   message,
 });
+
+const layerBoundaryRestrictions = (sourceLayer) => frontendLayers
+  .filter((targetLayer) => !allowedLayerDependencies[sourceLayer].includes(targetLayer))
+  .map((targetLayer) => restrictLayerImport(
+    targetLayer,
+    boundaryMessages[sourceLayer][targetLayer],
+  ));
 
 export default tseslint.config(
   {
@@ -75,14 +128,7 @@ export default tseslint.config(
     ignores: ['**/*.test*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [
-          restrictLayerImport('services', 'The domain layer must not depend on services. Use a domain contract or application port.'),
-          restrictLayerImport('state', 'The domain layer must not depend on state. Pass state values through a domain contract.'),
-          restrictLayerImport('hooks', 'The domain layer must not depend on React hooks.'),
-          restrictLayerImport('components', 'The domain layer must not depend on presentation components.'),
-          restrictLayerImport('pages', 'The domain layer must not depend on pages.'),
-          restrictLayerImport('features', 'The domain layer must not depend on application features.'),
-        ],
+        patterns: layerBoundaryRestrictions('domain'),
       }],
     },
   },
@@ -91,13 +137,7 @@ export default tseslint.config(
     ignores: ['**/*.test*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [
-          restrictLayerImport('state', 'Services must not depend on UI state.'),
-          restrictLayerImport('hooks', 'Services must not depend on React hooks.'),
-          restrictLayerImport('components', 'Services must not depend on presentation components.'),
-          restrictLayerImport('pages', 'Services must not depend on pages.'),
-          restrictLayerImport('features', 'Services must not depend on application features.'),
-        ],
+        patterns: layerBoundaryRestrictions('services'),
       }],
     },
   },
@@ -106,12 +146,7 @@ export default tseslint.config(
     ignores: ['**/*.test*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [
-          restrictLayerImport('hooks', 'State must not depend on React hooks.'),
-          restrictLayerImport('components', 'State must not depend on presentation components.'),
-          restrictLayerImport('pages', 'State must not depend on pages.'),
-          restrictLayerImport('services', 'State must use an application or feature authentication use case instead of services.'),
-        ],
+        patterns: layerBoundaryRestrictions('state'),
       }],
     },
   },
@@ -120,10 +155,7 @@ export default tseslint.config(
     ignores: ['**/*.test*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [
-          restrictLayerImport('components', 'Hooks must not depend on presentation components.'),
-          restrictLayerImport('pages', 'Hooks must not depend on pages.'),
-        ],
+        patterns: layerBoundaryRestrictions('hooks'),
       }],
     },
   },
@@ -132,10 +164,7 @@ export default tseslint.config(
     ignores: ['**/*.test*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [
-          restrictLayerImport('components', 'Features must not depend on presentation components.'),
-          restrictLayerImport('pages', 'Features must not depend on pages.'),
-        ],
+        patterns: layerBoundaryRestrictions('features'),
       }],
     },
   },
@@ -144,9 +173,16 @@ export default tseslint.config(
     ignores: ['**/*.test*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [
-          restrictLayerImport('services', 'Move service calls behind an application or feature use case.'),
-        ],
+        patterns: layerBoundaryRestrictions('components'),
+      }],
+    },
+  },
+  {
+    files: ['src/react/pages/**/*.{ts,tsx}'],
+    ignores: ['**/*.test*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: layerBoundaryRestrictions('pages'),
       }],
     },
   },

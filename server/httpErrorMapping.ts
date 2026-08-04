@@ -1,3 +1,4 @@
+import { HttpRequestError } from './http/httpErrors.js';
 import { PreviewError } from './preview/errors.js';
 
 export type HttpErrorResponse = {
@@ -7,6 +8,14 @@ export type HttpErrorResponse = {
 };
 
 export function toHttpErrorResponse(error: unknown): HttpErrorResponse {
+  if (error instanceof HttpRequestError) {
+    return {
+      status: error.status,
+      code: error.code,
+      message: error.message,
+    };
+  }
+
   if (error instanceof PreviewError) {
     return {
       status: statusForPreviewError(error.kind),

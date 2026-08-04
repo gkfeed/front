@@ -25,6 +25,23 @@ describe('static server', () => {
     }));
     expect(response.end).toHaveBeenCalledOnce();
   });
+
+  it('reports malformed paths as HTTP boundary errors', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'gkfeed-static-'));
+    await writeFile(join(root, 'index.html'), '<!doctype html>');
+    const response = createResponse();
+
+    try {
+      await expect(serveFrontend('/%E0%A4%A', false, response, root))
+        .rejects.toMatchObject({
+          code: 'invalid_path',
+          kind: 'invalid_path',
+          status: 400,
+        });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });
 
 function createResponse(): ServerResponse & {

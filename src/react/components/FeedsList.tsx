@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { filterFeeds } from '../features/feeds/feedsListViewModel';
 import { useFeedsList } from '../features/feeds/useFeedsList';
-import type { Feed } from '../types';
 import { FeedCard } from './FeedCard';
 
 const SEARCH_DEBOUNCE_MS = 80;
@@ -81,12 +81,4 @@ function getResultsAnnouncement(count: number, query: string, t: (key: string, o
   if (!query) return t('feed.showing', { count });
   if (count === 0) return t('feed.noResults', { query });
   return t('feed.found', { count, query });
-}
-
-function filterFeeds(feeds: Feed[], normalizedQuery: string): Feed[] {
-  if (!normalizedQuery) return feeds;
-
-  return feeds.filter((feed) => (
-    `${feed.title} ${feed.type} ${feed.url}`.toLowerCase().includes(normalizedQuery)
-  ));
 }

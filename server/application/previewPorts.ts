@@ -2,27 +2,18 @@ import type {
   LiquipediaMatchPreview,
   OpenGraphPreview,
 } from '../../shared/previewContracts.js';
+import type {
+  PreviewImage,
+  TikTokCommentsPreview,
+} from './previewContracts.js';
 import type { RequestContext } from '../requestContext.js';
 
-export interface PreviewImage {
-  body: Uint8Array;
-  contentType: string;
-}
-
-export interface TikTokComment {
-  id: string;
-  text: string;
-  author: string;
-  username: string;
-  avatarUrl: string | null;
-}
-
-export interface TikTokCommentsPreview {
-  comments: TikTokComment[];
-  description: string | null;
-  creatorName: string | null;
-  creatorAvatarUrl: string | null;
-}
+export type {
+  PreviewImage,
+  PreviewUseCases,
+  TikTokComment,
+  TikTokCommentsPreview,
+} from './previewContracts.js';
 
 export type PreviewPort<TResult> = (
   input: string,
@@ -37,10 +28,3 @@ export interface PreviewPorts {
 }
 
 export type PreviewConcurrencyLimiter = <T>(load: () => Promise<T>) => Promise<T>;
-
-export interface PreviewUseCases {
-  openGraph: PreviewPort<OpenGraphPreview>;
-  liquipediaMatch: PreviewPort<LiquipediaMatchPreview>;
-  tiktokComments: PreviewPort<TikTokCommentsPreview>;
-  redditPreviewImage: PreviewPort<PreviewImage>;
-}
