@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { HttpRequestError } from './http/httpErrors.js';
-import { toHttpErrorResponse } from './httpErrorMapping.js';
+import { toHttpErrorResponse } from './http/httpErrorMapping.js';
 import { PreviewError } from './preview/errors.js';
 
 describe('HTTP error mapping', () => {

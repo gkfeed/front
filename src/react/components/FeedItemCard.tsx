@@ -1,7 +1,7 @@
-import { InstagramIcon } from './Icons';
 import { useTranslation } from 'react-i18next';
 import {
   FeedItemCardCopy,
+  FeedItemCardIdentity,
   FeedItemCardPreview,
   FeedItemCardSupplementary,
 } from './FeedItemCardContent';
@@ -10,13 +10,7 @@ import { useFeedItemCardModel } from './useFeedItemCardModel';
 export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCardModel>[0] }) {
   const { t } = useTranslation();
   const model = useFeedItemCardModel(item);
-  const {
-    cardRef,
-    isPreviewPending,
-    descriptor,
-    shouldBlurNsfw,
-    shouldHideNsfw,
-  } = model;
+  const { cardRef, isPreviewPending, descriptor, shouldBlurNsfw, shouldHideNsfw } = model;
 
   if (shouldHideNsfw) return null;
 
@@ -37,19 +31,10 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
           <span>{t('preview.hidden')}</span>
         </div>
       ) : null}
-      {descriptor.showInstagramIdentity ? (
-        <div className="reader-card__short-video-identity">
-          <span className="reader-card__short-video-logo"><InstagramIcon /></span>
-          <span>{getInstagramUsername(item.title)}</span>
-        </div>
-      ) : null}
+      <FeedItemCardIdentity model={model} />
       <FeedItemCardPreview model={model} />
       <FeedItemCardSupplementary model={model} />
       <FeedItemCardCopy model={model} />
     </article>
   );
-}
-
-function getInstagramUsername(title: string): string {
-  return title.replace(/^inst:\s*/i, '').trim() || 'Instagram';
 }

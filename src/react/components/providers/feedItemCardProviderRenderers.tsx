@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { FeedItemCardModel } from '../useFeedItemCardModel';
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import { InstagramIcon } from '../Icons';
 import { FeedItemMedia } from '../previews/FeedItemMedia';
 import { HltvCountdown, HltvMatchup } from '../previews/HltvMatch';
 import { LiquipediaMatch } from '../previews/LiquipediaMatch';
@@ -25,12 +26,24 @@ type FeedItemCardProviderRenderer = {
   Preview: ComponentType<FeedItemCardProviderRendererProps>;
   Supplementary: ComponentType<FeedItemCardProviderRendererProps>;
   Copy: ComponentType<FeedItemCardProviderRendererProps>;
+  Identity: ComponentType<FeedItemCardProviderRendererProps>;
 };
 
 export type { FeedItemCardProviderRenderer };
 
 export function EmptyRenderer(): null {
   return null;
+}
+
+export function InstagramIdentity({ model }: FeedItemCardProviderRendererProps) {
+  if (!model.descriptor.showInstagramIdentity) return null;
+
+  return (
+    <div className="reader-card__short-video-identity">
+      <span className="reader-card__short-video-logo"><InstagramIcon /></span>
+      <span>{getInstagramUsername(model.item.title)}</span>
+    </div>
+  );
 }
 
 type FeedItemCardVariantType = FeedItemCardModel['variant']['type'];
@@ -221,6 +234,10 @@ export function StandardCopy({ model, displayHostname }: FeedItemCardProviderRen
 
 function getYoutubeChannelName(title: string): string {
   return title.replace(/^YT:\s*/i, '').trim() || 'YouTube';
+}
+
+function getInstagramUsername(title: string): string {
+  return title.replace(/^inst:\s*/i, '').trim() || 'Instagram';
 }
 
 function createVariantRenderer<T extends FeedItemCardVariantType>(

@@ -5,6 +5,7 @@ import {
   FeedItemMediaPreview,
   HltvPreview,
   HltvSupplementary,
+  InstagramIdentity,
   LiquipediaPreview,
   MatreshkaCopy,
   MatreshkaVideoPreview,
@@ -28,6 +29,7 @@ export const feedItemCardProviderRendererMap = {
     Copy: StandardCopy,
   }),
   instagram: createProviderRenderer({
+    Identity: InstagramIdentity,
     Preview: FeedItemMediaPreview,
   }),
   liquipedia: createProviderRenderer({
@@ -74,6 +76,7 @@ function createProviderRenderer(
     Preview: overrides.Preview ?? EmptyRenderer,
     Supplementary: overrides.Supplementary ?? EmptyRenderer,
     Copy: withCopyVisibility(Copy),
+    Identity: overrides.Identity ?? EmptyRenderer,
   };
 }
 

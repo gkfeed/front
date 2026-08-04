@@ -1,4 +1,4 @@
-import { createHttpServer } from './httpServer.js';
+import { createHttpServer } from './http/httpServer.js';
 
 const port = Number(process.env.PORT ?? 3000);
 

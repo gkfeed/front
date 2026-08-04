@@ -6,10 +6,10 @@ import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleHttpRequest } from './httpServer.js';
-import { sendJson } from './httpResponse.js';
+import { handleHttpRequest } from './http/httpServer.js';
+import { sendJson } from './http/httpResponse.js';
 import { PreviewError } from './preview/errors.js';
-import { serveFrontend } from './staticServer.js';
+import { serveFrontend } from './http/staticServer.js';
 
 describe('HTTP server composition root', () => {
   it('wires BFF routing and static serving behind the HTTP boundary', async () => {

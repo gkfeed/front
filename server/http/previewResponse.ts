@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
-import type { PreviewImage } from '../application/previewPorts.js';
+import type { PreviewImage } from '../application/previewContracts.js';
 
 export function sendPreviewImage(response: ServerResponse, image: PreviewImage): void {
   response.writeHead(200, {

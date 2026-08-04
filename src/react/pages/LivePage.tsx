@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
+import { LiveStreamPreview } from '../components/LiveStreamPreview';
 import { TwitchTitle } from '../components/TwitchTitle';
 import { useLivePageModel } from '../features/live/useLivePageModel';
-import type { LiveStreamViewModel } from '../features/live/liveViewModel';
 
 export function LivePage() {
   const { t } = useTranslation();
@@ -48,7 +48,7 @@ export function LivePage() {
       {streams?.length && selectedStream ? (
         <div className="live__layout">
           <div className="live__stream-card">
-            <TwitchPreview
+            <LiveStreamPreview
               stream={selectedStream}
               isPlaying={playingId === selectedStream.item.id}
               onPlay={() => playChannel(selectedStream.item)}
@@ -85,47 +85,5 @@ export function LivePage() {
         </div>
       ) : null}
     </section>
-  );
-}
-
-type TwitchPreviewProps = {
-  stream: LiveStreamViewModel;
-  isPlaying: boolean;
-  onPlay: () => void;
-};
-
-function TwitchPreview({ stream, isPlaying, onPlay }: TwitchPreviewProps) {
-  const { t } = useTranslation();
-  const { channel, preview } = stream;
-
-  if (isPlaying) {
-    const parameters = new URLSearchParams({
-      channel,
-      parent: window.location.hostname || 'localhost',
-      autoplay: 'true',
-    });
-
-    return (
-      <div className="live__preview live__preview--player">
-        <iframe
-          src={`https://player.twitch.tv/?${parameters}`}
-          title={t('live.playerTitle', { channel })}
-          allow="autoplay; fullscreen"
-          allowFullScreen
-        />
-      </div>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      className="live__preview live__preview-trigger"
-      aria-label={t('live.playOn', { channel })}
-      onClick={onPlay}
-    >
-      {preview ? <img src={preview.src} alt={t('live.previewAlt', { channel })} /> : null}
-      <span className="live__play" aria-hidden="true">▶</span>
-    </button>
   );
 }

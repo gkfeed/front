@@ -19,7 +19,10 @@ const frontendLayers = [
 // hooks. Keep that transition explicit while preventing presentation layers
 // from reaching infrastructure directly.
 const allowedLayerDependencies = {
-  application: ['application', 'domain', 'services', 'state', 'hooks', 'features', 'components', 'pages'],
+  // The application layer is the composition root for use cases and adapters,
+  // not a presentation entry point. Keep UI wiring in the page/component
+  // layers so the dependency direction remains one-way.
+  application: ['application', 'domain', 'services', 'features'],
   domain: ['domain'],
   services: ['domain', 'services'],
   state: ['application', 'domain', 'features', 'state'],
@@ -32,6 +35,12 @@ const allowedLayerDependencies = {
 };
 
 const boundaryMessages = {
+  application: {
+    state: 'The application layer must not depend on UI state.',
+    hooks: 'The application layer must not depend on React hooks.',
+    components: 'The application layer must not depend on presentation components.',
+    pages: 'The application layer must not depend on pages.',
+  },
   domain: {
     application: 'The domain layer must not depend on the composition root. Use a domain contract.',
     services: 'The domain layer must not depend on services. Use a domain contract or application port.',

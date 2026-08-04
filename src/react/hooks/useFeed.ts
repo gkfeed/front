@@ -1,69 +1,8 @@
-import { useCallback, useState } from 'react';
-
-import { featureUseCases } from '../application/featureComposition';
-import { useAsyncLoad } from './useAsyncLoad';
-import { isNotFoundError } from '../features/requestError';
-import { useAuth } from '../state/useAuth';
-
-type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
-export type FeedLoadStatus = 'loading' | 'success' | 'error' | 'not-found';
-export type FeedDeleteStatus = DeleteState;
-
-export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) {
-  const { credentials } = useAuth();
-  const [deleteState, setDeleteState] = useState<DeleteState>('idle');
-  const feedId = parseFeedId(feedIdParam);
-  const load = useCallback(
-    (signal: AbortSignal) => featureUseCases.feeds.loadFeed(feedId, credentials, signal),
-    [credentials, feedId],
-  );
-  const {
-    result: feed,
-    status: asyncLoadStatus,
-    error: loadError,
-    retry: retryLoad,
-  } = useAsyncLoad(load);
-  const loadStatus: FeedLoadStatus = (featureUseCases.feeds.isFeedNotFoundError(loadError)
-    || isNotFoundError(loadError))
-    ? 'not-found'
-    : asyncLoadStatus;
-  const isDeleting = deleteState === 'deleting';
-
-  async function deleteFeed() {
-    if (feedId === null || isDeleting) return;
-
-    setDeleteState('deleting');
-
-    try {
-      await featureUseCases.feeds.deleteFeed(feedId, credentials);
-      onDeleted();
-    } catch {
-      setDeleteState('error');
-    }
-  }
-
-  function requestDelete() {
-    setDeleteState('confirming');
-  }
-
-  function cancelDelete() {
-    if (!isDeleting) setDeleteState('idle');
-  }
-
-  return {
-    feed,
-    loadStatus,
-    loadError,
-    deleteStatus: deleteState,
-    retryLoad,
-    requestDelete,
-    cancelDelete,
-    deleteFeed,
-  };
-}
-
-function parseFeedId(feedIdParam: string | undefined): number | null {
-  const feedId = Number(feedIdParam);
-
-  return Number.isSafeInteger(feedId) && feedId > 0 ? feedId : null;
-}
+// Compatibility façade for callers that still import the feed hook from the
+// hooks layer. Feed-page behavior is owned by the feature model so loading,
+// deletion, and route-id handling cannot drift between entry points.
+export {
+  useFeedPageModel as useFeed,
+  type FeedDeleteStatus,
+  type FeedLoadStatus,
+} from '../features/feeds/useFeedPageModel';

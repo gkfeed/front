@@ -24,6 +24,12 @@ export function FeedItemCardPreview({ model }: { model: FeedItemCardModel }) {
   );
 }
 
+export function FeedItemCardIdentity({ model }: { model: FeedItemCardModel }) {
+  const { Identity: Renderer } = getFeedItemCardProviderRenderer(model.provider);
+
+  return <Renderer model={model} localizedPreview={null} displayHostname="" />;
+}
+
 export function FeedItemCardSupplementary({ model }: { model: FeedItemCardModel }) {
   const { Supplementary: Renderer } = getFeedItemCardProviderRenderer(model.provider);
   if (model.isPreviewPending) return null;

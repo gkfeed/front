@@ -4,23 +4,10 @@ import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { FeedItemCardModel } from '../useFeedItemCardModel';
-import type { FeedItemProvider } from '../../domain/feedItemPreviewTypes';
 import {
   feedItemCardProviderRendererMap,
   getFeedItemCardProviderRenderer,
 } from './feedItemCardProviderRegistry';
-
-const providers: FeedItemProvider[] = [
-  'generic',
-  'hltv',
-  'instagram',
-  'liquipedia',
-  'matreshka',
-  'tiktok',
-  'twitch',
-  'vk',
-  'youtube',
-];
 
 function createModel(overrides: Partial<FeedItemCardModel> = {}): FeedItemCardModel {
   return {
@@ -64,13 +51,16 @@ function createModel(overrides: Partial<FeedItemCardModel> = {}): FeedItemCardMo
 
 describe('feed item card provider renderer map', () => {
   it('registers every provider with all rendering slots', () => {
-    for (const provider of providers) {
+    for (const provider of Object.keys(feedItemCardProviderRendererMap) as Array<
+      keyof typeof feedItemCardProviderRendererMap
+    >) {
       const renderer = getFeedItemCardProviderRenderer(provider);
 
       expect(feedItemCardProviderRendererMap[provider]).toBe(renderer);
       expect(renderer.Preview).toBeTypeOf('function');
       expect(renderer.Supplementary).toBeTypeOf('function');
       expect(renderer.Copy).toBeTypeOf('function');
+      expect(renderer.Identity).toBeTypeOf('function');
     }
   });
 
@@ -110,6 +100,33 @@ describe('feed item card provider renderer map', () => {
     );
 
     expect(container.firstChild).toBeNull();
+  });
+
+  it('keeps provider-specific identity rendering in the registry', () => {
+    const Identity = getFeedItemCardProviderRenderer('instagram').Identity;
+    const { container } = render(
+      <Identity
+        model={createModel({
+          provider: 'instagram',
+          item: {
+            id: 1,
+            feedId: 2,
+            link: 'https://www.instagram.com/p/example',
+            title: 'inst: creator',
+            text: '',
+          },
+          descriptor: {
+            ...createModel().descriptor,
+            showInstagramIdentity: true,
+          },
+        })}
+        localizedPreview={null}
+        displayHostname=""
+      />,
+    );
+
+    expect(container.querySelector('.reader-card__short-video-identity')).toBeTruthy();
+    expect(container.textContent).toContain('creator');
   });
 
   it('falls back to standard copy when a variant-specific renderer receives another variant', () => {

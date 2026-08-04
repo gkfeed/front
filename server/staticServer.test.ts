@@ -1,12 +1,13 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ServerResponse } from 'node:http';
+import { PassThrough } from 'node:stream';
 
 import { describe, expect, it, vi } from 'vitest';
 
 import { HttpRequestError } from './http/httpErrors.js';
-import { serveFrontend } from './staticServer.js';
+import { serveFrontend } from './http/staticServer.js';
 
 describe('static server', () => {
   it('falls back to the application shell and supports HEAD responses', async () => {
@@ -43,6 +44,29 @@ describe('static server', () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  it('streams existing assets with their transport metadata', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'gkfeed-static-'));
+    await writeFile(join(root, 'index.html'), '<!doctype html>');
+    await mkdir(join(root, 'assets'));
+    await writeFile(join(root, 'assets', 'app.js'), 'console.log("ok")');
+    const response = createStreamResponse();
+    const chunks: Buffer[] = [];
+    response.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+    try {
+      await serveFrontend('/assets/app.js', false, response, root);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+
+    expect(response.writeHead).toHaveBeenCalledWith(200, expect.objectContaining({
+      'cache-control': 'public, max-age=31536000, immutable',
+      'content-type': 'text/javascript; charset=utf-8',
+      'content-length': 17,
+    }));
+    expect(Buffer.concat(chunks).toString()).toBe('console.log("ok")');
+  });
 });
 
 function createResponse(): ServerResponse & {
@@ -56,4 +80,14 @@ function createResponse(): ServerResponse & {
     writeHead: ReturnType<typeof vi.fn>;
     end: ReturnType<typeof vi.fn>;
   };
+}
+
+function createStreamResponse(): PassThrough & ServerResponse & {
+  writeHead: ReturnType<typeof vi.fn>;
+} {
+  const response = new PassThrough() as PassThrough & ServerResponse & {
+    writeHead: ReturnType<typeof vi.fn>;
+  };
+  response.writeHead = vi.fn();
+  return response;
 }

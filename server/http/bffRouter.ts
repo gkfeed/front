@@ -1,21 +1,17 @@
 import type { ServerResponse } from 'node:http';
 
-import { sendJson } from '../httpResponse.js';
+import { sendJson } from './httpResponse.js';
 import type { PreviewUseCases } from '../application/previewUseCases.js';
 import { createDetachedRequestContext, type RequestContext } from '../requestContext.js';
 import { getRequiredPreviewUrl } from './previewQuery.js';
 import { sendPreviewImage } from './previewResponse.js';
 
-type JsonPreviewHandler = (
-  useCases: PreviewUseCases,
-  input: string,
-  context: RequestContext,
-) => Promise<unknown>;
+type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'openGraph' | 'liquipediaMatch' | 'tiktokComments'>;
 
-const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewHandler> = {
-  '/api/bff/open-graph': (useCases, input, context) => useCases.openGraph(input, context),
-  '/api/bff/liquipedia-match': (useCases, input, context) => useCases.liquipediaMatch(input, context),
-  '/api/bff/tiktok-comments': (useCases, input, context) => useCases.tiktokComments(input, context),
+const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
+  '/api/bff/open-graph': 'openGraph',
+  '/api/bff/liquipedia-match': 'liquipediaMatch',
+  '/api/bff/tiktok-comments': 'tiktokComments',
 };
 
 export async function routeBffRequest(
@@ -25,12 +21,12 @@ export async function routeBffRequest(
   useCases: PreviewUseCases,
 ): Promise<boolean> {
   const requestContext = context ?? createDetachedRequestContext();
-  const jsonPreviewHandler = JSON_PREVIEW_ROUTES[requestUrl.pathname];
-  if (jsonPreviewHandler) {
+  const useCaseName = JSON_PREVIEW_ROUTES[requestUrl.pathname];
+  if (useCaseName) {
     await handleJsonPreview(
       requestUrl,
       response,
-      (input, context) => jsonPreviewHandler(useCases, input, context),
+      (input, context) => useCases[useCaseName](input, context),
       requestContext,
     );
     return true;
@@ -45,10 +41,10 @@ export async function routeBffRequest(
   return false;
 }
 
-async function handleJsonPreview<TResult>(
+async function handleJsonPreview(
   requestUrl: URL,
   response: ServerResponse,
-  load: (input: string, context: RequestContext) => Promise<TResult>,
+  load: (input: string, context: RequestContext) => Promise<unknown>,
   context: RequestContext,
 ): Promise<void> {
   const result = await load(getRequiredPreviewUrl(requestUrl), context);

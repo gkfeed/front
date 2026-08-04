@@ -48,6 +48,28 @@ describe('BFF HTTP router', () => {
     expect(response.end).toHaveBeenCalledWith(JSON.stringify({ title: 'Story' }));
   });
 
+  it.each([
+    ['/api/bff/liquipedia-match', 'liquipediaMatch', { status: 'live' }],
+    ['/api/bff/tiktok-comments', 'tiktokComments', { comments: [] }],
+  ] as const)('dispatches %s through its application use case', async (pathname, useCaseName, result) => {
+    const response = createResponse();
+    const useCases = createUseCases();
+    vi.mocked(useCases[useCaseName]).mockResolvedValue(result);
+
+    await expect(handleBffRequest(
+      new URL(`http://localhost${pathname}?url=https%3A%2F%2Fexample.com`),
+      response,
+      undefined,
+      useCases,
+    )).resolves.toBe(true);
+
+    expect(useCases[useCaseName]).toHaveBeenCalledWith(
+      'https://example.com',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(response.end).toHaveBeenCalledWith(JSON.stringify(result));
+  });
+
   it('keeps missing query validation at the HTTP boundary', async () => {
     const response = createResponse();
 
@@ -98,6 +120,23 @@ describe('BFF HTTP router', () => {
       new URL('http://localhost/api/other'),
       response,
     )).resolves.toBe(false);
+
+    expect(response.writeHead).not.toHaveBeenCalled();
+    expect(response.end).not.toHaveBeenCalled();
+  });
+
+  it('leaves application failures for the outer HTTP error mapper', async () => {
+    const response = createResponse();
+    const useCases = createUseCases();
+    const failure = new Error('provider failure');
+    vi.mocked(useCases.openGraph).mockRejectedValue(failure);
+
+    await expect(handleBffRequest(
+      new URL('http://localhost/api/bff/open-graph?url=https%3A%2F%2Fexample.com'),
+      response,
+      undefined,
+      useCases,
+    )).rejects.toBe(failure);
 
     expect(response.writeHead).not.toHaveBeenCalled();
     expect(response.end).not.toHaveBeenCalled();

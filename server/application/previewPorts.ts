@@ -8,13 +8,6 @@ import type {
 } from './previewContracts.js';
 import type { RequestContext } from '../requestContext.js';
 
-export type {
-  PreviewImage,
-  PreviewUseCases,
-  TikTokComment,
-  TikTokCommentsPreview,
-} from './previewContracts.js';
-
 export type PreviewPort<TResult> = (
   input: string,
   context: RequestContext,
