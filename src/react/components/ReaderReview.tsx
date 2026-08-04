@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemPreview';
@@ -26,7 +26,6 @@ export function ReaderReview({
   onKeep,
   onDelete,
   onReset,
-  onShowScroll,
 }: {
   item: FeedItem;
   remainingCount: number;
@@ -37,17 +36,25 @@ export function ReaderReview({
   onKeep: () => void;
   onDelete: () => void;
   onReset: () => void;
-  onShowScroll: () => void;
 }) {
   const { t } = useTranslation();
   const isShortVideo = isShortVideoFeedItem(item);
   const isTikTok = isTikTokFeedItem(item);
   const [isMobileViewport, setIsMobileViewport] = useState(getIsMobileViewport);
   const [isFullscreen, setIsFullscreen] = useState(isReaderFullscreen);
+  const wasFullscreenRef = useRef(isReaderFullscreen());
+  const automaticFullscreenDismissedRef = useRef(false);
   const reviewActions = { isDeleting, onKeep, onDelete };
 
   useEffect(() => {
-    const updateFullscreenState = () => setIsFullscreen(isReaderFullscreen());
+    const updateFullscreenState = () => {
+      const nextIsFullscreen = isReaderFullscreen();
+      if (wasFullscreenRef.current && !nextIsFullscreen && isShortVideo) {
+        automaticFullscreenDismissedRef.current = true;
+      }
+      wasFullscreenRef.current = nextIsFullscreen;
+      setIsFullscreen(nextIsFullscreen);
+    };
     document.addEventListener('fullscreenchange', updateFullscreenState);
     document.addEventListener('webkitfullscreenchange', updateFullscreenState);
     document.addEventListener(FALLBACK_FULLSCREEN_EVENT, updateFullscreenState);
@@ -58,10 +65,16 @@ export function ReaderReview({
       document.removeEventListener('webkitfullscreenchange', updateFullscreenState);
       document.removeEventListener(FALLBACK_FULLSCREEN_EVENT, updateFullscreenState);
     };
-  }, []);
+  }, [isShortVideo]);
 
   useEffect(() => {
-    if (!isShortVideo || !isMobileViewport || !getMainElement() || isReaderFullscreen()) return;
+    if (
+      !isShortVideo
+      || !isMobileViewport
+      || !getMainElement()
+      || isReaderFullscreen()
+      || automaticFullscreenDismissedRef.current
+    ) return;
     // Native fullscreen requires a user gesture in Chromium and Safari. The
     // reader's fallback is the reliable automatic mobile fullscreen mode.
     setAutomaticFallbackFullscreen(true);
@@ -100,10 +113,7 @@ export function ReaderReview({
       <FeedItemCard key={item.id} item={item} />
       {isShortVideo ? (
         <ReaderMobileRail
-          item={item}
-          isTikTok={isTikTok}
           {...reviewActions}
-          onShowScroll={onShowScroll}
         />
       ) : null}
       {useCompactActions ? <CompactReviewActions {...reviewActions} /> : null}

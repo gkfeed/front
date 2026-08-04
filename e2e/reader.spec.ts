@@ -61,14 +61,32 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(commentsButtonBox!.x + commentsButtonBox!.width).toBeLessThanOrEqual(1024);
   });
 
-  test('automatically opens TikTok in fullscreen on mobile without the action menu', async ({ page }) => {
+  test('automatically opens TikTok in fullscreen on mobile without bottom shortcuts', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/reader');
 
     await expect(page.getByRole('button', { name: 'Exit Reader fullscreen' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'More review actions' })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Scroll view' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Open original' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Scroll view' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Show comments' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Open original' })).toHaveCount(0);
+  });
+
+  test('stays out of fullscreen after leaving TikTok fullscreen', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/reader');
+
+    const fullscreenButton = page.getByRole('button', { name: 'Exit Reader fullscreen' });
+    await expect(fullscreenButton).toBeVisible();
+    await fullscreenButton.click();
+    await expect(page.getByRole('button', { name: 'Open Reader fullscreen' })).toBeVisible();
+    await expect(page.locator('html')).not.toHaveAttribute('data-reader-fullscreen', 'true');
+
+    // A viewport change must not undo an explicit exit for the current TikTok.
+    await page.setViewportSize({ width: 700, height: 844 });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole('button', { name: 'Open Reader fullscreen' })).toBeVisible();
+    await expect(page.locator('html')).not.toHaveAttribute('data-reader-fullscreen', 'true');
   });
 
   test('uses the available height in landscape', async ({ page }) => {

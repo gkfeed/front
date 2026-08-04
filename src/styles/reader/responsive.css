@@ -327,6 +327,10 @@
     display: none;
   }
 
+  .reader-card__sound-toggle {
+    bottom: max(88px, calc(env(safe-area-inset-bottom) + 72px));
+  }
+
   .reader__item--short-video .reader__compact-actions {
     display: none;
   }

@@ -249,15 +249,9 @@ describe('ReaderPage', () => {
     expect(screen.queryByLabelText('More review actions')).toBeNull();
     expect(screen.getByRole('button', { name: 'Keep item' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Delete item' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Scroll view' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Open original' }).getAttribute('href'))
-      .toBe('https://www.tiktok.com/@creator/video/123');
-    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(2);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Scroll view' }));
-
-    expect(screen.queryByLabelText('Review controls')).toBeNull();
-    expect(screen.getByTitle('Video preview for Short video')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Scroll view' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Open original' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(1);
   });
 
   it.each([
@@ -285,7 +279,7 @@ describe('ReaderPage', () => {
     expect(await screen.findByRole('button', { name: 'Exit Reader fullscreen' })).toBeTruthy();
     expect(document.documentElement.dataset.readerFullscreen).toBe('true');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Scroll view' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Exit Reader fullscreen' }));
     await waitFor(() => expect(document.documentElement.dataset.readerFullscreen).toBeUndefined());
   });
 
