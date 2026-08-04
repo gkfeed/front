@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedById, getFeedById } from '../services/feeds';
 import { AuthProvider } from '../state/AuthProvider';
-import { useFeed } from './useFeed';
+import { useFeedPageModel as useFeed } from '../adapters/feeds/useFeedPageModel';
 
 vi.mock('../services/feeds');
 

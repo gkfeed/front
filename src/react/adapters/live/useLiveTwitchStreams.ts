@@ -1,17 +1,18 @@
 import { useCallback } from 'react';
 
-import { featureUseCases } from '../../application/featureComposition';
 import { useAsyncLoad } from '../../hooks/useAsyncLoad';
 import { useAuth } from '../../state/useAuth';
-import { getRequestErrorMessage } from '../requestError';
+import { useFeatureUseCases } from '../../state/useFeatureUseCases';
+import { getRequestErrorMessage } from '../../services/authError';
 
 type Translator = (key: string) => string;
 
 export function useLiveTwitchStreams(t: Translator) {
   const { credentials } = useAuth();
+  const { live } = useFeatureUseCases();
   const load = useCallback(
-    (signal: AbortSignal) => featureUseCases.live.loadLiveTwitchItems(credentials, signal),
-    [credentials],
+    (signal: AbortSignal) => live.loadLiveTwitchItems(credentials, signal),
+    [credentials, live],
   );
   const resource = useAsyncLoad(load);
 

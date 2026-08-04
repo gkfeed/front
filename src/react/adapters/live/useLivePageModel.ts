@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import type { FeedItem } from '../../types';
 import { useLiveTwitchStreams } from './useLiveTwitchStreams';
-import { toLiveStreamViewModel, type LiveStreamViewModel } from './liveViewModel';
+import { toLiveStreamViewModel, type LiveStreamViewModel } from '../../features/live/liveViewModel';
 
 type Translator = (key: string) => string;
 

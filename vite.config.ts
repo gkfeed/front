@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/bff': {
-        target: process.env.BFF_TARGET ?? 'http://localhost:3000',
+        target: process.env.BFF_TARGET ?? 'http://127.0.0.1:3000',
       },
       '/api/v1': {
         target: 'https://feed.gws.freemyip.com',

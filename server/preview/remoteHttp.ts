@@ -1,7 +1,7 @@
 import type { PublicHttpResponse } from '../publicHttp.js';
-import { PublicHttpError, requestPublicHttp } from '../publicHttp.js';
-import type { RequestContext } from '../requestContext.js';
-import { discardResponseBody, firstHeader } from './bodyReaders.js';
+import { PublicHttpError, discardResponseBody, requestPublicHttp } from '../publicHttp.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
+import { firstHeader } from './headers.js';
 import { PreviewError } from './errors.js';
 import { isRedirect, parsePublicHttpUrl } from './publicUrlPolicy.js';
 
@@ -11,12 +11,11 @@ export {
   MAX_IMAGE_RESPONSE_BYTES,
   MAX_METADATA_RESPONSE_BYTES,
   MAX_RESPONSE_BYTES,
-  firstHeader,
   readLimitedBody,
   readLimitedBytes,
   readLimitedJson,
   responseTooLarge,
-} from './bodyReaders.js';
+} from './bodyAdapters.js';
 export { isRedirect, parsePublicHttpUrl, safeDecodeURIComponent } from './publicUrlPolicy.js';
 
 export interface PublicResponseOptions {
@@ -34,7 +33,7 @@ export interface PublicResponseOptions {
 export async function fetchPublicResponse(
   input: URL,
   options: PublicResponseOptions,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<PublicHttpResponse> {
   let url = input;
   const maxRedirects = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;

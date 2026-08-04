@@ -4,7 +4,10 @@ import { PublicHttpError, discardResponseBody, type PublicHttpResponse } from '.
 import { PreviewError } from './errors.js';
 import { getDecodedBody } from './decompression.js';
 import { firstHeader } from './headers.js';
-import type { RequestContext } from '../requestContext.js';
+import {
+  isRequestDeadlineExceeded,
+  type RequestExecutionContext,
+} from '../application/requestExecutionContext.js';
 import {
   readBoundedBytes,
   readBoundedText,
@@ -18,7 +21,7 @@ export async function readLimitedBody(
     encoding?: string;
     stopAfterHead?: boolean;
     truncateAtLimit?: boolean;
-    context?: RequestContext;
+    context?: RequestExecutionContext;
   } = {},
 ): Promise<string> {
   const maxBytes = options.maxBytes ?? MAX_RESPONSE_BYTES;
@@ -38,7 +41,7 @@ export async function readLimitedBody(
 export async function readLimitedBytes(
   response: PublicHttpResponse,
   maximumBytes: number,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<Uint8Array> {
   const body = getDecodedBody(response.body, response.headers['content-encoding']);
   rejectDeclaredLength(response, maximumBytes, imageTooLarge);
@@ -56,7 +59,7 @@ export async function readLimitedJson(
     maximumBytes: number;
     tooLarge: () => PreviewError;
     invalidJson: () => PreviewError;
-    context?: RequestContext;
+    context?: RequestExecutionContext;
   },
 ): Promise<unknown> {
   const body = getDecodedBody(response.body, response.headers['content-encoding']);
@@ -103,12 +106,14 @@ function destroyBody(response: PublicHttpResponse, body: Readable, error?: Error
 function readWithContext<T>(
   response: PublicHttpResponse,
   body: Readable,
-  context: RequestContext | undefined,
+  context: RequestExecutionContext | undefined,
   read: () => Promise<T>,
 ): Promise<T> {
   if (!context) return read();
 
-  const abortError = new PublicHttpError(context?.timedOut ? 'timeout' : 'aborted');
+  const abortError = new PublicHttpError(
+    context && isRequestDeadlineExceeded(context) ? 'timeout' : 'aborted',
+  );
   const abort = () => destroyBody(response, body, abortError);
   if (context.signal.aborted) {
     abort();

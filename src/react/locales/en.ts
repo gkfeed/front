@@ -2,6 +2,7 @@ const en = {
   app: {
     skipToContent: 'Skip to content',
     fallbackTitle: 'GKFEED',
+    loading: 'Loading…',
   },
   pages: {
     feedSources: 'Feed sources',

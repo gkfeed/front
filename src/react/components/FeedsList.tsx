@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { filterFeeds } from '../features/feeds/feedsListViewModel';
-import { useFeedsList } from '../features/feeds/useFeedsList';
+import { useFeedsList } from '../adapters/feeds/useFeedsList';
 import { FeedCard } from './FeedCard';
 
 const SEARCH_DEBOUNCE_MS = 80;

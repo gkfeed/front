@@ -7,9 +7,11 @@ import {
   loadYoutubeIframeApi,
   type YoutubePlayer,
   type YoutubePlayerStateChangeEvent,
+} from '../../services/youtubeIframeApi';
+import {
   readYoutubeProgress,
   writeYoutubeProgress,
-} from '../../features/reader/youtubePlayer';
+} from '../../services/youtubeProgress';
 
 type YoutubePreviewProps = {
   onPreviewError: () => void;

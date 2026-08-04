@@ -11,7 +11,7 @@ import {
   rememberReviewActionsSize,
   setFallbackFullscreen,
   setNativeFullscreenAttribute,
-} from '../features/reader/readerFullscreen';
+} from '../services/readerFullscreen';
 
 export function ReaderFullscreenButton({ enableKeyboardShortcut = false }: {
   enableKeyboardShortcut?: boolean;

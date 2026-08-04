@@ -71,8 +71,6 @@ describe('resolvePublicAddress request cancellation', () => {
     const context = {
       signal: controller.signal,
       deadline: Date.now() + 10_000,
-      timedOut: false,
-      clientAborted: false,
       remainingMs: (maximum = Number.POSITIVE_INFINITY) => maximum,
     };
 

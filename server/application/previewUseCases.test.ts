@@ -4,9 +4,9 @@ import {
   createPreviewUseCases,
   type PreviewPorts,
 } from './previewUseCases.js';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestExecutionContext } from './requestExecutionContext.js';
 
-const context = {} as RequestContext;
+const context = {} as RequestExecutionContext;
 
 describe('preview use cases', () => {
   it('composes provider ports behind the application boundary', async () => {

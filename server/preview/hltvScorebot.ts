@@ -18,7 +18,7 @@ import {
   type HltvScorebotTeamIds,
 } from './hltvScorebotParser.js';
 import { TWITTERBOT_USER_AGENT } from './previewFetchers.js';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
 // HLTV's public Scorebot endpoint still speaks the Socket.IO v2 / Engine.IO
 // v3 protocol, so this import intentionally uses socket.io-client 2.x.
@@ -40,7 +40,7 @@ export async function fetchHltvScorebotSnapshot(
   html: string,
   cookiesPath?: string,
   cookieHeader?: string,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<HltvScorebotData | null> {
   const scoreboardTag = html.match(/<div\b[^>]*\bid=(?:"scoreboardElement"|'scoreboardElement')[^>]*>/i)?.[0];
   if (!scoreboardTag) return null;
@@ -134,7 +134,7 @@ function requestHltvScorebotSnapshot(
   html: string,
   headers: Record<string, string>,
   agent: ReturnType<typeof createPinnedHttpsAgent>,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<HltvScorebotSnapshot | null> {
   return new Promise((resolve) => {
     const timeoutMs = context?.remainingMs(SCOREBOT_TIMEOUT_MS) ?? SCOREBOT_TIMEOUT_MS;

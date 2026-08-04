@@ -1,1 +1,3 @@
-import './i18n';
+import { i18nReady } from './i18n';
+
+await i18nReady;

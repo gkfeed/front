@@ -10,14 +10,14 @@ const frontendLayers = [
   'services',
   'state',
   'hooks',
+  'adapters',
   'features',
   'components',
   'pages',
 ];
 
-// Features currently contain both application use cases and feature-specific
-// hooks. Keep that transition explicit while preventing presentation layers
-// from reaching infrastructure directly.
+// Feature modules contain pure use cases and view models. React adapters own
+// the UI wiring and receive their use cases through the provider.
 const allowedLayerDependencies = {
   // The application layer is the composition root for use cases and adapters,
   // not a presentation entry point. Keep UI wiring in the page/component
@@ -26,12 +26,11 @@ const allowedLayerDependencies = {
   domain: ['domain'],
   services: ['domain', 'services'],
   state: ['application', 'domain', 'features', 'state'],
-  hooks: ['application', 'domain', 'features', 'hooks', 'state'],
-  // Feature-local React hooks are still colocated with their use cases and
-  // need the composition root; pure use-case modules depend only on ports.
-  features: ['application', 'domain', 'features', 'hooks', 'services', 'state'],
-  components: ['components', 'domain', 'features', 'hooks', 'state'],
-  pages: ['components', 'domain', 'features', 'hooks', 'pages', 'state'],
+  hooks: ['application', 'domain', 'features', 'hooks', 'services', 'state'],
+  adapters: ['adapters', 'domain', 'features', 'hooks', 'services', 'state'],
+  features: ['domain', 'features'],
+  components: ['adapters', 'components', 'domain', 'features', 'hooks', 'services', 'state'],
+  pages: ['adapters', 'components', 'domain', 'features', 'hooks', 'pages', 'services', 'state'],
 };
 
 const boundaryMessages = {
@@ -65,12 +64,17 @@ const boundaryMessages = {
     pages: 'State must not depend on pages.',
   },
   hooks: {
-    services: 'Hooks must call application or feature use cases instead of services.',
     components: 'Hooks must not depend on presentation components.',
     pages: 'Hooks must not depend on pages.',
   },
+  adapters: {
+    application: 'React adapters must consume feature use cases through the provider.',
+    components: 'React adapters must not depend on presentation components.',
+    pages: 'React adapters must not depend on pages.',
+  },
   features: {
     application: 'Features must depend on ports, not the composition root.',
+    services: 'Features must depend on ports, not infrastructure services.',
     components: 'Features must not depend on presentation components.',
     pages: 'Features must not depend on pages.',
   },
@@ -103,6 +107,8 @@ const layerBoundaryRestrictions = (sourceLayer) => frontendLayers
 
 const layerBoundaryConfig = (sourceLayer) => ({
   files: [`src/react/${sourceLayer}/**/*.{ts,tsx}`],
+  // Unit tests are explicit fixture seams: they may mock a lower-level port
+  // directly. Production import cycles and layer edges are checked below.
   ignores: ['**/*.test*.{ts,tsx}'],
   rules: {
     'no-restricted-imports': ['error', {
@@ -110,6 +116,50 @@ const layerBoundaryConfig = (sourceLayer) => ({
     }],
   },
 });
+
+// Server application modules expose contracts and ports only. HTTP, provider,
+// and transport modules are infrastructure and must not leak into that layer.
+const serverApplicationBoundaryConfig = {
+  files: ['server/application/**/*.ts'],
+  rules: {
+    'no-restricted-imports': ['error', {
+      patterns: [
+        restrictLayerImport('http', 'Server application must not depend on HTTP transport.'),
+        restrictLayerImport('preview', 'Server application must not depend on provider implementations.'),
+        restrictLayerImport('transport', 'Server application must not depend on transport adapters.'),
+        restrictLayerImport('tiktok', 'Server application must use a port instead of a provider module.'),
+        restrictLayerImport('publicHttp', 'Server application must not depend on HTTP transport.'),
+        restrictLayerImport('publicAddress', 'Server application must not depend on network policy.'),
+      ],
+    }],
+  },
+};
+
+const serverHttpBoundaryConfig = {
+  files: ['server/http/**/*.ts'],
+  rules: {
+    'no-restricted-imports': ['error', {
+      patterns: [
+        {
+          regex: '^(?:\\.\\./)+preview/(?!errors(?:[/.]|$))',
+          message: 'HTTP transport must call application use cases, not providers.',
+        },
+        restrictLayerImport('tiktok', 'HTTP transport must call application use cases, not providers.'),
+        restrictLayerImport('publicHttp', 'HTTP routing must not bypass the application boundary.'),
+        restrictLayerImport('publicAddress', 'HTTP routing must not depend on network policy.'),
+      ],
+    }],
+  },
+};
+
+const serverTransportBoundaryConfig = {
+  files: ['server/transport/**/*.ts'],
+  rules: {
+    'no-restricted-imports': ['error', {
+      patterns: [restrictLayerImport('http', 'Transport adapters must not depend on HTTP routing.')],
+    }],
+  },
+};
 
 export default tseslint.config(
   {
@@ -161,5 +211,14 @@ export default tseslint.config(
       },
     },
   },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
   ...frontendLayers.map(layerBoundaryConfig),
+  serverApplicationBoundaryConfig,
+  serverHttpBoundaryConfig,
+  serverTransportBoundaryConfig,
 );

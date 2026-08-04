@@ -1,4 +1,4 @@
-import { PublicHttpError, type PublicHttpResponse } from '../publicHttp.js';
+import { PublicHttpError, discardResponseBody, type PublicHttpResponse } from '../publicHttp.js';
 import {
   MAX_IMAGE_RESPONSE_BYTES,
   MAX_METADATA_RESPONSE_BYTES,
@@ -6,8 +6,9 @@ import {
   fetchPublicResponse,
 } from './remoteHttp.js';
 import { PreviewError } from './errors.js';
-import { discardResponseBody, firstHeader, readLimitedBody, readLimitedBytes } from './bodyReaders.js';
-import type { RequestContext } from '../requestContext.js';
+import { firstHeader } from './headers.js';
+import { readLimitedBody, readLimitedBytes } from './bodyAdapters.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
 const MAX_REDIRECTS = 5;
 export const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
@@ -20,7 +21,7 @@ export type PreviewResponse = {
 export async function fetchHtmlResponse(
   input: URL,
   userAgent = TWITTERBOT_USER_AGENT,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<PreviewResponse> {
   const requestOptions = {
     accept: 'text/html,application/xhtml+xml',
@@ -45,7 +46,7 @@ export async function fetchHtmlResponse(
   return { response, contentType };
 }
 
-export async function fetchImageResponse(input: URL, context?: RequestContext): Promise<PreviewResponse> {
+export async function fetchImageResponse(input: URL, context?: RequestExecutionContext): Promise<PreviewResponse> {
   const requestOptions = {
     accept: 'image/avif,image/webp,image/jpeg,image/png,image/*',
     userAgent: TWITTERBOT_USER_AGENT,
@@ -78,7 +79,7 @@ export async function readHtmlBody(
     encoding?: string;
     stopAfterHead?: boolean;
     truncateAtLimit?: boolean;
-    context?: RequestContext;
+    context?: RequestExecutionContext;
   } = {},
 ): Promise<string> {
   return readPreviewBody(
@@ -100,7 +101,7 @@ export async function readHtmlBody(
 export async function readMetadataBody(
   response: PublicHttpResponse,
   encoding?: string,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<string> {
   return readHtmlBody(response, {
     maxBytes: MAX_METADATA_RESPONSE_BYTES,
@@ -113,7 +114,7 @@ export async function readMetadataBody(
 
 export async function readImageBody(
   response: PublicHttpResponse,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<Uint8Array> {
   return readPreviewBody(
     () => readLimitedBytes(response, MAX_IMAGE_RESPONSE_BYTES, context),

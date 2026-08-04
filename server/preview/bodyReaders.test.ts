@@ -9,7 +9,7 @@ import {
   readLimitedBytes,
   readLimitedJson,
   responseTooLarge,
-} from './bodyReaders.js';
+} from './bodyAdapters.js';
 
 describe('body readers', () => {
   it('destroys a pending body when the request context is aborted', async () => {
@@ -18,8 +18,6 @@ describe('body readers', () => {
     const context = {
       signal: controller.signal,
       deadline: Date.now() + 10_000,
-      timedOut: false,
-      clientAborted: false,
       remainingMs: (maximum = Number.POSITIVE_INFINITY) => maximum,
     };
 

@@ -4,12 +4,12 @@ import { useLocation } from 'react-router';
 import { useFeedReader } from '../../hooks/useFeedReader';
 import { useReviewActionsLayout } from '../../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../../hooks/useReviewShortcuts';
-import { getRequestErrorMessage } from '../requestError';
+import { getRequestErrorMessage } from '../../services/authError';
 import {
   exitReaderFullscreen,
   isAutomaticFallbackFullscreen,
-} from './readerFullscreen';
-import { getReaderMode } from './readerMode';
+} from '../../services/readerFullscreen';
+import { getReaderMode } from '../../state/readerMode';
 
 type Translator = (key: string) => string;
 

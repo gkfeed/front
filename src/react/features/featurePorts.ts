@@ -1,4 +1,5 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
+import type { TikTokCommentsPreview } from '../../../shared/tiktokContracts';
 
 import type { RemotePreview } from '../domain/feedItemCardContracts';
 import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../types';
@@ -41,24 +42,11 @@ export type PreviewApplicationPort = {
     signal: AbortSignal,
   ) => Promise<RemotePreview>;
   getOpenGraphPreview: (url: string, signal?: AbortSignal) => Promise<OpenGraphPreview>;
-  fetchTikTokComments: (url: string, signal: AbortSignal) => Promise<TikTokCommentsResult>;
+  fetchTikTokComments: (url: string, signal: AbortSignal) => Promise<TikTokCommentsPreview>;
   mergeHltvLiveData: (
     next: OpenGraphPreview,
     previous: OpenGraphPreview | null,
   ) => OpenGraphPreview;
 };
 
-export type TikTokComment = {
-  id: string;
-  text: string;
-  author: string;
-  username: string;
-  avatarUrl: string | null;
-};
-
-export type TikTokCommentsResult = {
-  comments: TikTokComment[];
-  description: string | null;
-  creatorName: string | null;
-  creatorAvatarUrl: string | null;
-};
+export type { TikTokComment, TikTokCommentsPreview } from '../../../shared/tiktokContracts';

@@ -1,11 +1,12 @@
-import type { PreviewApplicationPort, TikTokCommentsResult } from '../featurePorts';
+import type { TikTokCommentsPreview } from '../../../../shared/tiktokContracts';
+import type { PreviewApplicationPort } from '../featurePorts';
 
-export type { TikTokCommentsResult } from '../featurePorts';
+export type { TikTokCommentsPreview } from '../../../../shared/tiktokContracts';
 
 export function createPreviewUseCases(port: PreviewApplicationPort) {
   return {
     EMPTY_REMOTE_PREVIEW: port.EMPTY_REMOTE_PREVIEW,
-    fetchTikTokComments: (url: string, signal: AbortSignal): Promise<TikTokCommentsResult> => (
+    fetchTikTokComments: (url: string, signal: AbortSignal): Promise<TikTokCommentsPreview> => (
       port.fetchTikTokComments(url, signal)
     ),
     getOpenGraphPreview: port.getOpenGraphPreview,

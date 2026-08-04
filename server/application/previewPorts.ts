@@ -6,11 +6,11 @@ import type {
   PreviewImage,
   TikTokCommentsPreview,
 } from './previewContracts.js';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestExecutionContext } from './requestExecutionContext.js';
 
 export type PreviewPort<TResult> = (
   input: string,
-  context: RequestContext,
+  context: RequestExecutionContext,
 ) => Promise<TResult>;
 
 export interface PreviewPorts {

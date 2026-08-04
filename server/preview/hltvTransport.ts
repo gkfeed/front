@@ -5,11 +5,11 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import { REMOTE_REQUEST_TIMEOUT_MS } from '../timeouts.js';
-import { responseTooLarge } from './bodyReaders.js';
+import { responseTooLarge } from './bodyAdapters.js';
 import { fetchPublicResponse } from './remoteHttp.js';
 import { readHtmlBody, TWITTERBOT_USER_AGENT } from './previewFetchers.js';
 import { PreviewError } from './errors.js';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
 // HLTV match pages include a long history/stats section and are commonly
 // larger than the generic preview limit.
@@ -27,7 +27,7 @@ export interface HltvRawPage {
 
 export async function fetchHltvPageViaPublicHttp(
   url: URL,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<HltvRawPage> {
   const requestOptions = {
     accept: 'text/html,application/xhtml+xml',
@@ -56,7 +56,7 @@ export async function fetchHltvPageViaPublicHttp(
 
 export async function fetchHltvPageViaAria2c(
   url: URL,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<HltvRawPage> {
   const directory = await mkdtemp(join(tmpdir(), 'gkfeed-hltv-'));
   const output = join(directory, 'response');

@@ -1,9 +1,9 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
-import { handleBffRequest } from '../apiRouter.js';
+import { handleBffRequest } from './apiRouter.js';
 import { toHttpErrorResponse } from './httpErrorMapping.js';
 import { sendJson } from './httpResponse.js';
-import { createRequestContext } from '../requestContext.js';
+import { createHttpRequestContext } from './requestContext.js';
 import { serveFrontend } from './staticServer.js';
 
 export type HttpServerDependencies = {
@@ -29,7 +29,7 @@ export async function handleHttpRequest(
   response: ServerResponse,
   dependencies: HttpServerDependencies = defaultDependencies,
 ): Promise<void> {
-  const context = createRequestContext(request, response);
+  const context = createHttpRequestContext(request, response);
   try {
     const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
 

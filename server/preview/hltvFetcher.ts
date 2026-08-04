@@ -12,7 +12,7 @@ import {
   fetchHltvPageViaPublicHttp,
   type HltvRawPage,
 } from './hltvTransport.js';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
 export interface HltvPage {
   html: string;
@@ -23,7 +23,7 @@ export interface HltvPage {
   roundHistory: HltvRoundPreview[] | null;
 }
 
-export async function fetchHltvHtml(url: URL, context?: RequestContext): Promise<HltvPage> {
+export async function fetchHltvHtml(url: URL, context?: RequestExecutionContext): Promise<HltvPage> {
   try {
     return await fetchHltvHtmlWithPublicHttp(url, context);
   } catch (error) {
@@ -35,15 +35,15 @@ export async function fetchHltvHtml(url: URL, context?: RequestContext): Promise
   }
 }
 
-async function fetchHltvHtmlWithPublicHttp(url: URL, context?: RequestContext): Promise<HltvPage> {
+async function fetchHltvHtmlWithPublicHttp(url: URL, context?: RequestExecutionContext): Promise<HltvPage> {
   return enrichHltvPage(await fetchHltvPageViaPublicHttp(url, context), context);
 }
 
-async function fetchHltvHtmlWithAria2c(url: URL, context?: RequestContext): Promise<HltvPage> {
+async function fetchHltvHtmlWithAria2c(url: URL, context?: RequestExecutionContext): Promise<HltvPage> {
   return enrichHltvPage(await fetchHltvPageViaAria2c(url, context), context);
 }
 
-async function enrichHltvPage(page: HltvRawPage, context?: RequestContext): Promise<HltvPage> {
+async function enrichHltvPage(page: HltvRawPage, context?: RequestExecutionContext): Promise<HltvPage> {
   try {
     const scorebot = parseHltvMatchStatus(page.html) === 'live'
       ? context

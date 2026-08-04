@@ -5,7 +5,8 @@ import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { FeedItem } from '../../types';
-import { fetchTikTokComments, type TikTokCommentsResult } from '../../services/tiktokComments';
+import { fetchTikTokComments } from '../../services/tiktokComments';
+import type { TikTokCommentsPreview } from '../../../../shared/tiktokContracts';
 import { TikTokComments } from './TikTokComments';
 
 vi.mock('../../services/tiktokComments');
@@ -18,7 +19,7 @@ const item: FeedItem = {
   text: 'Video caption',
 };
 
-const emptyComments: TikTokCommentsResult = {
+const emptyComments: TikTokCommentsPreview = {
   comments: [],
   description: null,
   creatorName: null,
@@ -84,7 +85,7 @@ describe('TikTokComments', () => {
   });
 
   it('announces loading and aborts an in-flight request when collapsed', async () => {
-    vi.mocked(fetchTikTokComments).mockImplementation((_url, signal) => new Promise((resolve) => {
+  vi.mocked(fetchTikTokComments).mockImplementation((_url, signal) => new Promise((resolve) => {
       signal.addEventListener('abort', () => resolve(emptyComments));
     }));
     renderComments();
@@ -176,8 +177,8 @@ describe('TikTokComments', () => {
   });
 
   it('ignores a stale response after the video link changes', async () => {
-    let resolveFirst: ((result: TikTokCommentsResult) => void) | undefined;
-    let resolveSecond: ((result: TikTokCommentsResult) => void) | undefined;
+    let resolveFirst: ((result: TikTokCommentsPreview) => void) | undefined;
+    let resolveSecond: ((result: TikTokCommentsPreview) => void) | undefined;
     vi.mocked(fetchTikTokComments)
       .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
       .mockImplementationOnce(() => new Promise((resolve) => { resolveSecond = resolve; }));

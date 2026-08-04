@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { featureUseCases } from '../application/featureComposition';
 import type { Credentials } from '../types';
+import { useFeatureUseCases } from '../state/useFeatureUseCases';
 
 export type FeedItemDeletionStatus = 'pending' | 'failed';
 
@@ -14,6 +14,7 @@ export type FeedItemDeletion = {
 type MutableDeletion = FeedItemDeletion;
 
 export function useFeedItemDeletion(credentials: Credentials | null) {
+  const { feeds } = useFeatureUseCases();
   const [operations, setOperations] = useState<FeedItemDeletion[]>([]);
   const operationsRef = useRef(new Map<number, MutableDeletion>());
   const queueRef = useRef<number[]>([]);
@@ -41,7 +42,7 @@ export function useFeedItemDeletion(credentials: Credentials | null) {
         if (!operation || operation.status !== 'pending') continue;
 
         try {
-          await featureUseCases.feeds.deleteFeedItem(itemId, credentials);
+          await feeds.deleteFeedItem(itemId, credentials);
           if (operationsRef.current.get(itemId) === operation) {
             operationsRef.current.delete(itemId);
             publishOperations();
@@ -60,7 +61,7 @@ export function useFeedItemDeletion(credentials: Credentials | null) {
     } finally {
       isProcessingRef.current = false;
     }
-  }, [credentials, publishOperations]);
+  }, [credentials, feeds, publishOperations]);
 
   const retryItem = useCallback((itemId: number): boolean => {
     const operation = operationsRef.current.get(itemId);

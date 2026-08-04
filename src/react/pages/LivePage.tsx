@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
 
+import '../../styles/live.css';
 import { LiveStreamPreview } from '../components/LiveStreamPreview';
 import { TwitchTitle } from '../components/TwitchTitle';
-import { useLivePageModel } from '../features/live/useLivePageModel';
+import { useLivePageModel } from '../adapters/live/useLivePageModel';
 
 export function LivePage() {
   const { t } = useTranslation();

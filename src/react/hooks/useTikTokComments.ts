@@ -1,21 +1,22 @@
 import { useCallback } from 'react';
 
-import { featureUseCases } from '../application/featureComposition';
-import type { TikTokCommentsResult } from '../features/featurePorts';
+import type { TikTokCommentsPreview } from '../../../shared/tiktokContracts';
+import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useAsyncResource } from './useAsyncResource';
 
 export type TikTokCommentsLoadStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export function useTikTokComments(link: string, enabled: boolean) {
+  const { preview } = useFeatureUseCases();
   const load = useCallback(
-    (signal: AbortSignal) => featureUseCases.preview.fetchTikTokComments(link, signal),
-    [link],
+    (signal: AbortSignal) => preview.fetchTikTokComments(link, signal),
+    [link, preview],
   );
   const {
     status,
     result,
     retry: retryResource,
-  } = useAsyncResource<TikTokCommentsResult>(load, { enabled, key: link });
+  } = useAsyncResource<TikTokCommentsPreview>(load, { enabled, key: link });
   const typedStatus: TikTokCommentsLoadStatus = status;
   const retry = useCallback(() => {
     retryResource();

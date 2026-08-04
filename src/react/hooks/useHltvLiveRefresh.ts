@@ -7,8 +7,8 @@ import {
 } from 'react';
 
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
-import { featureUseCases } from '../application/featureComposition';
 import type { RemotePreview } from '../domain/feedItemCardContracts';
+import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useAsyncResource } from './useAsyncResource';
 
 const HLTV_LIVE_REFRESH_MS = 30_000;
@@ -28,14 +28,15 @@ export function useHltvLiveRefresh({
   currentPreview: OpenGraphPreview | null;
   setPreview: Dispatch<SetStateAction<RemotePreview>>;
 }): void {
+  const { preview: previewUseCases } = useFeatureUseCases();
   const refreshEnabled = enabled
     && isVisible
     && isHltv
     && currentPreview?.providerData?.provider === 'hltv'
     && currentPreview.providerData.snapshot.status === 'live';
   const load = useCallback(
-    (signal: AbortSignal) => featureUseCases.preview.getOpenGraphPreview(url, signal),
-    [url],
+    (signal: AbortSignal) => previewUseCases.getOpenGraphPreview(url, signal),
+    [previewUseCases, url],
   );
   const { result, isLoading, retry } = useAsyncResource<OpenGraphPreview>(load, {
     enabled: refreshEnabled,
@@ -50,9 +51,9 @@ export function useHltvLiveRefresh({
     if (!result) return;
     setPreview((previous) => ({
       liquipediaMatch: null,
-      openGraphPreview: featureUseCases.preview.mergeHltvLiveData(result, previous.openGraphPreview),
+      openGraphPreview: previewUseCases.mergeHltvLiveData(result, previous.openGraphPreview),
     }));
-  }, [result, setPreview]);
+  }, [previewUseCases, result, setPreview]);
 
   useEffect(() => {
     if (!refreshEnabled) return undefined;

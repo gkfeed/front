@@ -8,7 +8,7 @@ import { fetchHltvHtml } from './hltvFetcher.js';
 import { parseLiquipediaMatch } from './liquipediaParser.js';
 import type { HltvPage } from './hltvFetcher.js';
 import { isHltvMatchUrl, parseOpenGraph } from './openGraphParser.js';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
 export { parseLiquipediaMatch };
 export { fetchLiquipediaMatch };
@@ -23,7 +23,7 @@ export { parseOpenGraph } from './openGraphParser.js';
 const TWITTERBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Twitterbot/1.0)';
 const REZKA_USER_AGENT = 'TelegramBot (like TwitterBot)';
 
-export async function fetchOpenGraph(input: string, context?: RequestContext): Promise<OpenGraphPreview> {
+export async function fetchOpenGraph(input: string, context?: RequestExecutionContext): Promise<OpenGraphPreview> {
   const requestedUrl = parsePublicHttpUrl(input);
   const url = getPreviewUrl(requestedUrl);
   if (isHltvMatchUrl(url)) {

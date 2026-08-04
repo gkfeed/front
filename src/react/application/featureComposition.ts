@@ -22,28 +22,32 @@ import { getOpenGraphPreview } from '../services/openGraph';
 import { fetchTikTokComments } from '../services/tiktokComments';
 import { getLiveTwitchItems } from '../services/twitch';
 
-export const featureUseCases = {
-  auth: createAuthUseCases({
-    isAuthenticationError,
-    validateCredentials: (credentials, signal) => signal === undefined
-      ? validateCredentials(credentials)
-      : validateCredentials(credentials, signal),
-  }),
-  feeds: createFeedUseCases({
-    createFeed: createFeedRequest,
-    createFeedFromUrl: createFeedFromUrlRequest,
-    deleteFeedById,
-    deleteFeedItemById,
-    getAllFeeds,
-    getFeedById,
-    getFeedItems,
-  }),
-  live: createLiveUseCases({ getLiveTwitchItems }),
-  preview: createPreviewUseCases({
-    EMPTY_REMOTE_PREVIEW,
-    fetchTikTokComments,
-    getOpenGraphPreview,
-    loadRemotePreview: loadRemotePreviewRequest,
-    mergeHltvLiveData,
-  }),
-} as const;
+export function createFeatureComposition() {
+  return {
+    auth: createAuthUseCases({
+      isAuthenticationError,
+      validateCredentials: (credentials, signal) => signal === undefined
+        ? validateCredentials(credentials)
+        : validateCredentials(credentials, signal),
+    }),
+    feeds: createFeedUseCases({
+      createFeed: createFeedRequest,
+      createFeedFromUrl: createFeedFromUrlRequest,
+      deleteFeedById,
+      deleteFeedItemById,
+      getAllFeeds,
+      getFeedById,
+      getFeedItems,
+    }),
+    live: createLiveUseCases({ getLiveTwitchItems }),
+    preview: createPreviewUseCases({
+      EMPTY_REMOTE_PREVIEW,
+      fetchTikTokComments,
+      getOpenGraphPreview,
+      loadRemotePreview: loadRemotePreviewRequest,
+      mergeHltvLiveData,
+    }),
+  } as const;
+}
+
+export type FeatureUseCases = ReturnType<typeof createFeatureComposition>;

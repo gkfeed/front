@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { validateCredentials } from '../../services/auth';
-import {
-  authenticateCredentials,
-  restoreAuthentication,
-} from './authSession';
+import { createAuthUseCases } from './authUseCaseFactory';
 
 vi.mock('../../services/auth', () => ({
   validateCredentials: vi.fn(),
@@ -12,6 +9,14 @@ vi.mock('../../services/auth', () => ({
 
 const validate = vi.mocked(validateCredentials);
 const credentials = { username: 'alice', password: 'secret' };
+const useCases = () => createAuthUseCases({
+  validateCredentials: (nextCredentials, signal) => signal === undefined
+    ? validateCredentials(nextCredentials)
+    : validateCredentials(nextCredentials, signal),
+  isAuthenticationError: (error) => (
+    typeof error === 'object' && error !== null && (error as { status?: unknown }).status === 401
+  ),
+});
 
 afterEach(() => {
   vi.resetAllMocks();
@@ -22,7 +27,7 @@ describe('auth session use cases', () => {
     const persist = vi.fn();
     validate.mockResolvedValue();
 
-    await authenticateCredentials(credentials, persist);
+    await useCases().authenticateCredentials(credentials, persist);
 
     expect(validate).toHaveBeenCalledWith(credentials);
     expect(persist).toHaveBeenCalledWith(credentials);
@@ -33,7 +38,7 @@ describe('auth session use cases', () => {
     const error = new Error('invalid credentials');
     validate.mockRejectedValue(error);
 
-    await expect(authenticateCredentials(credentials, persist)).rejects.toBe(error);
+    await expect(useCases().authenticateCredentials(credentials, persist)).rejects.toBe(error);
     expect(persist).not.toHaveBeenCalled();
   });
 
@@ -41,7 +46,7 @@ describe('auth session use cases', () => {
     const remove = vi.fn();
     validate.mockRejectedValue(Object.assign(new Error('unauthorized'), { status: 401 }));
 
-    await expect(restoreAuthentication(credentials, remove)).rejects.toMatchObject({ status: 401 });
+    await expect(useCases().restoreAuthentication(credentials, remove)).rejects.toMatchObject({ status: 401 });
     expect(remove).toHaveBeenCalledOnce();
   });
 });

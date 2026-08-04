@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getReaderMode } from './readerMode';
+import { getReaderMode } from '../../state/readerMode';
 
 describe('reader mode use case', () => {
   it('selects scroll mode only for the explicit scroll query', () => {

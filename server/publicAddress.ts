@@ -4,13 +4,16 @@ import type { LookupFunction } from 'node:net';
 
 import { PublicHttpError } from './publicHttpError.js';
 import { isPrivateAddress } from './publicAddressPolicy.js';
-import type { RequestContext } from './requestContext.js';
+import {
+  isRequestDeadlineExceeded,
+  type RequestExecutionContext,
+} from './application/requestExecutionContext.js';
 
 export { isPrivateAddress } from './publicAddressPolicy.js';
 
 export async function resolvePublicAddress(
   url: URL,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<{ address: string; family: 4 | 6 }> {
   const hostname = url.hostname.replace(/^\[|\]$/g, '');
   const literalFamily = isIP(hostname);
@@ -36,21 +39,21 @@ export function createPinnedLookup(address: { address: string; family: 4 | 6 }):
   };
 }
 
-async function resolveHostname(hostname: string, context?: RequestContext) {
+async function resolveHostname(hostname: string, context?: RequestExecutionContext) {
   try {
     const result = lookup(hostname, { all: true, verbatim: true });
     if (!context) return await result;
     return await raceWithContext(result, context);
   } catch {
-    if (context?.timedOut) throw new PublicHttpError('timeout');
+    if (context && isRequestDeadlineExceeded(context)) throw new PublicHttpError('timeout');
     if (context?.signal.aborted) throw new PublicHttpError('aborted');
     throw new PublicHttpError('unresolvable');
   }
 }
 
-async function raceWithContext<T>(promise: Promise<T>, context: RequestContext): Promise<T> {
+async function raceWithContext<T>(promise: Promise<T>, context: RequestExecutionContext): Promise<T> {
   if (context.signal.aborted) {
-    throw new PublicHttpError(context.timedOut ? 'timeout' : 'aborted');
+    throw new PublicHttpError(isRequestDeadlineExceeded(context) ? 'timeout' : 'aborted');
   }
 
   return new Promise<T>((resolve, reject) => {
@@ -62,7 +65,7 @@ async function raceWithContext<T>(promise: Promise<T>, context: RequestContext):
       callback();
     };
     const onAbort = () => finish(() => reject(
-      new PublicHttpError(context.timedOut ? 'timeout' : 'aborted'),
+      new PublicHttpError(isRequestDeadlineExceeded(context) ? 'timeout' : 'aborted'),
     ));
     context.signal.addEventListener('abort', onAbort, { once: true });
     promise.then(

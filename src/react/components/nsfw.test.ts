@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isNsfwLink } from './nsfw';
+import { isNsfwLink } from '../domain/nsfw';
 
 describe('isNsfwLink', () => {
   it('recognizes Porno365 and Pornhub hostnames', () => {

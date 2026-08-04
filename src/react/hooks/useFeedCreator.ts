@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { featureUseCases } from '../application/featureComposition';
 import { useAuth } from '../state/useAuth';
+import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import {
   EMPTY_FEED,
   getFeedCreatorFields,
@@ -17,6 +17,7 @@ export type { FeedCreatorMode } from '../domain/feedCreator';
 
 export function useFeedCreator() {
   const { credentials } = useAuth();
+  const { feeds } = useFeatureUseCases();
   const [feed, setFeed] = useState<FeedInput>(EMPTY_FEED);
   const [mode, setMode] = useState<FeedCreatorMode>('lazy');
   const [submitted, setSubmitted] = useState(false);
@@ -45,9 +46,9 @@ export function useFeedCreator() {
 
     try {
       if (mode === 'extended') {
-        await featureUseCases.feeds.createFeed(trimFeed(feed), credentials);
+        await feeds.createFeed(trimFeed(feed), credentials);
       } else {
-        await featureUseCases.feeds.createFeedFromUrl({ url: feed.url.trim() }, credentials);
+        await feeds.createFeedFromUrl({ url: feed.url.trim() }, credentials);
       }
       setFeed(EMPTY_FEED);
       setSubmitted(false);

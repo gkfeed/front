@@ -5,7 +5,11 @@ import { Agent as HttpsAgent, request as requestHttps } from 'node:https';
 import { createPinnedLookup, resolvePublicAddress } from './publicAddress.js';
 import { PublicHttpError } from './publicHttpError.js';
 import { REMOTE_REQUEST_TIMEOUT_MS } from './timeouts.js';
-import { createDetachedRequestContext, type RequestContext } from './requestContext.js';
+import {
+  createDetachedRequestExecutionContext,
+  isRequestDeadlineExceeded,
+  type RequestExecutionContext,
+} from './application/requestExecutionContext.js';
 
 export { PublicHttpError } from './publicHttpError.js';
 export { createPinnedLookup, isPrivateAddress, resolvePublicAddress } from './publicAddress.js';
@@ -26,13 +30,13 @@ export interface PublicHttpResponse {
 export async function requestPublicHttp(
   input: URL,
   headers: Record<string, string>,
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<PublicHttpResponse> {
-  const requestContext = context ?? createDetachedRequestContext();
+  const requestContext = context ?? createDetachedRequestExecutionContext();
   const address = await resolvePublicAddress(input, requestContext);
   const timeoutMs = requestContext.remainingMs(REMOTE_REQUEST_TIMEOUT_MS);
   if (timeoutMs <= 0 || requestContext.signal.aborted) {
-    throw new PublicHttpError(requestContext.timedOut ? 'timeout' : 'aborted');
+    throw new PublicHttpError(isRequestDeadlineExceeded(requestContext) ? 'timeout' : 'aborted');
   }
 
   return new Promise((resolve, reject) => {
@@ -89,7 +93,7 @@ export async function requestPublicHttp(
     }
 
     function abortRequest() {
-      const error = new PublicHttpError(requestContext.timedOut ? 'timeout' : 'aborted');
+      const error = new PublicHttpError(isRequestDeadlineExceeded(requestContext) ? 'timeout' : 'aborted');
       request.destroy(error);
       responseBody?.destroy(error);
     }

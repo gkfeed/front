@@ -1,34 +1,24 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-import { REQUEST_DEADLINE_MS } from './timeouts.js';
+import { REQUEST_DEADLINE_MS } from '../timeouts.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
-export interface RequestContext {
-  readonly signal: AbortSignal;
-  readonly deadline: number;
-  readonly timedOut: boolean;
+export interface HttpRequestContext extends RequestExecutionContext {
   readonly clientAborted: boolean;
-  remainingMs(maximum?: number): number;
-}
-
-export interface ManagedRequestContext extends RequestContext {
   dispose(): void;
 }
 
-export function createRequestContext(
+export function createHttpRequestContext(
   request: IncomingMessage,
   response: ServerResponse,
   timeoutMs = REQUEST_DEADLINE_MS,
-): ManagedRequestContext {
+): HttpRequestContext {
   const controller = new AbortController();
   const deadline = Date.now() + timeoutMs;
-  let timedOut = false;
   let clientAborted = false;
   let disposed = false;
 
-  const timeout = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   const abortForClient = () => {
     if (disposed) return;
@@ -49,9 +39,6 @@ export function createRequestContext(
   return {
     signal: controller.signal,
     deadline,
-    get timedOut() {
-      return timedOut;
-    },
     get clientAborted() {
       return clientAborted;
     },
@@ -67,23 +54,4 @@ export function createRequestContext(
       response.removeListener('close', onResponseClose);
     },
   };
-}
-
-export function createDetachedRequestContext(): RequestContext {
-  const controller = new AbortController();
-  return {
-    signal: controller.signal,
-    deadline: Number.POSITIVE_INFINITY,
-    timedOut: false,
-    clientAborted: false,
-    remainingMs(maximum = Number.POSITIVE_INFINITY) {
-      return maximum;
-    },
-  };
-}
-
-export function throwIfRequestAborted(context: RequestContext): void {
-  if (context.signal.aborted) {
-    throw new Error(context.timedOut ? 'Request deadline exceeded' : 'Request aborted');
-  }
 }

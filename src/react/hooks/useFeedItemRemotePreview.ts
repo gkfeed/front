@@ -6,10 +6,8 @@ import {
   type SetStateAction,
 } from 'react';
 
-import {
-  featureUseCases,
-} from '../application/featureComposition';
 import type { RemotePreview } from '../domain/feedItemCardContracts';
+import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useHltvLiveRefresh } from './useHltvLiveRefresh';
 import { useAsyncResource } from './useAsyncResource';
 import { usePreviewVisibility } from './usePreviewVisibility';
@@ -22,11 +20,12 @@ export function useFeedItemRemotePreview(
   isLiquipedia: boolean,
   isHltv = false,
 ) {
+  const { preview: previewUseCases } = useFeatureUseCases();
   const cardRef = useRef<HTMLElement>(null);
   const isVisible = usePreviewVisibility(cardRef);
   const load = useCallback(
-    (signal: AbortSignal) => featureUseCases.preview.loadRemotePreview(url, isLiquipedia, signal),
-    [isLiquipedia, url],
+    (signal: AbortSignal) => previewUseCases.loadRemotePreview(url, isLiquipedia, signal),
+    [isLiquipedia, previewUseCases, url],
   );
   const resource = useAsyncResource(load, {
     enabled: enabled && isVisible,
@@ -39,16 +38,16 @@ export function useFeedItemRemotePreview(
   } | null>(null);
   const preview = (livePreview?.key === previewKey ? livePreview.value : null)
     ?? resource.result
-    ?? featureUseCases.preview.EMPTY_REMOTE_PREVIEW;
+    ?? previewUseCases.EMPTY_REMOTE_PREVIEW;
   const setPreview = useCallback<Dispatch<SetStateAction<RemotePreview>>>((update) => {
     setLivePreview((previous) => {
       const current = previous?.key === previewKey
         ? previous.value
-        : resource.result ?? featureUseCases.preview.EMPTY_REMOTE_PREVIEW;
+        : resource.result ?? previewUseCases.EMPTY_REMOTE_PREVIEW;
       const value = typeof update === 'function' ? update(current) : update;
       return { key: previewKey, value };
     });
-  }, [previewKey, resource.result]);
+  }, [previewKey, previewUseCases.EMPTY_REMOTE_PREVIEW, resource.result]);
   const previewStatus: RemotePreviewStatus = !enabled
     ? 'idle'
     : !isVisible

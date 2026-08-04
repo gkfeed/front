@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createPreviewComposition } from './compositionRoot.js';
 import type { PreviewPorts } from './application/previewPorts.js';
-import type { RequestContext } from './requestContext.js';
+import type { RequestExecutionContext } from './application/requestExecutionContext.js';
 
-const context = {} as RequestContext;
+const context = {} as RequestExecutionContext;
 
 describe('server composition root', () => {
   it('wires provider ports and the concurrency policy into application use cases', async () => {

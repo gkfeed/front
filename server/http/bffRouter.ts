@@ -1,8 +1,12 @@
 import type { ServerResponse } from 'node:http';
 
+import { isTikTokCommentsPreview } from '../../shared/tiktokContracts.js';
 import { sendJson } from './httpResponse.js';
 import type { PreviewUseCases } from '../application/previewUseCases.js';
-import { createDetachedRequestContext, type RequestContext } from '../requestContext.js';
+import {
+  createDetachedRequestExecutionContext,
+  type RequestExecutionContext,
+} from '../application/requestExecutionContext.js';
 import { getRequiredPreviewUrl } from './previewQuery.js';
 import { sendPreviewImage } from './previewResponse.js';
 
@@ -17,10 +21,10 @@ const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
 export async function routeBffRequest(
   requestUrl: URL,
   response: ServerResponse,
-  context: RequestContext | undefined,
+  context: RequestExecutionContext | undefined,
   useCases: PreviewUseCases,
 ): Promise<boolean> {
-  const requestContext = context ?? createDetachedRequestContext();
+  const requestContext = context ?? createDetachedRequestExecutionContext();
   const useCaseName = JSON_PREVIEW_ROUTES[requestUrl.pathname];
   if (useCaseName) {
     await handleJsonPreview(
@@ -28,6 +32,7 @@ export async function routeBffRequest(
       response,
       (input, context) => useCases[useCaseName](input, context),
       requestContext,
+      useCaseName === 'tiktokComments' ? isTikTokCommentsPreview : undefined,
     );
     return true;
   }
@@ -44,9 +49,11 @@ export async function routeBffRequest(
 async function handleJsonPreview(
   requestUrl: URL,
   response: ServerResponse,
-  load: (input: string, context: RequestContext) => Promise<unknown>,
-  context: RequestContext,
+  load: (input: string, context: RequestExecutionContext) => Promise<unknown>,
+  context: RequestExecutionContext,
+  validate?: (value: unknown) => boolean,
 ): Promise<void> {
   const result = await load(getRequiredPreviewUrl(requestUrl), context);
+  if (validate && !validate(result)) throw new Error('Invalid TikTok comments contract');
   sendJson(response, 200, result);
 }

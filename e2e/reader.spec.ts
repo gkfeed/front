@@ -27,8 +27,8 @@ test.describe('TikTok player on iPad-sized readers', () => {
       json: {
         comments: [],
         description: null,
-        authorName: null,
-        authorAvatar: null,
+        creatorName: null,
+        creatorAvatarUrl: null,
       },
     }));
     await page.addInitScript(() => {

@@ -2,7 +2,7 @@ import type { ServerResponse } from 'node:http';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleBffRequest } from './apiRouter.js';
+import { handleBffRequest } from './http/apiRouter.js';
 import type { PreviewUseCases } from './application/previewUseCases.js';
 import { HttpRequestError } from './http/httpErrors.js';
 
@@ -20,7 +20,12 @@ function createUseCases(): PreviewUseCases {
   return {
     openGraph: vi.fn().mockResolvedValue({ title: 'Story' }),
     liquipediaMatch: vi.fn().mockResolvedValue({ status: 'scheduled' }),
-    tiktokComments: vi.fn().mockResolvedValue({ comments: [] }),
+    tiktokComments: vi.fn().mockResolvedValue({
+      comments: [],
+      description: null,
+      creatorName: null,
+      creatorAvatarUrl: null,
+    }),
     redditPreviewImage: vi.fn().mockResolvedValue({
       body: new Uint8Array([1, 2]),
       contentType: 'image/jpeg',
@@ -50,7 +55,12 @@ describe('BFF HTTP router', () => {
 
   it.each([
     ['/api/bff/liquipedia-match', 'liquipediaMatch', { status: 'live' }],
-    ['/api/bff/tiktok-comments', 'tiktokComments', { comments: [] }],
+    ['/api/bff/tiktok-comments', 'tiktokComments', {
+      comments: [],
+      description: null,
+      creatorName: null,
+      creatorAvatarUrl: null,
+    }],
   ] as const)('dispatches %s through its application use case', async (pathname, useCaseName, result) => {
     const response = createResponse();
     const useCases = createUseCases();

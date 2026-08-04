@@ -4,9 +4,9 @@ import { PreviewError } from './errors.js';
 import { parsePublicHttpUrl } from './publicUrlPolicy.js';
 import { fetchHtml } from './pageFetcher.js';
 import { parseLiquipediaMatch } from './liquipediaParser.js';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
-export async function fetchLiquipediaMatch(input: string, context?: RequestContext): Promise<LiquipediaMatchPreview> {
+export async function fetchLiquipediaMatch(input: string, context?: RequestExecutionContext): Promise<LiquipediaMatchPreview> {
   const url = parsePublicHttpUrl(input);
   if (!isLiquipediaMatchUrl(url)) {
     throw new PreviewError('Only Liquipedia match pages can be previewed', 'invalid_liquipedia_match');

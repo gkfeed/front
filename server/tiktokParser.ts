@@ -1,21 +1,14 @@
 import { PreviewError } from './preview/errors.js';
 import { isRecord } from '../shared/valueGuards.js';
 import { normalizeExternalText } from '../shared/text.js';
+import type { TikTokComment, TikTokCommentsPreview } from '../shared/tiktokContracts.js';
 import { isTikTokVideoUrl } from '../shared/urlRules.js';
 
-export type TikTokComment = {
-  id: string;
-  text: string;
-  author: string;
-  username: string;
-  avatarUrl: string | null;
-};
-
-export type TikTokDetails = {
-  description: string | null;
-  creatorName: string | null;
-  creatorAvatarUrl: string | null;
-};
+export type { TikTokComment } from '../shared/tiktokContracts.js';
+export type TikTokDetails = Pick<
+  TikTokCommentsPreview,
+  'description' | 'creatorName' | 'creatorAvatarUrl'
+>;
 
 export function parseTikTokComments(value: unknown): TikTokComment[] {
   if (!isRecord(value) || value.code !== 0 || !isRecord(value.data) || !Array.isArray(value.data.comments)) {

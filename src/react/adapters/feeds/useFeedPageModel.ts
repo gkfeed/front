@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 
-import { featureUseCases } from '../../application/featureComposition';
-import { isNotFoundError } from '../requestError';
-import { useAuth } from '../../state/useAuth';
 import { useAsyncLoad } from '../../hooks/useAsyncLoad';
+import { useAuth } from '../../state/useAuth';
+import { useFeatureUseCases } from '../../state/useFeatureUseCases';
+import { isNotFoundError } from '../../services/authError';
 
 type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
 export type FeedLoadStatus = 'loading' | 'success' | 'error' | 'not-found';
@@ -14,11 +14,12 @@ export function useFeedPageModel(
   onDeleted: () => void,
 ) {
   const { credentials } = useAuth();
+  const { feeds } = useFeatureUseCases();
   const [deleteState, setDeleteState] = useState<DeleteState>('idle');
   const feedId = parseFeedId(feedIdParam);
   const load = useCallback(
-    (signal: AbortSignal) => featureUseCases.feeds.loadFeed(feedId, credentials, signal),
-    [credentials, feedId],
+    (signal: AbortSignal) => feeds.loadFeed(feedId, credentials, signal),
+    [credentials, feedId, feeds],
   );
   const {
     result: feed,
@@ -26,7 +27,7 @@ export function useFeedPageModel(
     error: loadError,
     retry: retryLoad,
   } = useAsyncLoad(load);
-  const loadStatus: FeedLoadStatus = (featureUseCases.feeds.isFeedNotFoundError(loadError)
+  const loadStatus: FeedLoadStatus = (feeds.isFeedNotFoundError(loadError)
     || isNotFoundError(loadError))
     ? 'not-found'
     : asyncLoadStatus;
@@ -38,12 +39,12 @@ export function useFeedPageModel(
     setDeleteState('deleting');
 
     try {
-      await featureUseCases.feeds.deleteFeed(feedId, credentials);
+      await feeds.deleteFeed(feedId, credentials);
       onDeleted();
     } catch {
       setDeleteState('error');
     }
-  }, [credentials, feedId, isDeleting, onDeleted]);
+  }, [credentials, feedId, feeds, isDeleting, onDeleted]);
 
   const requestDelete = useCallback(() => {
     setDeleteState('confirming');

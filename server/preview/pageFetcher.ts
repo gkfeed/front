@@ -4,13 +4,13 @@ import {
   readMetadataBody,
   TWITTERBOT_USER_AGENT,
 } from './previewFetchers.js';
-import type { RequestContext } from '../requestContext.js';
+import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
 export async function fetchHtml(
   input: URL,
   userAgent = TWITTERBOT_USER_AGENT,
   options: { metadataOnly?: boolean } = {},
-  context?: RequestContext,
+  context?: RequestExecutionContext,
 ): Promise<{ html: string; url: URL }> {
   const { response, contentType } = await fetchHtmlResponse(input, userAgent, context);
   const html = options.metadataOnly === true

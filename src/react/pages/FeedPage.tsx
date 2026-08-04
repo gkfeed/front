@@ -3,12 +3,14 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 
+import '../../styles/actions.css';
+import '../../styles/feeds.css';
 import { FeedCard } from '../components/FeedCard';
 import {
   useFeedPageModel,
   type FeedDeleteStatus,
-} from '../features/feeds/useFeedPageModel';
-import { getRequestErrorMessage } from '../features/requestError';
+} from '../adapters/feeds/useFeedPageModel';
+import { getRequestErrorMessage } from '../services/authError';
 
 export function FeedPage() {
   const { t } = useTranslation();

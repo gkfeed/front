@@ -2,6 +2,7 @@ const ru = {
   app: {
     skipToContent: 'Перейти к содержимому',
     fallbackTitle: 'GKFEED',
+    loading: 'Загрузка…',
   },
   pages: {
     feedSources: 'Источники лент',

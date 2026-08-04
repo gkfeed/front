@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { featureUseCases } from '../application/featureComposition';
+import type { AuthUseCases } from '../features/auth/authUseCaseFactory';
 import type { Credentials } from '../types';
 import type { AuthContextValue, AuthStatus } from './authContext';
 import {
@@ -14,9 +14,7 @@ interface AuthSessionState {
   status: AuthStatus;
 }
 
-const authUseCases = featureUseCases.auth;
-
-export function useAuthSession(): AuthContextValue {
+export function useAuthSession(authUseCases: AuthUseCases): AuthContextValue {
   const [storedCredentials] = useState(readStoredCredentials);
   const [session, setSession] = useState<AuthSessionState>(() => ({
     credentials: null,
@@ -38,12 +36,12 @@ export function useAuthSession(): AuthContextValue {
     return () => {
       active = false;
     };
-  }, [storedCredentials]);
+  }, [authUseCases, storedCredentials]);
 
   const authenticate = useCallback(async (credentials: Credentials) => {
     await authUseCases.authenticateCredentials(credentials, writeStoredCredentials);
     setSession({ credentials, status: 'authenticated' });
-  }, []);
+  }, [authUseCases]);
 
   const clearCredentials = useCallback(() => {
     removeStoredCredentials();
