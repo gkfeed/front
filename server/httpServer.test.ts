@@ -1,10 +1,15 @@
 import { EventEmitter } from 'node:events';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
 import { handleHttpRequest } from './httpServer.js';
 import { sendJson } from './httpResponse.js';
+import { PreviewError } from './preview/errors.js';
+import { serveFrontend } from './staticServer.js';
 
 describe('HTTP server composition root', () => {
   it('wires BFF routing and static serving behind the HTTP boundary', async () => {
@@ -38,6 +43,44 @@ describe('HTTP server composition root', () => {
       error: { code: 'method_not_allowed', message: 'Method not allowed' },
     }));
     expect(serveFrontend).not.toHaveBeenCalled();
+  });
+
+  it('maps provider failures after BFF routing at the HTTP boundary', async () => {
+    const request = createRequest('/api/bff/open-graph?url=https%3A%2F%2Fexample.com', 'GET');
+    const response = createResponse();
+
+    await handleHttpRequest(request, response, {
+      handleBffRequest: vi.fn().mockRejectedValue(new PreviewError('Upstream failed', 'fetch_failed')),
+      serveFrontend: vi.fn(),
+    });
+
+    expect(response.writeHead).toHaveBeenCalledWith(502, expect.any(Object));
+    expect(response.end).toHaveBeenCalledWith(JSON.stringify({
+      error: { code: 'fetch_failed', message: 'Upstream failed' },
+    }));
+  });
+
+  it('maps malformed static paths after the real static transport fails', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'gkfeed-http-'));
+    await writeFile(join(root, 'index.html'), '<!doctype html>');
+    const request = createRequest('/%E0%A4%A', 'GET');
+    const response = createResponse();
+
+    try {
+      await handleHttpRequest(request, response, {
+        handleBffRequest: vi.fn().mockResolvedValue(false),
+        serveFrontend: (pathname, headOnly, frontendResponse) => (
+          serveFrontend(pathname, headOnly, frontendResponse, root)
+        ),
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+
+    expect(response.writeHead).toHaveBeenCalledWith(400, expect.any(Object));
+    expect(response.end).toHaveBeenCalledWith(JSON.stringify({
+      error: { code: 'invalid_path', message: 'Invalid path' },
+    }));
   });
 });
 

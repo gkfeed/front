@@ -1,9 +1,13 @@
 import type { Credentials, FeedItem } from '../../types';
-import { getLiveTwitchItems } from '../../services/twitch';
+import type { LiveApplicationPort } from '../featurePorts';
 
-export function loadLiveTwitchItems(
-  credentials: Credentials | null,
-  signal?: AbortSignal,
-): Promise<FeedItem[]> {
-  return getLiveTwitchItems(credentials, signal);
+export function createLiveUseCases(port: LiveApplicationPort) {
+  function loadLiveTwitchItems(
+    credentials: Credentials | null,
+    signal?: AbortSignal,
+  ): Promise<FeedItem[]> {
+    return port.getLiveTwitchItems(credentials, signal);
+  }
+
+  return { loadLiveTwitchItems };
 }

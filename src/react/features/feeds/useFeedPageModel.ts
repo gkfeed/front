@@ -1,13 +1,9 @@
 import { useCallback, useState } from 'react';
 
+import { featureUseCases } from '../../application/featureComposition';
 import { isNotFoundError } from '../requestError';
 import { useAuth } from '../../state/useAuth';
 import { useAsyncLoad } from '../../hooks/useAsyncLoad';
-import {
-  deleteFeed,
-  isFeedNotFoundError,
-  loadFeed,
-} from './feedUseCases';
 
 type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
 export type FeedLoadStatus = 'loading' | 'success' | 'error' | 'not-found';
@@ -21,7 +17,7 @@ export function useFeedPageModel(
   const [deleteState, setDeleteState] = useState<DeleteState>('idle');
   const feedId = parseFeedId(feedIdParam);
   const load = useCallback(
-    (signal: AbortSignal) => loadFeed(feedId, credentials, signal),
+    (signal: AbortSignal) => featureUseCases.feeds.loadFeed(feedId, credentials, signal),
     [credentials, feedId],
   );
   const {
@@ -30,7 +26,8 @@ export function useFeedPageModel(
     error: loadError,
     retry: retryLoad,
   } = useAsyncLoad(load);
-  const loadStatus: FeedLoadStatus = (isFeedNotFoundError(loadError) || isNotFoundError(loadError))
+  const loadStatus: FeedLoadStatus = (featureUseCases.feeds.isFeedNotFoundError(loadError)
+    || isNotFoundError(loadError))
     ? 'not-found'
     : asyncLoadStatus;
   const isDeleting = deleteState === 'deleting';
@@ -41,7 +38,7 @@ export function useFeedPageModel(
     setDeleteState('deleting');
 
     try {
-      await deleteFeed(feedId, credentials);
+      await featureUseCases.feeds.deleteFeed(feedId, credentials);
       onDeleted();
     } catch {
       setDeleteState('error');

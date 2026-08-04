@@ -1,16 +1,14 @@
 import { useCallback } from 'react';
 
-import {
-  fetchTikTokComments,
-  type TikTokCommentsResult,
-} from '../features/preview/previewUseCases';
+import { featureUseCases } from '../application/featureComposition';
+import type { TikTokCommentsResult } from '../features/featurePorts';
 import { useAsyncResource } from './useAsyncResource';
 
 export type TikTokCommentsLoadStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export function useTikTokComments(link: string, enabled: boolean) {
   const load = useCallback(
-    (signal: AbortSignal) => fetchTikTokComments(link, signal),
+    (signal: AbortSignal) => featureUseCases.preview.fetchTikTokComments(link, signal),
     [link],
   );
   const {

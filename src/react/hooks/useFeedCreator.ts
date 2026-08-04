@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { createFeed, createFeedFromUrl } from '../features/feeds/feedUseCases';
+import { featureUseCases } from '../application/featureComposition';
 import { useAuth } from '../state/useAuth';
 import {
   EMPTY_FEED,
@@ -45,9 +45,9 @@ export function useFeedCreator() {
 
     try {
       if (mode === 'extended') {
-        await createFeed(trimFeed(feed), credentials);
+        await featureUseCases.feeds.createFeed(trimFeed(feed), credentials);
       } else {
-        await createFeedFromUrl({ url: feed.url.trim() }, credentials);
+        await featureUseCases.feeds.createFeedFromUrl({ url: feed.url.trim() }, credentials);
       }
       setFeed(EMPTY_FEED);
       setSubmitted(false);

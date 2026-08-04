@@ -5,6 +5,7 @@ import type { ServerResponse } from 'node:http';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { HttpRequestError } from './http/httpErrors.js';
 import { serveFrontend } from './staticServer.js';
 
 describe('static server', () => {
@@ -33,7 +34,7 @@ describe('static server', () => {
 
     try {
       await expect(serveFrontend('/%E0%A4%A', false, response, root))
-        .rejects.toMatchObject({
+        .rejects.toMatchObject<HttpRequestError>({
           code: 'invalid_path',
           kind: 'invalid_path',
           status: 400,

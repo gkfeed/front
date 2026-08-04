@@ -17,3 +17,9 @@ export class HttpRequestError extends Error {
     this.name = 'HttpRequestError';
   }
 }
+
+export type HttpErrorResponse = {
+  status: number;
+  code: string;
+  message: string;
+};

@@ -17,53 +17,55 @@ import {
   type FeedItemCardProviderRenderer,
 } from './feedItemCardProviderRenderers';
 
-const feedItemCardProviderRenderers = {
-  generic: createRenderer({
+export const feedItemCardProviderRendererMap = {
+  generic: createProviderRenderer({
     Preview: FeedItemMediaPreview,
     Copy: StandardCopy,
   }),
-  hltv: createRenderer({
+  hltv: createProviderRenderer({
     Preview: HltvPreview,
     Supplementary: HltvSupplementary,
     Copy: StandardCopy,
   }),
-  instagram: createRenderer({
+  instagram: createProviderRenderer({
     Preview: FeedItemMediaPreview,
   }),
-  liquipedia: createRenderer({
+  liquipedia: createProviderRenderer({
     Preview: LiquipediaPreview,
     Copy: StandardCopy,
   }),
-  matreshka: createRenderer({
+  matreshka: createProviderRenderer({
     Preview: MatreshkaVideoPreview,
     Copy: MatreshkaCopy,
   }),
-  tiktok: createRenderer({
+  tiktok: createProviderRenderer({
     Preview: FeedItemMediaPreview,
     Supplementary: TikTokSupplementary,
   }),
-  twitch: createRenderer({
+  twitch: createProviderRenderer({
     Preview: TwitchVideoPreview,
     Copy: TwitchCopy,
   }),
-  vk: createRenderer({
+  vk: createProviderRenderer({
     Preview: FeedItemMediaPreview,
     Copy: StandardCopy,
   }),
-  youtube: createRenderer({
+  youtube: createProviderRenderer({
     Preview: YoutubeVideoPreview,
     Copy: YoutubeCopy,
   }),
-} satisfies Readonly<Record<FeedItemProvider, FeedItemCardProviderRenderer>>;
+} as const satisfies Readonly<Record<FeedItemProvider, FeedItemCardProviderRenderer>>;
 
 export function getFeedItemCardProviderRenderer(
   provider: FeedItemProvider,
 ): FeedItemCardProviderRenderer {
-  return feedItemCardProviderRenderers[provider];
+  return feedItemCardProviderRendererMap[provider];
 }
 
-function createRenderer(
-  overrides: Partial<FeedItemCardProviderRenderer>,
+type FeedItemCardProviderRendererOverrides = Partial<FeedItemCardProviderRenderer>;
+
+function createProviderRenderer(
+  overrides: FeedItemCardProviderRendererOverrides,
 ): FeedItemCardProviderRenderer {
   const Copy = overrides.Copy ?? EmptyRenderer;
 

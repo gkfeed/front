@@ -7,9 +7,8 @@ import {
 } from 'react';
 
 import {
-  EMPTY_REMOTE_PREVIEW,
-  loadRemotePreview,
-} from '../features/preview/previewUseCases';
+  featureUseCases,
+} from '../application/featureComposition';
 import type { RemotePreview } from '../domain/feedItemCardContracts';
 import { useHltvLiveRefresh } from './useHltvLiveRefresh';
 import { useAsyncResource } from './useAsyncResource';
@@ -26,7 +25,7 @@ export function useFeedItemRemotePreview(
   const cardRef = useRef<HTMLElement>(null);
   const isVisible = usePreviewVisibility(cardRef);
   const load = useCallback(
-    (signal: AbortSignal) => loadRemotePreview(url, isLiquipedia, signal),
+    (signal: AbortSignal) => featureUseCases.preview.loadRemotePreview(url, isLiquipedia, signal),
     [isLiquipedia, url],
   );
   const resource = useAsyncResource(load, {
@@ -40,12 +39,12 @@ export function useFeedItemRemotePreview(
   } | null>(null);
   const preview = (livePreview?.key === previewKey ? livePreview.value : null)
     ?? resource.result
-    ?? EMPTY_REMOTE_PREVIEW;
+    ?? featureUseCases.preview.EMPTY_REMOTE_PREVIEW;
   const setPreview = useCallback<Dispatch<SetStateAction<RemotePreview>>>((update) => {
     setLivePreview((previous) => {
       const current = previous?.key === previewKey
         ? previous.value
-        : resource.result ?? EMPTY_REMOTE_PREVIEW;
+        : resource.result ?? featureUseCases.preview.EMPTY_REMOTE_PREVIEW;
       const value = typeof update === 'function' ? update(current) : update;
       return { key: previewKey, value };
     });

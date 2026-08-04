@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { createElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FeedItemCardModel } from '../useFeedItemCardModel';
@@ -31,6 +32,17 @@ export type { FeedItemCardProviderRenderer };
 export function EmptyRenderer(): null {
   return null;
 }
+
+type FeedItemCardVariantType = FeedItemCardModel['variant']['type'];
+
+type VariantRendererProps<T extends FeedItemCardVariantType> = Omit<
+  FeedItemCardProviderRendererProps,
+  'model'
+> & {
+  model: Omit<FeedItemCardModel, 'variant'> & {
+    variant: Extract<FeedItemCardModel['variant'], { type: T }>;
+  };
+};
 
 export function FeedItemMediaPreview({
   model,
@@ -75,24 +87,26 @@ export function LiquipediaPreview(props: FeedItemCardProviderRendererProps) {
   return <FeedItemMediaPreview {...props} />;
 }
 
-export function YoutubeVideoPreview(props: FeedItemCardProviderRendererProps) {
-  const { model, localizedPreview } = props;
-  if (model.variant.type !== 'youtube') return <FeedItemMediaPreview {...props} />;
+const renderYoutubeVideoPreview = createVariantRenderer('youtube', ({
+  model,
+  localizedPreview,
+}: VariantRendererProps<'youtube'>) => (
+  <YoutubePreview
+    videoId={model.variant.videoId}
+    title={model.item.text || model.item.title}
+    preview={localizedPreview}
+    onPreviewError={model.onPreviewError}
+  />
+));
 
-  return (
-    <YoutubePreview
-      videoId={model.variant.videoId}
-      title={model.item.text || model.item.title}
-      preview={localizedPreview}
-      onPreviewError={model.onPreviewError}
-    />
-  );
+export function YoutubeVideoPreview(props: FeedItemCardProviderRendererProps) {
+  return createElement(renderYoutubeVideoPreview, props);
 }
 
-export function MatreshkaVideoPreview(props: FeedItemCardProviderRendererProps) {
-  const { model, localizedPreview } = props;
-  if (model.variant.type !== 'matreshka') return <FeedItemMediaPreview {...props} />;
-
+const renderMatreshkaVideoPreview = createVariantRenderer('matreshka', ({
+  model,
+  localizedPreview,
+}: VariantRendererProps<'matreshka'>) => {
   const matreshkaTitle = parseMatreshkaTitle(model.item.title, model.item.text);
   return (
     <MatreshkaPreview
@@ -102,19 +116,25 @@ export function MatreshkaVideoPreview(props: FeedItemCardProviderRendererProps) 
       onPreviewError={model.onPreviewError}
     />
   );
+});
+
+export function MatreshkaVideoPreview(props: FeedItemCardProviderRendererProps) {
+  return createElement(renderMatreshkaVideoPreview, props);
 }
 
-export function TwitchVideoPreview(props: FeedItemCardProviderRendererProps) {
-  const { model, localizedPreview } = props;
-  if (model.variant.type !== 'twitch') return <FeedItemMediaPreview {...props} />;
+const renderTwitchVideoPreview = createVariantRenderer('twitch', ({
+  model,
+  localizedPreview,
+}: VariantRendererProps<'twitch'>) => (
+  <TwitchPreview
+    channel={model.variant.channel}
+    preview={localizedPreview}
+    onPreviewError={model.onPreviewError}
+  />
+));
 
-  return (
-    <TwitchPreview
-      channel={model.variant.channel}
-      preview={localizedPreview}
-      onPreviewError={model.onPreviewError}
-    />
-  );
+export function TwitchVideoPreview(props: FeedItemCardProviderRendererProps) {
+  return createElement(renderTwitchVideoPreview, props);
 }
 
 export function HltvSupplementary({ model }: FeedItemCardProviderRendererProps) {
@@ -126,37 +146,37 @@ export function TikTokSupplementary({ model }: FeedItemCardProviderRendererProps
   return <TikTokComments item={model.item} />;
 }
 
-export function YoutubeCopy(props: FeedItemCardProviderRendererProps) {
-  if (props.model.variant.type !== 'youtube') return <StandardCopy {...props} />;
-
-  const { model } = props;
-  return (
+const renderYoutubeCopy = createVariantRenderer(
+  'youtube',
+  ({ model }: VariantRendererProps<'youtube'>) => (
     <div className="reader-card__copy reader-card__youtube-copy">
       <h2 className="reader-card__title">{model.item.text || model.item.title}</h2>
       <p className="reader-card__channel">{getYoutubeChannelName(model.item.title)}</p>
     </div>
-  );
+  ),
+  StandardCopy,
+);
+
+export function YoutubeCopy(props: FeedItemCardProviderRendererProps) {
+  return createElement(renderYoutubeCopy, props);
 }
 
-export function TwitchCopy(props: FeedItemCardProviderRendererProps) {
-  if (props.model.variant.type !== 'twitch') return <StandardCopy {...props} />;
-
-  const { model } = props;
-  const streamTitle = model.variant.type === 'twitch'
-    ? getTwitchStreamTitle(model.item.title, model.variant.channel)
-    : model.item.title || model.item.text;
-
+const renderTwitchCopy = createVariantRenderer('twitch', ({ model }: VariantRendererProps<'twitch'>) => {
+  const streamTitle = getTwitchStreamTitle(model.item.title, model.variant.channel);
   return (
     <div className="reader-card__copy reader-card__twitch-copy">
       <h2 className="reader-card__title"><TwitchTitle text={streamTitle} /></h2>
     </div>
   );
+}, StandardCopy);
+
+export function TwitchCopy(props: FeedItemCardProviderRendererProps) {
+  return createElement(renderTwitchCopy, props);
 }
 
-export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
-  if (props.model.variant.type !== 'matreshka') return <StandardCopy {...props} />;
-
-  const { model } = props;
+const renderMatreshkaCopy = createVariantRenderer('matreshka', ({
+  model,
+}: VariantRendererProps<'matreshka'>) => {
   const matreshkaTitle = parseMatreshkaTitle(model.item.title, model.item.text);
   return (
     <div className="reader-card__copy reader-card__matreshka-copy">
@@ -166,6 +186,10 @@ export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
       ) : null}
     </div>
   );
+}, StandardCopy);
+
+export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
+  return createElement(renderMatreshkaCopy, props);
 }
 
 export function StandardCopy({ model, displayHostname }: FeedItemCardProviderRendererProps) {
@@ -197,4 +221,15 @@ export function StandardCopy({ model, displayHostname }: FeedItemCardProviderRen
 
 function getYoutubeChannelName(title: string): string {
   return title.replace(/^YT:\s*/i, '').trim() || 'YouTube';
+}
+
+function createVariantRenderer<T extends FeedItemCardVariantType>(
+  variantType: T,
+  Renderer: ComponentType<VariantRendererProps<T>>,
+  Fallback: ComponentType<FeedItemCardProviderRendererProps> = FeedItemMediaPreview,
+): ComponentType<FeedItemCardProviderRendererProps> {
+  return (props) => {
+    if (props.model.variant.type !== variantType) return <Fallback {...props} />;
+    return <Renderer {...props as VariantRendererProps<T>} />;
+  };
 }

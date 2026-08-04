@@ -1,12 +1,8 @@
 import { useCallback, useState } from 'react';
 
+import { featureUseCases } from '../application/featureComposition';
 import { useAsyncLoad } from './useAsyncLoad';
 import { isNotFoundError } from '../features/requestError';
-import {
-  deleteFeed as deleteFeedUseCase,
-  isFeedNotFoundError,
-  loadFeed,
-} from '../features/feeds/feedUseCases';
 import { useAuth } from '../state/useAuth';
 
 type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
@@ -18,7 +14,7 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
   const [deleteState, setDeleteState] = useState<DeleteState>('idle');
   const feedId = parseFeedId(feedIdParam);
   const load = useCallback(
-    (signal: AbortSignal) => loadFeed(feedId, credentials, signal),
+    (signal: AbortSignal) => featureUseCases.feeds.loadFeed(feedId, credentials, signal),
     [credentials, feedId],
   );
   const {
@@ -27,7 +23,8 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     error: loadError,
     retry: retryLoad,
   } = useAsyncLoad(load);
-  const loadStatus: FeedLoadStatus = (isFeedNotFoundError(loadError) || isNotFoundError(loadError))
+  const loadStatus: FeedLoadStatus = (featureUseCases.feeds.isFeedNotFoundError(loadError)
+    || isNotFoundError(loadError))
     ? 'not-found'
     : asyncLoadStatus;
   const isDeleting = deleteState === 'deleting';
@@ -38,7 +35,7 @@ export function useFeed(feedIdParam: string | undefined, onDeleted: () => void) 
     setDeleteState('deleting');
 
     try {
-      await deleteFeedUseCase(feedId, credentials);
+      await featureUseCases.feeds.deleteFeed(feedId, credentials);
       onDeleted();
     } catch {
       setDeleteState('error');

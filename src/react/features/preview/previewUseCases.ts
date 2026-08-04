@@ -1,8 +1,15 @@
-export {
-  EMPTY_REMOTE_PREVIEW,
-  loadRemotePreview,
-  mergeHltvLiveData,
-} from '../../services/remotePreview';
-export { getOpenGraphPreview } from '../../services/openGraph';
-export { fetchTikTokComments } from '../../services/tiktokComments';
-export type { TikTokCommentsResult } from '../../services/tiktokComments';
+import type { PreviewApplicationPort, TikTokCommentsResult } from '../featurePorts';
+
+export type { TikTokCommentsResult } from '../featurePorts';
+
+export function createPreviewUseCases(port: PreviewApplicationPort) {
+  return {
+    EMPTY_REMOTE_PREVIEW: port.EMPTY_REMOTE_PREVIEW,
+    fetchTikTokComments: (url: string, signal: AbortSignal): Promise<TikTokCommentsResult> => (
+      port.fetchTikTokComments(url, signal)
+    ),
+    getOpenGraphPreview: port.getOpenGraphPreview,
+    loadRemotePreview: port.loadRemotePreview,
+    mergeHltvLiveData: port.mergeHltvLiveData,
+  };
+}

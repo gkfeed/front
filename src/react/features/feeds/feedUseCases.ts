@@ -1,59 +1,64 @@
 import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../../types';
-import {
-  createFeed as createFeedRequest,
-  createFeedFromUrl as createFeedFromUrlRequest,
-  deleteFeedById,
-  deleteFeedItemById,
-  getAllFeeds,
-  getFeedById,
-  getFeedItems,
-} from '../../services/feeds';
+import type { FeedApplicationPort } from '../featurePorts';
 
-export async function loadFeeds(
-  credentials: Credentials | null,
-  signal?: AbortSignal,
-): Promise<Feed[]> {
-  return getAllFeeds(credentials, signal);
-}
+export function createFeedUseCases(port: FeedApplicationPort) {
+  async function loadFeeds(
+    credentials: Credentials | null,
+    signal?: AbortSignal,
+  ): Promise<Feed[]> {
+    return port.getAllFeeds(credentials, signal);
+  }
 
-export async function loadFeed(
-  id: number | null,
-  credentials: Credentials | null,
-  signal?: AbortSignal,
-): Promise<Feed> {
-  if (id === null) throw new FeedNotFoundError();
+  async function loadFeed(
+    id: number | null,
+    credentials: Credentials | null,
+    signal?: AbortSignal,
+  ): Promise<Feed> {
+    if (id === null) throw new FeedNotFoundError();
 
-  const feed = await getFeedById(id, credentials, signal);
-  if (!feed) throw new FeedNotFoundError();
-  return feed;
-}
+    const feed = await port.getFeedById(id, credentials, signal);
+    if (!feed) throw new FeedNotFoundError();
+    return feed;
+  }
 
-export async function loadFeedItems(
-  credentials: Credentials | null,
-  limit = 1000,
-  signal?: AbortSignal,
-): Promise<FeedItem[]> {
-  return getFeedItems(credentials, limit, signal);
-}
+  function loadFeedItems(
+    credentials: Credentials | null,
+    limit = 1000,
+    signal?: AbortSignal,
+  ): Promise<FeedItem[]> {
+    return port.getFeedItems(credentials, limit, signal);
+  }
 
-export function deleteFeedItem(id: number, credentials: Credentials | null): Promise<void> {
-  return deleteFeedItemById(id, credentials);
-}
+  function deleteFeedItem(id: number, credentials: Credentials | null): Promise<void> {
+    return port.deleteFeedItemById(id, credentials);
+  }
 
-export function deleteFeed(id: number, credentials: Credentials | null): Promise<void> {
-  return deleteFeedById(id, credentials);
-}
+  function deleteFeed(id: number, credentials: Credentials | null): Promise<void> {
+    return port.deleteFeedById(id, credentials);
+  }
 
-export function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<void> {
-  return createFeedRequest(feed, credentials);
-}
+  function createFeed(feed: FeedInput, credentials: Credentials | null): Promise<void> {
+    return port.createFeed(feed, credentials);
+  }
 
-export function createFeedFromUrl(feed: FeedLazyInput, credentials: Credentials | null): Promise<void> {
-  return createFeedFromUrlRequest(feed, credentials);
-}
+  function createFeedFromUrl(feed: FeedLazyInput, credentials: Credentials | null): Promise<void> {
+    return port.createFeedFromUrl(feed, credentials);
+  }
 
-export function isFeedNotFoundError(error: unknown): boolean {
-  return error instanceof FeedNotFoundError;
+  function isFeedNotFoundError(error: unknown): boolean {
+    return error instanceof FeedNotFoundError;
+  }
+
+  return {
+    createFeed,
+    createFeedFromUrl,
+    deleteFeed,
+    deleteFeedItem,
+    isFeedNotFoundError,
+    loadFeed,
+    loadFeedItems,
+    loadFeeds,
+  };
 }
 
 export class FeedNotFoundError extends Error {

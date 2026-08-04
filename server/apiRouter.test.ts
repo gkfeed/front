@@ -3,8 +3,8 @@ import type { ServerResponse } from 'node:http';
 import { describe, expect, it, vi } from 'vitest';
 
 import { handleBffRequest } from './apiRouter.js';
-import { PreviewError } from './preview/errors.js';
 import type { PreviewUseCases } from './application/previewUseCases.js';
+import { HttpRequestError } from './http/httpErrors.js';
 
 function createResponse() {
   return {
@@ -54,8 +54,10 @@ describe('BFF HTTP router', () => {
     await expect(handleBffRequest(
       new URL('http://localhost/api/bff/open-graph'),
       response,
-    )).rejects.toMatchObject<PreviewError>({
+    )).rejects.toMatchObject<HttpRequestError>({
+      code: 'missing_url',
       kind: 'missing_url',
+      status: 400,
     });
   });
 
