@@ -215,16 +215,18 @@ export function isLiquipediaFeedItem(item: FeedItem): boolean {
 }
 
 export function getFeedItemProviderFromUrl(item: FeedItem, url: URL | null): FeedItemProvider {
+  // A valid provider URL is more authoritative than a feed title marker. Some
+  // imported TikTok items retain an `inst:` title prefix from their source.
+  if (url) {
+    if (getMatreshkaVideoId(url)) return 'matreshka';
+    if (getYoutubeVideoId(url)) return 'youtube';
+    if (getTwitchChannel(url)) return 'twitch';
+    if (isTikTokVideoUrl(url)) return 'tiktok';
+    if (isVkHost(url.hostname)) return 'vk';
+    if (isHltvMatchUrl(url)) return 'hltv';
+    if (isLiquipediaMatchUrl(url)) return 'liquipedia';
+  }
+
   if (/^inst:\s*/i.test(item.title)) return 'instagram';
-
-  if (!url) return 'generic';
-
-  if (getMatreshkaVideoId(url)) return 'matreshka';
-  if (getYoutubeVideoId(url)) return 'youtube';
-  if (getTwitchChannel(url)) return 'twitch';
-  if (isTikTokVideoUrl(url)) return 'tiktok';
-  if (isVkHost(url.hostname)) return 'vk';
-  if (isHltvMatchUrl(url)) return 'hltv';
-  if (isLiquipediaMatchUrl(url)) return 'liquipedia';
   return 'generic';
 }

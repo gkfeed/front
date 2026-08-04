@@ -156,6 +156,13 @@ describe('isTikTokFeedItem', () => {
     expect(isTikTokFeedItem(item({ link: 'https://m.tiktok.com/v/123' }))).toBe(true);
     expect(isTikTokFeedItem(item({ link: 'https://tiktok.com.example.org/video/123' }))).toBe(false);
   });
+
+  it('keeps a TikTok link as TikTok when its imported title has an Instagram marker', () => {
+    expect(analyzeFeedItem(item({
+      link: 'https://www.tiktok.com/@creator/video/123',
+      title: 'inst: milasmokesjoint',
+    })).provider).toBe('tiktok');
+  });
 });
 
 describe('Instagram feed items', () => {
