@@ -17,6 +17,8 @@ type YoutubePreviewProps = {
   videoId: string;
 };
 
+const YOUTUBE_SEEK_STEP_SECONDS = 5;
+
 export function YoutubePreview({
   onPreviewError,
   preview,
@@ -308,6 +310,44 @@ function YoutubePlayer({
       youtubePlayerRef.current = null;
     };
   }, [resumePosition, videoId]);
+
+  useEffect(() => {
+    const playerElement = shellRef.current;
+    if (!playerElement) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      if (!playerElement.contains(document.activeElement)) return;
+
+      const player = youtubePlayerRef.current;
+      let currentTime = currentTimeRef.current;
+      let duration = durationRef.current;
+      if (player) {
+        currentTime = player.getCurrentTime();
+        duration = player.getDuration();
+      }
+      if (typeof currentTime !== 'number' || !Number.isFinite(currentTime)) return;
+
+      const direction = event.key === 'ArrowLeft' ? -1 : 1;
+      const maxTime = typeof duration === 'number' && Number.isFinite(duration) && duration > 0
+        ? duration
+        : Number.POSITIVE_INFINITY;
+      const nextTime = Math.max(
+        0,
+        Math.min(maxTime, currentTime + direction * YOUTUBE_SEEK_STEP_SECONDS),
+      );
+      currentTimeRef.current = nextTime;
+      event.preventDefault();
+      if (player) {
+        player.seekTo(nextTime, true);
+      } else {
+        sendPlayerCommand(iframeRef.current, 'seekTo', [nextTime, true]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [shellRef]);
 
   useEffect(() => {
     if (!isResumeRequested || resumePosition === null) return;

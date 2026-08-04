@@ -54,7 +54,7 @@ Run `npm run check` or `make check` to execute the test suite, lint, browser aut
 
 Run `npm run test:e2e:install` once to install the Chromium browser used by Playwright.
 
-Run `npm run test:e2e` to execute browser automation tests. Playwright starts the Vite dev server on `http://127.0.0.1:4200/` automatically and reuses an existing server during local runs.
+Run `npm run test:e2e` to execute browser automation tests. Playwright starts the Vite dev server on `http://127.0.0.1:4300/` automatically and reuses an existing server during local runs.
 
 Run `npm run test:e2e:ui` for Playwright's interactive runner.
 

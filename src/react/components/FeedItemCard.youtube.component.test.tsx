@@ -422,6 +422,44 @@ describe('FeedItemCard YouTube and general states', () => {
       .toBe('true');
   });
 
+  it('seeks the YouTube video with the left and right arrow keys', async () => {
+    const player: YoutubePlayer = {
+      getCurrentTime: () => 120,
+      getDuration: () => 600,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: { onReady: (event: { target: YoutubePlayer }) => void };
+        }) {
+          options.events.onReady({ target: player });
+          return player;
+        }),
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+
+    expect(player.seekTo).toHaveBeenNthCalledWith(1, 115, true);
+    expect(player.seekTo).toHaveBeenNthCalledWith(2, 125, true);
+  });
+
   it('toggles YouTube playback speed from the default 2x setting', () => {
     render(<FeedItemCard item={{
       ...item,

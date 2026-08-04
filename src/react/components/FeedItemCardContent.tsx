@@ -117,7 +117,7 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
   const displayHostname = hostname ?? t('feed.item');
   if (descriptor.copy === 'youtube') {
     return (
-      <div className="reader-card__youtube-copy">
+      <div className="reader-card__copy reader-card__youtube-copy">
         <h2 className="reader-card__title">{item.text || item.title}</h2>
         <p className="reader-card__channel">{getYoutubeChannelName(item.title)}</p>
       </div>
@@ -129,7 +129,7 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
       : item.title || item.text;
 
     return (
-      <div className="reader-card__twitch-copy">
+      <div className="reader-card__copy reader-card__twitch-copy">
         <h2 className="reader-card__title"><TwitchTitle text={streamTitle} /></h2>
       </div>
     );
@@ -146,11 +146,15 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
     );
   }
   if (descriptor.copy === 'simple-image') {
-    return <h2 className="reader-card__title">{item.title || displayHostname}</h2>;
+    return (
+      <div className="reader-card__copy">
+        <h2 className="reader-card__title">{item.title || displayHostname}</h2>
+      </div>
+    );
   }
 
   return (
-    <>
+    <div className="reader-card__copy">
       <div className="reader-card__meta">
         <span>{displayHostname}</span>
         <span>{t('feed.item')} #{item.feedId}</span>
@@ -160,7 +164,7 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
       <a className="reader-card__link" href={item.link} target="_blank" rel="noreferrer">
         {t('reader.openOriginal')} <span aria-hidden="true">↗</span>
       </a>
-    </>
+    </div>
   );
 }
 

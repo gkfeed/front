@@ -33,6 +33,12 @@
   border-radius: inherit;
 }
 
+.reader-card__copy {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+}
+
 .reader-card__youtube-copy,
 .reader-card__twitch-copy,
 .reader-card__matreshka-copy {

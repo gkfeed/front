@@ -55,7 +55,7 @@ export function MatreshkaPreview({
     const playerElement = playerRef.current;
     const triggerElement = triggerRef.current;
     window.addEventListener('keydown', handleKeyDown);
-    playerElement?.querySelector<HTMLElement>('button, iframe')?.focus();
+    playerElement?.querySelector<HTMLIFrameElement>('iframe')?.focus();
     return () => {
       document.documentElement.classList.remove('reader-theater-open');
       window.removeEventListener('keydown', handleKeyDown);

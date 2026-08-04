@@ -8,12 +8,12 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://127.0.0.1:4200',
+    baseURL: 'http://127.0.0.1:4300',
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'vite --host 127.0.0.1 --port 4200',
-    url: 'http://127.0.0.1:4200',
+    command: 'vite --host 127.0.0.1 --port 4300',
+    url: 'http://127.0.0.1:4300',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

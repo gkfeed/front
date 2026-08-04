@@ -56,6 +56,7 @@ describe('Matreshka player', () => {
     expect(player.getAttribute('src'))
       .toBe('https://matreshka.tv/embed/video/LHAN5jgduhC');
     expect(player.getAttribute('allow')).toContain('autoplay');
+    expect(document.activeElement).toBe(player);
     expect(screen.getByRole('button', { name: 'Exit theater mode' })
       .getAttribute('aria-pressed')).toBe('true');
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
@@ -65,5 +66,19 @@ describe('Matreshka player', () => {
     expect(screen.getByTitle('Matreshka video player: Story')).toBe(player);
     expect(screen.getByRole('button', { name: 'Enter theater mode' })).toBeTruthy();
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(false);
+  });
+
+  it('does not expose unsupported playback speed controls', () => {
+    render(
+      <MatreshkaPreview
+        videoId="LHAN5jgduhC"
+        title="Story"
+        preview={null}
+        onPreviewError={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play Matreshka video Story' }));
+    expect(screen.queryByRole('button', { name: /Playback speed/ })).toBeNull();
   });
 });

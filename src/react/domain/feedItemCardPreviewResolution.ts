@@ -49,12 +49,12 @@ export function resolveFeedItemCardPreviews({
   const policy = getFeedItemProviderPolicy(analysis.provider);
   const localPreviewSource = localPreview?.src;
   const isRezka = isRezkaUrl(analysis.url);
+  const isReddit = isRedditUrl(analysis.url);
   const usesTikTokEmbed = policy.previewMode === 'tiktok-embed';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
   const remoteItemPreview = isRezka && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
-  const isReddit = isRedditUrl(analysis.url);
   const tiktokEmbedPreview = usesTikTokEmbed ? getTikTokEmbedPreview(item) : null;
   const preview = usesTikTokEmbed
     ? tiktokEmbedPreview ?? localPreview
