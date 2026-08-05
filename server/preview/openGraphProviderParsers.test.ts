@@ -49,6 +49,13 @@ describe('parseVkStructuredVideo', () => {
 });
 
 describe('parseRezkaOriginalCover', () => {
+  it('supports image-only sidecovers on either Rezka host', () => {
+    expect(parseRezkaOriginalCover(
+      `<section class="b-post__cover b-sidecover"><img data-src="/covers/series.webp"></section>`,
+      new URL('https://hdrezka.me/series/comedy/story.html'),
+    )).toBe('https://hdrezka.me/covers/series.webp');
+  });
+
   it('ignores malformed or non-http cover links', () => {
     expect(parseRezkaOriginalCover(
       '<div class="b-sidecover"><a href="javascript:alert(1)"></a></div>',

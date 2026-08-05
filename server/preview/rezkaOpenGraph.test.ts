@@ -51,4 +51,47 @@ describe('Rezka OpenGraph provider', () => {
       },
     );
   });
+
+  it('falls back to the requested host when the mirror does not have the item', async () => {
+    const requestedUrl = new URL('https://hdrezka.me/series/comedy/91415-kop-zvezda-2026.html');
+    requestPublicHttp.mockImplementation((url: URL) => {
+      if (url.hostname === 'rezka.ag') {
+        return Promise.resolve({
+          body: { destroy: vi.fn() },
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+          status: 404,
+          url,
+        });
+      }
+      return Promise.resolve(gzipHtmlResponse(
+        '<meta property="og:image" content="/covers/kop-zvezda.jpg">',
+        requestedUrl,
+      ));
+    });
+
+    await expect(fetchOpenGraph(requestedUrl.href)).resolves.toMatchObject({
+      image: 'https://hdrezka.me/covers/kop-zvezda.jpg',
+      url: requestedUrl.href,
+    });
+    expect(requestPublicHttp.mock.calls.map(([url]) => url.href)).toEqual([
+      'https://rezka.ag/series/comedy/91415-kop-zvezda-2026.html',
+      requestedUrl.href,
+    ]);
+  });
+
+  it('also falls back when the mirror returns a page without preview metadata', async () => {
+    const requestedUrl = new URL('https://hdrezka.me/series/comedy/91415-kop-zvezda-2026.html');
+    requestPublicHttp.mockImplementation((url: URL) => Promise.resolve(gzipHtmlResponse(
+      url.hostname === 'rezka.ag'
+        ? '<title>Коп-звезда</title>'
+        : '<meta property="og:image" content="/covers/kop-zvezda.jpg">',
+      url,
+    )));
+
+    await expect(fetchOpenGraph(requestedUrl.href)).resolves.toMatchObject({
+      image: 'https://hdrezka.me/covers/kop-zvezda.jpg',
+      url: requestedUrl.href,
+    });
+    expect(requestPublicHttp).toHaveBeenCalledTimes(2);
+  });
 });

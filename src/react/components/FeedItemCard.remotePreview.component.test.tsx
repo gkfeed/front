@@ -12,7 +12,7 @@ describe('FeedItemCard remote and feed previews', () => {
       url: 'https://www.reddit.com/r/neovim/comments/abc123/post/',
       title: 'Reddit post',
       description: null,
-      image: '/api/bff/reddit-preview-image?url=encoded',
+      image: '/bff/reddit-preview-image?url=encoded',
       video: null,
       siteName: 'Reddit',
       type: 'website',
@@ -39,7 +39,7 @@ describe('FeedItemCard remote and feed previews', () => {
       url: 'https://www.reddit.com/r/example/comments/abc123/post/',
       title: 'Reddit video',
       description: null,
-      image: '/api/bff/reddit-preview-image?url=encoded',
+      image: '/bff/reddit-preview-image?url=encoded',
       video: 'https://v.redd.it/video123',
       siteName: 'Reddit',
       type: 'video',
@@ -55,7 +55,7 @@ describe('FeedItemCard remote and feed previews', () => {
     const video = await screen.findByLabelText('Video preview for Reddit video');
     expect(video.tagName).toBe('VIDEO');
     expect(video.getAttribute('src')).toBe('https://v.redd.it/video123');
-    expect(video.getAttribute('poster')).toBe('/api/bff/reddit-preview-image?url=encoded');
+    expect(video.getAttribute('poster')).toBe('/bff/reddit-preview-image?url=encoded');
     expect(video.closest('.reader-card--reddit-preview')).toBeNull();
   });
 

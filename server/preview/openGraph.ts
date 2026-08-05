@@ -9,6 +9,7 @@ import { parseLiquipediaMatch } from './liquipediaParser.js';
 import type { HltvPage } from './hltvFetcher.js';
 import { isHltvMatchUrl, parseOpenGraph } from './openGraphParser.js';
 import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
+import { normalizeHostname } from '../../shared/urlRules.js';
 
 export { parseLiquipediaMatch };
 export { fetchLiquipediaMatch };
@@ -25,7 +26,11 @@ const REZKA_USER_AGENT = 'TelegramBot (like TwitterBot)';
 
 export async function fetchOpenGraph(input: string, context?: RequestExecutionContext): Promise<OpenGraphPreview> {
   const requestedUrl = parsePublicHttpUrl(input);
-  const url = getPreviewUrl(requestedUrl);
+  if (isRezkaUrl(requestedUrl)) {
+    return fetchRezkaOpenGraph(requestedUrl, context);
+  }
+
+  const url = requestedUrl;
   if (isHltvMatchUrl(url)) {
     const page = await fetchHltvHtml(url, context);
     return enrichHltvPreview(parseOpenGraph(page.html, page.url), page);
@@ -33,11 +38,35 @@ export async function fetchOpenGraph(input: string, context?: RequestExecutionCo
 
   const page = await fetchHtml(
     url,
-    isRezkaUrl(requestedUrl) ? REZKA_USER_AGENT : TWITTERBOT_USER_AGENT,
+    TWITTERBOT_USER_AGENT,
     { metadataOnly: isMatreshkaVideoUrl(requestedUrl) },
     context,
   );
   return parseOpenGraph(page.html, page.url);
+}
+
+async function fetchRezkaOpenGraph(
+  requestedUrl: URL,
+  context?: RequestExecutionContext,
+): Promise<OpenGraphPreview> {
+  let firstPreview: OpenGraphPreview | null = null;
+  let lastError: unknown = null;
+
+  for (const url of getRezkaPreviewUrls(requestedUrl)) {
+    try {
+      const page = await fetchHtml(url, REZKA_USER_AGENT, {}, context);
+      const preview = parseOpenGraph(page.html, page.url);
+      if (preview.image || url.href === requestedUrl.href) return preview;
+      firstPreview ??= preview;
+    } catch (error) {
+      if (context?.signal.aborted) throw error;
+      lastError = error;
+    }
+  }
+
+  if (firstPreview) return firstPreview;
+  if (lastError) throw lastError;
+  throw new PreviewError('The Rezka page could not be fetched', 'fetch_failed');
 }
 
 function enrichHltvPreview(preview: OpenGraphPreview, page: HltvPage): OpenGraphPreview {
@@ -58,15 +87,15 @@ function enrichHltvPreview(preview: OpenGraphPreview, page: HltvPage): OpenGraph
   };
 }
 
-function getPreviewUrl(url: URL): URL {
-  if (!isRezkaUrl(url)) return url;
-  const previewUrl = new URL(url.href);
-  previewUrl.host = 'rezka.ag';
-  return previewUrl;
+function getRezkaPreviewUrls(url: URL): URL[] {
+  if (normalizeHostname(url.hostname) !== 'hdrezka.me') return [url];
+  const mirrorUrl = new URL(url.href);
+  mirrorUrl.host = 'rezka.ag';
+  return [mirrorUrl, url];
 }
 
 function isRezkaUrl(url: URL): boolean {
-  return url.hostname.toLowerCase().replace(/^www\./, '') === 'hdrezka.me';
+  return ['hdrezka.me', 'rezka.ag'].includes(normalizeHostname(url.hostname));
 }
 
 function isMatreshkaVideoUrl(url: URL): boolean {

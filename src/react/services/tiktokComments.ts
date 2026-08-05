@@ -11,7 +11,7 @@ export async function fetchTikTokComments(
   signal: AbortSignal,
 ): Promise<TikTokCommentsPreview> {
   return requestBffJson({
-    endpoint: '/api/bff/tiktok-comments',
+    endpoint: '/bff/tiktok-comments',
     input: url,
     resourceName: 'TikTok comments',
     validate: isTikTokCommentsPreview,

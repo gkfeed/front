@@ -13,9 +13,9 @@ import { sendPreviewImage } from './previewResponse.js';
 type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'openGraph' | 'liquipediaMatch' | 'tiktokComments'>;
 
 const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
-  '/api/bff/open-graph': 'openGraph',
-  '/api/bff/liquipedia-match': 'liquipediaMatch',
-  '/api/bff/tiktok-comments': 'tiktokComments',
+  '/bff/open-graph': 'openGraph',
+  '/bff/liquipedia-match': 'liquipediaMatch',
+  '/bff/tiktok-comments': 'tiktokComments',
 };
 
 export async function routeBffRequest(
@@ -37,7 +37,7 @@ export async function routeBffRequest(
     return true;
   }
 
-  if (requestUrl.pathname === '/api/bff/reddit-preview-image') {
+  if (requestUrl.pathname === '/bff/reddit-preview-image') {
     const image = await useCases.redditPreviewImage(getRequiredPreviewUrl(requestUrl), requestContext);
     sendPreviewImage(response, image);
     return true;

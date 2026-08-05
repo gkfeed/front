@@ -98,7 +98,7 @@ function getImagePreviewType({
   remotePreviewSource: string | undefined;
 }): FeedItemCardImagePreview {
   if (!isImagePreview(visiblePreview)) return { type: 'none' };
-  if (visiblePreview.src.startsWith('/api/bff/reddit-preview-image?')) {
+  if (visiblePreview.src.startsWith('/bff/reddit-preview-image?')) {
     return { type: 'generated', source: isReddit ? 'reddit' : 'other' };
   }
   if (isHltv && visiblePreview.src === remotePreviewSource) return { type: 'hltv' };

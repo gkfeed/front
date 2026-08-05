@@ -23,7 +23,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
       contentType: 'image/svg+xml',
       body: '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="#a6e3a1"/></svg>',
     }));
-    await page.route('**/api/bff/tiktok-comments?**', (route) => route.fulfill({
+    await page.route('**/bff/tiktok-comments?**', (route) => route.fulfill({
       json: {
         comments: [],
         description: null,

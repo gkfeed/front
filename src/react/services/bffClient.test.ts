@@ -9,7 +9,7 @@ import {
 afterEach(() => vi.unstubAllGlobals());
 
 const request = (options: Partial<Parameters<typeof requestBffJson<string>>[0]> = {}) => requestBffJson({
-  endpoint: '/api/bff/test',
+  endpoint: '/bff/test',
   input: 'https://example.com/story?a=1&b=2',
   resourceName: 'test response',
   validate: (value: unknown): value is string => typeof value === 'string',

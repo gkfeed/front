@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api/bff': {
+      '/bff': {
         target: process.env.BFF_TARGET ?? 'http://127.0.0.1:3000',
       },
       '/api/v1': {

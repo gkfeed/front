@@ -11,7 +11,7 @@ export type {
 
 export async function getOpenGraphPreview(url: string, signal?: AbortSignal): Promise<OpenGraphPreview> {
   const value = await requestBffJson({
-    endpoint: '/api/bff/open-graph',
+    endpoint: '/bff/open-graph',
     input: url,
     resourceName: 'preview',
     httpErrorName: 'Preview',
@@ -28,7 +28,7 @@ function getBrowserImageUrl(imageUrl: string): string {
   try {
     const url = new URL(imageUrl);
     if (url.hostname.toLowerCase() === 'share.redd.it' && url.pathname.startsWith('/preview/post/')) {
-      return `/api/bff/reddit-preview-image?url=${encodeURIComponent(url.href)}`;
+      return `/bff/reddit-preview-image?url=${encodeURIComponent(url.href)}`;
     }
     if (url.protocol === 'http:' && url.hostname.toLowerCase() === 'api.url2png.com') {
       url.protocol = 'https:';

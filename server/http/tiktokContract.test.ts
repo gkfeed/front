@@ -25,7 +25,7 @@ describe('TikTok HTTP contract', () => {
     } as unknown as PreviewUseCases;
 
     await routeBffRequest(
-      new URL('http://localhost/api/bff/tiktok-comments?url=https%3A%2F%2Fwww.tiktok.com%2F%40creator%2Fvideo%2F123'),
+      new URL('http://localhost/bff/tiktok-comments?url=https%3A%2F%2Fwww.tiktok.com%2F%40creator%2Fvideo%2F123'),
       response,
       undefined,
       useCases,

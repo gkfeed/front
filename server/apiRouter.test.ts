@@ -39,7 +39,7 @@ describe('BFF HTTP router', () => {
     const useCases = createUseCases();
 
     await expect(handleBffRequest(
-      new URL('http://localhost/api/bff/open-graph?url=https%3A%2F%2Fexample.com'),
+      new URL('http://localhost/bff/open-graph?url=https%3A%2F%2Fexample.com'),
       response,
       undefined,
       useCases,
@@ -54,8 +54,8 @@ describe('BFF HTTP router', () => {
   });
 
   it.each([
-    ['/api/bff/liquipedia-match', 'liquipediaMatch', { status: 'live' }],
-    ['/api/bff/tiktok-comments', 'tiktokComments', {
+    ['/bff/liquipedia-match', 'liquipediaMatch', { status: 'live' }],
+    ['/bff/tiktok-comments', 'tiktokComments', {
       comments: [],
       description: null,
       creatorName: null,
@@ -84,7 +84,7 @@ describe('BFF HTTP router', () => {
     const response = createResponse();
 
     await expect(handleBffRequest(
-      new URL('http://localhost/api/bff/open-graph'),
+      new URL('http://localhost/bff/open-graph'),
       response,
     )).rejects.toMatchObject<HttpRequestError>({
       code: 'missing_url',
@@ -104,7 +104,7 @@ describe('BFF HTTP router', () => {
     });
 
     await expect(handleBffRequest(
-      new URL('http://localhost/api/bff/reddit-preview-image?url=https%3A%2F%2Fshare.redd.it%2Fpreview%2Fpost%2Fabc'),
+      new URL('http://localhost/bff/reddit-preview-image?url=https%3A%2F%2Fshare.redd.it%2Fpreview%2Fpost%2Fabc'),
       response,
       undefined,
       useCases,
@@ -123,11 +123,11 @@ describe('BFF HTTP router', () => {
     expect(response.end).toHaveBeenCalledWith(body);
   });
 
-  it('does not claim unrelated routes', async () => {
+  it('does not claim the old API-prefixed BFF routes', async () => {
     const response = createResponse();
 
     await expect(handleBffRequest(
-      new URL('http://localhost/api/other'),
+      new URL('http://localhost/api/bff/open-graph?url=https%3A%2F%2Fexample.com'),
       response,
     )).resolves.toBe(false);
 
@@ -142,7 +142,7 @@ describe('BFF HTTP router', () => {
     vi.mocked(useCases.openGraph).mockRejectedValue(failure);
 
     await expect(handleBffRequest(
-      new URL('http://localhost/api/bff/open-graph?url=https%3A%2F%2Fexample.com'),
+      new URL('http://localhost/bff/open-graph?url=https%3A%2F%2Fexample.com'),
       response,
       undefined,
       useCases,

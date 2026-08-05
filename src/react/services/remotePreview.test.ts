@@ -32,8 +32,8 @@ afterEach(() => {
 
 describe('loadRemotePreview', () => {
   it.each([
-    ['invalid response', new BffResponseError('Invalid Liquipedia preview response', '/api/bff/liquipedia-match', 200)],
-    ['unsupported markup', new BffHttpError('Liquipedia preview request failed with 422', 422, '/api/bff/liquipedia-match')],
+    ['invalid response', new BffResponseError('Invalid Liquipedia preview response', '/bff/liquipedia-match', 200)],
+    ['unsupported markup', new BffHttpError('Liquipedia preview request failed with 422', 422, '/bff/liquipedia-match')],
   ])('falls back to Open Graph for %s', async (_label, error) => {
     vi.mocked(getLiquipediaMatchPreview).mockRejectedValue(error);
     vi.mocked(getOpenGraphPreview).mockResolvedValue(OPEN_GRAPH_PREVIEW);
@@ -45,12 +45,12 @@ describe('loadRemotePreview', () => {
 
   it.each([
     ['abort', new DOMException('The operation was aborted', 'AbortError')],
-    ['invalid JSON', new BffResponseError('Invalid Liquipedia preview response', '/api/bff/liquipedia-match', 200, 'invalid-json')],
-    ['timeout', new BffTimeoutError('/api/bff/liquipedia-match', 10_000)],
-    ['rate limit', new BffHttpError('Liquipedia preview request failed with 429', 429, '/api/bff/liquipedia-match')],
-    ['upstream failure', new BffHttpError('Liquipedia preview request failed with 502', 502, '/api/bff/liquipedia-match')],
-    ['auth failure', new BffHttpError('Liquipedia preview request failed with 401', 401, '/api/bff/liquipedia-match')],
-    ['forbidden', new BffHttpError('Liquipedia preview request failed with 403', 403, '/api/bff/liquipedia-match')],
+    ['invalid JSON', new BffResponseError('Invalid Liquipedia preview response', '/bff/liquipedia-match', 200, 'invalid-json')],
+    ['timeout', new BffTimeoutError('/bff/liquipedia-match', 10_000)],
+    ['rate limit', new BffHttpError('Liquipedia preview request failed with 429', 429, '/bff/liquipedia-match')],
+    ['upstream failure', new BffHttpError('Liquipedia preview request failed with 502', 502, '/bff/liquipedia-match')],
+    ['auth failure', new BffHttpError('Liquipedia preview request failed with 401', 401, '/bff/liquipedia-match')],
+    ['forbidden', new BffHttpError('Liquipedia preview request failed with 403', 403, '/bff/liquipedia-match')],
     ['transport failure', new TypeError('Failed to fetch')],
   ])('propagates %s instead of falling back', async (_label, error) => {
     vi.mocked(getLiquipediaMatchPreview).mockRejectedValue(error);

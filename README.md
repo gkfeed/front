@@ -29,7 +29,7 @@ Set `PORT` to use a different port.
 The BFF exposes the Open Graph metadata route:
 
 ```text
-GET /api/bff/open-graph?url=https%3A%2F%2Fexample.com%2Farticle
+GET /bff/open-graph?url=https%3A%2F%2Fexample.com%2Farticle
 ```
 
 It returns the final page URL plus its title, description, image, video, site
@@ -39,7 +39,7 @@ fetched; private/local addresses, non-HTML responses, large pages, and slow
 responses are rejected.
 
 Generated Reddit cards from `share.redd.it` are loaded through
-`/api/bff/reddit-preview-image`, which applies the same crawler request headers
+`/bff/reddit-preview-image`, which applies the same crawler request headers
 as gkbot. That image proxy only accepts Reddit's generated preview URLs.
 HLTV match cards use the parsed teams and live/final match data when available,
 with the site's generated Open Graph image as a fallback. Like gkbot, the BFF

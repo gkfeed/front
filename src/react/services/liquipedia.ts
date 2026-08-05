@@ -16,7 +16,7 @@ export async function getLiquipediaMatchPreview(
   signal?: AbortSignal,
 ): Promise<LiquipediaMatchPreview> {
   return requestBffJson({
-    endpoint: '/api/bff/liquipedia-match',
+    endpoint: '/bff/liquipedia-match',
     input: url,
     resourceName: 'Liquipedia preview',
     validate: isLiquipediaMatchPreview,

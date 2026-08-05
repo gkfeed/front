@@ -46,7 +46,7 @@ describe('HTTP server composition root', () => {
   });
 
   it('maps provider failures after BFF routing at the HTTP boundary', async () => {
-    const request = createRequest('/api/bff/open-graph?url=https%3A%2F%2Fexample.com', 'GET');
+    const request = createRequest('/bff/open-graph?url=https%3A%2F%2Fexample.com', 'GET');
     const response = createResponse();
 
     await handleHttpRequest(request, response, {

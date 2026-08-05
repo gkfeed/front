@@ -20,7 +20,7 @@ describe('getOpenGraphPreview', () => {
 
     await expect(getOpenGraphPreview(preview.url)).resolves.toEqual(preview);
     expect(fetch).toHaveBeenCalledWith(
-      '/api/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fstory%3Fa%3D1%26b%3D2',
+      '/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fstory%3Fa%3D1%26b%3D2',
       { signal: expect.any(AbortSignal) },
     );
   });
@@ -44,7 +44,7 @@ describe('getOpenGraphPreview', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
 
     await expect(getOpenGraphPreview(preview.url)).resolves.toMatchObject({
-      image: '/api/bff/reddit-preview-image?url=https%3A%2F%2Fshare.redd.it%2Fpreview%2Fpost%2Fabc123',
+      image: '/bff/reddit-preview-image?url=https%3A%2F%2Fshare.redd.it%2Fpreview%2Fpost%2Fabc123',
     });
   });
 
