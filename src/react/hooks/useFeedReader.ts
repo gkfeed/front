@@ -6,8 +6,9 @@ import { useAuth } from '../state/useAuth';
 import { useFeedItemDeletion } from './useFeedItemDeletion';
 import { useFeedItems } from './useFeedItems';
 import { useReviewSession } from './useReviewSession';
+import { useReviewPreviewPrefetch } from './useReviewPreviewPrefetch';
 
-export function useFeedReader() {
+export function useFeedReader({ prefetchNextPreviews = false }: { prefetchNextPreviews?: boolean } = {}) {
   const { credentials } = useAuth();
   const { nsfwMode } = useNsfwPreferences();
   const { loadedItems, status, error: loadError, isLoading, retry } = useFeedItems(credentials);
@@ -54,6 +55,12 @@ export function useFeedReader() {
     username: credentials?.username ?? null,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
+
+  useReviewPreviewPrefetch({
+    enabled: prefetchNextPreviews,
+    items: items ?? [],
+    activeReviewIds,
+  });
 
   const keepItem = useCallback(() => {
     if (!currentItem) return;

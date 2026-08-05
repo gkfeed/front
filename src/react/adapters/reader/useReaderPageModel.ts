@@ -26,7 +26,7 @@ export function useReaderPageModel(t: Translator) {
     void exitReaderFullscreen();
   }, [mode]);
 
-  const reader = useFeedReader();
+  const reader = useFeedReader({ prefetchNextPreviews: mode === 'review' });
   const {
     panelRef: reviewPanelRef,
     actionsRef: reviewActionsRef,
