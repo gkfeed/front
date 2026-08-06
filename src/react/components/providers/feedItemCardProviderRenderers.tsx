@@ -15,11 +15,13 @@ import { TwitchTitle } from '../TwitchTitle';
 import { YoutubePreview } from '../previews/YoutubePreview';
 import { getTwitchStreamTitle } from '../../domain/twitchPreview';
 import { parseMatreshkaTitle } from '../../domain/matreshkaTitle';
+import { ArticleReaderLink } from '../ArticleReader';
 
 export type FeedItemCardProviderRendererProps = {
   model: FeedItemCardModel;
   localizedPreview: LocalizedFeedItemPreview | null;
   displayHostname: string;
+  onOpenArticle?: () => void;
 };
 
 type FeedItemCardProviderRenderer = {
@@ -205,7 +207,7 @@ export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
   return createElement(renderMatreshkaCopy, props);
 }
 
-export function StandardCopy({ model, displayHostname }: FeedItemCardProviderRendererProps) {
+export function StandardCopy({ model, displayHostname, onOpenArticle }: FeedItemCardProviderRendererProps) {
   const { t } = useTranslation();
   const { item, description } = model;
 
@@ -225,9 +227,15 @@ export function StandardCopy({ model, displayHostname }: FeedItemCardProviderRen
       </div>
       <h2 className="reader-card__title">{item.title || displayHostname}</h2>
       {description ? <p className="reader-card__description">{description}</p> : null}
-      <a className="reader-card__link" href={item.link} target="_blank" rel="noreferrer">
-        {t('reader.openOriginal')} <span aria-hidden="true">↗</span>
-      </a>
+      <ArticleReaderLink
+        url={item.link}
+        enabled={
+          model.openGraphPreview?.type?.toLowerCase() === 'article'
+          || model.hostname === 'trashbox.ru'
+          || model.hostname?.endsWith('.trashbox.ru') === true
+        }
+        onOpen={onOpenArticle ?? (() => {})}
+      />
     </div>
   );
 }

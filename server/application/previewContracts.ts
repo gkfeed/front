@@ -2,6 +2,7 @@ import type {
   LiquipediaMatchPreview,
   OpenGraphPreview,
 } from '../../shared/previewContracts.js';
+import type { ArticlePreview } from '../../shared/articleContracts.js';
 import type { TikTokCommentsPreview } from '../../shared/tiktokContracts.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
 
@@ -21,6 +22,7 @@ export type PreviewUseCase<TResult> = (
 ) => Promise<TResult>;
 
 export interface PreviewUseCases {
+  article: PreviewUseCase<ArticlePreview>;
   openGraph: PreviewUseCase<OpenGraphPreview>;
   liquipediaMatch: PreviewUseCase<LiquipediaMatchPreview>;
   tiktokComments: PreviewUseCase<TikTokCommentsPreview>;

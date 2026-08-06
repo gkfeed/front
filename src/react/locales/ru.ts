@@ -125,6 +125,14 @@ const ru = {
     remaining_other: 'Осталось элементов: {{count}}',
     openOriginal: 'Открыть оригинал',
   },
+  article: {
+    title: 'Чтение статьи',
+    close: 'Назад',
+    original: 'Оригинал',
+    loading: 'Разбираем статью…',
+    error: 'Не удалось разобрать эту статью.',
+    retry: 'Повторить',
+  },
   live: {
     checking: 'Проверка каналов Twitch…',
     checkErrorTitle: 'Не удалось проверить Twitch',

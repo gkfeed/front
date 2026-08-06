@@ -2,6 +2,7 @@ import type {
   LiquipediaMatchPreview,
   OpenGraphPreview,
 } from '../../shared/previewContracts.js';
+import type { ArticlePreview } from '../../shared/articleContracts.js';
 import type {
   PreviewImage,
   TikTokCommentsPreview,
@@ -14,6 +15,7 @@ export type PreviewPort<TResult> = (
 ) => Promise<TResult>;
 
 export interface PreviewPorts {
+  fetchArticle: PreviewPort<ArticlePreview>;
   fetchOpenGraph: PreviewPort<OpenGraphPreview>;
   fetchLiquipediaMatch: PreviewPort<LiquipediaMatchPreview>;
   fetchTikTokComments: PreviewPort<TikTokCommentsPreview>;

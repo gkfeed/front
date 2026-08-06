@@ -14,6 +14,7 @@ const PREVIEW_HTTP_MAPPINGS: Record<string, PreviewHttpMapping> = {
   invalid_liquipedia_match: { status: 400, code: 'invalid_liquipedia_match' },
   not_html: { status: 422, code: 'not_html' },
   match_not_found: { status: 422, code: 'match_not_found' },
+  article_not_found: { status: 422, code: 'article_not_found' },
   response_too_large: { status: 422, code: 'response_too_large' },
   image_too_large: { status: 422, code: 'image_too_large' },
   unresolvable_host: { status: 422, code: 'unresolvable_host' },

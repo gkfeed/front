@@ -10,6 +10,7 @@ export function createPreviewUseCases(
   limit: PreviewConcurrencyLimiter = withoutLimit,
 ): PreviewUseCases {
   return {
+    article: withLimit(ports.fetchArticle, limit),
     openGraph: withLimit(ports.fetchOpenGraph, limit),
     liquipediaMatch: withLimit(ports.fetchLiquipediaMatch, limit),
     tiktokComments: withLimit(ports.fetchTikTokComments, limit),

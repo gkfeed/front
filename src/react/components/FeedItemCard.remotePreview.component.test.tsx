@@ -3,10 +3,46 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { getPreview, item } from './FeedItemCard.component.testUtils';
+import { getArticlePreview, getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 
 describe('FeedItemCard remote and feed previews', () => {
+  it('opens an article preview inside the site when its cover is clicked', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://trashbox.ru/link/cloudflare-os',
+      title: 'Cloudflare OS',
+      description: 'Описание статьи',
+      image: 'https://trashbox.ru/images/cloudflare.webp',
+      video: null,
+      siteName: 'Trashbox.ru',
+      type: 'article',
+      providerData: null,
+    });
+    getArticlePreview.mockResolvedValue({
+      url: 'https://trashbox.ru/link/cloudflare-os',
+      title: 'Cloudflare OS',
+      byline: 'Svidetel',
+      excerpt: null,
+      blocks: [{ type: 'paragraph', text: 'Полный текст статьи.' }],
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://trashbox.ru/link/cloudflare-os',
+      title: 'Cloudflare OS',
+    }} />);
+
+    const cover = await screen.findByAltText('Preview for Cloudflare OS');
+    fireEvent.click(cover);
+
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    expect(screen.getByText('Полный текст статьи.')).toBeTruthy();
+    expect(getArticlePreview).toHaveBeenCalledWith(
+      'https://trashbox.ru/link/cloudflare-os',
+      expect.any(AbortSignal),
+    );
+  });
+
   it('shows generated Reddit cards without duplicating their content', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.reddit.com/r/neovim/comments/abc123/post/',

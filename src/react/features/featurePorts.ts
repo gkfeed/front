@@ -1,5 +1,6 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
 import type { TikTokCommentsPreview } from '../../../shared/tiktokContracts';
+import type { ArticlePreview } from '../../../shared/articleContracts';
 
 import type { RemotePreview } from '../domain/feedItemCardContracts';
 import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../types';
@@ -35,6 +36,7 @@ export type AuthApplicationPort = {
 };
 
 export type PreviewApplicationPort = {
+  getArticle: (url: string, signal?: AbortSignal) => Promise<ArticlePreview>;
   EMPTY_REMOTE_PREVIEW: RemotePreview;
   loadRemotePreview: (
     url: string,

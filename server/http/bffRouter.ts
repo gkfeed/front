@@ -1,6 +1,7 @@
 import type { ServerResponse } from 'node:http';
 
 import { isTikTokCommentsPreview } from '../../shared/tiktokContracts.js';
+import { isArticlePreview } from '../../shared/articleContracts.js';
 import { sendJson } from './httpResponse.js';
 import type { PreviewUseCases } from '../application/previewUseCases.js';
 import {
@@ -10,9 +11,10 @@ import {
 import { getRequiredPreviewUrl } from './previewQuery.js';
 import { sendPreviewImage } from './previewResponse.js';
 
-type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'openGraph' | 'liquipediaMatch' | 'tiktokComments'>;
+type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokComments'>;
 
 const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
+  '/bff/article': 'article',
   '/bff/open-graph': 'openGraph',
   '/bff/liquipedia-match': 'liquipediaMatch',
   '/bff/tiktok-comments': 'tiktokComments',
@@ -32,7 +34,11 @@ export async function routeBffRequest(
       response,
       (input, context) => useCases[useCaseName](input, context),
       requestContext,
-      useCaseName === 'tiktokComments' ? isTikTokCommentsPreview : undefined,
+      useCaseName === 'tiktokComments'
+        ? isTikTokCommentsPreview
+        : useCaseName === 'article'
+          ? isArticlePreview
+          : undefined,
     );
     return true;
   }
@@ -54,6 +60,6 @@ async function handleJsonPreview(
   validate?: (value: unknown) => boolean,
 ): Promise<void> {
   const result = await load(getRequiredPreviewUrl(requestUrl), context);
-  if (validate && !validate(result)) throw new Error('Invalid TikTok comments contract');
+  if (validate && !validate(result)) throw new Error('Invalid preview contract');
   sendJson(response, 200, result);
 }

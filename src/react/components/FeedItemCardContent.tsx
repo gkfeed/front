@@ -37,7 +37,13 @@ export function FeedItemCardSupplementary({ model }: { model: FeedItemCardModel 
   return <Renderer model={model} localizedPreview={null} displayHostname="" />;
 }
 
-export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
+export function FeedItemCardCopy({
+  model,
+  onOpenArticle,
+}: {
+  model: FeedItemCardModel;
+  onOpenArticle?: () => void;
+}) {
   const { t } = useTranslation();
   const { Copy: Renderer } = getFeedItemCardProviderRenderer(model.provider);
   if (model.isPreviewPending) return null;
@@ -47,6 +53,7 @@ export function FeedItemCardCopy({ model }: { model: FeedItemCardModel }) {
       model={model}
       localizedPreview={null}
       displayHostname={model.hostname ?? t('feed.item')}
+      onOpenArticle={onOpenArticle}
     />
   );
 }

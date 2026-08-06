@@ -6,11 +6,17 @@ import {
   FeedItemCardSupplementary,
 } from './FeedItemCardContent';
 import { useFeedItemCardModel } from './useFeedItemCardModel';
+import { ArticleReaderOverlay } from './ArticleReader';
+import { useArticleReader } from '../hooks/useArticleReader';
 
 export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCardModel>[0] }) {
   const { t } = useTranslation();
   const model = useFeedItemCardModel(item);
+  const articleReader = useArticleReader(item.link);
   const { cardRef, isPreviewPending, descriptor, shouldBlurNsfw, shouldHideNsfw } = model;
+  const canReadArticle = model.openGraphPreview?.type?.toLowerCase() === 'article'
+    || model.hostname === 'trashbox.ru'
+    || model.hostname?.endsWith('.trashbox.ru') === true;
 
   if (shouldHideNsfw) return null;
 
@@ -24,6 +30,14 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
       inert={shouldBlurNsfw}
+      onClickCapture={(event) => {
+        if (!canReadArticle || articleReader.isOpen) return;
+        const target = event.target instanceof Element ? event.target : null;
+        const previewLink = target?.closest('.reader-card__preview[href]');
+        if (!previewLink) return;
+        event.preventDefault();
+        articleReader.open();
+      }}
     >
       {shouldBlurNsfw ? (
         <div className="reader-card__nsfw-shield" aria-hidden="true">
@@ -34,7 +48,8 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
       <FeedItemCardIdentity model={model} />
       <FeedItemCardPreview model={model} />
       <FeedItemCardSupplementary model={model} />
-      <FeedItemCardCopy model={model} />
+      <FeedItemCardCopy model={model} onOpenArticle={articleReader.open} />
+      <ArticleReaderOverlay reader={articleReader} originalUrl={item.link} />
     </article>
   );
 }

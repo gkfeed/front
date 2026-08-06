@@ -119,6 +119,14 @@ const en = {
     remaining_other: '{{count}} remaining',
     openOriginal: 'Open original',
   },
+  article: {
+    title: 'Article reader',
+    close: 'Back',
+    original: 'Original',
+    loading: 'Parsing article…',
+    error: 'This article could not be parsed.',
+    retry: 'Try again',
+  },
   live: {
     checking: 'Checking Twitch channels…',
     checkErrorTitle: 'Couldn’t check Twitch',

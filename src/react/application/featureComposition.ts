@@ -19,6 +19,7 @@ import {
   mergeHltvLiveData,
 } from '../services/remotePreview';
 import { getOpenGraphPreview } from '../services/openGraph';
+import { getArticle } from '../services/article';
 import { fetchTikTokComments } from '../services/tiktokComments';
 import { getLiveTwitchItems } from '../services/twitch';
 
@@ -41,6 +42,7 @@ export function createFeatureComposition() {
     }),
     live: createLiveUseCases({ getLiveTwitchItems }),
     preview: createPreviewUseCases({
+      getArticle,
       EMPTY_REMOTE_PREVIEW,
       fetchTikTokComments,
       getOpenGraphPreview,
