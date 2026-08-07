@@ -76,16 +76,23 @@ test.describe('TikTok player on iPad-sized readers', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/reader');
 
+    const navbar = page.locator('.nav');
     const fullscreenButton = page.getByRole('button', { name: 'Exit Reader fullscreen' });
+    await expect(navbar).toBeHidden();
     await expect(fullscreenButton).toBeVisible();
     await fullscreenButton.click();
-    await expect(page.getByRole('button', { name: 'Open Reader fullscreen' })).toBeVisible();
+    await expect(navbar).toBeVisible();
+    await expect(page.locator('#main').getByRole('button', {
+      name: 'Open Reader fullscreen',
+    })).toBeVisible();
     await expect(page.locator('html')).not.toHaveAttribute('data-reader-fullscreen', 'true');
 
     // A viewport change must not undo an explicit exit for the current TikTok.
     await page.setViewportSize({ width: 700, height: 844 });
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByRole('button', { name: 'Open Reader fullscreen' })).toBeVisible();
+    await expect(page.locator('#main').getByRole('button', {
+      name: 'Open Reader fullscreen',
+    })).toBeVisible();
     await expect(page.locator('html')).not.toHaveAttribute('data-reader-fullscreen', 'true');
   });
 
