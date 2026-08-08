@@ -89,6 +89,31 @@
   display: block;
 }
 
+.reader__page-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.reader__page-controls span {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.reader__page-button {
+  grid-row: 2;
+  min-height: 42px;
+}
+
+.reader__page-button:last-child {
+  justify-self: end;
+}
+
 .reader-card,
 .reader__loading,
 .reader__state {

@@ -33,7 +33,13 @@ export async function handleHttpRequest(
   try {
     const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
 
-    if (request.method === 'GET' && await dependencies.handleBffRequest(requestUrl, response, context)) return;
+    if (request.method === 'GET' && await dependencies.handleBffRequest(
+      requestUrl,
+      response,
+      context,
+      undefined,
+      request.socket.remoteAddress ?? 'unknown',
+    )) return;
 
     if (requestUrl.pathname.startsWith('/api/')) {
       sendJson(response, 404, { error: { code: 'not_found', message: 'Route not found' } });

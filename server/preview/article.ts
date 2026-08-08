@@ -4,6 +4,7 @@ import { parseHTML } from 'linkedom';
 import type { ArticleBlock, ArticlePreview } from '../../shared/articleContracts.js';
 import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 import { PreviewError } from './errors.js';
+import { resolveHttpUrl } from './html.js';
 import { fetchHtml } from './pageFetcher.js';
 import { parsePublicHttpUrl } from './publicUrlPolicy.js';
 
@@ -69,6 +70,7 @@ export function extractBlocks(content: string, baseUrl: URL): ArticleBlock[] {
     if (tag === 'p' || tag === 'blockquote') {
       const text = cleanText(element.textContent ?? '');
       if (text) add({ type: tag === 'p' ? 'paragraph' : 'quote', text });
+      Array.from(element.querySelectorAll('img')).forEach(visit);
       return;
     }
     if (tag === 'ul' || tag === 'ol') {
@@ -93,12 +95,7 @@ export function extractBlocks(content: string, baseUrl: URL): ArticleBlock[] {
 
 function safeImageUrl(value: string | null, baseUrl: URL): string | null {
   if (!value || value.startsWith('data:')) return null;
-  try {
-    const url = new URL(value, baseUrl);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
-  } catch {
-    return null;
-  }
+  return resolveHttpUrl(value, baseUrl);
 }
 
 function nullableText(value: string | null | undefined): string | null {

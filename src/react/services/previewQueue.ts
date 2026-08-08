@@ -13,6 +13,7 @@ class PreviewQueue {
     const request = new PreviewRequest<T>(key, load, (settled, failed) => {
       this.scheduler.settled(settled);
       if (failed) this.cache.delete(key, settled);
+      else this.cache.settled();
     });
     this.cache.set(key, request);
 

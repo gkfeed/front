@@ -20,6 +20,7 @@ const PREVIEW_HTTP_MAPPINGS: Record<string, PreviewHttpMapping> = {
   unresolvable_host: { status: 422, code: 'unresolvable_host' },
   private_url: { status: 403, code: 'private_url' },
   preview_busy: { status: 429, code: 'preview_busy' },
+  preview_rate_limited: { status: 429, code: 'preview_rate_limited' },
 };
 
 export function toPreviewHttpError(error: PreviewError): HttpErrorResponse {

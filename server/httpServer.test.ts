@@ -25,6 +25,13 @@ describe('HTTP server composition root', () => {
     expect(response.writeHead).toHaveBeenCalledWith(200, expect.any(Object));
     expect(response.end).toHaveBeenCalledWith(JSON.stringify({ source: 'frontend' }));
     expect(handleBffRequest).toHaveBeenCalledOnce();
+    expect(handleBffRequest).toHaveBeenCalledWith(
+      expect.any(URL),
+      response,
+      expect.any(Object),
+      undefined,
+      '203.0.113.10',
+    );
     expect(serveFrontend).toHaveBeenCalledWith('/reader', false, response);
   });
 
@@ -90,6 +97,7 @@ function createRequest(url: string, method: string): IncomingMessage {
     complete: true,
     headers: { host: 'localhost' },
     method,
+    socket: { remoteAddress: '203.0.113.10' },
     url,
   });
   return request;

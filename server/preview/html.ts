@@ -1,3 +1,7 @@
+import { isIP } from 'node:net';
+
+import { isPrivateAddress } from '../publicAddressPolicy.js';
+
 const NAMED_ENTITIES: Record<string, string> = { amp: '&', apos: "'", gt: '>', lt: '<', quot: '"' };
 const MAX_CODE_POINT = 0x10ffff;
 
@@ -35,8 +39,25 @@ export function resolveHttpUrl(value: string | null | undefined, base: URL): str
   if (!value) return null;
   try {
     const url = new URL(value, base);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+    return isPublicSubresourceUrl(url) ? url.href : null;
   } catch {
     return null;
   }
+}
+
+function isPublicSubresourceUrl(url: URL): boolean {
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return false;
+
+  const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  if (isIP(hostname)) return !isPrivateAddress(hostname);
+
+  // These names can resolve inside the reader's network without going through
+  // public DNS. Single-label hosts are intranet names in browsers and OS
+  // resolvers, so they are not safe remote subresources either.
+  return hostname.includes('.')
+    && hostname !== 'localhost'
+    && !hostname.endsWith('.localhost')
+    && !hostname.endsWith('.local')
+    && hostname !== 'home.arpa'
+    && !hostname.endsWith('.home.arpa');
 }

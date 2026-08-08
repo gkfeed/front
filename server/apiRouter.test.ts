@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { handleBffRequest } from './http/apiRouter.js';
 import type { PreviewUseCases } from './application/previewUseCases.js';
 import { HttpRequestError } from './http/httpErrors.js';
+import { createBffResultCache } from './http/bffResultCache.js';
+import type { BffRequestGate } from './http/bffRequestGate.js';
 
 function createResponse() {
   return {
@@ -142,7 +144,7 @@ describe('BFF HTTP router', () => {
     vi.mocked(useCases.openGraph).mockRejectedValue(failure);
 
     await expect(handleBffRequest(
-      new URL('http://localhost/bff/open-graph?url=https%3A%2F%2Fexample.com'),
+      new URL('http://localhost/bff/open-graph?url=https%3A%2F%2Ffailing.example'),
       response,
       undefined,
       useCases,
@@ -150,5 +152,19 @@ describe('BFF HTTP router', () => {
 
     expect(response.writeHead).not.toHaveBeenCalled();
     expect(response.end).not.toHaveBeenCalled();
+  });
+
+  it('applies client admission even when the preview result is cached', async () => {
+    const useCases = createUseCases();
+    const cache = createBffResultCache();
+    const run = vi.fn(<T>(_clientId: string, _context: unknown, load: () => Promise<T>) => load());
+    const gate: BffRequestGate = { run } as BffRequestGate;
+    const url = new URL('http://localhost/bff/open-graph?url=https%3A%2F%2Fcached.example');
+
+    await handleBffRequest(url, createResponse(), undefined, useCases, '203.0.113.1', gate, cache);
+    await handleBffRequest(url, createResponse(), undefined, useCases, '203.0.113.1', gate, cache);
+
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(useCases.openGraph).toHaveBeenCalledOnce();
   });
 });

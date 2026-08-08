@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createFeatureComposition } from '../application/featureComposition';
@@ -42,6 +42,47 @@ describe('ArticleReaderLink', () => {
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('traps focus inside the modal and restores it to the activating link', async () => {
+    const getArticle = vi.fn().mockResolvedValue({
+      url: 'https://trashbox.ru/link/cloudflare-os',
+      title: 'Cloudflare OS',
+      byline: null,
+      excerpt: null,
+      blocks: [],
+    });
+    const composition = createFeatureComposition();
+    const useCases = {
+      ...composition,
+      preview: { ...composition.preview, getArticle },
+    };
+
+    render(
+      <FeatureUseCasesContext.Provider value={useCases}>
+        <ArticleReaderHarness />
+      </FeatureUseCasesContext.Provider>,
+    );
+
+    const activatingLink = screen.getByRole('link', { name: /Open original/i });
+    activatingLink.focus();
+    fireEvent.click(activatingLink);
+
+    const dialog = await screen.findByRole('dialog');
+    const close = dialog.querySelector<HTMLButtonElement>('.article-reader__close')!;
+    const original = within(dialog).getByRole('link', { name: /^Original/i });
+    expect(document.activeElement).toBe(close);
+
+    original.focus();
+    fireEvent.keyDown(original, { key: 'Tab' });
+    expect(document.activeElement).toBe(close);
+
+    fireEvent.keyDown(close, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(original);
+
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(document.activeElement).toBe(activatingLink);
   });
 });
 

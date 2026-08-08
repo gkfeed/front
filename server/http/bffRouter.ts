@@ -10,6 +10,8 @@ import {
 } from '../application/requestExecutionContext.js';
 import { getRequiredPreviewUrl } from './previewQuery.js';
 import { sendPreviewImage } from './previewResponse.js';
+import { bffRequestGate, type BffRequestGate } from './bffRequestGate.js';
+import { bffResultCache, type BffResultCache } from './bffResultCache.js';
 
 type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokComments'>;
 
@@ -25,6 +27,9 @@ export async function routeBffRequest(
   response: ServerResponse,
   context: RequestExecutionContext | undefined,
   useCases: PreviewUseCases,
+  clientId = 'detached',
+  requestGate: BffRequestGate = bffRequestGate,
+  resultCache: BffResultCache = bffResultCache,
 ): Promise<boolean> {
   const requestContext = context ?? createDetachedRequestExecutionContext();
   const useCaseName = JSON_PREVIEW_ROUTES[requestUrl.pathname];
@@ -34,6 +39,9 @@ export async function routeBffRequest(
       response,
       (input, context) => useCases[useCaseName](input, context),
       requestContext,
+      clientId,
+      requestGate,
+      resultCache,
       useCaseName === 'tiktokComments'
         ? isTikTokCommentsPreview
         : useCaseName === 'article'
@@ -44,7 +52,12 @@ export async function routeBffRequest(
   }
 
   if (requestUrl.pathname === '/bff/reddit-preview-image') {
-    const image = await useCases.redditPreviewImage(getRequiredPreviewUrl(requestUrl), requestContext);
+    const input = getRequiredPreviewUrl(requestUrl);
+    const image = await requestGate.run(clientId, requestContext, () => (
+      resultCache.load(`${requestUrl.pathname}:${input}`, () => (
+        useCases.redditPreviewImage(input, requestContext)
+      ))
+    ));
     sendPreviewImage(response, image);
     return true;
   }
@@ -57,9 +70,15 @@ async function handleJsonPreview(
   response: ServerResponse,
   load: (input: string, context: RequestExecutionContext) => Promise<unknown>,
   context: RequestExecutionContext,
+  clientId: string,
+  requestGate: BffRequestGate,
+  resultCache: BffResultCache,
   validate?: (value: unknown) => boolean,
 ): Promise<void> {
-  const result = await load(getRequiredPreviewUrl(requestUrl), context);
+  const input = getRequiredPreviewUrl(requestUrl);
+  const result = await requestGate.run(clientId, context, () => (
+    resultCache.load(`${requestUrl.pathname}:${input}`, () => load(input, context))
+  ));
   if (validate && !validate(result)) throw new Error('Invalid preview contract');
   sendJson(response, 200, result);
 }

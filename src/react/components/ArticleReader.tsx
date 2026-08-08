@@ -7,6 +7,15 @@ import type { useArticleReader } from '../hooks/useArticleReader';
 
 type ArticleReaderState = ReturnType<typeof useArticleReader>;
 
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
 export function ArticleReaderLink({
   url,
   enabled,
@@ -74,30 +83,65 @@ function ArticleReaderDialog({
 }) {
   const { t } = useTranslation();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
+    const returnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     document.body.style.overflow = 'hidden';
     closeRef.current?.focus();
     return () => {
       document.body.style.overflow = previousOverflow;
+      if (returnFocus?.isConnected) returnFocus.focus();
     };
-  }, [onClose]);
+  }, []);
+
+  const trapFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Tab') return;
+    const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [])]
+      .filter((element) => element.tabIndex >= 0);
+    if (focusable.length === 0) {
+      event.preventDefault();
+      return;
+    }
+
+    const first = focusable[0]!;
+    const last = focusable.at(-1)!;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    } else if (!dialogRef.current?.contains(document.activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
+  };
 
   return (
     <div
+      ref={dialogRef}
       className="article-reader"
       role="dialog"
       aria-modal="true"
       aria-label={t('article.title')}
       onKeyDown={(event) => {
         event.stopPropagation();
-        if (event.key === 'Escape') onClose();
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          onClose();
+          return;
+        }
+        trapFocus(event);
       }}
     >
       <button
         className="article-reader__backdrop"
         type="button"
+        tabIndex={-1}
         aria-label={t('article.close')}
         onClick={onClose}
       />

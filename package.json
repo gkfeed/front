@@ -30,7 +30,11 @@
     "react-dom": "^19.2.7",
     "react-i18next": "^17.0.11",
     "react-router": "^8.3.0",
+    "parseuri": "file:server/vendor/parseuri",
     "socket.io-client": "^2.4.0"
+  },
+  "overrides": {
+    "parseuri": "$parseuri"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

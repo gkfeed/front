@@ -1,0 +1,8 @@
+{
+  "name": "parseuri",
+  "version": "2.0.0-gkfeed.1",
+  "description": "CommonJS compatibility backport of parseuri 2.x for Socket.IO 2.x",
+  "main": "index.cjs",
+  "license": "MIT",
+  "private": true
+}
