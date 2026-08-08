@@ -14,6 +14,7 @@ import type { RequestExecutionContext } from './application/requestExecutionCont
 import { discardResponseBody } from './publicHttp.js';
 
 const COMMENT_LIMIT = 10;
+const COMMENT_REQUEST_ATTEMPTS = 2;
 const TIKTOK_HEADERS = {
   accept: 'application/json',
   'user-agent': 'GKFeed/1.0',
@@ -79,7 +80,7 @@ export async function fetchTikTokComments(
 
   let body: TikTokJsonResult | null;
   try {
-    body = await fetchTikTokJson(upstream, 'comments', context);
+    body = await fetchTikTokCommentsJson(upstream, context);
   } catch (error) {
     if (error instanceof PreviewError) throw error;
     const message = error instanceof PublicHttpError && error.reason === 'timeout'
@@ -93,6 +94,29 @@ export async function fetchTikTokComments(
     comments: parseTikTokComments(body.value),
     ...await detailsPromise,
   };
+}
+
+async function fetchTikTokCommentsJson(
+  upstream: URL,
+  context?: RequestExecutionContext,
+): Promise<TikTokJsonResult | null> {
+  for (let attempt = 0; attempt < COMMENT_REQUEST_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetchTikTokJson(upstream, 'comments', context);
+      if (response || attempt === COMMENT_REQUEST_ATTEMPTS - 1) return response;
+    } catch (error) {
+      if (attempt === COMMENT_REQUEST_ATTEMPTS - 1 || !isRetryableCommentsError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  return null;
+}
+
+function isRetryableCommentsError(error: unknown): boolean {
+  return error instanceof PublicHttpError
+    && (error.reason === 'network' || error.reason === 'timeout');
 }
 
 async function fetchTikTokDetails(videoUrl: URL, context?: RequestExecutionContext): Promise<TikTokDetails> {

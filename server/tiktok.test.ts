@@ -23,6 +23,26 @@ beforeEach(() => {
 });
 
 describe('fetchTikTokComments', () => {
+  it('retries a temporary comments provider failure once', async () => {
+    let commentsRequests = 0;
+    requestPublicHttp.mockImplementation(async (url: URL) => {
+      if (url.pathname === '/api/comment/list') {
+        commentsRequests += 1;
+        return commentsRequests === 1
+          ? jsonResponse('{}', 503)
+          : jsonResponse(JSON.stringify({ code: 0, data: { comments: [] } }));
+      }
+      return jsonResponse(JSON.stringify({
+        code: 0,
+        data: { title: 'Video caption', author: { nickname: 'Creator' } },
+      }));
+    });
+
+    await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
+      .resolves.toMatchObject({ comments: [], description: 'Video caption' });
+    expect(commentsRequests).toBe(2);
+  });
+
   it('maps a non-success comments response to an upstream error', async () => {
     requestPublicHttp.mockImplementation(async () => jsonResponse('{}', 503));
 
@@ -35,6 +55,18 @@ describe('fetchTikTokComments', () => {
 
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
       .rejects.toMatchObject({ kind: 'invalid_comments' });
+  });
+
+  it('does not retry a request aborted by the client', async () => {
+    let commentsRequests = 0;
+    requestPublicHttp.mockImplementation(async (url: URL) => {
+      if (url.pathname === '/api/comment/list') commentsRequests += 1;
+      throw new PublicHttpError('aborted');
+    });
+
+    await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
+      .rejects.toMatchObject({ kind: 'comments_fetch_failed' });
+    expect(commentsRequests).toBe(1);
   });
 
   it('maps a provider timeout to a fetch error', async () => {
