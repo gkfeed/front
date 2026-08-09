@@ -5,7 +5,9 @@ import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import {
   EMPTY_FEED,
   getFeedCreatorFields,
+  inferFeedSourceFromLazyUrl,
   isFeedFieldValid,
+  normalizeLazyFeedUrl,
   trimFeed,
   type FeedCreatorMode,
 } from '../domain/feedCreator';
@@ -17,7 +19,7 @@ export type { FeedCreatorMode } from '../domain/feedCreator';
 
 export function useFeedCreator() {
   const { credentials } = useAuth();
-  const { feeds } = useFeatureUseCases();
+  const { feeds, preview } = useFeatureUseCases();
   const [feed, setFeed] = useState<FeedInput>(EMPTY_FEED);
   const [mode, setMode] = useState<FeedCreatorMode>('lazy');
   const [submitted, setSubmitted] = useState(false);
@@ -48,7 +50,15 @@ export function useFeedCreator() {
       if (mode === 'extended') {
         await feeds.createFeed(trimFeed(feed), credentials);
       } else {
-        await feeds.createFeedFromUrl({ url: feed.url.trim() }, credentials);
+        const inferredSource = inferFeedSourceFromLazyUrl(feed.url);
+        if (inferredSource) {
+          const metadata = await preview.getOpenGraphPreview(inferredSource.url);
+          const title = metadata.title?.trim();
+          if (!title) throw new Error('YouTube channel title is unavailable');
+          await feeds.createFeed({ ...inferredSource, title }, credentials);
+        } else {
+          await feeds.createFeedFromUrl({ url: normalizeLazyFeedUrl(feed.url) }, credentials);
+        }
       }
       setFeed(EMPTY_FEED);
       setSubmitted(false);

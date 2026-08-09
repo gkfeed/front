@@ -4,14 +4,17 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createFeed, createFeedFromUrl } from '../services/feeds';
+import { getOpenGraphPreview } from '../services/openGraph';
 import { AuthProvider } from '../state/AuthProvider';
 import { getControlValue } from '../testUtils';
 import { FeedCreator } from './FeedCreator';
 
 vi.mock('../services/feeds');
+vi.mock('../services/openGraph');
 
 const create = vi.mocked(createFeed);
 const createLazy = vi.mocked(createFeedFromUrl);
+const getPreview = vi.mocked(getOpenGraphPreview);
 
 afterEach(() => {
   cleanup();
@@ -50,6 +53,39 @@ describe('FeedCreator', () => {
     expect(createLazy).toHaveBeenLastCalledWith({ url: 'https://www.youtube.com/@gkfeed' }, null);
     expect(create).not.toHaveBeenCalled();
     expect(getControlValue(screen.getByLabelText('URL'))).toBe('');
+  });
+
+  it('canonicalizes a shared YouTube channel URL for lazy creation', async () => {
+    render(<AuthProvider><FeedCreator /></AuthProvider>);
+    createLazy.mockResolvedValueOnce();
+    getPreview.mockResolvedValueOnce({
+      url: 'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ',
+      title: 'Fresh Technologies',
+      description: null,
+      image: null,
+      video: null,
+      siteName: 'YouTube',
+      type: 'profile',
+      providerData: null,
+    });
+
+    fireEvent.change(screen.getByLabelText('URL'), {
+      target: {
+        value: 'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ?si=9ox1NKEtHJ6v3YRg',
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add feed' }));
+
+    expect(await screen.findByText('Feed source saved.')).toBeTruthy();
+    expect(create).toHaveBeenCalledWith({
+      title: 'Fresh Technologies',
+      type: 'yt',
+      url: 'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ',
+    }, null);
+    expect(getPreview).toHaveBeenCalledWith(
+      'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ',
+    );
+    expect(createLazy).not.toHaveBeenCalled();
   });
 
   it('saves title and type from the extended tab', async () => {

@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   EMPTY_FEED,
   getFeedCreatorFields,
+  inferFeedSourceFromLazyUrl,
   isFeedFieldValid,
+  normalizeLazyFeedUrl,
   trimFeed,
 } from './feedCreator';
 
@@ -27,5 +29,25 @@ describe('feed creator domain', () => {
       type: 'yt',
       url: 'https://example.com',
     });
+  });
+
+  it('removes share parameters from YouTube channel URLs before lazy creation', () => {
+    expect(normalizeLazyFeedUrl(
+      ' https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ?si=9ox1NKEtHJ6v3YRg ',
+    )).toBe('https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ');
+    expect(inferFeedSourceFromLazyUrl(
+      'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ?si=9ox1NKEtHJ6v3YRg',
+    )).toEqual({
+      type: 'yt',
+      url: 'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ',
+    });
+  });
+
+  it('leaves non-channel lazy feed URLs unchanged', () => {
+    expect(normalizeLazyFeedUrl(' https://example.com/feed.xml?token=value '))
+      .toBe('https://example.com/feed.xml?token=value');
+    expect(normalizeLazyFeedUrl('https://youtube.com/watch?v=video&si=share'))
+      .toBe('https://youtube.com/watch?v=video&si=share');
+    expect(inferFeedSourceFromLazyUrl('https://youtube.com/watch?v=video&si=share')).toBeNull();
   });
 });

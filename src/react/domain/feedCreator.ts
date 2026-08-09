@@ -1,4 +1,5 @@
 import type { FeedInput } from '../types';
+import { normalizeHostname } from '../../../shared/urlRules';
 
 export type FeedCreatorMode = 'lazy' | 'extended';
 
@@ -51,6 +52,38 @@ export function trimFeed(feed: FeedInput): FeedInput {
     type: feed.type.trim(),
     url: feed.url.trim(),
   };
+}
+
+export function normalizeLazyFeedUrl(value: string): string {
+  const trimmed = value.trim();
+
+  try {
+    const url = new URL(trimmed);
+    if (normalizeHostname(url.hostname) === 'youtube.com'
+      && /^\/channel\/[^/]+\/?$/.test(url.pathname)) {
+      url.search = '';
+      url.hash = '';
+      return url.href.replace(/\/$/, '');
+    }
+  } catch {
+    // Validation prevents malformed URLs from reaching lazy creation.
+  }
+
+  return trimmed;
+}
+
+export function inferFeedSourceFromLazyUrl(value: string): Pick<FeedInput, 'type' | 'url'> | null {
+  const url = normalizeLazyFeedUrl(value);
+
+  try {
+    const parsedUrl = new URL(url);
+    if (normalizeHostname(parsedUrl.hostname) !== 'youtube.com') return null;
+
+    const channelId = parsedUrl.pathname.match(/^\/channel\/([^/]+)\/?$/)?.[1];
+    return channelId ? { type: 'yt', url } : null;
+  } catch {
+    return null;
+  }
 }
 
 function isValidFeedUrl(value: string): boolean {
