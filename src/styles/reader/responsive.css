@@ -387,6 +387,12 @@
     color: var(--color-on-danger);
   }
 
+  .reader__mobile-decisions .reader__mobile-copy-link {
+    border-color: var(--color-control-border);
+    background: var(--color-control-well);
+    color: var(--color-ink-inverse);
+  }
+
   .reader__mobile-decisions button:disabled {
     border-color: transparent;
     background: var(--color-disabled);
@@ -462,9 +468,9 @@
 
 /* Fullscreen has enough room to show media at a useful reading size. */
 @media (min-width: 641px) {
-  main:fullscreen .reader-card--tiktok .tiktok-comments__toggle,
-  main:-webkit-full-screen .reader-card--tiktok .tiktok-comments__toggle,
-  html[data-reader-fullscreen="true"] main .reader-card--tiktok .tiktok-comments__toggle {
+  main:fullscreen .reader-card--tiktok .tiktok-comments__actions,
+  main:-webkit-full-screen .reader-card--tiktok .tiktok-comments__actions,
+  html[data-reader-fullscreen="true"] main .reader-card--tiktok .tiktok-comments__actions {
     transform: translateX(-56px);
   }
 

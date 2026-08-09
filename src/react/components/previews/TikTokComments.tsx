@@ -6,6 +6,7 @@ import { useTikTokComments } from '../../hooks/useTikTokComments';
 import { useTikTokCommentsPreference } from '../../hooks/useTikTokCommentsPreference';
 import { usePreviewVisibility } from '../../hooks/usePreviewVisibility';
 import { UserIcon } from '../Icons';
+import { CopyLinkButton } from '../CopyLinkButton';
 import { getFeedItemDescription } from '../../domain/feedItemDescription';
 
 export function TikTokComments({ item }: { item: FeedItem }) {
@@ -79,15 +80,21 @@ export function TikTokComments({ item }: { item: FeedItem }) {
         <h2 id={`tiktok-comments-${item.id}`} className="tiktok-comments__title">
           {t('comments.title')}
         </h2>
-        <button
-          type="button"
-          className="tiktok-comments__toggle"
-          aria-expanded={isExpanded}
-          aria-controls={commentsId}
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? t('comments.hide') : t('comments.show')}
-        </button>
+        <div className="tiktok-comments__actions">
+          <CopyLinkButton
+            url={item.link}
+            className="tiktok-comments__copy-link"
+          />
+          <button
+            type="button"
+            className="tiktok-comments__toggle"
+            aria-expanded={isExpanded}
+            aria-controls={commentsId}
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? t('comments.hide') : t('comments.show')}
+          </button>
+        </div>
       </div>
       {isExpanded && isLoading ? (
         <div id={commentsId} className="tiktok-comments__empty" role="status">

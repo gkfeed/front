@@ -185,6 +185,8 @@ const en = {
     title: 'Comments',
     hide: 'Hide comments',
     show: 'Show comments',
+    copyLink: 'Copy link',
+    linkCopied: 'Copied',
     loading: 'Loading comments…',
     none: 'No comments are available for this video.',
     viewOnTikTok: 'View comments on TikTok',

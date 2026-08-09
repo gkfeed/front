@@ -38,6 +38,21 @@ afterEach(() => {
 });
 
 describe('TikTokComments', () => {
+  it('copies the TikTok link and confirms success', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', {
+      ...window.navigator,
+      clipboard: { writeText },
+      language: window.navigator.language,
+    });
+    renderComments();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(item.link));
+    expect(screen.getByRole('button', { name: 'Copied' })).toBeTruthy();
+  });
+
   it('loads comments only after the expanded card becomes visible', async () => {
     window.sessionStorage.setItem('gkfeed:tiktok-comments-expanded', 'true');
     const callbacks: IntersectionObserverCallback[] = [];

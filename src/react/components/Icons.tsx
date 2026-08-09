@@ -24,6 +24,20 @@ export function InstagramIcon() {
   );
 }
 
+export function LinkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true" width="22" height="22">
+      <path
+        d="M10.6 13.4a2 2 0 0 0 2.8 0l3.5-3.5a2 2 0 0 0-2.8-2.8l-1.6 1.6M13.4 10.6a2 2 0 0 0-2.8 0l-3.5 3.5a2 2 0 0 0 2.8 2.8l1.6-1.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function BrandMark() {
   return (
     <svg

@@ -112,7 +112,14 @@
   text-transform: uppercase;
 }
 
-.tiktok-comments__toggle {
+.tiktok-comments__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tiktok-comments__toggle,
+.tiktok-comments__copy-link {
   min-height: 34px;
   padding: 6px 11px;
   border: 1px solid var(--color-control-border);
@@ -126,12 +133,14 @@
   transition: background-color var(--ease), border-color var(--ease);
 }
 
-.tiktok-comments__toggle:hover {
+.tiktok-comments__toggle:hover,
+.tiktok-comments__copy-link:hover {
   border-color: color-mix(in oklch, var(--color-field) 42%, var(--color-page));
   background: color-mix(in oklch, var(--color-field) 18%, var(--color-control-well));
 }
 
-.tiktok-comments__toggle:focus-visible {
+.tiktok-comments__toggle:focus-visible,
+.tiktok-comments__copy-link:focus-visible {
   outline: 2px solid var(--color-focus-light);
   outline-offset: 2px;
 }

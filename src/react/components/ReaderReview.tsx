@@ -114,6 +114,7 @@ export function ReaderReview({
       {isShortVideo ? (
         <ReaderMobileRail
           {...reviewActions}
+          copyLink={isTikTok ? item.link : undefined}
         />
       ) : null}
       {useCompactActions ? <CompactReviewActions {...reviewActions} /> : null}

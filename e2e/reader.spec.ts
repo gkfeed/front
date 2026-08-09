@@ -61,7 +61,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(commentsButtonBox!.x + commentsButtonBox!.width).toBeLessThanOrEqual(1024);
   });
 
-  test('automatically opens TikTok in fullscreen on mobile without bottom shortcuts', async ({ page }) => {
+  test('automatically opens TikTok in fullscreen on mobile with a copy-link action', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/reader');
 
@@ -69,6 +69,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
     await expect(page.getByRole('button', { name: 'More review actions' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Scroll view' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Show comments' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Copy link' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open original' })).toHaveCount(0);
   });
 
