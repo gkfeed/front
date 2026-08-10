@@ -130,6 +130,18 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(expandedBox!.height).toBeGreaterThanOrEqual(collapsedBox!.height - 1);
   });
 
+  test('uses free horizontal space for comments in a tall desktop viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 1224, height: 1401 });
+    await page.goto('/reader');
+
+    await page.getByRole('button', { name: 'Show comments' }).click();
+    const commentsBox = await page.locator('.tiktok-comments').boundingBox();
+
+    expect(commentsBox).not.toBeNull();
+    expect(commentsBox!.width).toBeGreaterThanOrEqual(420);
+    expect(commentsBox!.width).toBeLessThanOrEqual(620);
+  });
+
   test('makes the TikTok player larger in fullscreen', async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 1024 });
     await page.goto('/reader');
@@ -150,6 +162,26 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(fullscreenBox!.width).toBeGreaterThan(regularBox!.width);
     expect(fullscreenBox!.height).toBeGreaterThan(regularBox!.height);
     expect(Math.abs(fullscreenBox!.width * 16 / 9 - fullscreenBox!.height)).toBeLessThan(1);
+  });
+
+  test('keeps the TikTok comments rail wide in fullscreen', async ({ page }) => {
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    await page.goto('/reader');
+
+    await page.getByRole('button', { name: 'Show comments' }).click();
+    const comments = page.locator('.tiktok-comments');
+    const regularBox = await comments.boundingBox();
+
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('.reader__fullscreen-toolbar').getByRole('button', {
+      name: 'Exit Reader fullscreen',
+    })).toBeVisible();
+    const fullscreenBox = await comments.boundingBox();
+
+    expect(regularBox).not.toBeNull();
+    expect(fullscreenBox).not.toBeNull();
+    expect(fullscreenBox!.width).toBeGreaterThanOrEqual(420);
+    expect(fullscreenBox!.width).toBeLessThanOrEqual(620);
   });
 
   test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {
