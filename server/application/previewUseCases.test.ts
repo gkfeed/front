@@ -14,6 +14,7 @@ describe('preview use cases', () => {
       fetchOpenGraph: vi.fn().mockResolvedValue({ type: 'open-graph' }),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({ type: 'liquipedia' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ type: 'tiktok' }),
+      fetchTikTokVideo: vi.fn().mockResolvedValue({ url: 'https://video.example.com/tiktok.mp4' }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({
         body: new Uint8Array([1, 2, 3]),
         contentType: 'image/jpeg',
@@ -41,6 +42,7 @@ describe('preview use cases', () => {
       fetchOpenGraph: vi.fn().mockResolvedValue({}),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({}),
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
+      fetchTikTokVideo: vi.fn().mockResolvedValue({ url: 'https://video.example.com/tiktok.mp4' }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
     };
     const limit = vi.fn(<T>(load: () => Promise<T>) => load());

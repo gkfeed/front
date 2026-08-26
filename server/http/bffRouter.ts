@@ -9,7 +9,7 @@ import {
   type RequestExecutionContext,
 } from '../application/requestExecutionContext.js';
 import { getRequiredPreviewUrl } from './previewQuery.js';
-import { sendPreviewImage } from './previewResponse.js';
+import { sendPreviewImage, sendPreviewRedirect } from './previewResponse.js';
 import { bffRequestGate, type BffRequestGate } from './bffRequestGate.js';
 import { bffResultCache, type BffResultCache } from './bffResultCache.js';
 
@@ -59,6 +59,17 @@ export async function routeBffRequest(
       ))
     ));
     sendPreviewImage(response, image);
+    return true;
+  }
+
+  if (requestUrl.pathname === '/bff/tiktok-video') {
+    const input = getRequiredPreviewUrl(requestUrl);
+    const redirect = await requestGate.run(clientId, requestContext, () => (
+      resultCache.load(`${requestUrl.pathname}:${input}`, () => (
+        useCases.tiktokVideo(input, requestContext)
+      ))
+    ));
+    sendPreviewRedirect(response, redirect);
     return true;
   }
 

@@ -1,5 +1,6 @@
 import {
   getRemoteFeedItemPreview,
+  getTikTokBrokerPreview,
   getTikTokEmbedPreview,
   isRedditUrl,
   isRezkaUrl,
@@ -10,6 +11,7 @@ import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
 import type { RemotePreview } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
+import type { TikTokPreviewMode } from './tiktokPreview';
 
 export type FeedItemCardPreviewResolution = {
   preview: FeedItemPreview | null;
@@ -40,10 +42,12 @@ export function resolveFeedItemCardPreviews({
   item,
   analysis,
   remotePreview,
+  tiktokPreviewMode = 'embed',
 }: {
   item: FeedItem;
   analysis: FeedItemAnalysis;
   remotePreview: RemotePreview;
+  tiktokPreviewMode?: TikTokPreviewMode;
 }): FeedItemCardPreviewResolution {
   const { localPreview } = analysis;
   const policy = getFeedItemProviderPolicy(analysis.provider);
@@ -56,8 +60,11 @@ export function resolveFeedItemCardPreviews({
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
   const tiktokEmbedPreview = usesTikTokEmbed ? getTikTokEmbedPreview(item) : null;
+  const tiktokBrokerPreview = usesTikTokEmbed && tiktokPreviewMode === 'broker'
+    ? getTikTokBrokerPreview(item)
+    : null;
   const preview = usesTikTokEmbed
-    ? tiktokEmbedPreview ?? localPreview
+    ? tiktokBrokerPreview ?? tiktokEmbedPreview ?? localPreview
     : isRezka
       ? remoteItemPreview ?? localPreview
       : isReddit && remoteItemPreview?.type === 'video'

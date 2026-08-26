@@ -28,6 +28,7 @@ function createUseCases(): PreviewUseCases {
       creatorName: null,
       creatorAvatarUrl: null,
     }),
+    tiktokVideo: vi.fn().mockResolvedValue({ url: 'https://video.example.com/tiktok.mp4' }),
     redditPreviewImage: vi.fn().mockResolvedValue({
       body: new Uint8Array([1, 2]),
       contentType: 'image/jpeg',
@@ -123,6 +124,30 @@ describe('BFF HTTP router', () => {
       'x-content-type-options': 'nosniff',
     });
     expect(response.end).toHaveBeenCalledWith(body);
+  });
+
+  it('redirects TikTok video requests to the broker-resolved media URL', async () => {
+    const response = createResponse();
+    const useCases = createUseCases();
+    const input = 'https://www.tiktok.com/@creator/video/123';
+
+    await expect(handleBffRequest(
+      new URL(`http://localhost/bff/tiktok-video?url=${encodeURIComponent(input)}`),
+      response,
+      undefined,
+      useCases,
+    )).resolves.toBe(true);
+
+    expect(useCases.tiktokVideo).toHaveBeenCalledWith(
+      input,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(response.writeHead).toHaveBeenCalledWith(302, {
+      'cache-control': 'private, max-age=60',
+      location: 'https://video.example.com/tiktok.mp4',
+      'x-content-type-options': 'nosniff',
+    });
+    expect(response.end).toHaveBeenCalledWith();
   });
 
   it('does not claim the old API-prefixed BFF routes', async () => {

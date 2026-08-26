@@ -31,6 +31,7 @@ export async function requestPublicHttp(
   input: URL,
   headers: Record<string, string>,
   context?: RequestExecutionContext,
+  options: { method?: 'GET' | 'POST'; body?: string } = {},
 ): Promise<PublicHttpResponse> {
   const requestContext = context ?? createDetachedRequestExecutionContext();
   const address = await resolvePublicAddress(input, requestContext);
@@ -47,7 +48,7 @@ export async function requestPublicHttp(
       hostname: input.hostname,
       port: input.port || undefined,
       path: `${input.pathname}${input.search}`,
-      method: 'GET',
+      method: options.method ?? 'GET',
       headers,
       // Pin the connection to the address that passed validation. This prevents
       // a second DNS lookup from changing the destination between check and use.
@@ -85,7 +86,7 @@ export async function requestPublicHttp(
       if (settled) return;
       reject(error instanceof PublicHttpError ? error : new PublicHttpError('network'));
     });
-    request.end();
+    request.end(options.body);
 
     function clearTotalTimeout() {
       clearTimeout(totalTimeout);

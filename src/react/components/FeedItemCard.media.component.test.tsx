@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
+import { TikTokPreviewPreferencesContext } from '../state/tiktokPreviewPreferencesContext';
 
 describe('FeedItemCard media providers', () => {
   it('renders direct Open Graph video with its image as a poster', async () => {
@@ -159,6 +160,23 @@ describe('FeedItemCard media providers', () => {
     expect(player.getAttribute('src')).toContain('/player/v1/456?');
     expect(player.getAttribute('src')).toContain('autoplay=1');
     expect(player.getAttribute('src')).toContain('muted=0');
+  });
+
+  it('uses the broker video endpoint when that TikTok preview mode is selected', () => {
+    render(
+      <TikTokPreviewPreferencesContext value={{ mode: 'broker', setMode: () => undefined }}>
+        <FeedItemCard item={{
+          ...item,
+          link: 'https://www.tiktok.com/@creator/video/456',
+        }} />
+      </TikTokPreviewPreferencesContext>,
+    );
+
+    const player = screen.getByLabelText('Video preview for Story');
+    expect(player.tagName).toBe('VIDEO');
+    expect(player.getAttribute('src')).toBe(
+      '/bff/tiktok-video?url=https%3A%2F%2Fwww.tiktok.com%2F%40creator%2Fvideo%2F456',
+    );
   });
 
   it('autoplays TikTok on iPhone and offers a user gesture to enable sound', () => {

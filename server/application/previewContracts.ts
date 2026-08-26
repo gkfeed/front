@@ -16,6 +16,10 @@ export interface PreviewImage {
   contentType: string;
 }
 
+export interface PreviewRedirect {
+  url: string;
+}
+
 export type PreviewUseCase<TResult> = (
   input: string,
   context: RequestExecutionContext,
@@ -26,5 +30,6 @@ export interface PreviewUseCases {
   openGraph: PreviewUseCase<OpenGraphPreview>;
   liquipediaMatch: PreviewUseCase<LiquipediaMatchPreview>;
   tiktokComments: PreviewUseCase<TikTokCommentsPreview>;
+  tiktokVideo: PreviewUseCase<PreviewRedirect>;
   redditPreviewImage: PreviewUseCase<PreviewImage>;
 }

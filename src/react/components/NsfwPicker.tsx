@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 
-export function NsfwPicker() {
+export function NsfwPicker({ itemRole = 'menuitemradio' }: {
+  itemRole?: 'menuitemradio' | 'radio';
+} = {}) {
   const { t } = useTranslation();
   const { nsfwMode, setNsfwMode } = useNsfwPreferences();
 
@@ -10,7 +12,11 @@ export function NsfwPicker() {
     <div className="theme-picker__section">
       <span className="theme-picker__section-title">{t('settings.content')}</span>
       <span className="theme-picker__content-description">{t('settings.nsfwDescription')}</span>
-      <div className="theme-picker__nsfw-options">
+      <div
+        className="theme-picker__nsfw-options"
+        role={itemRole === 'radio' ? 'radiogroup' : undefined}
+        aria-label={itemRole === 'radio' ? t('settings.content') : undefined}
+      >
         {([
           { mode: 'show', labelKey: 'settings.show', icon: '○' },
           { mode: 'blur', labelKey: 'settings.blur', icon: '◉' },
@@ -23,7 +29,7 @@ export function NsfwPicker() {
               data-selected={selected || undefined}
               key={option.mode}
               type="button"
-              role="menuitemradio"
+              role={itemRole}
               aria-checked={selected}
               onClick={() => setNsfwMode(option.mode)}
             >

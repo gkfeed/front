@@ -28,7 +28,7 @@ export function FeedItemMedia({
   onPreviewError,
 }: FeedItemMediaProps) {
   const { t } = useTranslation();
-  const requiresSoundGesture = isAppleMobileDevice();
+  const requiresSoundGesture = isAppleMobileDevice() || (isTikTok && preview.type === 'video');
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const soundGesture = useSoundGesture(requiresSoundGesture, preview.src);
