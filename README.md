@@ -17,6 +17,12 @@ The dev server listens on `0.0.0.0`, so it is also reachable from your local net
 Set `VITE_API_ROOT` at build time to override the API URL. The default is the
 same-origin `/api/v1` proxy in development and the hosted API URL in production.
 
+TikTok previews can use either the official embed or the BFF download broker.
+The BFF enqueues the same `ytdlp.download_video` task and format options used by
+gkbot, then redirects the player to the completed download. Set `BROKER_URL` or
+the more specific `TIKTOK_BROKER_URL` to override the broker root; the default is
+`http://ytdlp.gws.freemyip.com`.
+
 ## Build
 
 Run `npm run build` to create a production build in `dist/`.

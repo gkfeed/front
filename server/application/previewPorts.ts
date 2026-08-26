@@ -5,6 +5,7 @@ import type {
 import type { ArticlePreview } from '../../shared/articleContracts.js';
 import type {
   PreviewImage,
+  PreviewRedirect,
   TikTokCommentsPreview,
 } from './previewContracts.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
@@ -19,6 +20,7 @@ export interface PreviewPorts {
   fetchOpenGraph: PreviewPort<OpenGraphPreview>;
   fetchLiquipediaMatch: PreviewPort<LiquipediaMatchPreview>;
   fetchTikTokComments: PreviewPort<TikTokCommentsPreview>;
+  fetchTikTokVideo: PreviewPort<PreviewRedirect>;
   fetchRedditPreviewImage: PreviewPort<PreviewImage>;
 }
 

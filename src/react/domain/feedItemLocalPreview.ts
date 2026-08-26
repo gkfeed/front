@@ -21,7 +21,7 @@ import {
 import { getYoutubePreview } from './youtubePreview';
 
 export { isGenericHltvPreview } from './hltvPreview';
-export { getTikTokEmbedPreview } from './tiktokPreview';
+export { getTikTokBrokerPreview, getTikTokEmbedPreview } from './tiktokPreview';
 export { getTwitchPreview } from './twitchPreview';
 export { getVkVideoPreview } from './vkPreview';
 

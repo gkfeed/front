@@ -11,7 +11,7 @@ export interface HttpRequestContext extends RequestExecutionContext {
 export function createHttpRequestContext(
   request: IncomingMessage,
   response: ServerResponse,
-  timeoutMs = REQUEST_DEADLINE_MS,
+  timeoutMs: number = REQUEST_DEADLINE_MS,
 ): HttpRequestContext {
   const controller = new AbortController();
   const deadline = Date.now() + timeoutMs;

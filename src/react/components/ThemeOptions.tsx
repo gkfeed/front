@@ -36,17 +36,23 @@ export function ThemeOptions({
   theme,
   onThemeChange,
   onSelect,
+  itemRole = 'menuitemradio',
 }: {
   theme: ThemePreference;
   onThemeChange: (theme: ThemePreference) => void;
-  onSelect: () => void;
+  onSelect?: () => void;
+  itemRole?: 'menuitemradio' | 'radio';
 }) {
   const { t } = useTranslation();
 
   return (
     <div className="theme-picker__section">
       <span className="theme-picker__section-title">{t('settings.appearance')}</span>
-      <div className="theme-picker__options">
+      <div
+        className="theme-picker__options"
+        role={itemRole === 'radio' ? 'radiogroup' : undefined}
+        aria-label={itemRole === 'radio' ? t('settings.appearance') : undefined}
+      >
         {themePreferences.map((option) => {
           const selected = option.value === theme;
           return (
@@ -56,12 +62,12 @@ export function ThemeOptions({
               data-selected={selected || undefined}
               key={option.value}
               type="button"
-              role="menuitemradio"
+              role={itemRole}
               aria-checked={selected}
               aria-label={t('settings.theme', { theme: t(themeAriaLabelKeys[option.value]) })}
               onClick={() => {
                 onThemeChange(option.value);
-                onSelect();
+                onSelect?.();
               }}
             >
               <ThemeSwatch theme={option.value} />

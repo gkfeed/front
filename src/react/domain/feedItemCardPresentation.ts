@@ -13,6 +13,7 @@ import type {
   RemotePreview,
 } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
+import type { TikTokPreviewMode } from './tiktokPreview';
 
 export type {
   FeedItemCardPresentation,
@@ -32,14 +33,16 @@ export function buildFeedItemCardPresentation({
   nsfwMode,
   remotePreview,
   previewFailures,
+  tiktokPreviewMode = 'embed',
 }: {
   item: FeedItem;
   analysis: FeedItemAnalysis;
   nsfwMode: NsfwMode;
   remotePreview: RemotePreview;
   previewFailures: number;
+  tiktokPreviewMode?: TikTokPreviewMode;
 }): FeedItemCardPresentation {
-  const previews = resolveFeedItemCardPreviews({ item, analysis, remotePreview });
+  const previews = resolveFeedItemCardPreviews({ item, analysis, remotePreview, tiktokPreviewMode });
   const visiblePreview = resolveVisibleFeedItemCardPreview({
     preview: previews.preview,
     tiktokEmbedPreview: previews.tiktokEmbedPreview,

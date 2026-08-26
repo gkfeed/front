@@ -1,4 +1,5 @@
 import { fetchTikTokComments } from '../tiktok.js';
+import { fetchTikTokVideo } from '../tiktokVideo.js';
 import { fetchLiquipediaMatch } from '../preview/liquipedia.js';
 import { fetchOpenGraph } from '../preview/openGraph.js';
 import { fetchRedditPreviewImage } from '../preview/reddit.js';
@@ -10,5 +11,6 @@ export const previewProviderPorts: PreviewPorts = {
   fetchOpenGraph,
   fetchLiquipediaMatch,
   fetchTikTokComments,
+  fetchTikTokVideo,
   fetchRedditPreviewImage,
 };

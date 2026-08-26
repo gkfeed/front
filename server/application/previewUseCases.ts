@@ -6,6 +6,7 @@ export type {
 } from './previewPorts.js';
 export type {
   PreviewImage,
+  PreviewRedirect,
   PreviewUseCase,
   PreviewUseCases,
   TikTokComment,

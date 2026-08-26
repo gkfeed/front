@@ -5,6 +5,7 @@ import { toHttpErrorResponse } from './httpErrorMapping.js';
 import { sendJson } from './httpResponse.js';
 import { createHttpRequestContext } from './requestContext.js';
 import { serveFrontend } from './staticServer.js';
+import { TIKTOK_VIDEO_REQUEST_DEADLINE_MS } from '../timeouts.js';
 
 export type HttpServerDependencies = {
   handleBffRequest: typeof handleBffRequest;
@@ -29,7 +30,13 @@ export async function handleHttpRequest(
   response: ServerResponse,
   dependencies: HttpServerDependencies = defaultDependencies,
 ): Promise<void> {
-  const context = createHttpRequestContext(request, response);
+  const context = createHttpRequestContext(
+    request,
+    response,
+    request.url?.startsWith('/bff/tiktok-video')
+      ? TIKTOK_VIDEO_REQUEST_DEADLINE_MS
+      : undefined,
+  );
   try {
     const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
 

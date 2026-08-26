@@ -24,6 +24,7 @@ export function useFeedItemCardModel(item: FeedItem): FeedItemCardModel {
       liquipediaMatch: resource.liquipediaMatch,
     },
     previewFailures: resource.previewFailures,
+    tiktokPreviewMode: resource.tiktokPreviewMode,
   });
 
   return {
