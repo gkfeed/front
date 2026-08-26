@@ -7,7 +7,7 @@ import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 
 describe('FeedItemCard Twitch player', () => {
-  it('removes the channel prefix and highlights mentions and commands', () => {
+  it('shows the channel separately from the stream title and highlights mentions and commands', () => {
     render(<FeedItemCard item={{
       ...item,
       title: 'leva2k: Пик Ленина @rostislav_999 !tg !donate',
@@ -17,6 +17,7 @@ describe('FeedItemCard Twitch player', () => {
     expect(screen.getByRole('heading', {
       name: 'Пик Ленина @rostislav_999 !tg !donate',
     })).toBeTruthy();
+    expect(screen.getByText('leva2k').className).toContain('reader-card__channel');
     expect(screen.queryByText('leva2k:')).toBeNull();
     expect(screen.getByText('@rostislav_999').className)
       .toContain('reader-card__title-token--mention');

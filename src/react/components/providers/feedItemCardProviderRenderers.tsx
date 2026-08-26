@@ -181,6 +181,7 @@ const renderTwitchCopy = createVariantRenderer('twitch', ({ model }: VariantRend
   return (
     <div className="reader-card__copy reader-card__twitch-copy">
       <h2 className="reader-card__title"><TwitchTitle text={streamTitle} /></h2>
+      <p className="reader-card__channel">{model.variant.channel}</p>
     </div>
   );
 }, StandardCopy);
