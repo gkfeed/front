@@ -18,7 +18,8 @@ describe('fetchArticle', () => {
         <article>
           <h1>Представлена Cloudflare OS</h1>
           <div id="div_text_content_214110">
-            <p>Компания Cloudflare представила открытую платформу для создания приложений и автоматизированных рабочих процессов.
+            <p><script>postload(function(){ add_photo(214110, 0, 0, '/images/inline.webp'); });</script>
+              Компания Cloudflare представила открытую платформу для создания приложений и автоматизированных рабочих процессов.
               <img src="/images/inline.webp" alt="Встроенная иллюстрация">
             </p>
             <h2>Возможности платформы</h2>
@@ -57,6 +58,8 @@ describe('fetchArticle', () => {
       alt: 'Встроенная иллюстрация',
     });
     expect(JSON.stringify(article.blocks)).not.toContain('Самое обсуждаемое');
+    expect(JSON.stringify(article.blocks)).not.toContain('postload');
+    expect(JSON.stringify(article.blocks)).not.toContain('add_photo');
   });
 
   it('drops image URLs that could target the reader local network', async () => {

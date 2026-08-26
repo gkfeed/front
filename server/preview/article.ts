@@ -51,6 +51,10 @@ export async function fetchArticle(
 
 export function extractBlocks(content: string, baseUrl: URL): ArticleBlock[] {
   const { document } = parseHTML(`<html><body>${content}</body></html>`);
+  // Provider widgets are often bootstrapped by scripts embedded directly in a
+  // paragraph. Their source is part of `textContent`, even though browsers do
+  // not render it as article copy.
+  Array.from(document.querySelectorAll('script, style, template')).forEach((element) => element.remove());
   const blocks: ArticleBlock[] = [];
   let textLength = 0;
 

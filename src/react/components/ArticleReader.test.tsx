@@ -84,6 +84,45 @@ describe('ArticleReaderLink', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(document.activeElement).toBe(activatingLink);
   });
+
+  it('renders the article inside the native fullscreen element', async () => {
+    const getArticle = vi.fn().mockResolvedValue({
+      url: 'https://trashbox.ru/link/cloudflare-os',
+      title: 'Cloudflare OS',
+      byline: null,
+      excerpt: null,
+      blocks: [],
+    });
+    const composition = createFeatureComposition();
+    const useCases = {
+      ...composition,
+      preview: { ...composition.preview, getArticle },
+    };
+    const main = document.createElement('main');
+    document.body.append(main);
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      value: main,
+    });
+
+    try {
+      render(
+        <FeatureUseCasesContext.Provider value={useCases}>
+          <ArticleReaderHarness />
+        </FeatureUseCasesContext.Provider>,
+        { container: main },
+      );
+
+      fireEvent.click(screen.getByRole('link', { name: /Open original/i }));
+
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog.parentElement).toBe(main);
+      expect(await screen.findByRole('heading', { name: 'Cloudflare OS' })).toBeTruthy();
+    } finally {
+      Reflect.deleteProperty(document, 'fullscreenElement');
+      main.remove();
+    }
+  });
 });
 
 function ArticleReaderHarness() {

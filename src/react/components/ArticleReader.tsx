@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import type { ArticleBlock, ArticlePreview } from '../services/article';
+import { getFullscreenElement } from '../services/readerFullscreen';
 import type { useArticleReader } from '../hooks/useArticleReader';
 
 type ArticleReaderState = ReturnType<typeof useArticleReader>;
@@ -56,6 +57,9 @@ export function ArticleReaderOverlay({ reader, originalUrl }: {
   originalUrl: string;
 }) {
   if (!reader.isOpen) return null;
+  // Native fullscreen only paints the fullscreen element and its descendants.
+  // Portaling to body would mount the dialog successfully but keep it invisible.
+  const portalRoot = getFullscreenElement() ?? document.body;
   return createPortal(
     <ArticleReaderDialog
       article={reader.result}
@@ -64,7 +68,7 @@ export function ArticleReaderOverlay({ reader, originalUrl }: {
       onClose={reader.close}
       onRetry={reader.retry}
     />,
-    document.body,
+    portalRoot,
   );
 }
 
