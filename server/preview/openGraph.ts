@@ -30,6 +30,17 @@ export async function fetchOpenGraph(input: string, context?: RequestExecutionCo
     return fetchRezkaOpenGraph(requestedUrl, context);
   }
 
+  if (isInstagramPostUrl(requestedUrl)) {
+    const embedUrl = new URL(requestedUrl.href);
+    embedUrl.protocol = 'https:';
+    embedUrl.hostname = 'www.instagram.com';
+    embedUrl.search = '';
+    embedUrl.hash = '';
+    embedUrl.pathname = `${embedUrl.pathname.replace(/\/$/, '')}/embed/`;
+    const page = await fetchHtml(embedUrl, TWITTERBOT_USER_AGENT, {}, context);
+    return parseOpenGraph(page.html, requestedUrl);
+  }
+
   const url = requestedUrl;
   if (isHltvMatchUrl(url)) {
     const page = await fetchHltvHtml(url, context);
@@ -101,4 +112,9 @@ function isRezkaUrl(url: URL): boolean {
 function isMatreshkaVideoUrl(url: URL): boolean {
   return url.hostname.toLowerCase().replace(/^www\./, '') === 'matreshka.tv'
     && /^\/video\/[^/]+(?:\/|$)/i.test(url.pathname);
+}
+
+function isInstagramPostUrl(url: URL): boolean {
+  return normalizeHostname(url.hostname) === 'instagram.com'
+    && /^\/p\/[A-Za-z0-9_-]{1,64}\/?$/i.test(url.pathname);
 }

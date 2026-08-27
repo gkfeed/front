@@ -95,7 +95,34 @@ describe('FeedItemCard media providers', () => {
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
-  it('identifies an Instagram base64 description image as a photo post', () => {
+  it('renders an Instagram Reel with the official embed player', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.instagram.com/reel/AbC_123/?igsh=example',
+      title: 'inst: creator',
+    }} />);
+
+    const player = screen.getByTitle('Video preview for inst: creator');
+    expect(player.tagName).toBe('IFRAME');
+    expect(player.getAttribute('src'))
+      .toBe('https://www.instagram.com/reel/AbC_123/embed/');
+    expect(player.getAttribute('allow')).toContain('encrypted-media');
+    expect(player.closest('.reader-card__preview--instagram')).toBeTruthy();
+    expect(player.closest('.reader-card--instagram')).toBeTruthy();
+    expect(getPreview).not.toHaveBeenCalled();
+  });
+
+  it('keeps a photo from a universal Instagram post path as an image', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.instagram.com/p/example/',
+      title: 'Photo',
+      description: null,
+      image: 'https://example.com/photo.jpg',
+      video: null,
+      siteName: 'Instagram',
+      type: 'photo',
+      providerData: null,
+    });
     render(<FeedItemCard item={{
       ...item,
       link: 'https://www.instagram.com/p/example/',
@@ -103,9 +130,33 @@ describe('FeedItemCard media providers', () => {
       text: '<img src="data:image/png;base64,iVBORw0KGgo=">',
     }} />);
 
-    const image = screen.getByAltText('Preview for inst: photographer');
+    const image = await screen.findByAltText('Preview for inst: photographer');
     expect(image.closest('.reader-card--instagram-photo')).toBeTruthy();
-    expect(image.closest('.reader-card--short-video')).toBeTruthy();
+    expect(screen.queryByTitle('Video preview for inst: photographer')).toBeNull();
+  });
+
+  it('plays a video published under a universal Instagram post path', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.instagram.com/p/DcZUpIItbZu/',
+      title: 'Video',
+      description: null,
+      image: 'https://example.com/poster.jpg',
+      video: 'https://scontent.cdninstagram.com/video.mp4?token=example',
+      siteName: 'Instagram',
+      type: 'video',
+      providerData: null,
+    });
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.instagram.com/p/DcZUpIItbZu/',
+      title: 'inst: mibreoo',
+      text: '<img src="https://example.com/poster.jpg">',
+    }} />);
+
+    const player = await screen.findByLabelText('Video preview for Video');
+    expect(player.tagName).toBe('VIDEO');
+    expect(player.getAttribute('src'))
+      .toBe('https://scontent.cdninstagram.com/video.mp4?token=example');
   });
 
   it('renders TikTok’s static player without calling the Open Graph BFF', () => {

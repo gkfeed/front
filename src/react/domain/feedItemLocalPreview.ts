@@ -19,6 +19,7 @@ import {
   parseUrl,
 } from './feedItemUrls';
 import { getYoutubePreview } from './youtubePreview';
+import { getKnownInstagramVideoEmbedPreview } from './instagramPreview';
 
 export { isGenericHltvPreview } from './hltvPreview';
 export { getTikTokEmbedPreview } from './tiktokPreview';
@@ -80,6 +81,9 @@ export function getRemoteFeedItemPreview(
 
 function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPreview | null {
   if (!url) return getEmbeddedPreview(item.text, item.title);
+
+  const instagramEmbed = getKnownInstagramVideoEmbedPreview(url, item.title);
+  if (instagramEmbed) return instagramEmbed;
 
   const vkVideoEmbed = getVkVideoPreview(url, item.title);
   if (vkVideoEmbed) return vkVideoEmbed;

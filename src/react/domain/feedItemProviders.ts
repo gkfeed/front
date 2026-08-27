@@ -14,6 +14,7 @@ import {
 } from '../../../shared/urlRules';
 import { getMatreshkaVideoId, getYoutubeVideoId, parseUrl } from './feedItemUrls';
 import { getTwitchChannel } from './twitchPreview';
+import { isInstagramMediaUrl } from './instagramPreview';
 
 export type {
   FeedItemCardImagePreview,
@@ -187,6 +188,7 @@ export function getFeedItemProviderFromUrl(item: FeedItem, url: URL | null): Fee
     if (getYoutubeVideoId(url)) return 'youtube';
     if (getTwitchChannel(url)) return 'twitch';
     if (isTikTokVideoUrl(url)) return 'tiktok';
+    if (isInstagramMediaUrl(url)) return 'instagram';
     if (isVkHost(url.hostname)) return 'vk';
     if (isHltvMatchUrl(url)) return 'hltv';
     if (isLiquipediaMatchUrl(url)) return 'liquipedia';

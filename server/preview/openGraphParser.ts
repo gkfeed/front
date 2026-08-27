@@ -11,11 +11,16 @@ import {
   parseHltvPlayerStats,
   parseHltvRoundHistory,
 } from './hltvHtmlParser.js';
-import { parseRezkaOriginalCover, parseVkStructuredVideo } from './openGraphProviderParsers.js';
+import {
+  parseInstagramEmbedMedia,
+  parseRezkaOriginalCover,
+  parseVkStructuredVideo,
+} from './openGraphProviderParsers.js';
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
   const isHltvMatch = isHltvMatchUrl(pageUrl);
   const structuredVideo = parseVkStructuredVideo(html, pageUrl);
+  const instagramMedia = parseInstagramEmbedMedia(html);
   const metadata = parseMetadata(html);
   const documentTitle = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
   const image = parseRezkaOriginalCover(html, pageUrl) ?? firstMetadata(metadata, [
@@ -30,7 +35,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     'og:video',
     'og:video:url',
     'twitter:player:stream',
-  ]) ?? structuredVideo?.embedUrl ?? null;
+  ]) ?? instagramMedia?.videoUrl ?? structuredVideo?.embedUrl ?? null;
 
   return {
     url: pageUrl.href,
@@ -40,7 +45,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     image: resolvePreviewImageUrl(image, pageUrl),
     video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
-    type: metadata.get('og:type') ?? null,
+    type: instagramMedia?.type ?? metadata.get('og:type') ?? null,
     providerData: isHltvMatch ? parseHltvProviderData(html, pageUrl) : null,
   };
 }

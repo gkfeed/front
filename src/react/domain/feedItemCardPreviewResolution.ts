@@ -10,6 +10,10 @@ import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
 import type { RemotePreview } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
+import {
+  getInstagramEmbedPreview,
+  isAmbiguousInstagramPostUrl,
+} from './instagramPreview';
 
 export type FeedItemCardPreviewResolution = {
   preview: FeedItemPreview | null;
@@ -27,13 +31,18 @@ export function shouldLoadRemotePreview(
   const isRezka = isRezkaUrl(url);
   const usesVkDescription = policy.description === 'vk';
   const isReddit = isRedditUrl(url);
+  const needsInstagramMediaType = analysis.provider === 'instagram'
+    && Boolean(url && isAmbiguousInstagramPostUrl(url));
   const feedDescription = usesVkDescription
     ? getFeedItemDescription(item.text, item.title)
     : null;
 
   return !shouldHideNsfw
     && policy.remotePreview
-    && (isReddit || isRezka || !(localPreview?.src && (!usesVkDescription || feedDescription)));
+    && (isReddit
+      || isRezka
+      || needsInstagramMediaType
+      || !(localPreview?.src && (!usesVkDescription || feedDescription)));
 }
 
 export function resolveFeedItemCardPreviews({
@@ -52,12 +61,23 @@ export function resolveFeedItemCardPreviews({
   const isReddit = isRedditUrl(analysis.url);
   const usesTikTokEmbed = policy.previewMode === 'tiktok-embed';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
+  const instagramEmbedPreview = analysis.provider === 'instagram'
+    && analysis.url
+    && remotePreview.openGraphPreview?.type === 'video'
+    ? getInstagramEmbedPreview(analysis.url, item.title)
+    : null;
+  const instagramVideoPreview = analysis.provider === 'instagram'
+    && remotePreview.openGraphPreview?.type === 'video'
+    ? loadedRemotePreview ?? instagramEmbedPreview
+    : null;
   const remoteItemPreview = isRezka && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
   const tiktokEmbedPreview = usesTikTokEmbed ? getTikTokEmbedPreview(item) : null;
   const preview = usesTikTokEmbed
     ? tiktokEmbedPreview ?? localPreview
+    : instagramVideoPreview
+      ? instagramVideoPreview
     : isRezka
       ? remoteItemPreview ?? localPreview
       : isReddit && remoteItemPreview?.type === 'video'

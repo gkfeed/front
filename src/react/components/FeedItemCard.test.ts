@@ -166,6 +166,17 @@ describe('isTikTokFeedItem', () => {
 });
 
 describe('Instagram feed items', () => {
+  it('recognizes Instagram media links without a feed title marker', () => {
+    expect(isInstagramFeedItem(item({
+      link: 'https://www.instagram.com/reel/Video123/',
+      title: 'Creator video',
+    }))).toBe(true);
+    expect(isInstagramFeedItem(item({
+      link: 'https://instagram.com.example.org/reel/Video123/',
+      title: 'Creator video',
+    }))).toBe(false);
+  });
+
   it('recognizes the feed title marker even when media is hosted elsewhere', () => {
     const instagramItem = item({
       link: 'https://files.catbox.moe/story.mp4',

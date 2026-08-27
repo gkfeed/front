@@ -7,6 +7,7 @@ import { useSoundGesture } from '../../hooks/useSoundGesture';
 import { TikTokEmbed } from './TikTokEmbed';
 import { VideoEmbed } from './VideoEmbed';
 import { HltvImageScore } from './HltvMatch';
+import { InstagramEmbed } from './InstagramEmbed';
 
 type FeedItemMediaProps = {
   href: string;
@@ -96,6 +97,8 @@ export function FeedItemMedia({
         title={preview.alt}
         soundGesture={soundGesture}
       />
+    ) : isShortVideo ? (
+      <InstagramEmbed src={preview.src} title={preview.alt} />
     ) : (
       <VideoEmbed src={preview.src} title={preview.alt} />
     );

@@ -1,9 +1,33 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  parseInstagramEmbedMedia,
   parseRezkaOriginalCover,
   parseVkStructuredVideo,
 } from './openGraphProviderParsers.js';
+
+describe('parseInstagramEmbedMedia', () => {
+  it('extracts a playable video URL from escaped embed data', () => {
+    const payload = JSON.stringify({
+      shortcode_media: {
+        __typename: 'GraphVideo',
+        is_video: true,
+        video_url: 'https:\\/\\/scontent.cdninstagram.com\\/video.mp4?token=example&amp;expires=123',
+      },
+    });
+    const html = `<script>window.__data = ${JSON.stringify(payload)};</script>`;
+
+    expect(parseInstagramEmbedMedia(html)).toEqual({
+      type: 'video',
+      videoUrl: 'https://scontent.cdninstagram.com/video.mp4?token=example&expires=123',
+    });
+  });
+
+  it('does not invent a video URL for a photo', () => {
+    const html = '<script>"shortcode_media":{"is_video":false}</script>';
+    expect(parseInstagramEmbedMedia(html)).toEqual({ type: 'photo', videoUrl: null });
+  });
+});
 
 describe('parseVkStructuredVideo', () => {
   it('extracts a nested VideoObject through a shared runtime guard', () => {

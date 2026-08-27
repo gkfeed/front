@@ -2,6 +2,49 @@ import { decodeHtml, parseAttributes, resolveHttpUrl } from './html.js';
 import { normalizeHostname } from '../../shared/urlRules.js';
 import { getStringProperty, isRecord } from '../../shared/valueGuards.js';
 
+export function parseInstagramEmbedMedia(
+  html: string,
+): { type: 'video' | 'photo'; videoUrl: string | null } | null {
+  const normalized = html.replace(/\\"/g, '"');
+  const mediaIndex = normalized.indexOf('"shortcode_media"');
+  if (mediaIndex < 0) return null;
+
+  const mediaData = normalized.slice(mediaIndex);
+  if (/"is_video"\s*:\s*true/i.test(mediaData)) {
+    const encodedVideoUrl = mediaData.match(/"video_url"\s*:\s*"((?:\\.|[^"\\])*)"/i)?.[1];
+    return {
+      type: 'video',
+      videoUrl: decodeInstagramVideoUrl(encodedVideoUrl),
+    };
+  }
+  if (/"is_video"\s*:\s*false/i.test(mediaData)) {
+    return { type: 'photo', videoUrl: null };
+  }
+  return null;
+}
+
+function decodeInstagramVideoUrl(value: string | undefined): string | null {
+  if (!value) return null;
+
+  let decoded: unknown;
+  try {
+    const normalizedEscapes = value.replace(/\\{2,}(?=[/u])/g, '\\');
+    decoded = JSON.parse(`"${normalizedEscapes}"`);
+  } catch {
+    return null;
+  }
+  if (typeof decoded !== 'string') return null;
+  decoded = decodeHtml(decoded);
+
+  let url: URL;
+  try {
+    url = new URL(decoded);
+  } catch {
+    return null;
+  }
+  return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+}
+
 export function parseVkStructuredVideo(
   html: string,
   pageUrl: URL,
