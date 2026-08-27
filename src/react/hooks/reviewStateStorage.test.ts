@@ -8,7 +8,7 @@ import { getReviewStateStorageKey, readReviewState, writeReviewState } from './r
 afterEach(restoreLocalStorage);
 
 describe('reviewStateStorage', () => {
-  it('persists and restores a review queue while adding new items', () => {
+  it('persists and restores a review queue without an item snapshot', () => {
     stubLocalStorage();
     const key = getReviewStateStorageKey('reader');
     const state = {
@@ -19,14 +19,14 @@ describe('reviewStateStorage', () => {
 
     writeReviewState(key, state);
 
-    expect(readReviewState(key, [1, 2, 3])).toEqual({
-      pendingIds: [1, 3],
+    expect(readReviewState(key)).toEqual({
+      pendingIds: [3],
       revisitIds: [2],
       keptItemIds: new Set([2]),
     });
   });
 
-  it('puts the newest fetched items first regardless of API order', () => {
+  it('does not discard saved ids that have not been fetched yet', () => {
     stubLocalStorage();
     const key = getReviewStateStorageKey('reader');
     const state = {
@@ -37,8 +37,8 @@ describe('reviewStateStorage', () => {
 
     writeReviewState(key, state);
 
-    expect(readReviewState(key, [1, 5, 4, 3, 7, 2])).toEqual({
-      pendingIds: [7, 5, 4, 3, 1],
+    expect(readReviewState(key)).toEqual({
+      pendingIds: [4, 3, 1],
       revisitIds: [2],
       keptItemIds: new Set([2]),
     });
@@ -49,6 +49,6 @@ describe('reviewStateStorage', () => {
     const key = getReviewStateStorageKey('reader');
     values.set(key, JSON.stringify({ version: 1, pendingIds: 'invalid' }));
 
-    expect(readReviewState(key, [1])).toBeNull();
+    expect(readReviewState(key)).toBeNull();
   });
 });

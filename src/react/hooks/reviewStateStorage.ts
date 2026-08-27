@@ -9,7 +9,6 @@ export function getReviewStateStorageKey(username: string): string {
 
 export function readReviewState(
   storageKey: string | null,
-  availableIds: number[],
 ): ReviewQueueState | null {
   const storage = getReviewStorage();
   if (!storageKey || !storage) return null;
@@ -25,25 +24,16 @@ export function readReviewState(
     const keptIds = parseIds(getObjectProperty(parsed, 'keptItemIds'));
     if (!pendingIds || !revisitIds || !keptIds) return null;
 
-    const available = new Set(availableIds);
-    const keptItemIds = new Set(keptIds.filter((id) => available.has(id)));
+    const keptItemIds = new Set(keptIds);
     const filteredPendingIds = uniqueIds(
-      pendingIds.filter((id) => available.has(id) && !keptItemIds.has(id)),
+      pendingIds.filter((id) => !keptItemIds.has(id)),
     );
     const filteredRevisitIds = uniqueIds(
-      revisitIds.filter((id) => available.has(id) && keptItemIds.has(id)),
+      revisitIds.filter((id) => keptItemIds.has(id)),
     );
-    const knownIds = new Set([
-      ...filteredPendingIds,
-      ...filteredRevisitIds,
-      ...keptItemIds,
-    ]);
-    const newIds = availableIds
-      .filter((id) => !knownIds.has(id))
-      .sort((left, right) => right - left);
 
     return {
-      pendingIds: [...newIds, ...filteredPendingIds],
+      pendingIds: filteredPendingIds,
       revisitIds: filteredRevisitIds,
       keptItemIds,
     };

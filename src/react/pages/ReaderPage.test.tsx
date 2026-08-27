@@ -1,16 +1,18 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getReviewStateStorageKey } from '../hooks/reviewStateStorage';
+import { deleteFeedItemsCache } from '../services/feedItemsCache';
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
 import { NsfwPreferencesContext, type NsfwMode } from '../state/nsfwPreferencesContext';
 import { createStatusError, restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { ReaderPage } from './ReaderPage';
 
 vi.mock('../services/feeds');
+vi.mock('../services/feedItemsCache');
 vi.mock('../state/useAuth', () => {
   const auth = { credentials: { username: 'reader', password: 'secret' } };
   return { useAuth: () => auth };
@@ -118,6 +120,53 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('Second story')).toBeTruthy();
   });
 
+  it('reconciles a saved review queue only after all cursor pages are loaded', async () => {
+    const storage = stubLocalStorage();
+    const storageKey = getReviewStateStorageKey('reader');
+    storage.set(storageKey, JSON.stringify({
+      version: 1,
+      pendingIds: [98, 96],
+      revisitIds: [],
+      keptItemIds: [],
+    }));
+    const makeItem = (id: number) => ({
+      ...ITEMS[0],
+      id,
+      title: `Story ${id}`,
+    });
+    const firstPage = Array.from({ length: 10 }, (_, index) => makeItem(110 - index));
+    const allItems = [
+      ...firstPage,
+      ...Array.from({ length: 6 }, (_, index) => makeItem(100 - index)),
+    ];
+    let publishProgress: ((items: typeof allItems) => boolean | void) | undefined;
+    let finishLoad: ((items: typeof allItems) => void) | undefined;
+    vi.mocked(getFeedItems).mockImplementation((_credentials, _limit, _signal, onProgress) => {
+      publishProgress = onProgress;
+      return new Promise((resolve) => {
+        finishLoad = resolve;
+      });
+    });
+    renderReader();
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
+    act(() => publishProgress?.(firstPage));
+    expect(await screen.findByText('Story 110')).toBeTruthy();
+    expect(storage.get(storageKey)).toContain('"pendingIds":[98,96]');
+
+    act(() => publishProgress?.(allItems));
+    expect(screen.getByText('Story 110')).toBeTruthy();
+
+    await act(async () => finishLoad?.(allItems));
+    expect(await screen.findByText('Story 110')).toBeTruthy();
+    await waitFor(() => expect(JSON.parse(storage.get(storageKey) ?? '')).toEqual({
+      version: 1,
+      pendingIds: [110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 97, 95, 98, 96],
+      revisitIds: [],
+      keptItemIds: [],
+    }));
+  });
+
   it('resets kept items and persists the empty kept state', async () => {
     const storage = stubLocalStorage();
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
@@ -180,6 +229,59 @@ describe('ReaderPage', () => {
 
     expect(await screen.findByText('Second story')).toBeTruthy();
     expect(deleteFeedItemById).not.toHaveBeenCalled();
+  });
+
+  it('keeps the current card selected while cursor pages extend the counter', async () => {
+    const firstPage = [
+      { ...ITEMS[0], id: 20, title: 'Current page item' },
+      { ...ITEMS[1], id: 19, title: 'Stable selected item' },
+    ];
+    const nextPageItem = { ...ITEMS[1], id: 18, title: 'Older cursor item' };
+    let publishProgress: ((items: typeof firstPage) => boolean | void) | undefined;
+    let finishLoad: ((items: typeof firstPage) => void) | undefined;
+    vi.mocked(getFeedItems).mockImplementation((_credentials, _limit, _signal, onProgress) => {
+      publishProgress = onProgress;
+      return new Promise((resolve) => {
+        finishLoad = resolve;
+      });
+    });
+    renderReader();
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
+    act(() => publishProgress?.(firstPage));
+    expect(await screen.findByText('Current page item')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Stable selected item')).toBeTruthy();
+
+    act(() => publishProgress?.([...firstPage, nextPageItem]));
+    expect(screen.getByText('Stable selected item')).toBeTruthy();
+    expect(screen.queryByText('Current page item')).toBeNull();
+    await waitFor(() => expect(screen.getByText('2 remaining')).toBeTruthy());
+
+    await act(async () => finishLoad?.([...firstPage, nextPageItem]));
+    expect(screen.getByText('Stable selected item')).toBeTruthy();
+  });
+
+  it('keeps partial items visible and offers retry when a later cursor page fails', async () => {
+    let publishProgress: ((items: typeof ITEMS) => boolean | void) | undefined;
+    let failLoad: ((error: Error) => void) | undefined;
+    vi.mocked(getFeedItems).mockImplementation((_credentials, _limit, _signal, onProgress) => {
+      publishProgress = onProgress;
+      return new Promise((_resolve, reject) => {
+        failLoad = reject;
+      });
+    });
+    renderReader('/reader?view=scroll');
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
+    act(() => publishProgress?.(ITEMS));
+    expect(await screen.findByText('First story')).toBeTruthy();
+
+    await act(async () => failLoad?.(new Error('Later page failed')));
+
+    expect(screen.getByText('First story')).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toContain('Could not load your feed items.');
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
   });
 
   it('deletes the current item with d', async () => {
@@ -441,6 +543,7 @@ describe('ReaderPage', () => {
 
     expect(await screen.findByText('Second story')).toBeTruthy();
     expect(deleteFeedItemById).toHaveBeenCalledWith(10, { username: 'reader', password: 'secret' });
+    await waitFor(() => expect(deleteFeedItemsCache).toHaveBeenCalledWith('reader'));
   });
 
   it('keeps deleted items out of Scroll view', async () => {

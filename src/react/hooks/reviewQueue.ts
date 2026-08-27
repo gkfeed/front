@@ -7,6 +7,9 @@ export type ReviewQueueState = {
 export type ReviewQueueAction =
   | { type: 'restore'; state: ReviewQueueState }
   | { type: 'reset'; ids: number[] }
+  | { type: 'extend'; ids: number[] }
+  | { type: 'extendRestored'; ids: number[]; restoredIds: ReadonlySet<number> }
+  | { type: 'reconcile'; ids: number[] }
   | { type: 'keep'; id: number }
   | { type: 'remove'; id: number };
 
@@ -27,6 +30,53 @@ export function reviewQueueReducer(
       return cloneReviewQueueState(action.state);
     case 'reset':
       return createReviewQueueState(action.ids);
+    case 'extend': {
+      const knownIds = new Set([
+        ...state.pendingIds,
+        ...state.revisitIds,
+        ...state.keptItemIds,
+      ]);
+      const newIds = action.ids.filter((id) => !knownIds.has(id));
+      return {
+        ...state,
+        pendingIds: [...state.pendingIds, ...newIds],
+      };
+    }
+    case 'extendRestored': {
+      const knownIds = new Set([
+        ...state.pendingIds,
+        ...state.revisitIds,
+        ...state.keptItemIds,
+      ]);
+      const newIds = action.ids.filter((id) => !knownIds.has(id));
+      const firstRestoredIndex = state.pendingIds.findIndex((id) => action.restoredIds.has(id));
+      const insertionIndex = firstRestoredIndex === -1
+        ? state.pendingIds.length
+        : firstRestoredIndex;
+      return {
+        ...state,
+        pendingIds: [
+          ...state.pendingIds.slice(0, insertionIndex),
+          ...newIds,
+          ...state.pendingIds.slice(insertionIndex),
+        ],
+      };
+    }
+    case 'reconcile': {
+      const availableIds = new Set(action.ids);
+      const keptItemIds = new Set([...state.keptItemIds].filter((id) => availableIds.has(id)));
+      const pendingIds = state.pendingIds.filter((id) => availableIds.has(id));
+      const revisitIds = state.revisitIds.filter((id) => availableIds.has(id));
+      const knownIds = new Set([...pendingIds, ...revisitIds, ...keptItemIds]);
+      const newIds = action.ids
+        .filter((id) => !knownIds.has(id))
+        .sort((left, right) => right - left);
+      return {
+        pendingIds: [...newIds, ...pendingIds],
+        revisitIds,
+        keptItemIds,
+      };
+    }
     case 'keep': {
       const isPending = state.pendingIds.includes(action.id);
       const keptItemIds = new Set(state.keptItemIds).add(action.id);

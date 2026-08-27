@@ -4,6 +4,7 @@ import {
   createReviewQueueState,
   getActiveReviewIds,
   reviewQueueReducer,
+  type ReviewQueueState,
 } from './reviewQueue';
 
 describe('reviewQueueReducer', () => {
@@ -41,5 +42,64 @@ describe('reviewQueueReducer', () => {
 
     expect(getActiveReviewIds(state, new Set([2, 3]))).toEqual([2]);
     expect(getActiveReviewIds({ ...state, pendingIds: [] }, new Set([2, 3]))).toEqual([3]);
+  });
+
+  it('appends cursor pages without resetting review progress', () => {
+    let state = createReviewQueueState([10, 9]);
+    state = reviewQueueReducer(state, { type: 'keep', id: 10 });
+
+    state = reviewQueueReducer(state, { type: 'extend', ids: [10, 9, 8, 7] });
+
+    expect(state).toEqual({
+      pendingIds: [9, 8, 7],
+      revisitIds: [10],
+      keptItemIds: new Set([10]),
+    });
+  });
+
+  it('does not move newly fetched ids ahead of the active cursor page', () => {
+    const state = createReviewQueueState([10, 9]);
+
+    const next = reviewQueueReducer(state, { type: 'extend', ids: [12, 11, 10, 9] });
+
+    expect(next.pendingIds).toEqual([10, 9, 12, 11]);
+  });
+
+  it('extends partial snapshots before a saved queue without discarding unfetched ids', () => {
+    const restoredIds = new Set([98, 96]);
+    let state: ReviewQueueState = {
+      pendingIds: [98, 96],
+      revisitIds: [],
+      keptItemIds: new Set<number>(),
+    };
+
+    state = reviewQueueReducer(state, {
+      type: 'extendRestored',
+      ids: [110, 109],
+      restoredIds,
+    });
+    state = reviewQueueReducer(state, {
+      type: 'extendRestored',
+      ids: [110, 109, 108, 107],
+      restoredIds,
+    });
+
+    expect(state.pendingIds).toEqual([110, 109, 108, 107, 98, 96]);
+  });
+
+  it('removes externally deleted ids after the authoritative sync completes', () => {
+    const state = {
+      pendingIds: [10, 9, 8],
+      revisitIds: [7],
+      keptItemIds: new Set([7]),
+    };
+
+    const next = reviewQueueReducer(state, { type: 'reconcile', ids: [11, 10, 8] });
+
+    expect(next).toEqual({
+      pendingIds: [11, 10, 8],
+      revisitIds: [],
+      keptItemIds: new Set(),
+    });
   });
 });
