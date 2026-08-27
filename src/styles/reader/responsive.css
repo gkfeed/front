@@ -486,9 +486,13 @@
 
 /* Fullscreen has enough room to show media at a useful reading size. */
 @media (min-width: 641px) {
-  main:fullscreen .reader-card--tiktok .tiktok-comments__actions,
-  main:-webkit-full-screen .reader-card--tiktok .tiktok-comments__actions,
-  html[data-reader-fullscreen="true"] main .reader-card--tiktok .tiktok-comments__actions {
+  main:fullscreen .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .tiktok-comments__actions,
+  main:-webkit-full-screen .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .tiktok-comments__actions,
+  html[data-reader-fullscreen="true"] main
+  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .tiktok-comments__actions {
     transform: translateX(-56px);
   }
 
@@ -516,20 +520,32 @@
     max-width: none;
   }
 
-  main:fullscreen .reader__item--tiktok .reader-card.reader-card--short-video,
-  main:-webkit-full-screen .reader__item--tiktok .reader-card.reader-card--short-video,
-  html[data-reader-fullscreen="true"] main .reader__item--tiktok .reader-card.reader-card--short-video,
-  .reader__item--fullscreen.reader__item--tiktok .reader-card.reader-card--short-video {
+  main:fullscreen .reader__item--tiktok
+  .reader-card.reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]),
+  main:-webkit-full-screen .reader__item--tiktok
+  .reader-card.reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]),
+  html[data-reader-fullscreen="true"] main .reader__item--tiktok
+  .reader-card.reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]),
+  .reader__item--fullscreen.reader__item--tiktok
+  .reader-card.reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]) {
     --reader-tiktok-comments-width: clamp(420px, 35vw, 620px);
 
     grid-template-columns: auto var(--reader-tiktok-comments-width);
     justify-content: center;
   }
 
-  main:fullscreen .reader__item--tiktok .tiktok-comments,
-  main:-webkit-full-screen .reader__item--tiktok .tiktok-comments,
-  html[data-reader-fullscreen="true"] main .reader__item--tiktok .tiktok-comments,
-  .reader__item--fullscreen .tiktok-comments {
+  main:fullscreen .reader__item--tiktok
+  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .tiktok-comments,
+  main:-webkit-full-screen .reader__item--tiktok
+  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .tiktok-comments,
+  html[data-reader-fullscreen="true"] main .reader__item--tiktok
+  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .tiktok-comments,
+  .reader__item--fullscreen
+  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .tiktok-comments {
     width: 100%;
     max-width: none;
   }
