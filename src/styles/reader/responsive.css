@@ -498,6 +498,16 @@
   html[data-reader-fullscreen="true"] main .reader__item .reader-card__preview--short-video {
     width: calc(56.25dvh - 16px);
   }
+
+  /* Instagram photo posts share the short-video markup, but their aspect ratio
+     is not necessarily 9:16. Let wide photos use the fullscreen item width. */
+  main:fullscreen .reader__item .reader-card--instagram-photo .reader-card__preview--short-video,
+  main:-webkit-full-screen .reader__item .reader-card--instagram-photo .reader-card__preview--short-video,
+  html[data-reader-fullscreen="true"] main .reader__item
+  .reader-card--instagram-photo .reader-card__preview--short-video,
+  .reader__item--fullscreen .reader-card--instagram-photo .reader-card__preview--short-video {
+    width: fit-content;
+  }
 }
 
 @media (min-width: 641px) {

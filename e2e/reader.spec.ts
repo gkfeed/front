@@ -222,6 +222,52 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
   });
 
+  test('does not shrink wide Instagram photos in fullscreen', async ({ page }) => {
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 24,
+          feed_id: 4,
+          link: 'https://www.instagram.com/p/wide-photo/',
+          title: 'inst: photographer',
+          text: '',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://www.instagram.com/p/wide-photo/',
+        title: 'Wide photo',
+        description: null,
+        image: 'https://example.com/instagram-wide.jpg',
+        video: null,
+        siteName: 'Instagram',
+        type: 'photo',
+        providerData: null,
+      },
+    }));
+    await page.route('https://example.com/instagram-wide.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#11111b"/></svg>',
+    }));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+
+    const image = page.locator('.reader-card--instagram-photo img');
+    await expect(image).toBeVisible();
+    const regularBox = await image.boundingBox();
+
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    const fullscreenBox = await image.boundingBox();
+
+    expect(regularBox).not.toBeNull();
+    expect(fullscreenBox).not.toBeNull();
+    expect(fullscreenBox!.width).toBeGreaterThanOrEqual(regularBox!.width);
+    expect(fullscreenBox!.width).toBeGreaterThan(900);
+    expect(Math.abs(fullscreenBox!.width / fullscreenBox!.height - 16 / 9)).toBeLessThan(0.01);
+  });
+
   test('keeps VK image previews visible in their media-first card', async ({ page }) => {
     await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
       json: {
