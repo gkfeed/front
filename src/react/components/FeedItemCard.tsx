@@ -8,6 +8,7 @@ import {
 import { useFeedItemCardModel } from './useFeedItemCardModel';
 import { ArticleReaderOverlay } from './ArticleReader';
 import { useArticleReader } from '../hooks/useArticleReader';
+import { isRezkaUrl, parseUrl } from '../domain/feedItemUrls';
 
 export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCardModel>[0] }) {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
         'reader-card',
         isPreviewPending ? 'reader-card--preview-pending' : '',
         descriptor.className,
+        isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
       inert={shouldBlurNsfw}

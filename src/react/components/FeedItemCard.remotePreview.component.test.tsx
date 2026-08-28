@@ -125,6 +125,7 @@ describe('FeedItemCard remote and feed previews', () => {
       .toBe('https://static.hdrezka.ac/covers/thumbnail.jpg');
     expect((await screen.findByAltText('Preview for Story')).getAttribute('src'))
       .toBe('https://static.hdrezka.ac/covers/original.jpg');
+    expect(screen.getByAltText('Preview for Story').closest('.reader-card--rezka')).toBeTruthy();
     expect(getPreview).toHaveBeenCalledWith(
       'https://hdrezka.me/films/drama/123-story.html',
       expect.any(AbortSignal),
