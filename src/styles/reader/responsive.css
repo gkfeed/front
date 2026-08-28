@@ -745,6 +745,10 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
 
   /* Portrait image cards should size to the image instead of leaving wide
      side gutters inside a fullscreen card. */
+  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card--simple-image) {
+    max-height: none;
+  }
+
   .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card > .reader-card__preview > img) {
     width: min(100%, 960px);
     max-width: none;
@@ -752,24 +756,35 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
     margin-inline: auto;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(> .reader-card__preview > img) {
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img) {
     width: 100%;
     max-width: none;
+    height: auto;
+    max-height: none;
+    grid-template-rows: auto auto;
     justify-self: center;
     margin-inline: auto;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(> .reader-card__preview > img)
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
   > .reader-card__preview {
-    width: 100%;
+    width: fit-content;
     max-width: 100%;
+    min-height: auto;
+    height: auto;
+    max-height: none;
     justify-self: center;
+    background: transparent;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(> .reader-card__preview > img)
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
   > .reader-card__preview > img {
-    width: 100%;
+    width: auto;
     max-width: 100%;
+    height: auto;
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card > .reader-card__preview > img)

@@ -184,6 +184,44 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(fullscreenBox!.width).toBeLessThanOrEqual(620);
   });
 
+  test('does not add vertical bars around fullscreen feed images', async ({ page }) => {
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 22,
+          feed_id: 4,
+          link: 'https://www.reddit.com/r/opensource/comments/abc/event_dispatch/',
+          title: 'Event Dispatch',
+          text: '<img src="https://example.com/reddit-card.jpg">',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('https://example.com/reddit-card.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720"><rect width="1280" height="720" fill="#11111b"/></svg>',
+    }));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+
+    await expect(page.locator('.reader-card__preview img')).toBeVisible();
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+
+    const bounds = await page.evaluate(() => {
+      const preview = document.querySelector<HTMLElement>('.reader-card__preview')?.getBoundingClientRect();
+      const image = document.querySelector<HTMLImageElement>('.reader-card__preview img')?.getBoundingClientRect();
+      return {
+        previewHeight: preview?.height ?? 0,
+        imageHeight: image?.height ?? 0,
+        actionsBottom: document.querySelector<HTMLElement>('.reader__actions')?.getBoundingClientRect().bottom ?? 0,
+        viewportHeight: window.innerHeight,
+      };
+    });
+
+    expect(Math.abs(bounds.previewHeight - bounds.imageHeight)).toBeLessThan(3);
+    expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
+  });
+
   test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {
     await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
       json: {
@@ -196,6 +234,10 @@ test.describe('TikTok player on iPad-sized readers', () => {
         }],
         next_cursor: null,
       },
+    }));
+    await page.route('https://example.com/poster.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1000" viewBox="0 0 900 1000"><rect width="900" height="1000" fill="#a6e3a1"/></svg>',
     }));
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/reader');
@@ -220,7 +262,10 @@ test.describe('TikTok player on iPad-sized readers', () => {
         actionsWidth: actions?.getBoundingClientRect().width ?? 0,
         cardWidth: document.querySelector<HTMLElement>('.reader-card')?.getBoundingClientRect().width ?? 0,
         previewWidth: previewBox?.width ?? 0,
+        previewHeight: previewBox?.height ?? 0,
         imageWidth: document.querySelector<HTMLElement>('.reader-card__preview img')?.getBoundingClientRect().width ?? 0,
+        imageHeight: document.querySelector<HTMLElement>('.reader-card__preview img')?.getBoundingClientRect().height ?? 0,
+        imageLeft: document.querySelector<HTMLElement>('.reader-card__preview img')?.getBoundingClientRect().left ?? 0,
         imageRight: document.querySelector<HTMLElement>('.reader-card__preview img')?.getBoundingClientRect().right ?? 0,
         previewRight: previewBox?.right ?? 0,
         actionsBottom: actions?.getBoundingClientRect().bottom ?? 0,
@@ -235,8 +280,11 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(Math.abs(bounds.itemWidth - bounds.actionsWidth)).toBeLessThan(1);
     expect(Math.abs(bounds.itemLeft - bounds.actionsLeft)).toBeLessThan(1);
     expect(Math.abs(bounds.itemWidth - bounds.cardWidth)).toBeLessThan(1);
-    expect(Math.abs(bounds.cardWidth - bounds.previewWidth)).toBeLessThan(1);
-    expect(bounds.imageRight).toBeLessThanOrEqual(bounds.previewRight + 1);
+    expect(Math.abs(bounds.previewWidth - bounds.imageWidth)).toBeLessThan(3);
+    expect(Math.abs(bounds.previewHeight - bounds.imageHeight)).toBeLessThan(3);
+    expect(Math.abs(bounds.imageLeft - (bounds.previewRight - bounds.previewWidth))).toBeLessThan(2);
+    expect(Math.abs(bounds.imageRight - bounds.previewRight)).toBeLessThan(2);
+    expect(Math.abs(bounds.imageWidth / bounds.imageHeight - 9 / 10)).toBeLessThan(0.01);
     expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
     expect(Math.abs(bounds.previewCenter - bounds.viewportWidth / 2)).toBeLessThan(1);
   });
