@@ -268,7 +268,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(Math.abs(fullscreenBox!.width / fullscreenBox!.height - 16 / 9)).toBeLessThan(0.01);
   });
 
-  test('keeps VK image previews visible in their media-first card', async ({ page }) => {
+  test('keeps the full VK image visible in regular and fullscreen cards', async ({ page }) => {
     await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
       json: {
         items: [{
@@ -289,14 +289,27 @@ test.describe('TikTok player on iPad-sized readers', () => {
     await page.goto('/reader');
 
     const preview = page.locator('.reader-card--vk .reader-card__preview');
+    const image = preview.locator('img');
     await expect(preview).toBeVisible();
+    await expect(image).toHaveCSS('object-fit', 'contain');
     await expect(page.locator('.reader-card--vk .reader-card__copy')).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Open original' })).toHaveCount(0);
     const box = await preview.boundingBox();
 
     expect(box).not.toBeNull();
     expect(box!.height).toBeGreaterThan(200);
-    expect(Math.abs(box!.width / box!.height - 16 / 9)).toBeLessThan(0.01);
+    expect(Math.abs(box!.width / box!.height - 3 / 4)).toBeLessThan(0.01);
+
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(image).toHaveCSS('object-fit', 'contain');
+    const fullscreenPreviewBox = await preview.boundingBox();
+    const fullscreenImageBox = await image.boundingBox();
+
+    expect(fullscreenPreviewBox).not.toBeNull();
+    expect(fullscreenImageBox).not.toBeNull();
+    expect(Math.abs(fullscreenPreviewBox!.width - fullscreenImageBox!.width)).toBeLessThan(2);
+    expect(Math.abs(fullscreenPreviewBox!.height - fullscreenImageBox!.height)).toBeLessThan(2);
+    expect(Math.abs(fullscreenImageBox!.width / fullscreenImageBox!.height - 3 / 4)).toBeLessThan(0.01);
   });
 
   test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {

@@ -814,11 +814,25 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card--vk:has(.reader-card__preview > img) {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card--vk .reader-card__preview:has(> img) {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
   > .reader-card--vk .reader-card__preview:has(> img) > img {
-    width: 100%;
-    height: 100%;
-    max-height: none;
-    object-fit: cover;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
+    object-fit: contain;
   }
 
   /* Parsed HLTV matchups have their own responsive height. Do not stretch
