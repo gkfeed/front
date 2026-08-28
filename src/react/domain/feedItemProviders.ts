@@ -89,7 +89,9 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
       : { type: 'standard' },
     classNames: (variant) => variant.type === 'twitch' ? ['reader-card--twitch'] : [],
   }),
-  vk: createFeedItemProviderAdapter({}),
+  vk: createFeedItemProviderAdapter({
+    classNames: () => ['reader-card--vk'],
+  }),
   youtube: createFeedItemProviderAdapter({
     resolveVariant: ({ youtubeVideoId }) => youtubeVideoId
       ? { type: 'youtube', videoId: youtubeVideoId }

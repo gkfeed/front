@@ -45,7 +45,7 @@ export function resolveFeedItemCardMetadata({
     ? getFeedItemDescription(item.text, item.title)
     : null;
   const description = policy.description === 'vk'
-    ? feedDescription ?? getFeedItemDescription(remotePreview.openGraphPreview?.description ?? '', item.title)
+    ? feedDescription
     : null;
   // Prefer the parsed match data over HLTV's generated screenshot. The screenshot
   // endpoint can return a captured 404 page even when the match page itself is valid.

@@ -135,7 +135,7 @@ describe('FeedItemCard remote and feed previews', () => {
       .toBe('https://static.hdrezka.ac/covers/thumbnail.jpg');
   });
 
-  it('shows readable feed text as the description for VK items', () => {
+  it('keeps VK image cards focused on the media', () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://vk.com/wall-123_456',
@@ -143,15 +143,16 @@ describe('FeedItemCard remote and feed previews', () => {
       text: '<p>Новый пост сообщества</p><img src="https://example.com/vk-cover.jpg">',
     }} />);
 
-    expect(screen.getByText('Новый пост сообщества')).toBeTruthy();
+    expect(screen.queryByText('Новый пост сообщества')).toBeNull();
+    expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
   });
 
-  it('loads a VK description when local feed content only contains media', async () => {
+  it('does not show generic remote descriptions for VK items', async () => {
     getPreview.mockResolvedValue({
       url: 'https://vk.com/wall-123_456',
       title: 'Рифмы и Панчи',
       description: 'Описание публикации',
-      image: 'https://example.com/og-cover.jpg',
+      image: null,
       video: null,
       siteName: 'VK',
       type: 'article',
@@ -162,11 +163,64 @@ describe('FeedItemCard remote and feed previews', () => {
       ...item,
       link: 'https://vk.com/wall-123_456',
       title: 'Рифмы и Панчи',
-      text: '<img src="https://example.com/feed-cover.jpg">',
+      text: '',
     }} />);
 
-    expect(await screen.findByText('Описание публикации')).toBeTruthy();
+    expect(await screen.findByText('Рифмы и Панчи')).toBeTruthy();
+    expect(screen.queryByText('Описание публикации')).toBeNull();
+    expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
     expect(getPreview).toHaveBeenCalled();
+  });
+
+  it('shows feed text for a VK post without media', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.com/wall-123_456',
+      title: 'Рифмы и Панчи',
+      description: 'ВКонтакте — универсальное средство для общения',
+      image: null,
+      video: null,
+      siteName: 'VK',
+      type: 'article',
+      providerData: null,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/wall-123_456',
+      title: 'Рифмы и Панчи',
+      text: '<p>Новый пост сообщества</p>',
+    }} />);
+
+    expect(await screen.findByText('Новый пост сообщества')).toBeTruthy();
+    expect(screen.queryByText('ВКонтакте — универсальное средство для общения')).toBeNull();
+    expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
+  });
+
+  it('renders VK images in a media-first card', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.com/wall-123_456',
+      title: 'Рифмы и Панчи',
+      description: 'Описание публикации',
+      image: 'https://example.com/vk-cover.jpg',
+      video: null,
+      siteName: 'VK',
+      type: 'article',
+      providerData: null,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/wall-123_456',
+      title: 'Рифмы и Панчи',
+      text: '',
+    }} />);
+
+    const image = await screen.findByAltText('Preview for Рифмы и Панчи');
+    const card = image.closest('.reader-card--vk');
+    expect(card).toBeTruthy();
+    expect(image.closest('.reader-card__preview')?.parentElement).toBe(card);
+    expect(card?.querySelector('.reader-card__copy')).toBeNull();
+    expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
   });
 
   it('renders VK video links in the embedded player', () => {

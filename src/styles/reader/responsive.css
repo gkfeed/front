@@ -803,6 +803,14 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
     -webkit-line-clamp: 3;
   }
 
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card--vk .reader-card__preview:has(> img) > img {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+  }
+
   /* Parsed HLTV matchups have their own responsive height. Do not stretch
      the scorecard into the media-sized fullscreen grid row. */
   .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card--hltv-preview {

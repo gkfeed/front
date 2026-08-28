@@ -14,9 +14,11 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
   const model = useFeedItemCardModel(item);
   const articleReader = useArticleReader(item.link);
   const { cardRef, isPreviewPending, descriptor, shouldBlurNsfw, shouldHideNsfw } = model;
-  const canReadArticle = model.openGraphPreview?.type?.toLowerCase() === 'article'
+  const canReadArticle = model.provider !== 'vk' && (
+    model.openGraphPreview?.type?.toLowerCase() === 'article'
     || model.hostname === 'trashbox.ru'
-    || model.hostname?.endsWith('.trashbox.ru') === true;
+    || model.hostname?.endsWith('.trashbox.ru') === true
+  );
 
   if (shouldHideNsfw) return null;
 

@@ -13,6 +13,7 @@ import {
   TikTokSupplementary,
   TwitchCopy,
   TwitchVideoPreview,
+  VkCopy,
   YoutubeCopy,
   YoutubeVideoPreview,
   type FeedItemCardProviderRenderer,
@@ -50,7 +51,7 @@ export const feedItemCardProviderRendererMap = {
   }),
   vk: createProviderRenderer({
     Preview: FeedItemMediaPreview,
-    Copy: StandardCopy,
+    Copy: VkCopy,
   }),
   youtube: createProviderRenderer({
     Preview: YoutubeVideoPreview,

@@ -208,6 +208,18 @@ export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
   return createElement(renderMatreshkaCopy, props);
 }
 
+export function VkCopy({ model, displayHostname }: FeedItemCardProviderRendererProps) {
+  if (model.preview) return null;
+
+  const { item, description } = model;
+  return (
+    <div className="reader-card__copy reader-card__vk-copy">
+      <h2 className="reader-card__title">{item.title || displayHostname}</h2>
+      {description ? <p className="reader-card__description">{description}</p> : null}
+    </div>
+  );
+}
+
 export function StandardCopy({ model, displayHostname, onOpenArticle }: FeedItemCardProviderRendererProps) {
   const { t } = useTranslation();
   const { item, description } = model;

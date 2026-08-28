@@ -222,6 +222,37 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
   });
 
+  test('keeps VK image previews visible in their media-first card', async ({ page }) => {
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 23,
+          feed_id: 567,
+          link: 'https://vk.com/wall-123_456',
+          title: 'Рифмы и Панчи',
+          text: '<img src="https://example.com/vk-card.jpg"><br>Post description',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('https://example.com/vk-card.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200"><rect width="900" height="1200" fill="#447bba"/></svg>',
+    }));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+
+    const preview = page.locator('.reader-card--vk .reader-card__preview');
+    await expect(preview).toBeVisible();
+    await expect(page.locator('.reader-card--vk .reader-card__copy')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Open original' })).toHaveCount(0);
+    const box = await preview.boundingBox();
+
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThan(200);
+    expect(Math.abs(box!.width / box!.height - 16 / 9)).toBeLessThan(0.01);
+  });
+
   test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {
     await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
       json: {
