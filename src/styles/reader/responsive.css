@@ -486,16 +486,6 @@
 
 /* Fullscreen has enough room to show media at a useful reading size. */
 @media (min-width: 641px) {
-  main:fullscreen .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
-  .tiktok-comments__actions,
-  main:-webkit-full-screen .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
-  .tiktok-comments__actions,
-  html[data-reader-fullscreen="true"] main
-  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
-  .tiktok-comments__actions {
-    transform: translateX(-56px);
-  }
-
   main:fullscreen .reader-card__preview > img,
   main:-webkit-full-screen .reader-card__preview > img,
   html[data-reader-fullscreen="true"] main .reader-card__preview > img {
