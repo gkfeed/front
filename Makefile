@@ -8,11 +8,7 @@ update:
 	docker compose up -d --build
 
 dev:
-	@set -e; \
-	PORT="$(BFF_PORT)" npm run dev:bff & \
-	bff_pid=$$!; \
-	trap 'kill "$$bff_pid" 2>/dev/null || true; wait "$$bff_pid" 2>/dev/null || true' EXIT INT TERM; \
-	BFF_TARGET="$(BFF_TARGET)" npm run dev
+	BFF_PORT="$(BFF_PORT)" BFF_TARGET="$(BFF_TARGET)" npm run dev
 
 check:
 	NODE_OPTIONS=--disable-warning=ExperimentalWarning npm run check
