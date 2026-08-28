@@ -9,6 +9,8 @@ import {
   LiquipediaPreview,
   MatreshkaCopy,
   MatreshkaVideoPreview,
+  SasflixCopy,
+  SasflixVideoPreview,
   StandardCopy,
   TikTokSupplementary,
   TwitchCopy,
@@ -40,6 +42,10 @@ export const feedItemCardProviderRendererMap = {
   matreshka: createProviderRenderer({
     Preview: MatreshkaVideoPreview,
     Copy: MatreshkaCopy,
+  }),
+  sasflix: createProviderRenderer({
+    Preview: SasflixVideoPreview,
+    Copy: SasflixCopy,
   }),
   tiktok: createProviderRenderer({
     Preview: FeedItemMediaPreview,

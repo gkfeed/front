@@ -42,6 +42,14 @@ describe('feed item card presentation', () => {
     expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
   });
 
+  it('requests Sasflix stream metadata even when the feed includes a thumbnail', () => {
+    const feedItem = item({
+      link: 'https://sasflix.ru/topics/c3895a19-330e-4483-ac69-14fe9d0fd9c6',
+      text: '<img src="https://sasflix.ru/api/image/cover?w=1024">',
+    });
+    expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
+  });
+
   it('keeps the local image as a fallback for a remote Rezka preview', () => {
     const feedItem = item({
       link: 'https://hdrezka.me/films/drama/123-story.html',

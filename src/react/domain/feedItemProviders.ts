@@ -12,7 +12,12 @@ import {
   isTikTokVideoUrl,
   isVkHost,
 } from '../../../shared/urlRules';
-import { getMatreshkaVideoId, getYoutubeVideoId, parseUrl } from './feedItemUrls';
+import {
+  getMatreshkaVideoId,
+  getSasflixPublicationId,
+  getYoutubeVideoId,
+  parseUrl,
+} from './feedItemUrls';
 import { getTwitchChannel } from './twitchPreview';
 import { isInstagramMediaUrl } from './instagramPreview';
 
@@ -76,6 +81,12 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
       : { type: 'standard' },
     classNames: (variant) => variant.type === 'matreshka' ? ['reader-card--matreshka'] : [],
   }),
+  sasflix: createFeedItemProviderAdapter({
+    resolveVariant: ({ sasflixPublicationId }) => sasflixPublicationId
+      ? { type: 'sasflix', publicationId: sasflixPublicationId }
+      : { type: 'standard' },
+    classNames: (variant) => variant.type === 'sasflix' ? ['reader-card--sasflix'] : [],
+  }),
   tiktok: createFeedItemProviderAdapter({
     supplementary: 'tiktok',
     isShortVideo: true,
@@ -127,6 +138,8 @@ export function getFeedItemCardPresentationDescriptor({
     ].filter(Boolean).join(' '),
     preview: variant.type === 'matreshka'
       ? { type: 'matreshka', videoId: variant.videoId }
+      : variant.type === 'sasflix'
+        ? { type: 'sasflix', publicationId: variant.publicationId }
       : variant.type === 'youtube'
         ? { type: 'youtube', videoId: variant.videoId }
         : variant.type === 'twitch'
@@ -136,6 +149,8 @@ export function getFeedItemCardPresentationDescriptor({
       ? 'none'
       : variant.type === 'matreshka'
       ? 'matreshka'
+      : variant.type === 'sasflix'
+        ? 'sasflix'
       : variant.type === 'youtube'
         ? 'youtube'
         : variant.type === 'twitch'
@@ -187,6 +202,7 @@ export function getFeedItemProviderFromUrl(item: FeedItem, url: URL | null): Fee
   // imported TikTok items retain an `inst:` title prefix from their source.
   if (url) {
     if (getMatreshkaVideoId(url)) return 'matreshka';
+    if (getSasflixPublicationId(url)) return 'sasflix';
     if (getYoutubeVideoId(url)) return 'youtube';
     if (getTwitchChannel(url)) return 'twitch';
     if (isTikTokVideoUrl(url)) return 'tiktok';

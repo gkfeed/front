@@ -10,6 +10,7 @@ import { getTwitchChannel, getTwitchPreview } from './twitchPreview';
 import { getVkVideoPreview } from './vkPreview';
 import {
   getMatreshkaVideoId,
+  getSasflixPublicationId,
   getYoutubeVideoId,
   hostnameOf,
   isDirectImage,
@@ -36,6 +37,7 @@ export function analyzeFeedItem(item: FeedItem): FeedItemAnalysis {
     youtubeVideoId: url ? getYoutubeVideoId(url) : null,
     twitchChannel: url ? getTwitchChannel(url) : null,
     matreshkaVideoId: url ? getMatreshkaVideoId(url) : null,
+    sasflixPublicationId: url ? getSasflixPublicationId(url) : null,
   };
 }
 

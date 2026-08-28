@@ -33,7 +33,10 @@ export function useFeedItemCardResource(item: FeedItem) {
     liquipediaMatch: remotePreview.liquipediaMatch,
     previewStatus: remotePreview.previewStatus,
     previewFailures,
-    isPreviewPending: shouldLoadRemote && !analysis.localPreview && remotePreview.previewStatus === 'pending',
+    isPreviewPending: analysis.provider !== 'sasflix'
+      && shouldLoadRemote
+      && !analysis.localPreview
+      && remotePreview.previewStatus === 'pending',
     onPreviewError: () => setPreviewFailures((failures) => failures + 1),
   };
 }

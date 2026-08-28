@@ -14,6 +14,7 @@ import {
 import {
   parseInstagramEmbedMedia,
   parseRezkaOriginalCover,
+  parseSasflixVideoUrl,
   parseVkStructuredVideo,
 } from './openGraphProviderParsers.js';
 
@@ -30,7 +31,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     'twitter:image',
     'twitter:image:src',
   ]) ?? structuredVideo?.image ?? null;
-  const video = firstMetadata(metadata, [
+  const video = parseSasflixVideoUrl(html, pageUrl) ?? firstMetadata(metadata, [
     'og:video:secure_url',
     'og:video',
     'og:video:url',

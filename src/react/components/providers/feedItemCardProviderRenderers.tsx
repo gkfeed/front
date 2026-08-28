@@ -9,6 +9,7 @@ import { FeedItemMedia } from '../previews/FeedItemMedia';
 import { HltvCountdown, HltvMatchup } from '../previews/HltvMatch';
 import { LiquipediaMatch } from '../previews/LiquipediaMatch';
 import { MatreshkaPreview } from '../previews/MatreshkaPreview';
+import { SasflixPreview } from '../previews/SasflixPreview';
 import { TikTokComments } from '../previews/TikTokComments';
 import { TwitchPreview } from '../previews/TwitchPreview';
 import { TwitchTitle } from '../TwitchTitle';
@@ -137,6 +138,24 @@ export function MatreshkaVideoPreview(props: FeedItemCardProviderRendererProps) 
   return createElement(renderMatreshkaVideoPreview, props);
 }
 
+const renderSasflixVideoPreview = createVariantRenderer('sasflix', ({
+  model,
+  localizedPreview,
+}: VariantRendererProps<'sasflix'>) => (
+  <SasflixPreview
+    href={model.item.link}
+    title={model.item.title}
+    videoSrc={model.openGraphPreview?.video ?? null}
+    previewStatus={model.previewStatus}
+    preview={localizedPreview}
+    onPreviewError={model.onPreviewError}
+  />
+));
+
+export function SasflixVideoPreview(props: FeedItemCardProviderRendererProps) {
+  return createElement(renderSasflixVideoPreview, props);
+}
+
 const renderTwitchVideoPreview = createVariantRenderer('twitch', ({
   model,
   localizedPreview,
@@ -206,6 +225,18 @@ const renderMatreshkaCopy = createVariantRenderer('matreshka', ({
 
 export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
   return createElement(renderMatreshkaCopy, props);
+}
+
+const renderSasflixCopy = createVariantRenderer('sasflix', ({
+  model,
+}: VariantRendererProps<'sasflix'>) => (
+  <div className="reader-card__copy reader-card__sasflix-copy">
+    <h2 className="reader-card__title">{model.item.title}</h2>
+  </div>
+), StandardCopy);
+
+export function SasflixCopy(props: FeedItemCardProviderRendererProps) {
+  return createElement(renderSasflixCopy, props);
 }
 
 export function VkCopy({ model, displayHostname }: FeedItemCardProviderRendererProps) {

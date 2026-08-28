@@ -150,6 +150,23 @@ describe('Matreshka feed items', () => {
   });
 });
 
+describe('Sasflix feed items', () => {
+  it('recognizes canonical Sasflix topic links only', () => {
+    expect(analyzeFeedItem(item({
+      link: 'https://sasflix.ru/topics/c3895a19-330e-4483-ac69-14fe9d0fd9c6',
+    })).provider).toBe('sasflix');
+    expect(analyzeFeedItem(item({
+      link: 'https://www.sasflix.ru/documentary/630ffde7-febb-4f95-a490-6208d8770dea',
+    })).sasflixPublicationId).toBe('630ffde7-febb-4f95-a490-6208d8770dea');
+    expect(analyzeFeedItem(item({
+      link: 'https://sasflix.ru.example.org/topics/c3895a19-330e-4483-ac69-14fe9d0fd9c6',
+    })).provider).toBe('generic');
+    expect(analyzeFeedItem(item({
+      link: 'http://sasflix.ru/topics/c3895a19-330e-4483-ac69-14fe9d0fd9c6',
+    })).provider).toBe('generic');
+  });
+});
+
 describe('isTikTokFeedItem', () => {
   it('recognizes TikTok links without matching lookalike domains', () => {
     expect(isTikTokFeedItem(item({ link: 'https://www.tiktok.com/@creator/video/123' }))).toBe(true);

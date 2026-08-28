@@ -82,21 +82,25 @@
   main:fullscreen .reader__item:has(.reader-card--youtube),
   main:fullscreen .reader__item:has(.reader-card--twitch),
   main:fullscreen .reader__item:has(.reader-card--matreshka),
+  main:fullscreen .reader__item:has(.reader-card--sasflix),
   main:fullscreen .reader__item:has(.reader-card--image-preview),
   main:fullscreen .reader__item:has(.reader-card--simple-image),
   main:-webkit-full-screen .reader__item:has(.reader-card--youtube),
   main:-webkit-full-screen .reader__item:has(.reader-card--twitch),
   main:-webkit-full-screen .reader__item:has(.reader-card--matreshka),
+  main:-webkit-full-screen .reader__item:has(.reader-card--sasflix),
   main:-webkit-full-screen .reader__item:has(.reader-card--image-preview),
   main:-webkit-full-screen .reader__item:has(.reader-card--simple-image),
   html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--youtube),
   html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--twitch),
   html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--matreshka),
+  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--sasflix),
   html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--image-preview),
   html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--simple-image),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--youtube),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--twitch),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--matreshka),
+  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--sasflix),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--image-preview),
   main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--simple-image) {
     width: min(100%, 960px);
@@ -107,13 +111,17 @@
   main:fullscreen .reader-card--youtube .reader-card__preview > img,
   main:fullscreen .reader-card--twitch .reader-card__preview > img,
   main:fullscreen .reader-card--matreshka .reader-card__preview > img,
+  main:fullscreen .reader-card--sasflix .reader-card__preview > img,
   main:-webkit-full-screen .reader-card--youtube .reader-card__preview > img,
   main:-webkit-full-screen .reader-card--twitch .reader-card__preview > img,
   main:-webkit-full-screen .reader-card--matreshka .reader-card__preview > img,
+  main:-webkit-full-screen .reader-card--sasflix .reader-card__preview > img,
   html[data-reader-fullscreen="true"] main .reader-card--youtube .reader-card__preview > img,
   html[data-reader-fullscreen="true"] main .reader-card--twitch .reader-card__preview > img,
   html[data-reader-fullscreen="true"] main .reader-card--matreshka .reader-card__preview > img,
+  html[data-reader-fullscreen="true"] main .reader-card--sasflix .reader-card__preview > img,
   main[data-reader-fullscreen="true"] .reader-card--matreshka .reader-card__preview > img,
+  main[data-reader-fullscreen="true"] .reader-card--sasflix .reader-card__preview > img,
   main[data-reader-fullscreen="true"] .reader-card--twitch .reader-card__preview > img,
   main[data-reader-fullscreen="true"] .reader-card--youtube .reader-card__preview > img {
     max-height: none;
@@ -226,7 +234,8 @@
 
   .reader-card.reader-card--youtube,
   .reader-card.reader-card--twitch,
-  .reader-card.reader-card--matreshka {
+  .reader-card.reader-card--matreshka,
+  .reader-card.reader-card--sasflix {
     padding: 0;
   }
 

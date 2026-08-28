@@ -50,7 +50,9 @@ export async function fetchOpenGraph(input: string, context?: RequestExecutionCo
   const page = await fetchHtml(
     url,
     TWITTERBOT_USER_AGENT,
-    { metadataOnly: isMatreshkaVideoUrl(requestedUrl) },
+    isSasflixPublicationUrl(requestedUrl)
+      ? { maxBytes: 256_000, truncateAtLimit: true }
+      : { metadataOnly: isMatreshkaVideoUrl(requestedUrl) },
     context,
   );
   return parseOpenGraph(page.html, page.url);
@@ -112,6 +114,17 @@ function isRezkaUrl(url: URL): boolean {
 function isMatreshkaVideoUrl(url: URL): boolean {
   return url.hostname.toLowerCase().replace(/^www\./, '') === 'matreshka.tv'
     && /^\/video\/[^/]+(?:\/|$)/i.test(url.pathname);
+}
+
+function isSasflixPublicationUrl(url: URL): boolean {
+  // Sasflix publishes videos under category routes such as /documentary/:id.
+  // Keep in sync with src/react/domain/feedItemUrls.ts and shared/urlRules.ts.
+  return normalizeHostname(url.hostname) === 'sasflix.ru'
+    && url.protocol === 'https:'
+    && !url.username
+    && !url.password
+    && !url.port
+    && /^\/[a-z0-9_-]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/?$/i.test(url.pathname);
 }
 
 function isInstagramPostUrl(url: URL): boolean {

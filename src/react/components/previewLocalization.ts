@@ -28,6 +28,8 @@ function getFeedItemPreviewAlt(alt: FeedItemPreviewAlt, t: TFunction): string {
       return t('preview.twitchPreview', { channel: alt.channel });
     case 'matreshka':
       return alt.title ? t('preview.for', { title: alt.title }) : t('preview.matreshkaVideo');
+    case 'sasflix':
+      return alt.title ? t('preview.for', { title: alt.title }) : t('preview.sasflixVideo');
     case 'vk':
       return alt.title ? t('preview.videoFor', { title: alt.title }) : t('preview.vkVideo');
   }

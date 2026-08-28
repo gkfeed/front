@@ -33,6 +33,7 @@ export function shouldLoadRemotePreview(
   const isReddit = isRedditUrl(url);
   const needsInstagramMediaType = analysis.provider === 'instagram'
     && Boolean(url && isAmbiguousInstagramPostUrl(url));
+  const needsSasflixMetadata = analysis.provider === 'sasflix';
   const feedDescription = usesVkDescription
     ? getFeedItemDescription(item.text, item.title)
     : null;
@@ -42,6 +43,7 @@ export function shouldLoadRemotePreview(
     && (isReddit
       || isRezka
       || needsInstagramMediaType
+      || needsSasflixMetadata
       || !(localPreview?.src && (!usesVkDescription || feedDescription)));
 }
 

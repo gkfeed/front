@@ -15,6 +15,7 @@ export type FeedItemPreviewAlt =
   | { kind: 'tiktok'; title: string | null }
   | { kind: 'twitch'; channel: string }
   | { kind: 'matreshka'; title: string | null }
+  | { kind: 'sasflix'; title: string | null }
   | { kind: 'vk'; title: string | null };
 
 export type FeedItemProvider =
@@ -23,6 +24,7 @@ export type FeedItemProvider =
   | 'instagram'
   | 'liquipedia'
   | 'matreshka'
+  | 'sasflix'
   | 'tiktok'
   | 'twitch'
   | 'vk'
@@ -36,6 +38,7 @@ export interface FeedItemAnalysis {
   youtubeVideoId: string | null;
   twitchChannel: string | null;
   matreshkaVideoId: string | null;
+  sasflixPublicationId: string | null;
 }
 
 export type FeedItemAnalyzer = (item: FeedItem) => FeedItemAnalysis;

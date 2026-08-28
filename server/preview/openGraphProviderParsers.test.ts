@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   parseInstagramEmbedMedia,
   parseRezkaOriginalCover,
+  parseSasflixVideoUrl,
   parseVkStructuredVideo,
 } from './openGraphProviderParsers.js';
 
@@ -85,5 +86,20 @@ describe('parseRezkaOriginalCover', () => {
       '<div class="b-sidecover"><a href="javascript:alert(1)"></a></div>',
       new URL('https://rezka.ag/films/story'),
     )).toBeNull();
+  });
+});
+
+describe('parseSasflixVideoUrl', () => {
+  it('builds the public HLS URL from a Sasflix topic poster', () => {
+    const html = '<img src="https://sasflix.ru/api/poster/eb1ddca7-d933-4ccf-99b6-4129a4a6730e?w=1024">';
+    expect(parseSasflixVideoUrl(
+      html,
+      new URL('https://sasflix.ru/documentary/630ffde7-febb-4f95-a490-6208d8770dea'),
+    )).toBe('https://sasflix.ru/api/video/eb1ddca7-d933-4ccf-99b6-4129a4a6730e.m3u8');
+  });
+
+  it('does not expose poster identifiers from other hosts', () => {
+    const html = '<img src="https://sasflix.ru/api/poster/eb1ddca7-d933-4ccf-99b6-4129a4a6730e">';
+    expect(parseSasflixVideoUrl(html, new URL('https://example.com/topics/topic'))).toBeNull();
   });
 });

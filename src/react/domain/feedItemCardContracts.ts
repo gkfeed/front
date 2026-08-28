@@ -20,6 +20,7 @@ export type RemotePreview = {
 export type FeedItemCardVariant =
   | { type: 'standard' }
   | { type: 'matreshka'; videoId: string }
+  | { type: 'sasflix'; publicationId: string }
   | { type: 'twitch'; channel: string }
   | { type: 'youtube'; videoId: string }
   | { type: 'tiktok' }
@@ -35,6 +36,7 @@ export type FeedItemCardImagePreview =
 export type FeedItemCardPreviewDescriptor =
   | { type: 'media'; isShortVideo: boolean; isTikTok: boolean }
   | { type: 'matreshka'; videoId: string }
+  | { type: 'sasflix'; publicationId: string }
   | { type: 'twitch'; channel: string }
   | { type: 'youtube'; videoId: string };
 
@@ -43,6 +45,7 @@ export type FeedItemCardCopyDescriptor =
   | 'youtube'
   | 'twitch'
   | 'matreshka'
+  | 'sasflix'
   | 'simple-image'
   | 'standard';
 
@@ -59,6 +62,7 @@ export type FeedItemCardVariantContext = {
   youtubeVideoId: string | null;
   twitchChannel: string | null;
   matreshkaVideoId: string | null;
+  sasflixPublicationId: string | null;
   isSimpleImage: boolean;
   isInstagramPhoto: boolean;
 };

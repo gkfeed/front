@@ -1,6 +1,7 @@
 .reader-card--youtube,
 .reader-card--twitch,
-.reader-card--matreshka {
+.reader-card--matreshka,
+.reader-card--sasflix {
   position: relative;
   gap: 0;
   min-height: 0;
@@ -32,7 +33,8 @@
 
 .reader-card--youtube .reader-card__preview,
 .reader-card--twitch .reader-card__preview,
-.reader-card--matreshka .reader-card__preview {
+.reader-card--matreshka .reader-card__preview,
+.reader-card--sasflix .reader-card__preview {
   border: 0;
   border-radius: 0;
 }
@@ -117,6 +119,13 @@
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.reader-card__preview--player video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
 }
 
 .reader-card__player-shell--theater {

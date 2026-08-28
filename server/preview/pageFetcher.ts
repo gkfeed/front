@@ -9,13 +9,18 @@ import type { RequestExecutionContext } from '../application/requestExecutionCon
 export async function fetchHtml(
   input: URL,
   userAgent = TWITTERBOT_USER_AGENT,
-  options: { metadataOnly?: boolean } = {},
+  options: { metadataOnly?: boolean; maxBytes?: number; truncateAtLimit?: boolean } = {},
   context?: RequestExecutionContext,
 ): Promise<{ html: string; url: URL }> {
   const { response, contentType } = await fetchHtmlResponse(input, userAgent, context);
   const html = options.metadataOnly === true
     ? await readMetadataBody(response, getCharset(contentType), context)
-    : await readHtmlBody(response, { encoding: getCharset(contentType), context });
+    : await readHtmlBody(response, {
+      encoding: getCharset(contentType),
+      maxBytes: options.maxBytes,
+      truncateAtLimit: options.truncateAtLimit,
+      context,
+    });
   return { html, url: response.url };
 }
 
