@@ -1,0 +1,55 @@
+@media (max-width: 640px) {
+  .reader {
+    max-width: none;
+    gap: 12px;
+    padding: 14px 12px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .reader:has(.reader__item--short-video) {
+    display: block;
+    min-height: 100dvh;
+    padding: 8px;
+  }
+
+  body:has(.reader__item--short-video) .reader__fullscreen-toolbar {
+    display: block;
+  }
+
+  html:not([data-reader-fullscreen]) main:not(:fullscreen)
+  .reader__fullscreen-toolbar,
+  html:not([data-reader-fullscreen]) main:not(:-webkit-full-screen)
+  .reader__fullscreen-toolbar {
+    inset: max(12px, env(safe-area-inset-top))
+      max(60px, calc(48px + env(safe-area-inset-right) + 12px)) auto auto;
+  }
+
+  .reader-card {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .reader-card:is(
+    .reader-card--youtube,
+    .reader-card--twitch,
+    .reader-card--matreshka,
+    .reader-card--sasflix
+  ) {
+    padding: 0;
+  }
+
+  .reader__actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .reader__actions button {
+    min-height: 48px;
+    padding-inline: 12px;
+  }
+
+  .reader__item {
+    gap: 10px;
+  }
+
+}
+

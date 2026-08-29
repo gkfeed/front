@@ -1,0 +1,7 @@
+@media (max-width: 640px) {
+  .reader__count {
+    padding: 5px 9px;
+    font-size: 0.75rem;
+  }
+}
+

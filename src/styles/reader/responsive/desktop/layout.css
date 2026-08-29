@@ -1,0 +1,27 @@
+@media (min-width: 1024px) {
+  .reader {
+    max-width: 1024px;
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .reader:has(.reader__item--tiktok) {
+    max-width: 1648px;
+  }
+
+  .reader__item,
+  .reader__scroll-panel,
+  .reader__loading,
+  .reader__state {
+    max-width: 688px;
+  }
+
+  .reader__item--short-video {
+    max-width: 976px;
+  }
+
+  .reader__item--tiktok {
+    max-width: 1600px;
+  }
+}
+

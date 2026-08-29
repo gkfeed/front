@@ -1,0 +1,109 @@
+.reader-card__hltv-player-stats {
+  border-top: 1px solid rgb(255 255 255 / 15%);
+  background: rgb(7 26 41 / 22%);
+}
+
+.reader-card__hltv-player-stats summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
+  color: rgb(255 255 255 / 88%);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 850;
+  list-style: none;
+  user-select: none;
+}
+
+.reader-card__hltv-player-stats summary::-webkit-details-marker {
+  display: none;
+}
+
+.reader-card__hltv-player-stats summary > span:last-child {
+  font-size: 1.15rem;
+  transition: transform 160ms ease;
+}
+
+.reader-card__hltv-player-stats[open] summary > span:last-child {
+  transform: rotate(180deg);
+}
+
+.reader-card__hltv-player-stats summary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.reader-card__hltv-player-tables {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 14px 16px;
+}
+
+.reader-card__hltv-player-stats-pending {
+  margin: 0;
+  padding: 3px 18px 16px;
+  color: rgb(255 255 255 / 58%);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.reader-card__hltv-player-tables table {
+  width: 100%;
+  border-collapse: collapse;
+  color: rgb(255 255 255 / 82%);
+  font-size: clamp(0.67rem, 2.2cqw, 0.78rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.reader-card__hltv-player-tables caption {
+  padding: 5px 4px 8px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-align: left;
+}
+
+.reader-card__hltv-player-tables th,
+.reader-card__hltv-player-tables td {
+  padding: 5px 4px;
+  border-bottom: 1px solid rgb(255 255 255 / 9%);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.reader-card__hltv-player-tables th:first-child {
+  max-width: 88px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+}
+
+.reader-card__hltv-player-tables thead th {
+  color: rgb(255 255 255 / 52%);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reader-card__hltv-player-tables tbody th {
+  color: #fff;
+  font-weight: 750;
+}
+
+.reader-card__hltv-player-tables tbody tr.reader-card__hltv-player-row--best-adr th:first-child,
+.reader-card__hltv-player-tables tbody tr.reader-card__hltv-player-row--best-adr td:nth-last-child(2) {
+  color: #ffd08a;
+}
+
+.reader-card__hltv-player-tables tbody tr.reader-card__hltv-player-row--best-rating td:last-child {
+  color: #ffd08a;
+  font-weight: 950;
+}
+
+.reader-card__hltv-player-tables abbr {
+  text-decoration: none;
+}
+

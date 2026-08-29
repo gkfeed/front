@@ -3,6 +3,14 @@
   gap: 6px;
 }
 
+.field__label {
+  color: color-mix(in oklch, var(--color-ink-inverse) 78%, var(--color-page));
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
 .field__control {
   min-height: 48px;
   padding: 0 12px;
@@ -14,6 +22,12 @@
 .field__control:focus-within {
   background: var(--color-field-focus);
   border-color: var(--color-accent-focus);
+}
+
+.field--invalid .field__control {
+  border-color: color-mix(in oklch, var(--color-danger) 78%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 78%, var(--color-danger));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-danger) 70%, var(--color-page));
 }
 
 .field__icon {

@@ -1,0 +1,30 @@
+@media (max-width: 640px) {
+  .liquipedia-match__overview {
+    gap: 8px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .liquipedia-team__identity {
+    gap: 7px;
+  }
+
+  .liquipedia-team__form {
+    gap: 3px;
+  }
+
+  .liquipedia-team__form-result {
+    width: 20px;
+    height: 20px;
+    font-size: 0.64rem;
+  }
+
+  .liquipedia-team:not(.liquipedia-team--reverse) .liquipedia-team__form {
+    padding-right: calc(clamp(38px, 8vw, 56px) + 7px);
+  }
+
+  .liquipedia-team--reverse .liquipedia-team__form {
+    padding-left: calc(clamp(38px, 8vw, 56px) + 7px);
+  }
+}
+

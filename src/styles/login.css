@@ -25,14 +25,6 @@
   gap: 16px;
 }
 
-.login label {
-  color: color-mix(in oklch, var(--color-ink-inverse) 78%, var(--color-page));
-  font-size: 0.82rem;
-  font-weight: 650;
-  letter-spacing: 0.035em;
-  text-transform: uppercase;
-}
-
 .login .field__control,
 .login__account {
   display: grid;
@@ -68,12 +60,6 @@
   font-size: 1.05rem;
   line-height: 1.2;
   overflow-wrap: anywhere;
-}
-
-.login .field__control:has([aria-invalid="true"]) {
-  border-color: color-mix(in oklch, var(--color-danger) 78%, var(--color-page));
-  background: color-mix(in oklch, var(--color-field) 78%, var(--color-danger));
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-danger) 70%, var(--color-page));
 }
 
 .login input {
@@ -135,21 +121,6 @@
   font-weight: 650;
 }
 
-.login button {
-  display: inline-flex;
-  min-width: 128px;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 16px;
-  border: 1px solid var(--color-accent-border);
-  border-radius: 12px;
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  font-weight: 700;
-  transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease), transform var(--ease);
-}
-
 .login button[type="submit"]:not(:disabled):hover {
   background: color-mix(in oklch, var(--color-accent) 88%, var(--color-focus-light));
   transform: translateY(-1px);
@@ -157,11 +128,6 @@
 
 .login button:not(:disabled):active {
   transform: translateY(0);
-}
-
-.login button:focus-visible {
-  outline: 2px solid var(--color-focus-light);
-  outline-offset: 3px;
 }
 
 .login button:disabled {

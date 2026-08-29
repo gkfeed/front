@@ -70,7 +70,7 @@ export function FeedCreator() {
           >
             {getStatusMessage(saveStatus, t)}
           </span>
-          <button className="creator__submit" type="submit" disabled={isSaving}>
+          <button className="ui-primary-button creator__submit" type="submit" disabled={isSaving}>
             {isSaving ? t('creator.savingButton') : t('creator.addButton')}
           </button>
         </div>
@@ -99,6 +99,7 @@ function ModeTab({ children, mode, currentMode, disabled, onSelect }: ModeTabPro
 
   return (
     <button
+      className="ui-primary-button"
       id={`feed-create-${mode}-tab`}
       type="button"
       role="tab"
@@ -186,7 +187,7 @@ function CreatorField({
         </>
       ) : (
         <>
-          <label htmlFor={id}>{label}</label>
+          <label className="field__label" htmlFor={id}>{label}</label>
           <div className="field__control">
             <input
               type={type}

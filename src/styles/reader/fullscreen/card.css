@@ -37,7 +37,7 @@
     justify-self: center;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader__actions[hidden]) {
+  .reader__item--fullscreen.reader__item--compact-actions:not(.reader__item--short-video) {
     --reader-actions-height: 0px;
   }
 

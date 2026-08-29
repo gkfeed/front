@@ -44,7 +44,7 @@ export function LoginForm({
       </div>
       {errorMessage ? <p className="field__error" role="alert">{errorMessage}</p> : null}
       <div className="login__actions">
-        <button type="submit" disabled={!isValid || isSubmitting}>{isSubmitting ? t('auth.signingIn') : t('auth.signIn')}</button>
+        <button className="ui-primary-button" type="submit" disabled={!isValid || isSubmitting}>{isSubmitting ? t('auth.signingIn') : t('auth.signIn')}</button>
       </div>
     </form>
   );
@@ -66,8 +66,8 @@ function LoginField({
   const errorId = `${name}-error`;
 
   return (
-    <div className="field">
-      <label htmlFor={name}>{t(labelKey)}</label>
+    <div className={`field${invalid ? ' field--invalid' : ''}`}>
+      <label className="field__label" htmlFor={name}>{t(labelKey)}</label>
       <div className="field__control">
         <span className="field__icon" aria-hidden="true"><Icon /></span>
         <input

@@ -1,0 +1,60 @@
+/* Fullscreen has enough room to show media at a useful reading size. */
+@media (min-width: 641px) {
+  main[data-reader-fullscreen="true"] .reader-card__preview > img {
+    max-height: calc(100dvh - 180px);
+    object-fit: contain;
+  }
+
+  main[data-reader-fullscreen="true"] .reader__item .reader-card__preview--short-video {
+    width: calc(56.25dvh - 16px);
+  }
+
+  /* Instagram photo posts share the short-video markup, but their aspect ratio
+     is not necessarily 9:16. Let wide photos use the fullscreen item width. */
+  main[data-reader-fullscreen="true"] .reader__item .reader-card--instagram-photo .reader-card__preview--short-video {
+    width: fit-content;
+  }
+}
+
+/* Keep ordinary image previews wide even when fullscreen reports a narrow CSS viewport. */
+main[data-reader-fullscreen="true"] .reader {
+  max-width: none;
+  padding-right: clamp(12px, 3vw, 48px);
+  padding-left: clamp(12px, 3vw, 48px);
+}
+
+main[data-reader-fullscreen="true"] :is(.reader__item, .reader__scroll-panel) {
+  max-width: min(100%, 1600px);
+}
+
+main[data-reader-fullscreen="true"] .reader__item:has(
+  .reader-card--image-preview,
+  .reader-card--simple-image,
+  .reader-card--instagram-photo
+) {
+  width: min(100%, 960px);
+}
+
+@media (min-width: 641px) {
+  main[data-reader-fullscreen="true"] .reader {
+    padding-right: clamp(20px, 4vw, 72px);
+    padding-left: clamp(20px, 4vw, 72px);
+  }
+
+  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) > .reader-card {
+    width: 100%;
+    max-width: none;
+  }
+
+  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) > .reader-card .reader-card__preview {
+    width: 100%;
+    max-width: none;
+  }
+
+  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) > .reader-card .reader-card__preview > img {
+    width: 100%;
+    max-width: none;
+    height: auto;
+  }
+}
+

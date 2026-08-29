@@ -20,13 +20,13 @@ export function SavedLogin({ username, onLogout }: { username: string; onLogout:
         <div className="login__logout-confirmation" role="group" aria-labelledby="logout-confirmation">
           <p id="logout-confirmation">{t('auth.logoutQuestion')}</p>
           <div className="login__actions">
-            <button type="button" className="login__cancel" autoFocus onClick={() => setIsConfirmingLogout(false)}>{t('auth.cancel')}</button>
-            <button type="button" className="danger" onClick={onLogout}>{t('auth.yesLogout')}</button>
+            <button type="button" className="ui-primary-button login__cancel" autoFocus onClick={() => setIsConfirmingLogout(false)}>{t('auth.cancel')}</button>
+            <button type="button" className="ui-primary-button danger" onClick={onLogout}>{t('auth.yesLogout')}</button>
           </div>
         </div>
       ) : (
         <div className="login__actions">
-          <button type="button" className="danger" onClick={() => setIsConfirmingLogout(true)}>{t('auth.logout')}</button>
+          <button type="button" className="ui-primary-button danger" onClick={() => setIsConfirmingLogout(true)}>{t('auth.logout')}</button>
         </div>
       )}
     </div>
