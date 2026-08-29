@@ -1,7 +1,10 @@
-.reader-card--youtube,
-.reader-card--twitch,
-.reader-card--matreshka,
-.reader-card--sasflix {
+/* Shared player cards and theater controls for video-capable providers. */
+:is(
+  .reader-card--youtube,
+  .reader-card--twitch,
+  .reader-card--matreshka,
+  .reader-card--sasflix
+) {
   position: relative;
   gap: 0;
   min-height: 0;
@@ -31,10 +34,12 @@
   outline-offset: -3px;
 }
 
-.reader-card--youtube .reader-card__preview,
-.reader-card--twitch .reader-card__preview,
-.reader-card--matreshka .reader-card__preview,
-.reader-card--sasflix .reader-card__preview {
+:is(
+  .reader-card--youtube,
+  .reader-card--twitch,
+  .reader-card--matreshka,
+  .reader-card--sasflix
+) .reader-card__preview {
   border: 0;
   border-radius: 0;
 }
@@ -59,9 +64,11 @@
   background: linear-gradient(160deg, var(--color-card-hover), var(--color-card));
 }
 
-.reader-card__resume-toggle,
-.reader-card__speed-toggle,
-.reader-card__theater-toggle {
+:is(
+  .reader-card__resume-toggle,
+  .reader-card__speed-toggle,
+  .reader-card__theater-toggle
+) {
   display: inline-flex;
   min-height: 30px;
   align-items: center;
@@ -90,9 +97,11 @@
   justify-content: center;
 }
 
-.reader-card__resume-toggle:hover,
-.reader-card__speed-toggle:hover,
-.reader-card__theater-toggle:hover {
+:is(
+  .reader-card__resume-toggle,
+  .reader-card__speed-toggle,
+  .reader-card__theater-toggle
+):hover {
   border-color: color-mix(in oklch, var(--color-field) 42%, var(--color-page));
   background: color-mix(in oklch, var(--color-field) 18%, var(--color-control-well));
 }
@@ -102,9 +111,11 @@
   background: color-mix(in oklch, var(--color-field) 26%, var(--color-control-well));
 }
 
-.reader-card__resume-toggle:focus-visible,
-.reader-card__speed-toggle:focus-visible,
-.reader-card__theater-toggle:focus-visible {
+:is(
+  .reader-card__resume-toggle,
+  .reader-card__speed-toggle,
+  .reader-card__theater-toggle
+):focus-visible {
   outline: 2px solid var(--color-focus-light);
   outline-offset: 2px;
 }
@@ -153,17 +164,21 @@
   background: #18181b;
 }
 
-.reader-card__player-shell--theater .reader-card__speed-toggle,
-.reader-card__player-shell--theater .reader-card__resume-toggle,
-.reader-card__player-shell--theater .reader-card__theater-toggle {
+.reader-card__player-shell--theater :is(
+  .reader-card__speed-toggle,
+  .reader-card__resume-toggle,
+  .reader-card__theater-toggle
+) {
   border-color: rgb(255 255 255 / 22%);
   background: rgb(255 255 255 / 9%);
   color: #f7f7f8;
 }
 
-.reader-card__player-shell--theater .reader-card__resume-toggle:hover,
-.reader-card__player-shell--theater .reader-card__speed-toggle:hover,
-.reader-card__player-shell--theater .reader-card__theater-toggle:hover {
+.reader-card__player-shell--theater :is(
+  .reader-card__resume-toggle,
+  .reader-card__speed-toggle,
+  .reader-card__theater-toggle
+):hover {
   border-color: rgb(255 255 255 / 32%);
   background: rgb(255 255 255 / 16%);
 }

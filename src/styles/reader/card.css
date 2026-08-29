@@ -198,17 +198,7 @@
   height: 100%;
 }
 
-.reader-card.reader-card--simple-image {
-  gap: 18px;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.reader-card.reader-card--preview-pending {
+.reader-card:is(.reader-card--simple-image, .reader-card--preview-pending) {
   min-height: 0;
   padding: 0;
   border: 0;

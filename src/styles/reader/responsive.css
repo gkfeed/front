@@ -59,10 +59,12 @@
 
 /* Keep a regular review card and its actions inside the fullscreen viewport. */
 @media (min-width: 641px) {
-  main:fullscreen .reader,
-  main:-webkit-full-screen .reader,
-  html[data-reader-fullscreen="true"] main .reader,
-  main[data-reader-fullscreen="true"] .reader {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader {
     align-content: center;
     gap: clamp(14px, 1.8vh, 22px);
     min-height: 100dvh;
@@ -70,96 +72,76 @@
     padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
   }
 
-  main:fullscreen .reader__item:not(.reader__item--short-video),
-  main:-webkit-full-screen .reader__item:not(.reader__item--short-video),
-  html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video),
-  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader__item:not(.reader__item--short-video) {
     width: min(100%, 960px);
     max-width: none;
   }
 
   /* A 16:9 canvas is useful for media, but makes text-only cards awkwardly wide. */
-  main:fullscreen .reader__item:has(.reader-card--youtube),
-  main:fullscreen .reader__item:has(.reader-card--twitch),
-  main:fullscreen .reader__item:has(.reader-card--matreshka),
-  main:fullscreen .reader__item:has(.reader-card--sasflix),
-  main:fullscreen .reader__item:has(.reader-card--image-preview),
-  main:fullscreen .reader__item:has(.reader-card--simple-image),
-  main:-webkit-full-screen .reader__item:has(.reader-card--youtube),
-  main:-webkit-full-screen .reader__item:has(.reader-card--twitch),
-  main:-webkit-full-screen .reader__item:has(.reader-card--matreshka),
-  main:-webkit-full-screen .reader__item:has(.reader-card--sasflix),
-  main:-webkit-full-screen .reader__item:has(.reader-card--image-preview),
-  main:-webkit-full-screen .reader__item:has(.reader-card--simple-image),
-  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--youtube),
-  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--twitch),
-  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--matreshka),
-  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--sasflix),
-  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--image-preview),
-  html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--simple-image),
-  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--youtube),
-  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--twitch),
-  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--matreshka),
-  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--sasflix),
-  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--image-preview),
-  main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--simple-image) {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader__item:has(
+    .reader-card--youtube,
+    .reader-card--twitch,
+    .reader-card--matreshka,
+    .reader-card--sasflix,
+    .reader-card--image-preview,
+    .reader-card--simple-image
+  ) {
     width: min(100%, 960px);
   }
 
   /* YouTube thumbnails are 16:9, so sizing the item from the available height
      also removes the empty side strips caused by a separately capped image. */
-  main:fullscreen .reader-card--youtube .reader-card__preview > img,
-  main:fullscreen .reader-card--twitch .reader-card__preview > img,
-  main:fullscreen .reader-card--matreshka .reader-card__preview > img,
-  main:fullscreen .reader-card--sasflix .reader-card__preview > img,
-  main:-webkit-full-screen .reader-card--youtube .reader-card__preview > img,
-  main:-webkit-full-screen .reader-card--twitch .reader-card__preview > img,
-  main:-webkit-full-screen .reader-card--matreshka .reader-card__preview > img,
-  main:-webkit-full-screen .reader-card--sasflix .reader-card__preview > img,
-  html[data-reader-fullscreen="true"] main .reader-card--youtube .reader-card__preview > img,
-  html[data-reader-fullscreen="true"] main .reader-card--twitch .reader-card__preview > img,
-  html[data-reader-fullscreen="true"] main .reader-card--matreshka .reader-card__preview > img,
-  html[data-reader-fullscreen="true"] main .reader-card--sasflix .reader-card__preview > img,
-  main[data-reader-fullscreen="true"] .reader-card--matreshka .reader-card__preview > img,
-  main[data-reader-fullscreen="true"] .reader-card--sasflix .reader-card__preview > img,
-  main[data-reader-fullscreen="true"] .reader-card--twitch .reader-card__preview > img,
-  main[data-reader-fullscreen="true"] .reader-card--youtube .reader-card__preview > img {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) :is(
+    .reader-card--youtube,
+    .reader-card--twitch,
+    .reader-card--matreshka,
+    .reader-card--sasflix
+  ) .reader-card__preview > img {
     max-height: none;
   }
 
-  main:fullscreen .reader-card--image-preview,
-  main:fullscreen .reader-card--simple-image,
-  main:-webkit-full-screen .reader-card--image-preview,
-  main:-webkit-full-screen .reader-card--simple-image,
-  html[data-reader-fullscreen="true"] main .reader-card--image-preview,
-  html[data-reader-fullscreen="true"] main .reader-card--simple-image,
-  main[data-reader-fullscreen="true"] .reader-card--image-preview,
-  main[data-reader-fullscreen="true"] .reader-card--simple-image {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) :is(.reader-card--image-preview, .reader-card--simple-image) {
     width: 100%;
     max-width: 100%;
     justify-self: center;
   }
 
-  main:fullscreen .reader-card--image-preview .reader-card__preview,
-  main:fullscreen .reader-card--simple-image .reader-card__preview,
-  main:-webkit-full-screen .reader-card--image-preview .reader-card__preview,
-  main:-webkit-full-screen .reader-card--simple-image .reader-card__preview,
-  html[data-reader-fullscreen="true"] main .reader-card--image-preview .reader-card__preview,
-  html[data-reader-fullscreen="true"] main .reader-card--simple-image .reader-card__preview,
-  main[data-reader-fullscreen="true"] .reader-card--image-preview .reader-card__preview,
-  main[data-reader-fullscreen="true"] .reader-card--simple-image .reader-card__preview {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) :is(.reader-card--image-preview, .reader-card--simple-image) .reader-card__preview {
     width: 100%;
     max-width: 100%;
   }
 
-  main:fullscreen .reader-card--image-preview .reader-card__preview > img,
-  main:fullscreen .reader-card--simple-image .reader-card__preview > img,
-  main:-webkit-full-screen .reader-card--image-preview .reader-card__preview > img,
-  main:-webkit-full-screen .reader-card--simple-image .reader-card__preview > img,
-  html[data-reader-fullscreen="true"] main .reader-card--image-preview .reader-card__preview > img,
-  html[data-reader-fullscreen="true"] main .reader-card--simple-image .reader-card__preview > img,
-  main[data-reader-fullscreen="true"] .reader-card--image-preview .reader-card__preview > img,
-  main[data-reader-fullscreen="true"] .reader-card--simple-image .reader-card__preview > img {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) :is(.reader-card--image-preview, .reader-card--simple-image) .reader-card__preview > img {
     width: 100%;
     max-width: 100%;
     max-height: calc(100dvh - 300px);
@@ -232,10 +214,12 @@
     padding: 16px;
   }
 
-  .reader-card.reader-card--youtube,
-  .reader-card.reader-card--twitch,
-  .reader-card.reader-card--matreshka,
-  .reader-card.reader-card--sasflix {
+  .reader-card:is(
+    .reader-card--youtube,
+    .reader-card--twitch,
+    .reader-card--matreshka,
+    .reader-card--sasflix
+  ) {
     padding: 0;
   }
 
@@ -283,8 +267,7 @@
     clip-path: inset(0 round 30px 30px 0 0);
   }
 
-  .reader__item--short-video .reader-card__preview--short-video img,
-  .reader__item--short-video .reader-card__preview--short-video video {
+  .reader__item--short-video .reader-card__preview--short-video :is(img, video) {
     object-fit: cover;
   }
 
@@ -304,10 +287,7 @@
 
   .reader__item--short-video
   .reader-card--instagram
-  .reader-card__preview--short-video img,
-  .reader__item--short-video
-  .reader-card--instagram
-  .reader-card__preview--short-video video {
+  .reader-card__preview--short-video :is(img, video) {
     width: 100%;
     height: 100%;
     border-radius: 30px;
@@ -345,8 +325,7 @@
     object-fit: contain;
   }
 
-  .reader__item--short-video > .reader__actions,
-  .reader__item--short-video > .reader__count-row {
+  .reader__item--short-video > :is(.reader__actions, .reader__count-row) {
     display: none;
   }
 
@@ -495,25 +474,30 @@
 
 /* Fullscreen has enough room to show media at a useful reading size. */
 @media (min-width: 641px) {
-  main:fullscreen .reader-card__preview > img,
-  main:-webkit-full-screen .reader-card__preview > img,
-  html[data-reader-fullscreen="true"] main .reader-card__preview > img {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main
+  ) .reader-card__preview > img {
     max-height: calc(100dvh - 180px);
     object-fit: contain;
   }
 
-  main:fullscreen .reader__item .reader-card__preview--short-video,
-  main:-webkit-full-screen .reader__item .reader-card__preview--short-video,
-  html[data-reader-fullscreen="true"] main .reader__item .reader-card__preview--short-video {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main
+  ) .reader__item .reader-card__preview--short-video {
     width: calc(56.25dvh - 16px);
   }
 
   /* Instagram photo posts share the short-video markup, but their aspect ratio
      is not necessarily 9:16. Let wide photos use the fullscreen item width. */
-  main:fullscreen .reader__item .reader-card--instagram-photo .reader-card__preview--short-video,
-  main:-webkit-full-screen .reader__item .reader-card--instagram-photo .reader-card__preview--short-video,
-  html[data-reader-fullscreen="true"] main .reader__item
-  .reader-card--instagram-photo .reader-card__preview--short-video,
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main
+  ) .reader__item .reader-card--instagram-photo .reader-card__preview--short-video,
   .reader__item--fullscreen .reader-card--instagram-photo .reader-card__preview--short-video {
     width: fit-content;
   }
@@ -521,19 +505,21 @@
 
 @media (min-width: 641px) {
   /* Fullscreen has enough horizontal space for a more readable TikTok comments rail. */
-  main:fullscreen .reader__item--tiktok,
-  main:-webkit-full-screen .reader__item--tiktok,
-  html[data-reader-fullscreen="true"] main .reader__item--tiktok,
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main
+  ) .reader__item--tiktok,
   .reader__item--fullscreen.reader__item--tiktok {
     width: min(100%, 1600px);
     max-width: none;
   }
 
-  main:fullscreen .reader__item--tiktok
-  .reader-card.reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]),
-  main:-webkit-full-screen .reader__item--tiktok
-  .reader-card.reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]),
-  html[data-reader-fullscreen="true"] main .reader__item--tiktok
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main
+  ) .reader__item--tiktok
   .reader-card.reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]),
   .reader__item--fullscreen.reader__item--tiktok
   .reader-card.reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]) {
@@ -543,13 +529,11 @@
     justify-content: center;
   }
 
-  main:fullscreen .reader__item--tiktok
-  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
-  .tiktok-comments,
-  main:-webkit-full-screen .reader__item--tiktok
-  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
-  .tiktok-comments,
-  html[data-reader-fullscreen="true"] main .reader__item--tiktok
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main
+  ) .reader__item--tiktok
   .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
   .tiktok-comments,
   .reader__item--fullscreen
@@ -561,38 +545,36 @@
 }
 
 /* Keep ordinary image previews wide even when fullscreen reports a narrow CSS viewport. */
-main:fullscreen .reader,
-main:-webkit-full-screen .reader,
-html[data-reader-fullscreen="true"] main .reader,
-main[data-reader-fullscreen="true"] .reader {
+:is(
+  main:fullscreen,
+  main:-webkit-full-screen,
+  html[data-reader-fullscreen="true"] main,
+  main[data-reader-fullscreen="true"]
+) .reader {
   max-width: none;
   padding-right: clamp(12px, 3vw, 48px);
   padding-left: clamp(12px, 3vw, 48px);
 }
 
-main:fullscreen .reader__item,
-main:fullscreen .reader__scroll-panel,
-main:-webkit-full-screen .reader__item,
-main:-webkit-full-screen .reader__scroll-panel,
-html[data-reader-fullscreen="true"] main .reader__item,
-html[data-reader-fullscreen="true"] main .reader__scroll-panel,
-main[data-reader-fullscreen="true"] .reader__item,
-main[data-reader-fullscreen="true"] .reader__scroll-panel {
+:is(
+  main:fullscreen,
+  main:-webkit-full-screen,
+  html[data-reader-fullscreen="true"] main,
+  main[data-reader-fullscreen="true"]
+) :is(.reader__item, .reader__scroll-panel) {
   max-width: min(100%, 1600px);
 }
 
-main:fullscreen .reader__item:has(.reader-card--image-preview),
-main:fullscreen .reader__item:has(.reader-card--simple-image),
-main:fullscreen .reader__item:has(.reader-card--instagram-photo),
-main:-webkit-full-screen .reader__item:has(.reader-card--image-preview),
-main:-webkit-full-screen .reader__item:has(.reader-card--simple-image),
-main:-webkit-full-screen .reader__item:has(.reader-card--instagram-photo),
-html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--image-preview),
-html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--simple-image),
-html[data-reader-fullscreen="true"] main .reader__item:has(.reader-card--instagram-photo),
-main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--image-preview),
-main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--simple-image),
-main[data-reader-fullscreen="true"] .reader__item:has(.reader-card--instagram-photo) {
+:is(
+  main:fullscreen,
+  main:-webkit-full-screen,
+  html[data-reader-fullscreen="true"] main,
+  main[data-reader-fullscreen="true"]
+) .reader__item:has(
+  .reader-card--image-preview,
+  .reader-card--simple-image,
+  .reader-card--instagram-photo
+) {
   width: min(100%, 960px);
 }
 
@@ -607,9 +589,11 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
 /* Let the TikTok player grow in fullscreen instead of stretching a wider iframe
    into the old comments-expanded height. */
 @media (min-width: 641px) {
-  main:fullscreen .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"]),
-  main:-webkit-full-screen .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"]),
-  html[data-reader-fullscreen="true"] main .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"]),
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main
+  ) .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"]),
   .reader__item--fullscreen .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"]) {
     --reader-tiktok-fullscreen-height: min(
       calc(100dvh - 152px),
@@ -618,11 +602,11 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
     height: var(--reader-tiktok-fullscreen-height);
   }
 
-  main:fullscreen .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
-  .reader-card__preview--short-video,
-  main:-webkit-full-screen .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
-  .reader-card__preview--short-video,
-  html[data-reader-fullscreen="true"] main .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main
+  ) .reader__item--tiktok .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
   .reader-card__preview--short-video,
   .reader__item--fullscreen .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
   .reader-card__preview--short-video {
@@ -633,22 +617,25 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
 }
 
 @media (min-width: 641px) {
-  main:fullscreen .reader,
-  main:-webkit-full-screen .reader,
-  html[data-reader-fullscreen="true"] main .reader,
-  main[data-reader-fullscreen="true"] .reader {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader {
     padding-right: clamp(20px, 4vw, 72px);
     padding-left: clamp(20px, 4vw, 72px);
   }
 
-  main:fullscreen .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
-  main:fullscreen .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image),
-  main:-webkit-full-screen .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
-  main:-webkit-full-screen .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image),
-  html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
-  html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image),
-  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--image-preview),
-  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--simple-image) {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader__item:not(.reader__item--short-video):has(
+    .reader-card--image-preview,
+    .reader-card--simple-image
+  ) {
     width: min(100%, 960px);
   }
 }
@@ -684,10 +671,12 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
 
 /* A parsed HLTV matchup is a responsive layout, not a 16:9 image canvas. */
 @media (min-width: 641px) {
-  main:fullscreen .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview),
-  main:-webkit-full-screen .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview),
-  html[data-reader-fullscreen="true"] main .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview),
-  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview) {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview) {
     width: min(100%, 960px);
     max-width: none;
   }
@@ -697,9 +686,7 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
    remaining-item counter. Give the card the space left by those controls and
    let its media row shrink inside that space. */
 @media (min-width: 641px) {
-  main:fullscreen,
-  main:-webkit-full-screen,
-  html[data-reader-fullscreen="true"] main {
+  :is(main:fullscreen, main:-webkit-full-screen, html[data-reader-fullscreen="true"] main) {
     overflow: hidden;
   }
 
@@ -738,8 +725,8 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
     min-width: 0;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader__actions,
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader__count-row {
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > :is(.reader__actions, .reader__count-row) {
     width: 100%;
     min-width: 0;
   }
@@ -752,9 +739,7 @@ main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
   }
 
   .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
-  .reader-card__preview > img,
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
-  .reader-card__preview > video {
+  .reader-card__preview > :is(img, video) {
     width: 100%;
     height: auto;
     max-width: none;

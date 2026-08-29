@@ -221,22 +221,28 @@ html[data-reader-fullscreen="true"] main .reader {
   min-height: 100dvh;
 }
 
-main:fullscreen .reader__actions,
-main:-webkit-full-screen .reader__actions,
-html[data-reader-fullscreen="true"] .reader__actions {
+:is(
+  main:fullscreen,
+  main:-webkit-full-screen,
+  html[data-reader-fullscreen="true"] main
+) .reader__actions {
   width: 100%;
 }
 
-main:fullscreen .reader__actions button,
-main:-webkit-full-screen .reader__actions button,
-html[data-reader-fullscreen="true"] .reader__actions button {
+:is(
+  main:fullscreen,
+  main:-webkit-full-screen,
+  html[data-reader-fullscreen="true"] main
+) .reader__actions button {
   height: var(--reader-actions-height, 52px);
   min-height: var(--reader-actions-height, 52px);
 }
 
-main:fullscreen .reader__fullscreen-toolbar,
-main:-webkit-full-screen .reader__fullscreen-toolbar,
-html[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
+:is(
+  main:fullscreen,
+  main:-webkit-full-screen,
+  html[data-reader-fullscreen="true"] main
+) .reader__fullscreen-toolbar {
   display: block;
   position: fixed;
   inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) auto auto;
