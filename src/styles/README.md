@@ -5,7 +5,7 @@ Keep styles with the smallest unit that fully owns the behaviour:
 - `styles.css` contains application-wide foundations and reusable UI primitives.
 - Page styles are imported by their page component.
 - Reusable component styles are imported by the component itself.
-- `reader/layout.css` and `reader/card.css` define only the Reader and card foundations.
+- `reader/layout.css` and `reader/card.css` define only the Reader and card foundations; card media and state rules live in their named sibling modules.
 - Reader features and providers own their internal styles, including their viewport variants. For example, short-video rules belong under `reader/short-video/`.
 - `reader/responsive/` and `reader/fullscreen/` contain generic context layout and import feature-owned overrides after the generic rules.
 

@@ -207,6 +207,7 @@ describe('FeedItemCard media providers', () => {
 
     const image = await screen.findByAltText('Preview for inst: photographer');
     expect(image.closest('.reader-card--instagram-photo')).toBeTruthy();
+    expect(image.closest('.reader-card--portrait-image')).toBeTruthy();
     expect(screen.queryByTitle('Video preview for inst: photographer')).toBeNull();
   });
 

@@ -1,11 +1,16 @@
 /* Reader and card foundations. */
 @import "./reader/layout.css";
 @import "./reader/card.css";
+@import "./reader/card-media.css";
+@import "./reader/card-states.css";
 
 /* Provider variants build on the generic card foundation. */
 @import "./reader/liquipedia.css";
 @import "./reader/hltv.css";
 @import "./reader/vk.css";
+@import "./reader/reddit.css";
+@import "./reader/spotify.css";
+@import "./reader/rezka.css";
 
 /* Feature styles. */
 @import "./reader/short-video/base.css";

@@ -67,7 +67,7 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
       'reader-card--short-video',
       'reader-card--instagram',
       ...(variant.type === 'instagram' && variant.media === 'photo'
-        ? ['reader-card--instagram-photo']
+        ? ['reader-card--instagram-photo', 'reader-card--portrait-image']
         : []),
     ],
   }),

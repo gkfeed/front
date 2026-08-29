@@ -1,0 +1,9 @@
+.reader-card--reddit-preview .reader-card__preview {
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--color-card-border) 70%, transparent);
+  border-radius: 15px;
+}
+
+.reader-card--reddit-preview .reader-card__preview img {
+  border-radius: inherit;
+}

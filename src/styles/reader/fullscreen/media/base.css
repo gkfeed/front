@@ -20,7 +20,7 @@ main[data-reader-fullscreen="true"] :is(.reader__item, .reader__scroll-panel) {
 main[data-reader-fullscreen="true"] .reader__item:has(
   .reader-card--image-preview,
   .reader-card--simple-image,
-  .reader-card--instagram-photo
+  .reader-card--portrait-image
 ) {
   width: min(100%, 960px);
 }
