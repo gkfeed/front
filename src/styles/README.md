@@ -8,6 +8,7 @@ Keep styles with the smallest unit that fully owns the behaviour:
 - `reader/layout.css` and `reader/card.css` define only the Reader and card foundations; card media and state rules live in their named sibling modules.
 - Reader features and providers own their internal styles, including their viewport variants. For example, short-video rules belong under `reader/short-video/`.
 - `reader/responsive/` and `reader/fullscreen/` contain generic context layout and import feature-owned overrides after the generic rules.
+- Within fullscreen, `card.css` owns the available card shell and control space, while `media/` owns preview and media sizing within that shell.
 
 Prefer a semantic modifier class or `data-*` state when React already knows the presentation state. Use `:has()` when the layout genuinely depends on child content that the parent does not otherwise know about.
 

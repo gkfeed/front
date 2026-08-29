@@ -16,22 +16,6 @@ main[data-reader-fullscreen="true"] .reader__item:has(
 }
 
 @media (min-width: 641px) {
-  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card {
-    width: 100%;
-    max-width: none;
-  }
-
-  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card .reader-card__preview {
-    width: 100%;
-    max-width: none;
-  }
-
-  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card .reader-card__preview > img {
-    width: 100%;
-    max-width: none;
-    height: auto;
-  }
-
   /* Landscape thumbnails size from the available height without introducing
      empty side strips from a separately capped image. */
   main[data-reader-fullscreen="true"] .reader-card--landscape-media .reader-card__preview > img {

@@ -1,0 +1,93 @@
+/* Size media-bearing review cards inside the height reserved by fullscreen/card.css. */
+@media (min-width: 641px) {
+  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card {
+    width: 100%;
+    max-width: none;
+  }
+
+  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card .reader-card__preview {
+    width: 100%;
+    max-width: none;
+  }
+
+  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card .reader-card__preview > img {
+    width: 100%;
+    max-width: none;
+    height: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview) {
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
+    grid-template-rows: auto auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview)
+  .reader-card__preview {
+    min-height: 0;
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview)
+  .reader-card__preview > :is(img, video) {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: max(0px, calc(var(--reader-fullscreen-content-height) - 180px));
+    object-fit: contain;
+  }
+
+  /* Portrait image cards should size to the image instead of leaving wide
+     side gutters inside a fullscreen card. */
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card--simple-image) {
+    max-height: none;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card > .reader-card__preview > img) {
+    width: min(100%, 960px);
+    max-width: none;
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img) {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: none;
+    grid-template-rows: auto auto;
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
+  > .reader-card__preview {
+    width: fit-content;
+    max-width: 100%;
+    min-height: auto;
+    height: auto;
+    max-height: none;
+    justify-self: center;
+    background: transparent;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
+  > .reader-card__preview > img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card > .reader-card__preview > img)
+  .reader-card__copy {
+    width: 100%;
+    max-width: 100%;
+    justify-self: center;
+  }
+}
