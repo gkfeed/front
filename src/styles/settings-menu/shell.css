@@ -1,0 +1,99 @@
+.settings-menu {
+  position: relative;
+  justify-self: end;
+}
+
+.settings-menu__trigger {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in oklch, var(--color-border) 88%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--color-page) 82%, var(--color-border));
+  color: var(--color-ink-inverse);
+  transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease);
+}
+
+.settings-menu__trigger:hover,
+.settings-menu__trigger[aria-expanded="true"] {
+  border-color: color-mix(in oklch, var(--color-ink-inverse) 44%, var(--color-border));
+  background: color-mix(in oklch, var(--color-page) 68%, var(--color-border));
+}
+
+.settings-menu__gear {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  transition: transform var(--ease);
+}
+
+.settings-menu__trigger[aria-expanded="true"] .settings-menu__gear {
+  transform: rotate(28deg);
+}
+
+.settings-menu__panel {
+  position: absolute;
+  inset: calc(100% + 9px) 0 auto auto;
+  z-index: 20;
+  width: min(304px, calc(100vw - 30px));
+  padding: 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 18px;
+  background: var(--color-input-surface);
+  color: var(--color-ink-strong);
+  box-shadow: 0 22px 54px rgb(0 0 0 / 0.28);
+}
+
+.settings-menu__heading {
+  display: grid;
+  gap: 2px;
+  padding: 2px 3px 11px;
+}
+
+.settings-menu__heading strong {
+  font-size: 0.95rem;
+}
+
+.settings-menu__heading span {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+}
+
+.settings-menu__section {
+  display: grid;
+  gap: 7px;
+}
+
+.settings-menu__section + .settings-menu__section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in oklch, var(--color-input-border) 42%, transparent);
+}
+
+.settings-menu__section-title {
+  padding-inline: 3px;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.settings-menu__trigger:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .settings-menu__trigger {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+}

@@ -1,4 +1,4 @@
-.container {
+.feeds-page {
   display: grid;
   gap: 14px;
   width: 100%;
@@ -50,7 +50,7 @@
   color: var(--color-muted);
 }
 
-.loading {
+.feeds-loading {
   display: grid;
   gap: 14px;
 }
@@ -170,7 +170,7 @@ a.feed:focus-visible {
   padding: 18px 20px 16px;
 }
 
-.skeleton-line {
+.feed-skeleton__line {
   width: 48%;
   height: 14px;
   border-radius: 999px;
@@ -179,15 +179,15 @@ a.feed:focus-visible {
   animation: skeleton-loading 1.1s ease-out infinite;
 }
 
-.skeleton-title {
+.feed-skeleton__line--title {
   width: 64%;
 }
 
-.skeleton-url {
+.feed-skeleton__line--url {
   width: 88%;
 }
 
-.empty {
+.feeds-empty {
   display: grid;
   gap: 12px;
   justify-items: center;
@@ -195,11 +195,11 @@ a.feed:focus-visible {
   text-align: center;
 }
 
-.empty a {
+.feeds-empty a {
   text-decoration: underline;
 }
 
-.empty .ui-button--secondary {
+.feeds-empty .ui-button--secondary {
   justify-self: center;
 }
 

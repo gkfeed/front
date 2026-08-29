@@ -1,0 +1,74 @@
+@media (max-width: 640px) {
+  .reader__item--short-video > :is(.reader__actions, .reader__count-row) {
+    display: none;
+  }
+
+  .reader__item--short-video .reader__compact-actions {
+    display: none;
+  }
+
+  .reader__mobile-rail {
+    position: absolute;
+    z-index: 12;
+    top: 18px;
+    right: 0;
+    bottom: 18px;
+    display: block;
+    width: 48px;
+    pointer-events: none;
+  }
+
+  .reader__mobile-decisions {
+    position: fixed;
+    z-index: 14;
+    top: 57dvh;
+    right: max(8px, env(safe-area-inset-right));
+    display: grid;
+    gap: 12px;
+    pointer-events: auto;
+    transform: translateY(-50%);
+  }
+
+  .reader__mobile-decisions button {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    place-items: center;
+    border: 2px solid color-mix(in oklch, var(--color-page) 76%, black);
+    border-radius: 999px;
+    box-shadow: 0 5px 18px rgb(0 0 0 / 24%);
+    font-size: 1.55rem;
+    font-weight: 850;
+    line-height: 1;
+  }
+
+  .reader__mobile-decisions button:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .reader__mobile-decisions .reader__mobile-keep {
+    border-color: var(--color-accent-border);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .reader__mobile-decisions .reader__mobile-delete {
+    border-color: var(--color-danger-border);
+    background: var(--color-danger);
+    color: var(--color-on-danger);
+  }
+
+  .reader__mobile-decisions .reader__mobile-copy-link {
+    border-color: var(--color-control-border);
+    background: var(--color-control-well);
+    color: var(--color-ink-inverse);
+  }
+
+  .reader__mobile-decisions button:disabled {
+    border-color: transparent;
+    background: var(--color-disabled);
+    cursor: not-allowed;
+  }
+}

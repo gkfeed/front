@@ -56,7 +56,7 @@ export function FeedPage() {
   }
 
   return (
-    <section className="container" aria-labelledby="feed-page-title">
+    <section className="feeds-page" aria-labelledby="feed-page-title">
       <h1 id="feed-page-title" className="page-title">{t('pages.feedDetails')}</h1>
       {content}
     </section>

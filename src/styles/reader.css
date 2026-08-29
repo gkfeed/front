@@ -1,13 +1,22 @@
+/* Provider-specific card presentations. */
 @import "./reader/liquipedia.css";
 @import "./reader/hltv.css";
+
+/* Reader and card foundations. */
 @import "./reader/layout.css";
 @import "./reader/card.css";
-@import "./reader/short-video.css";
+
+/* Feature styles. */
+@import "./reader/short-video/base.css";
 @import "./reader/comments.css";
 @import "./reader/player.css";
 @import "./reader/content.css";
 @import "./reader/actions.css";
 @import "./reader/states.css";
+
+/* Context overrides: responsive first, then fullscreen. */
 @import "./reader/responsive.css";
 @import "./reader/fullscreen.css";
+
+/* The article reader is an independent presentation hosted by ReaderPage. */
 @import "./reader/article.css";

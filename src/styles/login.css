@@ -135,7 +135,7 @@
   opacity: 0.62;
 }
 
-.login .danger {
+.login__danger {
   min-width: 128px;
   min-height: 44px;
   border-color: color-mix(in oklch, var(--color-danger) 66%, var(--color-page));
@@ -143,7 +143,7 @@
   color: var(--color-on-login-danger);
 }
 
-.login .danger:hover {
+.login__danger:hover {
   border-color: var(--color-danger-border);
   background: color-mix(in oklch, var(--color-danger) 90%, var(--color-focus-light));
   box-shadow: 0 10px 24px oklch(10% 0.018 28 / 0.18);

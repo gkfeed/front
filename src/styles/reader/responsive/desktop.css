@@ -1,2 +1,2 @@
 @import "./desktop/layout.css";
-@import "./desktop/short-video.css";
+@import "../short-video/desktop.css";

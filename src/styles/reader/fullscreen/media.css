@@ -1,2 +1,2 @@
 @import "./media/base.css";
-@import "./media/short-video.css";
+@import "../short-video/fullscreen.css";

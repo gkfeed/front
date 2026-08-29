@@ -1,0 +1,73 @@
+.settings-menu__reader-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.settings-menu__reader-option {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid color-mix(in oklch, var(--color-input-border) 55%, transparent);
+  border-radius: 12px;
+  background: color-mix(in oklch, var(--color-input-surface) 86%, var(--color-page));
+  color: var(--color-ink-strong);
+  font-weight: 750;
+}
+
+.settings-menu__reader-option:hover {
+  border-color: var(--color-input-border);
+  background: var(--color-field-focus);
+}
+
+.settings-menu__reader-option[data-selected] {
+  border-color: var(--color-accent-focus);
+  background: color-mix(in oklch, var(--color-accent-focus) 10%, var(--color-input-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-accent-focus) 32%, transparent);
+}
+
+.settings-menu__content-description {
+  margin: -3px 3px 1px;
+  color: var(--color-muted);
+  font-size: 0.68rem;
+}
+
+.settings-menu__nsfw-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.settings-menu__nsfw-option {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid color-mix(in oklch, var(--color-input-border) 55%, transparent);
+  border-radius: 11px;
+  background: color-mix(in oklch, var(--color-input-surface) 86%, var(--color-page));
+  color: var(--color-ink-strong);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.settings-menu__nsfw-option:hover {
+  border-color: var(--color-input-border);
+  background: var(--color-field-focus);
+}
+
+.settings-menu__nsfw-option[data-selected] {
+  border-color: var(--color-accent-focus);
+  background: color-mix(in oklch, var(--color-accent-focus) 10%, var(--color-input-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-accent-focus) 32%, transparent);
+}
+
+.settings-menu__reader-option:focus-visible,
+.settings-menu__nsfw-option:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}

@@ -26,7 +26,7 @@ export function FeedsList() {
     : getResultsAnnouncement(filteredFeeds.length, displayQuery, t);
 
   return (
-    <div className="container">
+    <div className="feeds-page">
       <label className="feed-search">
         <span className="sr-only">{t('feed.search')}</span>
         <svg className="feed-search__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -49,25 +49,25 @@ export function FeedsList() {
         {resultsAnnouncement}
       </p>
       {isLoading ? (
-        <div className="loading" role="status" aria-live="polite" aria-label={t('feed.loading')}>
+        <div className="feeds-loading" role="status" aria-live="polite" aria-label={t('feed.loading')}>
           {SKELETON_ITEMS.map((item) => (
             <div key={item} className="feed-skeleton" aria-hidden="true">
-              <span className="skeleton-line skeleton-title" />
-              <span className="skeleton-line" />
-              <span className="skeleton-line skeleton-url" />
+              <span className="feed-skeleton__line feed-skeleton__line--title" />
+              <span className="feed-skeleton__line" />
+              <span className="feed-skeleton__line feed-skeleton__line--url" />
             </div>
           ))}
           <span className="sr-only">{t('feed.loading')}...</span>
         </div>
       ) : errorMessage ? (
-        <div className="empty">
+        <div className="feeds-empty">
           <span role="alert">{errorMessage}</span>
           <button type="button" className="ui-button--secondary" onClick={retry}>{t('live.tryAgain')}</button>
         </div>
       ) : filteredFeeds.length ? (
         filteredFeeds.map((feed) => <FeedCard key={feed.id} feed={feed} />)
       ) : (
-        <p className="empty">
+        <p className="feeds-empty">
           {normalizedQuery
             ? t('feed.noMatching')
             : <>{t('feed.noFeeds')} <Link to="/create">{t('feed.createOne')}</Link>.</>}
