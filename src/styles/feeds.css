@@ -199,7 +199,7 @@ a.feed:focus-visible {
   text-decoration: underline;
 }
 
-.empty .secondary {
+.empty .ui-button--secondary {
   justify-self: center;
 }
 

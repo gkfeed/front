@@ -62,7 +62,7 @@ export function ReviewDecisionButtons({
       </button>
       <button
         type="button"
-        className={compact ? 'reader__mobile-delete' : 'delete'}
+        className={compact ? 'reader__mobile-delete' : 'ui-button--danger'}
         aria-label={compact ? (isDeleting ? t('reader.deletingItem') : t('reader.deleteItem')) : undefined}
         onClick={onDelete}
         disabled={isDeleting}

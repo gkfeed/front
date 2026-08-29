@@ -62,7 +62,7 @@ export function FeedsList() {
       ) : errorMessage ? (
         <div className="empty">
           <span role="alert">{errorMessage}</span>
-          <button type="button" className="secondary" onClick={retry}>{t('live.tryAgain')}</button>
+          <button type="button" className="ui-button--secondary" onClick={retry}>{t('live.tryAgain')}</button>
         </div>
       ) : filteredFeeds.length ? (
         filteredFeeds.map((feed) => <FeedCard key={feed.id} feed={feed} />)

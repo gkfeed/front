@@ -39,7 +39,7 @@
   margin: 0;
 }
 
-.reader__deletion-error .secondary {
+.reader__deletion-error .ui-button--secondary {
   flex: 0 0 auto;
   min-height: 38px;
   padding: 8px 14px;

@@ -20,7 +20,7 @@
   margin: 0;
 }
 
-.reader__state .secondary {
+.reader__state .ui-button--secondary {
   justify-self: center;
   margin-top: 10px;
 }

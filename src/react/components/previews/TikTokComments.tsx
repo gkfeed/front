@@ -149,7 +149,7 @@ export function TikTokComments({ item }: { item: FeedItem }) {
       ) : isExpanded && loadFailed ? (
         <div id={commentsId} className="tiktok-comments__empty" role="alert">
           <p>{t('comments.loadError')}</p>
-          <button type="button" className="secondary" onClick={retry}>{t('live.tryAgain')}</button>
+          <button type="button" className="ui-button--secondary" onClick={retry}>{t('live.tryAgain')}</button>
         </div>
       ) : isExpanded && comments ? (
         <div id={commentsId} className="tiktok-comments__empty">

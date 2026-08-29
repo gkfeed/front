@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 
-import '../../styles/forms.css';
+import '../../styles/login.css';
 import { LoginForm } from '../components/LoginForm';
 import { SavedLogin } from '../components/SavedLogin';
 import { useLoginForm } from '../hooks/useLoginForm';

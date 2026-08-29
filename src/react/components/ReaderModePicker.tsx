@@ -12,14 +12,14 @@ export function ReaderModePicker({
   const { t } = useTranslation();
 
   return (
-    <div className="theme-picker__section">
-      <span className="theme-picker__section-title">{t('settings.readerView')}</span>
-      <div className="theme-picker__reader-options">
+    <div className="settings-menu__section">
+      <span className="settings-menu__section-title">{t('settings.readerView')}</span>
+      <div className="settings-menu__reader-options">
         {(['review', 'scroll'] as const).map((mode) => {
           const selected = mode === readerMode;
           return (
             <button
-              className="theme-picker__reader-option"
+              className="settings-menu__reader-option"
               data-selected={selected || undefined}
               key={mode}
               type="button"

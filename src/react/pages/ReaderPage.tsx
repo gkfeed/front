@@ -50,7 +50,7 @@ export function ReaderPage() {
         {loadFailed ? (
           <div className="reader__state" role="alert">
             <p>{loadErrorMessage}</p>
-            <button type="button" className="secondary" onClick={retryLoad}>{t('live.tryAgain')}</button>
+            <button type="button" className="ui-button--secondary" onClick={retryLoad}>{t('live.tryAgain')}</button>
           </div>
         ) : null}
         {hasLoadedContent && items.length === 0 ? (
@@ -58,7 +58,7 @@ export function ReaderPage() {
             <span className="reader__done-mark" aria-hidden="true">✓</span>
             <h2>{t('reader.caughtUp')}</h2>
             <p>{t('reader.noMore')}</p>
-            <button type="button" className="secondary" onClick={retryLoad}>{t('reader.checkAgain')}</button>
+            <button type="button" className="ui-button--secondary" onClick={retryLoad}>{t('reader.checkAgain')}</button>
           </div>
         ) : null}
         {mode === 'review' && currentItem ? (
@@ -84,7 +84,7 @@ export function ReaderPage() {
               <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={resetReview}>
                 {t('reader.reset')}
               </button>
-              <button type="button" className="secondary" onClick={retryLoad}>
+              <button type="button" className="ui-button--secondary" onClick={retryLoad}>
                 {t('reader.checkAgain')}
               </button>
             </div>
@@ -111,7 +111,7 @@ function ReaderDeletionErrors({
       {deletions.map((deletion) => (
         <div className="reader__deletion-error" role="alert" key={deletion.itemId}>
           <p>{t('reader.deleteError', { title: deletion.title || t('feed.item') })}</p>
-          <button type="button" className="secondary" onClick={() => onRetry(deletion.itemId)}>
+          <button type="button" className="ui-button--secondary" onClick={() => onRetry(deletion.itemId)}>
             {t('reader.retryDelete')}
           </button>
         </div>

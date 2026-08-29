@@ -34,6 +34,7 @@ test.describe('Reader fullscreen with theater mode', () => {
 
     await page.evaluate(() => {
       document.documentElement.dataset.readerFullscreen = 'true';
+      document.querySelector<HTMLElement>('main')!.dataset.readerFullscreen = 'true';
       document.dispatchEvent(new Event('readerfullscreenchange'));
     });
     const exitFullscreen = page.getByRole('button', { name: 'Exit Reader fullscreen' });

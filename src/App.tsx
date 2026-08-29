@@ -51,7 +51,7 @@ export function App() {
           <a className="skip-link" href="#main">{t('app.skipToContent')}</a>
           <Navbar />
           <main id="main" tabIndex={-1}>
-            <Suspense fallback={<p className="status" role="status">{t('app.loading')}</p>}>
+            <Suspense fallback={<p className="ui-status" role="status">{t('app.loading')}</p>}>
               <Routes>
                 <Route path="/" element={<RequireAuth><FeedListPage /></RequireAuth>} />
                 <Route path="/create" element={<RequireAuth><FeedCreator /></RequireAuth>} />

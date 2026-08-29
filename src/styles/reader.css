@@ -1,4 +1,3 @@
-@import "./reader/fullscreen.css";
 @import "./reader/liquipedia.css";
 @import "./reader/hltv.css";
 @import "./reader/layout.css";
@@ -10,4 +9,5 @@
 @import "./reader/actions.css";
 @import "./reader/states.css";
 @import "./reader/responsive.css";
+@import "./reader/fullscreen.css";
 @import "./reader/article.css";

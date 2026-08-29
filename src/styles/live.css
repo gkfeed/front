@@ -186,7 +186,7 @@
   margin: 0;
 }
 
-.live__state .secondary {
+.live__state .ui-button--secondary {
   justify-self: center;
   margin-top: 8px;
 }

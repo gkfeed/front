@@ -44,14 +44,14 @@ export function ThemeOptions({
   const { t } = useTranslation();
 
   return (
-    <div className="theme-picker__section">
-      <span className="theme-picker__section-title">{t('settings.appearance')}</span>
-      <div className="theme-picker__options">
+    <div className="settings-menu__section">
+      <span className="settings-menu__section-title">{t('settings.appearance')}</span>
+      <div className="settings-menu__options">
         {themePreferences.map((option) => {
           const selected = option.value === theme;
           return (
             <button
-              className="theme-picker__option"
+              className="settings-menu__option"
               data-theme-option={option.value}
               data-selected={selected || undefined}
               key={option.value}
@@ -65,11 +65,11 @@ export function ThemeOptions({
               }}
             >
               <ThemeSwatch theme={option.value} />
-              <span className="theme-picker__option-copy">
+              <span className="settings-menu__option-copy">
                 <strong>{t(themeLabelKeys[option.value])}</strong>
                 <small>{t(themeDescriptionKeys[option.value])}</small>
               </span>
-              <span className="theme-picker__check" aria-hidden="true">✓</span>
+              <span className="settings-menu__check" aria-hidden="true">✓</span>
             </button>
           );
         })}

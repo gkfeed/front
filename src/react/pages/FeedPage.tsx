@@ -30,7 +30,7 @@ export function FeedPage() {
   let content: ReactNode = null;
 
   if (loadStatus === 'loading') {
-    content = <p className="status" aria-live="polite">{t('feedDetails.loading')}</p>;
+    content = <p className="ui-status" aria-live="polite">{t('feedDetails.loading')}</p>;
   } else if (loadStatus === 'not-found' || loadStatus === 'error') {
     content = (
       <LoadErrorState
@@ -68,9 +68,9 @@ function LoadErrorState({ message, canRetry, onRetry }: { message: string; canRe
 
   return (
     <>
-      <p className="status status--error" role="alert">{message}</p>
+      <p className="ui-status ui-status--error" role="alert">{message}</p>
       {canRetry ? (
-        <button type="button" className="secondary" onClick={onRetry}>{t('live.tryAgain')}</button>
+        <button type="button" className="ui-button--secondary" onClick={onRetry}>{t('live.tryAgain')}</button>
       ) : null}
     </>
   );
@@ -92,28 +92,28 @@ function DeleteActions({
   const isDeleting = deleteStatus === 'deleting';
 
   return (
-    <div className="actions">
+    <div className="ui-actions">
       {isConfirmingDelete ? (
         <>
-          <p className="status" id="delete-confirmation">{t('feedDetails.deleteQuestion')}</p>
-          <div className="actions__confirm" aria-describedby="delete-confirmation">
-            <button type="button" className="secondary" onClick={onCancelDelete} disabled={isDeleting} autoFocus>
+          <p className="ui-status" id="delete-confirmation">{t('feedDetails.deleteQuestion')}</p>
+          <div className="ui-actions__confirm" aria-describedby="delete-confirmation">
+            <button type="button" className="ui-button--secondary" onClick={onCancelDelete} disabled={isDeleting} autoFocus>
               {t('auth.cancel')}
             </button>
-            <button type="button" onClick={onDelete} className="delete" disabled={isDeleting}>
+            <button type="button" onClick={onDelete} className="ui-button--danger" disabled={isDeleting}>
               {isDeleting ? t('feedDetails.deleting') : t('feedDetails.deleteSource')}
             </button>
           </div>
         </>
       ) : (
-        <button type="button" onClick={onRequestDelete} className="delete" disabled={isDeleting}>
+        <button type="button" onClick={onRequestDelete} className="ui-button--danger" disabled={isDeleting}>
           {t('feedDetails.delete')}
         </button>
       )}
       {deleteStatus === 'error' ? (
-        <p className="status status--error" role="alert">{t('feedDetails.deleteError')}</p>
+        <p className="ui-status ui-status--error" role="alert">{t('feedDetails.deleteError')}</p>
       ) : isDeleting ? (
-        <p className="status" aria-live="polite">{t('feedDetails.deletingSource')}</p>
+        <p className="ui-status" aria-live="polite">{t('feedDetails.deletingSource')}</p>
       ) : null}
     </div>
   );

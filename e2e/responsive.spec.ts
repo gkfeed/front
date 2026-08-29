@@ -56,6 +56,7 @@ test('collapsed TikTok controls stay beside the video in iPad landscape fullscre
   await expect(player).toBeVisible();
   await page.evaluate(() => {
     document.documentElement.dataset.readerFullscreen = 'true';
+    document.querySelector<HTMLElement>('main')!.dataset.readerFullscreen = 'true';
     document.dispatchEvent(new Event('readerfullscreenchange'));
   });
   await expect(page.getByRole('button', { name: 'Exit Reader fullscreen' })).toBeVisible();

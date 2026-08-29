@@ -34,7 +34,7 @@ export function ReaderScroll({ items }: { items: FeedItem[] }) {
       {items.length > PAGE_SIZE ? (
         <nav className="reader__page-controls" aria-label={t('reader.pageControls')}>
           <button
-            className="reader__page-button secondary"
+            className="reader__page-button ui-button--secondary"
             type="button"
             disabled={safePageStart === 0}
             onClick={() => setPageStart((start) => Math.max(0, start - PAGE_SIZE))}
@@ -45,7 +45,7 @@ export function ReaderScroll({ items }: { items: FeedItem[] }) {
             {t('reader.pageStatus', { start: safePageStart + 1, end: pageEnd, total: items.length })}
           </span>
           <button
-            className="reader__page-button secondary"
+            className="reader__page-button ui-button--secondary"
             type="button"
             disabled={safePageStart >= lastPageStart}
             onClick={() => setPageStart((start) => Math.min(lastPageStart, start + PAGE_SIZE))}

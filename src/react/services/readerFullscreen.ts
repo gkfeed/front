@@ -27,6 +27,7 @@ export function setNativeFullscreenAttribute(main: HTMLElement | null, enabled: 
 
 export function setFallbackFullscreen(enabled: boolean): void {
   if (!enabled) automaticFallbackFullscreen = false;
+  setNativeFullscreenAttribute(getMainElement(), enabled);
   if (enabled) document.documentElement.dataset.readerFullscreen = 'true';
   else delete document.documentElement.dataset.readerFullscreen;
   document.dispatchEvent(new Event(FALLBACK_FULLSCREEN_EVENT));

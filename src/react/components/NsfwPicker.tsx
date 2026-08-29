@@ -7,10 +7,10 @@ export function NsfwPicker() {
   const { nsfwMode, setNsfwMode } = useNsfwPreferences();
 
   return (
-    <div className="theme-picker__section">
-      <span className="theme-picker__section-title">{t('settings.content')}</span>
-      <span className="theme-picker__content-description">{t('settings.nsfwDescription')}</span>
-      <div className="theme-picker__nsfw-options">
+    <div className="settings-menu__section">
+      <span className="settings-menu__section-title">{t('settings.content')}</span>
+      <span className="settings-menu__content-description">{t('settings.nsfwDescription')}</span>
+      <div className="settings-menu__nsfw-options">
         {([
           { mode: 'show', labelKey: 'settings.show', icon: '○' },
           { mode: 'blur', labelKey: 'settings.blur', icon: '◉' },
@@ -19,7 +19,7 @@ export function NsfwPicker() {
           const selected = option.mode === nsfwMode;
           return (
             <button
-              className="theme-picker__nsfw-option"
+              className="settings-menu__nsfw-option"
               data-selected={selected || undefined}
               key={option.mode}
               type="button"

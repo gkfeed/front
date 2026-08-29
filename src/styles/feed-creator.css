@@ -1,0 +1,199 @@
+.creator {
+  max-width: 496px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+.creator__form {
+  display: grid;
+  max-width: 464px;
+  gap: 24px;
+  padding: 0;
+  color: var(--color-ink-inverse);
+}
+
+.creator__fields {
+  display: grid;
+  gap: 15px;
+}
+
+.creator h1 {
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: 1.72rem;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.creator label,
+.creator .field__label {
+  color: color-mix(in oklch, var(--color-ink-inverse) 78%, var(--color-page));
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.creator .field__control {
+  display: block;
+  border-color: var(--color-input-border);
+  background: var(--color-input-surface);
+  transition: background-color var(--ease), border-color var(--ease);
+}
+
+.creator .field__control:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-accent-focus) 22%, transparent);
+}
+
+.creator .field__control:has([aria-invalid="true"]),
+.creator .field--invalid .field__control {
+  border-color: color-mix(in oklch, var(--color-danger) 78%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 78%, var(--color-danger));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-danger) 70%, var(--color-page));
+}
+
+.creator input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
+}
+
+.creator input::placeholder {
+  color: color-mix(in oklch, var(--color-muted) 76%, var(--color-page));
+}
+
+.creator .field__error {
+  padding-left: 1px;
+  color: color-mix(in oklch, var(--color-danger) 62%, var(--color-focus-light));
+  font-size: 0.84rem;
+}
+
+.creator__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-control-border);
+  border-radius: 12px;
+  background: var(--color-control-well);
+}
+
+.creator__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.creator__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 20px;
+  color: color-mix(in oklch, var(--color-ink-inverse) 72%, var(--color-page));
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.creator__status:empty {
+  display: none;
+}
+
+.creator__status--success {
+  color: color-mix(in oklch, var(--color-accent) 46%, var(--color-focus-light));
+}
+
+.creator__status--error {
+  color: color-mix(in oklch, var(--color-danger) 58%, var(--color-focus-light));
+}
+
+.creator button {
+  display: inline-flex;
+  min-width: 128px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border: 1px solid var(--color-accent-border);
+  border-radius: 12px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 700;
+  transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease), transform var(--ease);
+}
+
+.creator button:focus-visible {
+  outline: 2px solid var(--color-focus-light);
+  outline-offset: 3px;
+}
+
+.creator button:disabled {
+  border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 64%, var(--color-page));
+  color: color-mix(in oklch, var(--color-ink-strong) 66%, var(--color-field));
+  cursor: not-allowed;
+}
+
+.creator__submit {
+  grid-column: 2;
+  min-width: 118px;
+  transition: background-color var(--ease), border-color var(--ease), transform var(--ease);
+}
+
+.creator__submit:not(:disabled):hover {
+  background: color-mix(in oklch, var(--color-accent) 88%, var(--color-focus-light));
+  transform: translateY(-1px);
+}
+
+.creator__tabs button {
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-ink-inverse);
+  font-size: 0.95rem;
+  transform: none;
+  transition: background-color var(--ease), border-color var(--ease), color var(--ease);
+}
+
+.creator__tabs button[aria-selected="true"] {
+  border-color: color-mix(in oklch, var(--color-field) 42%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 86%, var(--color-page));
+  color: color-mix(in oklch, var(--color-ink-strong) 86%, var(--color-page));
+}
+
+.creator__tabs button:disabled:not([aria-selected="true"]) {
+  color: color-mix(in oklch, var(--color-ink-inverse) 54%, var(--color-page));
+}
+
+.creator__tabs button:not([aria-selected="true"]):hover {
+  background: color-mix(in oklch, var(--color-field) 18%, transparent);
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .creator {
+    padding: 24px 12px 36px;
+  }
+
+  .creator__actions,
+  .creator__submit {
+    width: 100%;
+  }
+
+  .creator__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .creator__submit {
+    grid-column: auto;
+  }
+}

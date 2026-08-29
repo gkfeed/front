@@ -1,11 +1,6 @@
 /* A parsed HLTV matchup is a responsive layout, not a 16:9 image canvas. */
 @media (min-width: 641px) {
-  :is(
-    main:fullscreen,
-    main:-webkit-full-screen,
-    html[data-reader-fullscreen="true"] main,
-    main[data-reader-fullscreen="true"]
-  ) .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview) {
+  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview) {
     width: min(100%, 960px);
     max-width: none;
   }
@@ -15,7 +10,7 @@
    remaining-item counter. Give the card the space left by those controls and
    let its media row shrink inside that space. */
 @media (min-width: 641px) {
-  :is(main:fullscreen, main:-webkit-full-screen, html[data-reader-fullscreen="true"] main) {
+  main[data-reader-fullscreen="true"] {
     overflow: hidden;
   }
 
@@ -165,4 +160,3 @@
     height: auto;
   }
 }
-

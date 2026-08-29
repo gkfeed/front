@@ -1,13 +1,9 @@
 /*
- * Responsive reader styles are ordered from general viewport rules to
- * fullscreen media constraints. Keep this order: later modules intentionally
- * refine the same cascade without owning unrelated component base styles.
+ * General reader breakpoints. Feature modes such as fullscreen own their
+ * responsive rules in their respective modules.
  */
 @import "./responsive/desktop.css";
-@import "./responsive/fullscreen-layout.css";
 @import "./responsive/portrait.css";
 @import "./responsive/tablet.css";
 @import "./responsive/mobile.css";
-@import "./responsive/fullscreen-media.css";
-@import "./responsive/fullscreen-card.css";
 @import "./responsive/rezka.css";

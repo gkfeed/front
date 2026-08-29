@@ -34,7 +34,7 @@ export function LivePage() {
         <div className="live__state" role="alert">
           <h2>{t('live.checkErrorTitle')}</h2>
           <p>{errorMessage}</p>
-          <button type="button" className="secondary" onClick={retry}>{t('live.tryAgain')}</button>
+          <button type="button" className="ui-button--secondary" onClick={retry}>{t('live.tryAgain')}</button>
         </div>
       ) : null}
 
@@ -42,7 +42,7 @@ export function LivePage() {
         <div className="live__state">
           <h2>{t('live.noOne')}</h2>
           <p>{t('live.offline')}</p>
-          <button type="button" className="secondary" onClick={retry}>{t('live.checkAgain')}</button>
+          <button type="button" className="ui-button--secondary" onClick={retry}>{t('live.checkAgain')}</button>
         </div>
       ) : null}
 
