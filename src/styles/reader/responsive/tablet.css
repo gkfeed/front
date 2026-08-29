@@ -1,0 +1,10 @@
+@media (max-width: 1023px) {
+  .reader-card.reader-card--short-video {
+    grid-template-columns: 1fr;
+  }
+
+  .tiktok-comments {
+    width: min(100%, 464px);
+    justify-self: center;
+  }
+}

@@ -1,0 +1,93 @@
+/* Keep a regular review card and its actions inside the fullscreen viewport. */
+@media (min-width: 641px) {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader {
+    align-content: center;
+    gap: clamp(14px, 1.8vh, 22px);
+    min-height: 100dvh;
+    padding-top: max(28px, calc(env(safe-area-inset-top) + 20px));
+    padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
+  }
+
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader__item:not(.reader__item--short-video) {
+    width: min(100%, 960px);
+    max-width: none;
+  }
+
+  /* A 16:9 canvas is useful for media, but makes text-only cards awkwardly wide. */
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader__item:has(
+    .reader-card--youtube,
+    .reader-card--twitch,
+    .reader-card--matreshka,
+    .reader-card--sasflix,
+    .reader-card--image-preview,
+    .reader-card--simple-image
+  ) {
+    width: min(100%, 960px);
+  }
+
+  /* YouTube thumbnails are 16:9, so sizing the item from the available height
+     also removes the empty side strips caused by a separately capped image. */
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) :is(
+    .reader-card--youtube,
+    .reader-card--twitch,
+    .reader-card--matreshka,
+    .reader-card--sasflix
+  ) .reader-card__preview > img {
+    max-height: none;
+  }
+
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) :is(.reader-card--image-preview, .reader-card--simple-image) {
+    width: 100%;
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) :is(.reader-card--image-preview, .reader-card--simple-image) .reader-card__preview {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) :is(.reader-card--image-preview, .reader-card--simple-image) .reader-card__preview > img {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 300px);
+    margin-inline: auto;
+    object-fit: contain;
+  }
+}
+

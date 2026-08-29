@@ -1,0 +1,168 @@
+/* A parsed HLTV matchup is a responsive layout, not a 16:9 image canvas. */
+@media (min-width: 641px) {
+  :is(
+    main:fullscreen,
+    main:-webkit-full-screen,
+    html[data-reader-fullscreen="true"] main,
+    main[data-reader-fullscreen="true"]
+  ) .reader__item:not(.reader__item--short-video):has(.reader-card--hltv-preview) {
+    width: min(100%, 960px);
+    max-width: none;
+  }
+}
+
+/* Regular fullscreen cards share the viewport with review actions and the
+   remaining-item counter. Give the card the space left by those controls and
+   let its media row shrink inside that space. */
+@media (min-width: 641px) {
+  :is(main:fullscreen, main:-webkit-full-screen, html[data-reader-fullscreen="true"] main) {
+    overflow: hidden;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) {
+    --reader-fullscreen-gap: clamp(14px, 1.8vh, 22px);
+    --reader-fullscreen-padding-y: max(28px, calc(env(safe-area-inset-top) + 20px));
+    --reader-fullscreen-count-height: 34px;
+    min-height: 0;
+    --reader-fullscreen-content-height: max(
+      0px,
+      calc(
+        100dvh
+        - (2 * var(--reader-fullscreen-padding-y))
+        - var(--reader-actions-height, 52px)
+        - var(--reader-fullscreen-count-height)
+        - (2 * var(--reader-fullscreen-gap))
+      )
+    );
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
+    gap: var(--reader-fullscreen-gap);
+    grid-template-rows: auto auto auto;
+    min-width: 0;
+    justify-self: center;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader__actions[hidden]) {
+    --reader-actions-height: 0px;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview) {
+    min-height: 0;
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
+    grid-template-rows: auto auto;
+    min-width: 0;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > :is(.reader__actions, .reader__count-row) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
+  .reader-card__preview {
+    min-height: 0;
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
+  .reader-card__preview > :is(img, video) {
+    width: 100%;
+    height: auto;
+    max-width: none;
+    max-height: max(0px, calc(var(--reader-fullscreen-content-height) - 180px));
+    object-fit: contain;
+  }
+
+  /* Portrait image cards should size to the image instead of leaving wide
+     side gutters inside a fullscreen card. */
+  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card--simple-image) {
+    max-height: none;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card > .reader-card__preview > img) {
+    width: min(100%, 960px);
+    max-width: none;
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img) {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: none;
+    grid-template-rows: auto auto;
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
+  > .reader-card__preview {
+    width: fit-content;
+    max-width: 100%;
+    min-height: auto;
+    height: auto;
+    max-height: none;
+    justify-self: center;
+    background: transparent;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
+  > .reader-card__preview > img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card > .reader-card__preview > img)
+  .reader-card__copy {
+    width: 100%;
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) .reader-card__copy {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video) .reader-card__description {
+    -webkit-line-clamp: 3;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card--vk:has(.reader-card__preview > img) {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card--vk .reader-card__preview:has(> img) {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .reader__item--fullscreen:not(.reader__item--short-video)
+  > .reader-card--vk .reader-card__preview:has(> img) > img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: var(--reader-fullscreen-content-height);
+    object-fit: contain;
+  }
+
+  /* Parsed HLTV matchups have their own responsive height. Do not stretch
+     the scorecard into the media-sized fullscreen grid row. */
+  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card--hltv-preview {
+    align-self: start;
+    height: auto;
+  }
+}
+

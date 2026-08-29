@@ -1,0 +1,23 @@
+@media (min-width: 641px) and (orientation: portrait) {
+  .reader__item .reader-card__preview--short-video {
+    width: calc(56.25dvh - 191.25px);
+  }
+
+  .reader__item
+  .reader-card.reader-card--tiktok:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) {
+    grid-template-columns: minmax(0, auto);
+  }
+
+  .reader__item
+  .reader-card--tiktok:not(:has(.tiktok-comments__toggle[aria-expanded="true"]))
+  .tiktok-comments__toolbar {
+    justify-content: center;
+  }
+}
+
+@media (min-width: 1024px) and (orientation: portrait) {
+  .reader__item .reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]) {
+    height: min(calc(100dvh - 340px), 177.778cqw);
+  }
+}
+

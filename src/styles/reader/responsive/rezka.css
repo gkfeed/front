@@ -1,0 +1,27 @@
+/* Rezka artwork is poster-shaped, so the generic wide image canvas makes it
+   dominate the reader and can push review actions outside the viewport. */
+@media (min-width: 641px) {
+  .reader__item:has(> .reader-card--rezka) > .reader-card--rezka {
+    width: fit-content;
+    max-width: min(100%, 560px);
+    justify-self: center;
+  }
+
+  .reader__item:has(> .reader-card--rezka)
+  > .reader-card--rezka
+  > .reader-card__preview {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  .reader__item:has(> .reader-card--rezka)
+  > .reader-card--rezka
+  > .reader-card__preview
+  > img {
+    width: auto;
+    max-width: 100%;
+    max-height: min(70dvh, 720px);
+    object-fit: contain;
+  }
+}
