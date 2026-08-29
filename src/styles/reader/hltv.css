@@ -12,6 +12,33 @@
   box-shadow: var(--shadow-card);
 }
 
+.reader-card__hltv-meta {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(7 26 41 / 18%);
+  color: rgb(255 255 255 / 72%);
+  font-size: clamp(0.72rem, 2.5cqw, 0.86rem);
+  text-align: center;
+}
+
+.reader-card__hltv-meta strong {
+  max-width: 60%;
+  overflow: hidden;
+  color: #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-card__hltv-meta time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .reader-card__hltv-matchup {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);

@@ -41,6 +41,7 @@ function isHltvMatchSnapshot(value: unknown): value is HltvMatchSnapshot {
   if (!isRecord(value)) return false;
 
   return isNullableString(value.startsAt)
+    && (value.tournament === undefined || isNullableString(value.tournament))
     && isNullable(value.teams, isHltvMatchTeams)
     && isNullable(value.status, isHltvMatchStatus)
     && isNullable(value.score, isStringPair)

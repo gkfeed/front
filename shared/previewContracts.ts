@@ -60,6 +60,7 @@ export interface OpenGraphMetadata {
 
 export interface HltvMatchSnapshot {
   startsAt: string | null;
+  tournament?: string | null;
   teams: [HltvMatchTeamPreview, HltvMatchTeamPreview] | null;
   status: HltvMatchStatus | null;
   score: [string, string] | null;

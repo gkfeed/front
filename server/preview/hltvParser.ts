@@ -6,6 +6,7 @@ export {
   parseHltvMatchStartsAt,
   parseHltvMatchStatus,
   parseHltvMatchTeams,
+  parseHltvMatchTournament,
   parseHltvPlayerStats,
   parseHltvRoundHistory,
 } from './hltvHtmlParser.js';

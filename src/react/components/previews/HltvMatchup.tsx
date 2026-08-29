@@ -5,6 +5,7 @@ import { getHltvMatchupAccessibilityData } from './hltvMatchupAccessibility';
 import { HltvCountdown } from './HltvCountdown';
 import { HltvPlayerStats } from './HltvPlayerStats';
 import { HltvMatchupScore } from './HltvMatchupScore';
+import { HltvMatchMeta } from './HltvMatchMeta';
 
 export function HltvMatchup({
   teams,
@@ -54,6 +55,7 @@ export function HltvMatchup({
 
   return (
     <div className="reader-card__hltv-live-card">
+      <HltvMatchMeta tournament={snapshot.tournament} startsAt={snapshot.startsAt} />
       <a
         className="reader-card__hltv-matchup"
         href={href}

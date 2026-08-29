@@ -135,6 +135,7 @@ describe('FeedItemCard HLTV previews', () => {
         provider: 'hltv',
         snapshot: {
           startsAt: '2026-07-23T18:05:00.000Z',
+          tournament: 'IEM Cologne 2026',
           teams: [
             { name: 'Liquid', logo: 'https://img-cdn.hltv.org/teamlogo/liquid.png' },
             { name: 'Spirit', logo: 'https://img-cdn.hltv.org/teamlogo/spirit.png' },
@@ -159,6 +160,8 @@ describe('FeedItemCard HLTV previews', () => {
       name: 'Liquid versus Spirit, final score 1 to 2',
     })).toBeTruthy();
     expect(screen.getByText('1 : 2')).toBeTruthy();
+    expect(screen.getByText('IEM Cologne 2026')).toBeTruthy();
+    expect(document.querySelector('time[datetime="2026-07-23T18:05:00.000Z"]')).toBeTruthy();
     expect(screen.queryByAltText('Preview for Liquid vs Spirit')).toBeNull();
   });
 

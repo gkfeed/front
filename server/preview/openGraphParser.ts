@@ -8,6 +8,7 @@ import {
   parseHltvMatchStartsAt,
   parseHltvMatchStatus,
   parseHltvMatchTeams,
+  parseHltvMatchTournament,
   parseHltvPlayerStats,
   parseHltvRoundHistory,
 } from './hltvHtmlParser.js';
@@ -59,6 +60,7 @@ function parseHltvProviderData(html: string, pageUrl: URL): HltvProviderData {
     provider: 'hltv',
     snapshot: {
       startsAt: parseHltvMatchStartsAt(html),
+      tournament: parseHltvMatchTournament(html),
       teams: parseHltvMatchTeams(html, pageUrl),
       status,
       score: status === 'live' || status === 'over' ? parseHltvMatchScore(html) : null,

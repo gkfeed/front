@@ -162,6 +162,21 @@ export function parseHltvMatchStartsAt(html: string): string | null {
   return new Date(timestamp).toISOString();
 }
 
+export function parseHltvMatchTournament(html: string): string | null {
+  const sectionMatch = /<div\b[^>]*class=(?:"[^"]*\btimeAndEvent\b[^"]*"|'[^']*\btimeAndEvent\b[^']*')[^>]*>/i.exec(html);
+  if (!sectionMatch || sectionMatch.index === undefined) return null;
+
+  const section = html.slice(sectionMatch.index, sectionMatch.index + 4_000);
+  for (const anchor of section.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const openingTag = anchor[0].match(/^<a\b[^>]*>/i)?.[0];
+    const href = openingTag ? parseAttributes(openingTag).href : null;
+    if (!href || !/(?:^|\/)events\/\d+(?:\/|$)/i.test(href)) continue;
+    const tournament = htmlText(anchor[1] ?? '');
+    if (tournament) return tournament;
+  }
+  return null;
+}
+
 export function parseHltvMatchTeams(
   html: string,
   pageUrl: URL,

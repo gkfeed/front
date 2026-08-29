@@ -14,6 +14,7 @@ describe('parseOpenGraph: HLTV provider', () => {
       <div class="timeAndEvent">
         <div class="time" data-time-format="HH:mm" data-unix="1784829900000">20:05</div>
         <div class="date" data-unix="1784829900000">23rd of July 2026</div>
+        <div class="event text-ellipsis"><a href="/events/7557/blast-bounty-2026-season-2">BLAST Bounty 2026 Season 2</a></div>
       </div>
       <div class="team1-gradient">
         <img alt="Liquid" src="/teamlogo/liquid.png" class="logo">
@@ -34,6 +35,7 @@ describe('parseOpenGraph: HLTV provider', () => {
         provider: 'hltv',
         snapshot: {
           startsAt: '2026-07-23T18:05:00.000Z',
+          tournament: 'BLAST Bounty 2026 Season 2',
           teams: [
             { name: 'Liquid', logo: 'https://www.hltv.org/teamlogo/liquid.png' },
             { name: 'Spirit', logo: 'https://cdn.example/spirit.png' },
