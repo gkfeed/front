@@ -1,4 +1,16 @@
 @media (min-width: 1024px) {
+  .reader:has(.reader__item--tiktok) {
+    max-width: 1648px;
+  }
+
+  .reader__item--short-video {
+    max-width: 976px;
+  }
+
+  .reader__item--tiktok {
+    max-width: 1600px;
+  }
+
   .reader__item .reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]) {
     --reader-tiktok-comments-width: clamp(420px, 35cqw, 620px);
 

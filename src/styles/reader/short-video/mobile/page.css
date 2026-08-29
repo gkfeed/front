@@ -1,0 +1,11 @@
+@media (max-width: 640px) {
+  .reader:has(.reader__item--short-video) {
+    display: block;
+    min-height: 100dvh;
+    padding: 8px;
+  }
+
+  body:has(.reader__item--short-video) .reader__fullscreen-toolbar {
+    display: block;
+  }
+}

@@ -6,6 +6,9 @@
 @import "./reader/layout.css";
 @import "./reader/card.css";
 
+/* Provider variants that build on the generic card foundation. */
+@import "./reader/vk.css";
+
 /* Feature styles. */
 @import "./reader/short-video/base.css";
 @import "./reader/comments.css";

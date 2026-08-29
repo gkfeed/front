@@ -2,7 +2,6 @@ import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import '../../styles/feed-creator.css';
-import '../../styles/type-picker.css';
 import {
   getFeedCreatorFields,
   type FeedCreatorFieldConfig,

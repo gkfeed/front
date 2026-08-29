@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import '../../styles/type-picker.css';
 import { getFeedTypeIcon } from './feedIcons';
 import { FEED_TYPE_OPTIONS, type FeedTypeOption } from '../domain/feedTypes';
 
