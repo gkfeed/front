@@ -23,6 +23,7 @@ export function ReaderPage() {
     resetReview,
     retryLoad,
     mode,
+    itemOrder,
     reviewPanelRef,
     reviewActionsRef,
     useCompactActions,
@@ -90,7 +91,9 @@ export function ReaderPage() {
             </div>
           </div>
         ) : null}
-        {mode === 'scroll' && hasLoadedContent && items.length > 0 ? <ReaderScroll items={items} /> : null}
+        {mode === 'scroll' && hasLoadedContent && items.length > 0 ? (
+          <ReaderScroll key={itemOrder} items={items} />
+        ) : null}
       </section>
     </>
   );

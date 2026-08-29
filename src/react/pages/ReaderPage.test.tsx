@@ -8,6 +8,8 @@ import { getReviewStateStorageKey } from '../hooks/reviewStateStorage';
 import { deleteFeedItemsCache } from '../services/feedItemsCache';
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
 import { NsfwPreferencesContext, type NsfwMode } from '../state/nsfwPreferencesContext';
+import type { ReaderItemOrder } from '../state/readerItemOrder';
+import { ReaderItemOrderPreferencesContext } from '../state/readerItemOrderPreferencesContext';
 import { createStatusError, restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { ReaderPage } from './ReaderPage';
 
@@ -19,15 +21,22 @@ vi.mock('../state/useAuth', () => {
 });
 
 const ITEMS = [
-  { id: 10, feedId: 2, link: 'https://example.com/one', title: 'First story', text: 'First summary' },
-  { id: 11, feedId: 3, link: 'https://news.example.org/two', title: 'Second story', text: 'Second summary' },
+  { id: 11, feedId: 2, link: 'https://example.com/one', title: 'First story', text: 'First summary' },
+  { id: 10, feedId: 3, link: 'https://news.example.org/two', title: 'Second story', text: 'Second summary' },
 ];
 
-function renderReader(initialEntry = '/reader', nsfwMode: NsfwMode = 'blur', container?: HTMLElement) {
+function renderReader(
+  initialEntry = '/reader',
+  nsfwMode: NsfwMode = 'blur',
+  container?: HTMLElement,
+  itemOrder: ReaderItemOrder = 'desc',
+) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <NsfwPreferencesContext value={{ nsfwMode, setNsfwMode: vi.fn() }}>
-        <ReaderPage />
+        <ReaderItemOrderPreferencesContext value={{ itemOrder, setItemOrder: vi.fn() }}>
+          <ReaderPage />
+        </ReaderItemOrderPreferencesContext>
       </NsfwPreferencesContext>
     </MemoryRouter>,
     container ? { container } : undefined,
@@ -71,7 +80,7 @@ describe('ReaderPage', () => {
   it('revisits kept items after all other items have been reviewed', async () => {
     const items = [
       ...ITEMS,
-      { id: 12, feedId: 4, link: 'https://example.net/three', title: 'Third story', text: 'Third summary' },
+      { id: 9, feedId: 4, link: 'https://example.net/three', title: 'Third story', text: 'Third summary' },
     ];
     vi.mocked(getFeedItems).mockResolvedValue(items);
     renderReader();
@@ -161,7 +170,7 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('Story 110')).toBeTruthy();
     await waitFor(() => expect(JSON.parse(storage.get(storageKey) ?? '')).toEqual({
       version: 1,
-      pendingIds: [110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 97, 95, 98, 96],
+      pendingIds: [110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95],
       revisitIds: [],
       keptItemIds: [],
     }));
@@ -181,7 +190,7 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('First story')).toBeTruthy();
     expect(JSON.parse(storage.get(getReviewStateStorageKey('reader')) ?? '')).toEqual({
       version: 1,
-      pendingIds: [10, 11],
+      pendingIds: [11, 10],
       revisitIds: [],
       keptItemIds: [],
     });
@@ -293,7 +302,7 @@ describe('ReaderPage', () => {
     fireEvent.keyDown(window, { key: 'd' });
 
     expect(await screen.findByText('Second story')).toBeTruthy();
-    expect(deleteFeedItemById).toHaveBeenCalledWith(10, { username: 'reader', password: 'secret' });
+    expect(deleteFeedItemById).toHaveBeenCalledWith(11, { username: 'reader', password: 'secret' });
   });
 
   it('does not act on the old arrow shortcuts', async () => {
@@ -317,6 +326,15 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('Second story')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /keep/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /delete/i })).toBeNull();
+  });
+
+  it('shows review items in the selected order', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    renderReader('/reader', 'blur', undefined, 'asc');
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('First story')).toBeTruthy();
   });
 
   it('removes NSFW items from Review and the remaining count in hide mode', async () => {
@@ -542,21 +560,21 @@ describe('ReaderPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
 
     expect(await screen.findByText('Second story')).toBeTruthy();
-    expect(deleteFeedItemById).toHaveBeenCalledWith(10, { username: 'reader', password: 'secret' });
+    expect(deleteFeedItemById).toHaveBeenCalledWith(11, { username: 'reader', password: 'secret' });
     await waitFor(() => expect(deleteFeedItemsCache).toHaveBeenCalledWith('reader'));
   });
 
   it('keeps deleted items out of Scroll view', async () => {
     const items = [
       {
-        id: 10,
+        id: 11,
         feedId: 2,
         link: 'https://www.tiktok.com/@creator/video/123',
         title: 'Deleted video',
         text: '',
       },
       {
-        id: 11,
+        id: 10,
         feedId: 3,
         link: 'https://www.tiktok.com/@creator/video/456',
         title: 'Remaining video',
@@ -617,7 +635,7 @@ describe('ReaderPage', () => {
     });
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     vi.mocked(deleteFeedItemById).mockImplementation(async (itemId) => {
-      if (itemId === 10) await firstDeletion;
+      if (itemId === 11) await firstDeletion;
     });
     renderReader();
 
@@ -630,7 +648,7 @@ describe('ReaderPage', () => {
     resolveFirstDeletion();
 
     await waitFor(() => expect(deleteFeedItemById).toHaveBeenCalledTimes(2));
-    expect(deleteFeedItemById).toHaveBeenLastCalledWith(11, { username: 'reader', password: 'secret' });
+    expect(deleteFeedItemById).toHaveBeenLastCalledWith(10, { username: 'reader', password: 'secret' });
   });
 
   it('returns failed deletions to the end after a feed resync', async () => {

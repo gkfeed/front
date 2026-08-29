@@ -3,7 +3,9 @@ import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ReaderMode } from '../state/readerMode';
+import type { ReaderItemOrder } from '../state/readerItemOrder';
 import { NsfwPicker } from './NsfwPicker';
+import { ReaderItemOrderPicker } from './ReaderItemOrderPicker';
 import { ReaderModePicker } from './ReaderModePicker';
 import { ThemeOptions } from './ThemeOptions';
 import { useThemePreference } from './useThemePreference';
@@ -11,9 +13,16 @@ import { useThemePreference } from './useThemePreference';
 export type SettingsMenuProps = {
   readerMode?: ReaderMode;
   onReaderModeChange?: (mode: ReaderMode) => void;
+  itemOrder?: ReaderItemOrder;
+  onItemOrderChange?: (order: ReaderItemOrder) => void;
 };
 
-export function SettingsMenu({ readerMode, onReaderModeChange }: SettingsMenuProps) {
+export function SettingsMenu({
+  readerMode,
+  onReaderModeChange,
+  itemOrder,
+  onItemOrderChange,
+}: SettingsMenuProps) {
   const { t } = useTranslation();
   const { theme, selectTheme } = useThemePreference();
   const [isOpen, setIsOpen] = useState(false);
@@ -85,6 +94,15 @@ export function SettingsMenu({ readerMode, onReaderModeChange }: SettingsMenuPro
               readerMode={readerMode}
               onReaderModeChange={(mode) => {
                 onReaderModeChange(mode);
+                closeMenu(true);
+              }}
+            />
+          ) : null}
+          {itemOrder && onItemOrderChange ? (
+            <ReaderItemOrderPicker
+              itemOrder={itemOrder}
+              onItemOrderChange={(order) => {
+                onItemOrderChange(order);
                 closeMenu(true);
               }}
             />

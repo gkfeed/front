@@ -1,5 +1,46 @@
 import { expect, test } from '@playwright/test';
 
+test.describe('Reader item order', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [
+          { id: 20, feed_id: 4, link: 'https://example.com/new', title: 'New item', text: '' },
+          { id: 10, feed_id: 4, link: 'https://example.com/old', title: 'Old item', text: '' },
+        ],
+        next_cursor: null,
+      },
+    }));
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        'gkfeed.credentials',
+        JSON.stringify({ username: 'automation', password: 'secret' }),
+      );
+    });
+  });
+
+  test('switches between newest-first and oldest-first', async ({ page }) => {
+    await page.goto('/reader');
+    await expect(page.getByRole('heading', { name: 'New item' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('menuitemradio', { name: 'Oldest first' }).click();
+
+    await expect(page).toHaveURL(/\/reader$/);
+    await expect(page.getByRole('heading', { name: 'Old item' })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Old item' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('menuitemradio', { name: 'Newest first' }).click();
+
+    await expect(page).toHaveURL(/\/reader$/);
+    await expect(page.getByRole('heading', { name: 'New item' })).toBeVisible();
+  });
+});
+
 test.describe('Reader fullscreen with theater mode', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));

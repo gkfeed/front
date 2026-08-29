@@ -10,12 +10,14 @@ import {
   isAutomaticFallbackFullscreen,
 } from '../../services/readerFullscreen';
 import { getReaderMode } from '../../state/readerMode';
+import { useReaderItemOrderPreferences } from '../../state/useReaderItemOrderPreferences';
 
 type Translator = (key: string) => string;
 
 export function useReaderPageModel(t: Translator) {
   const { search } = useLocation();
   const mode = getReaderMode(search);
+  const { itemOrder } = useReaderItemOrderPreferences();
 
   useEffect(() => () => {
     void exitReaderFullscreen();
@@ -26,7 +28,10 @@ export function useReaderPageModel(t: Translator) {
     void exitReaderFullscreen();
   }, [mode]);
 
-  const reader = useFeedReader({ prefetchNextPreviews: mode === 'review' });
+  const reader = useFeedReader({
+    prefetchNextPreviews: mode === 'review',
+    itemOrder,
+  });
   const {
     panelRef: reviewPanelRef,
     actionsRef: reviewActionsRef,
@@ -44,6 +49,7 @@ export function useReaderPageModel(t: Translator) {
   return {
     ...reader,
     mode,
+    itemOrder,
     reviewPanelRef,
     reviewActionsRef,
     useCompactActions,

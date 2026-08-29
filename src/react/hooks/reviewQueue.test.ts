@@ -102,4 +102,18 @@ describe('reviewQueueReducer', () => {
       keptItemIds: new Set(),
     });
   });
+
+  it('reorders pending and revisit items without changing their review state', () => {
+    const state = {
+      pendingIds: [3, 1],
+      revisitIds: [4, 2],
+      keptItemIds: new Set([4, 2]),
+    };
+
+    expect(reviewQueueReducer(state, { type: 'reorder', ids: [1, 2, 3, 4] })).toEqual({
+      pendingIds: [1, 3],
+      revisitIds: [2, 4],
+      keptItemIds: new Set([4, 2]),
+    });
+  });
 });

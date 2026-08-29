@@ -14,12 +14,14 @@ export function useReviewSession({
   visibleItemIds,
   username,
   isSyncComplete,
+  orderKey,
 }: {
   loadedItems: FeedItem[] | undefined;
   reviewableIds: number[];
   visibleItemIds: ReadonlySet<number>;
   username: string | null;
   isSyncComplete: boolean;
+  orderKey: string;
 }) {
   const storageKey = username ? getReviewStateStorageKey(username) : null;
   const [reviewState, dispatchReview] = useReducer(
@@ -29,33 +31,41 @@ export function useReviewSession({
   const initializedItemsRef = useRef<FeedItem[] | undefined>(undefined);
   const initializedStorageKeyRef = useRef<string | null | undefined>(undefined);
   const initializedSyncCompleteRef = useRef<boolean | undefined>(undefined);
+  const initializedOrderKeyRef = useRef<string | undefined>(undefined);
   const restoredSessionRef = useRef(false);
   const restoredIdsRef = useRef<ReadonlySet<number>>(new Set());
   const reconciliationPendingRef = useRef(false);
   const pinnedCurrentIdRef = useRef<number | undefined>(undefined);
+  const skipCurrentPinRef = useRef(false);
 
   useEffect(() => {
     if (loadedItems === undefined) {
       initializedItemsRef.current = undefined;
       initializedStorageKeyRef.current = undefined;
       initializedSyncCompleteRef.current = undefined;
+      initializedOrderKeyRef.current = undefined;
       restoredSessionRef.current = false;
       restoredIdsRef.current = new Set();
       reconciliationPendingRef.current = false;
       pinnedCurrentIdRef.current = undefined;
+      skipCurrentPinRef.current = false;
       return;
     }
     if (
       loadedItems === initializedItemsRef.current
       && storageKey === initializedStorageKeyRef.current
       && isSyncComplete === initializedSyncCompleteRef.current
+      && orderKey === initializedOrderKeyRef.current
     ) return;
 
     const isInitialLoad = initializedItemsRef.current === undefined
       || storageKey !== initializedStorageKeyRef.current;
+    const orderChanged = initializedOrderKeyRef.current !== undefined
+      && orderKey !== initializedOrderKeyRef.current;
     initializedItemsRef.current = loadedItems;
     initializedStorageKeyRef.current = storageKey;
     initializedSyncCompleteRef.current = isSyncComplete;
+    initializedOrderKeyRef.current = orderKey;
     if (isInitialLoad) {
       const restoredState = readReviewState(storageKey);
       restoredSessionRef.current = restoredState !== null;
@@ -81,6 +91,13 @@ export function useReviewSession({
       return;
     }
 
+    if (orderChanged) {
+      pinnedCurrentIdRef.current = undefined;
+      skipCurrentPinRef.current = true;
+      dispatchReview({ type: 'reorder', ids: reviewableIds });
+      return;
+    }
+
     if (isSyncComplete) {
       if (restoredSessionRef.current) pinnedCurrentIdRef.current = undefined;
       reconciliationPendingRef.current = true;
@@ -94,7 +111,7 @@ export function useReviewSession({
     } else {
       dispatchReview({ type: 'extend', ids: reviewableIds });
     }
-  }, [isSyncComplete, loadedItems, reviewableIds, storageKey]);
+  }, [isSyncComplete, loadedItems, orderKey, reviewableIds, storageKey]);
 
   // Once a session is initialized, cursor pages must not make it temporarily
   // fall back to a brand-new queue. That fallback can replace the current item
@@ -124,6 +141,10 @@ export function useReviewSession({
 
   useEffect(() => {
     if (!isReady) return;
+    if (skipCurrentPinRef.current) {
+      skipCurrentPinRef.current = false;
+      return;
+    }
     pinnedCurrentIdRef.current = activeReviewIds[0];
   }, [activeReviewIds, isReady]);
 

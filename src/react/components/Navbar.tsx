@@ -2,6 +2,7 @@ import { NavLink, useLocation, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
+import { useReaderItemOrderPreferences } from '../state/useReaderItemOrderPreferences';
 import { BrandMark } from './Icons';
 import { ReaderFullscreenButton } from './ReaderFullscreenButton';
 import { SettingsMenu } from './SettingsMenu';
@@ -10,6 +11,7 @@ export function Navbar() {
   const { t } = useTranslation();
   const location = useLocation();
   const [, setSearchParams] = useSearchParams();
+  const { itemOrder, setItemOrder } = useReaderItemOrderPreferences();
   const isReader = location.pathname === '/reader';
 
   function setReaderMode(mode: ReaderMode) {
@@ -39,6 +41,8 @@ export function Navbar() {
         <SettingsMenu
           readerMode={isReader ? getReaderMode(location.search) : undefined}
           onReaderModeChange={isReader ? setReaderMode : undefined}
+          itemOrder={isReader ? itemOrder : undefined}
+          onItemOrderChange={isReader ? setItemOrder : undefined}
         />
       </div>
     </nav>

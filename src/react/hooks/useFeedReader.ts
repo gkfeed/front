@@ -3,12 +3,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isNsfwLink } from '../domain/nsfw';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import { useAuth } from '../state/useAuth';
+import { orderReaderItems, type ReaderItemOrder } from '../state/readerItemOrder';
 import { useFeedItemDeletion } from './useFeedItemDeletion';
 import { useFeedItems } from './useFeedItems';
 import { useReviewSession } from './useReviewSession';
 import { useReviewPreviewPrefetch } from './useReviewPreviewPrefetch';
 
-export function useFeedReader({ prefetchNextPreviews = false }: { prefetchNextPreviews?: boolean } = {}) {
+export function useFeedReader({
+  prefetchNextPreviews = false,
+  itemOrder = 'desc',
+}: {
+  prefetchNextPreviews?: boolean;
+  itemOrder?: ReaderItemOrder;
+} = {}) {
   const { credentials } = useAuth();
   const { nsfwMode } = useNsfwPreferences();
   const {
@@ -29,18 +36,22 @@ export function useFeedReader({ prefetchNextPreviews = false }: { prefetchNextPr
   const [deletedItemIds, setDeletedItemIds] = useState<Set<number>>(() => new Set());
   const [requeuedItemIds, setRequeuedItemIds] = useState<Set<number>>(() => new Set());
 
+  const orderedLoadedItems = useMemo(
+    () => loadedItems ? orderReaderItems(loadedItems, itemOrder) : undefined,
+    [itemOrder, loadedItems],
+  );
   const items = useMemo(
-    () => loadedItems?.filter((item) => (
+    () => orderedLoadedItems?.filter((item) => (
       !deletedItemIds.has(item.id)
       && (nsfwMode !== 'hide' || !isNsfwLink(item.link))
     )),
-    [deletedItemIds, loadedItems, nsfwMode],
+    [deletedItemIds, nsfwMode, orderedLoadedItems],
   );
   const visibleReviewableIds = useMemo(
-    () => loadedItems
+    () => orderedLoadedItems
       ?.filter((item) => !deletedItemIds.has(item.id))
       .map((item) => item.id) ?? [],
-    [deletedItemIds, loadedItems],
+    [deletedItemIds, orderedLoadedItems],
   );
   const reviewableIds = useMemo(() => {
     const requeued = visibleReviewableIds.filter((id) => requeuedItemIds.has(id));
@@ -62,6 +73,7 @@ export function useFeedReader({ prefetchNextPreviews = false }: { prefetchNextPr
     visibleItemIds,
     username: credentials?.username ?? null,
     isSyncComplete,
+    orderKey: itemOrder,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
 

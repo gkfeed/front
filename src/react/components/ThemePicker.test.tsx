@@ -55,6 +55,22 @@ describe('ThemePicker', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
+  it('offers the Reader item order in Settings', () => {
+    const onItemOrderChange = vi.fn();
+    document.documentElement.dataset.theme = 'light';
+    render(<ThemePicker itemOrder="desc" onItemOrderChange={onItemOrderChange} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+    expect(screen.getByRole('menuitemradio', { name: 'Newest first' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemradio', { name: 'Oldest first' }).getAttribute('aria-checked')).toBe('false');
+
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Oldest first' }));
+
+    expect(onItemOrderChange).toHaveBeenCalledWith('asc');
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
   it('offers all four color themes in its appearance menu', () => {
     document.documentElement.dataset.theme = 'dark';
     render(<ThemePicker />);

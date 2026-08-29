@@ -10,6 +10,7 @@ export type ReviewQueueAction =
   | { type: 'extend'; ids: number[] }
   | { type: 'extendRestored'; ids: number[]; restoredIds: ReadonlySet<number> }
   | { type: 'reconcile'; ids: number[] }
+  | { type: 'reorder'; ids: number[] }
   | { type: 'keep'; id: number }
   | { type: 'remove'; id: number };
 
@@ -65,18 +66,23 @@ export function reviewQueueReducer(
     case 'reconcile': {
       const availableIds = new Set(action.ids);
       const keptItemIds = new Set([...state.keptItemIds].filter((id) => availableIds.has(id)));
-      const pendingIds = state.pendingIds.filter((id) => availableIds.has(id));
-      const revisitIds = state.revisitIds.filter((id) => availableIds.has(id));
-      const knownIds = new Set([...pendingIds, ...revisitIds, ...keptItemIds]);
-      const newIds = action.ids
-        .filter((id) => !knownIds.has(id))
-        .sort((left, right) => right - left);
+      const pendingIdSet = new Set(state.pendingIds.filter((id) => availableIds.has(id)));
+      const revisitIdSet = new Set(state.revisitIds.filter((id) => availableIds.has(id)));
+      const knownIds = new Set([...pendingIdSet, ...revisitIdSet, ...keptItemIds]);
+      const pendingIds = action.ids.filter((id) => pendingIdSet.has(id) || !knownIds.has(id));
+      const revisitIds = action.ids.filter((id) => revisitIdSet.has(id));
       return {
-        pendingIds: [...newIds, ...pendingIds],
+        pendingIds,
         revisitIds,
         keptItemIds,
       };
     }
+    case 'reorder':
+      return {
+        pendingIds: orderKnownIds(state.pendingIds, action.ids),
+        revisitIds: orderKnownIds(state.revisitIds, action.ids),
+        keptItemIds: state.keptItemIds,
+      };
     case 'keep': {
       const isPending = state.pendingIds.includes(action.id);
       const keptItemIds = new Set(state.keptItemIds).add(action.id);
@@ -98,6 +104,15 @@ export function reviewQueueReducer(
       };
     }
   }
+}
+
+function orderKnownIds(currentIds: number[], orderedIds: number[]): number[] {
+  const currentIdSet = new Set(currentIds);
+  const availableIdSet = new Set(orderedIds);
+  return [
+    ...orderedIds.filter((id) => currentIdSet.has(id)),
+    ...currentIds.filter((id) => !availableIdSet.has(id)),
+  ];
 }
 
 export function getActiveReviewIds(
