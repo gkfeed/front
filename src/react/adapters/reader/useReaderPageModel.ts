@@ -47,7 +47,7 @@ export function useReaderPageModel(t: Translator) {
     reviewPanelRef,
     reviewActionsRef,
     useCompactActions,
-    hasLoadedContent: !reader.isLoading && !reader.loadFailed,
+    hasLoadedContent: !reader.isLoading && (!reader.loadFailed || reader.items.length > 0),
     loadErrorMessage: reader.loadFailed
       ? getRequestErrorMessage(reader.loadError, t, 'reader.loadError')
       : '',

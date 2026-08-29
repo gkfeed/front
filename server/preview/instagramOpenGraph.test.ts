@@ -16,10 +16,17 @@ beforeEach(() => {
 
 describe('Instagram OpenGraph provider', () => {
   it.each([
-    ['GraphVideo', true, 'video'],
-    ['GraphImage', false, 'photo'],
-  ] as const)('detects %s media from the official embed data', async (typename, isVideo, type) => {
-    const requestedUrl = new URL('https://www.instagram.com/p/DcZUpIItbZu/');
+    ['/p/DcZUpIItbZu/', 'GraphVideo', true, 'video'],
+    ['/p/DcZUpIItbZu/', 'GraphImage', false, 'photo'],
+    ['/reel/DcZUpIItbZu/', 'GraphVideo', true, 'video'],
+    ['/reels/DcZUpIItbZu/', 'GraphVideo', true, 'video'],
+  ] as const)('detects %s %s media from the official embed data', async (
+    pathname,
+    typename,
+    isVideo,
+    type,
+  ) => {
+    const requestedUrl = new URL(`https://www.instagram.com${pathname}`);
     requestPublicHttp.mockImplementation(async (url: URL) => htmlResponse(`
       <meta property="og:image" content="https://example.com/poster.jpg">
       <script>window.__data = "{\\"shortcode_media\\":{\\"__typename\\":\\"${typename}\\",\\"is_video\\":${isVideo}${isVideo ? ',\\"video_url\\":\\"https://scontent.cdninstagram.com/video.mp4?token=example\\"' : ''}}}";</script>
@@ -31,7 +38,8 @@ describe('Instagram OpenGraph provider', () => {
       type,
       video: isVideo ? 'https://scontent.cdninstagram.com/video.mp4?token=example' : null,
     });
-    expect(requestPublicHttp.mock.calls[0]?.[0].href)
-      .toBe('https://www.instagram.com/p/DcZUpIItbZu/embed/');
+    expect(requestPublicHttp.mock.calls[0]?.[0].href).toBe(
+      `https://www.instagram.com/${pathname.startsWith('/reels/') ? 'reel' : pathname.split('/')[1]}/DcZUpIItbZu/embed/`,
+    );
   });
 });

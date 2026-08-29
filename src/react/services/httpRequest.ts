@@ -6,7 +6,7 @@ import {
 } from './requestTimeout';
 
 export type HttpRequestOptions = {
-  timeoutMs?: number;
+  timeoutMs?: number | null;
   createHttpError: (status: number) => Error;
   createTimeoutError: (timeoutMs: number) => Error;
   createInvalidJsonError?: (status: number) => Error;
@@ -77,6 +77,10 @@ async function runRequest<T>(
     createTimeoutError,
   }: HttpRequestOptions,
 ): Promise<T> {
+  if (timeoutMs === null) {
+    return operation(callerSignal ?? new AbortController().signal);
+  }
+
   const timeout = createTimeoutSignal(timeoutMs);
   const signal = combineAbortSignals(callerSignal, timeout.signal);
   const normalizedTimeoutMs = Number.isFinite(timeoutMs)

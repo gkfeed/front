@@ -16,6 +16,8 @@ export type FeedApplicationPort = {
     credentials: Credentials | null,
     limit?: number,
     signal?: AbortSignal,
+    onProgress?: (items: FeedItem[]) => boolean | void,
+    initialPageSize?: number,
   ) => Promise<FeedItem[]>;
   deleteFeedItemById: (id: number, credentials: Credentials | null) => Promise<void>;
   deleteFeedById: (id: number, credentials: Credentials | null) => Promise<void>;

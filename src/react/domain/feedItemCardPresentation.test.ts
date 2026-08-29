@@ -42,6 +42,14 @@ describe('feed item card presentation', () => {
     expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
   });
 
+  it('requests a remote preview for an Instagram Reel with an embed fallback', () => {
+    const feedItem = item({
+      link: 'https://www.instagram.com/reel/Video123/',
+      title: 'inst: creator',
+    });
+    expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
+  });
+
   it('requests Sasflix stream metadata even when the feed includes a thumbnail', () => {
     const feedItem = item({
       link: 'https://sasflix.ru/topics/c3895a19-330e-4483-ac69-14fe9d0fd9c6',

@@ -1,5 +1,53 @@
 import { expect, test } from '@playwright/test';
 
+test.describe('Reader fullscreen with theater mode', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 19,
+          feed_id: 4,
+          link: 'https://www.youtube.com/watch?v=abc123xyz',
+          title: 'Theater video',
+          text: '',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('https://www.youtube.com/embed/**', (route) => route.fulfill({
+      contentType: 'text/html',
+      body: '<!doctype html><title>YouTube player</title>',
+    }));
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        'gkfeed.credentials',
+        JSON.stringify({ username: 'automation', password: 'secret' }),
+      );
+    });
+  });
+
+  test('hides the Reader fullscreen control while theater mode is open', async ({ page }) => {
+    await page.goto('/reader');
+    const playVideo = page.getByRole('button', { name: 'Play video Theater video' });
+    await expect(playVideo).toBeVisible();
+
+    await page.evaluate(() => {
+      document.documentElement.dataset.readerFullscreen = 'true';
+      document.dispatchEvent(new Event('readerfullscreenchange'));
+    });
+    const exitFullscreen = page.getByRole('button', { name: 'Exit Reader fullscreen' });
+    await expect(exitFullscreen).toBeVisible();
+
+    await playVideo.click();
+    await expect(page.getByRole('button', { name: 'Exit theater mode' })).toBeVisible();
+    await expect(exitFullscreen).toBeHidden();
+
+    await page.getByRole('button', { name: 'Exit theater mode' }).click();
+    await expect(exitFullscreen).toBeVisible();
+  });
+});
+
 test.describe('TikTok player on iPad-sized readers', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));

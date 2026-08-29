@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FeedItemCardCopy,
@@ -10,7 +11,11 @@ import { ArticleReaderOverlay } from './ArticleReader';
 import { useArticleReader } from '../hooks/useArticleReader';
 import { isRezkaUrl, parseUrl } from '../domain/feedItemUrls';
 
-export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCardModel>[0] }) {
+export const FeedItemCard = memo(function FeedItemCard({
+  item,
+}: {
+  item: Parameters<typeof useFeedItemCardModel>[0];
+}) {
   const { t } = useTranslation();
   const model = useFeedItemCardModel(item);
   const articleReader = useArticleReader(item.link);
@@ -56,4 +61,4 @@ export function FeedItemCard({ item }: { item: Parameters<typeof useFeedItemCard
       <ArticleReaderOverlay reader={articleReader} originalUrl={item.link} />
     </article>
   );
-}
+});

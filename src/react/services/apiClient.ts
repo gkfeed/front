@@ -44,12 +44,23 @@ const apiRequestOptions: HttpRequestOptions = {
   createTimeoutError: (timeoutMs) => new ApiTimeoutError(timeoutMs),
 };
 
+export type ApiRequestOptions = {
+  timeoutMs?: number | null;
+};
+
 export async function request(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   return requestResponse(input, init, apiRequestOptions);
 }
 
-export async function requestJson(input: RequestInfo | URL, init: RequestInit = {}): Promise<unknown> {
-  return requestJsonTransport(input, init, apiRequestOptions);
+export async function requestJson(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  options: ApiRequestOptions = {},
+): Promise<unknown> {
+  return requestJsonTransport(input, init, {
+    ...apiRequestOptions,
+    ...options,
+  });
 }
 
 export async function postJson(

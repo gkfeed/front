@@ -14,6 +14,20 @@ afterEach(() => {
 });
 
 describe('http request transport', () => {
+  it('keeps a request alive when its timeout is explicitly disabled', async () => {
+    vi.useFakeTimers();
+    let resolveFetch: ((response: Response) => void) | undefined;
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => {
+      resolveFetch = resolve;
+    })));
+
+    const pending = requestJson('/slow', {}, { ...options, timeoutMs: null });
+    await vi.advanceTimersByTimeAsync(60_000);
+    resolveFetch?.(Response.json({ ok: true }));
+
+    await expect(pending).resolves.toEqual({ ok: true });
+  });
+
   it('shares HTTP status handling for response and JSON requests', async () => {
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(new Response(null, { status: 503 }))

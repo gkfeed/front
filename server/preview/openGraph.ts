@@ -30,13 +30,15 @@ export async function fetchOpenGraph(input: string, context?: RequestExecutionCo
     return fetchRezkaOpenGraph(requestedUrl, context);
   }
 
-  if (isInstagramPostUrl(requestedUrl)) {
+  if (isInstagramMediaUrl(requestedUrl)) {
     const embedUrl = new URL(requestedUrl.href);
     embedUrl.protocol = 'https:';
     embedUrl.hostname = 'www.instagram.com';
     embedUrl.search = '';
     embedUrl.hash = '';
-    embedUrl.pathname = `${embedUrl.pathname.replace(/\/$/, '')}/embed/`;
+    embedUrl.pathname = `${embedUrl.pathname
+      .replace(/^\/reels\//i, '/reel/')
+      .replace(/\/$/, '')}/embed/`;
     const page = await fetchHtml(embedUrl, TWITTERBOT_USER_AGENT, {}, context);
     return parseOpenGraph(page.html, requestedUrl);
   }
@@ -127,7 +129,7 @@ function isSasflixPublicationUrl(url: URL): boolean {
     && /^\/[a-z0-9_-]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/?$/i.test(url.pathname);
 }
 
-function isInstagramPostUrl(url: URL): boolean {
+function isInstagramMediaUrl(url: URL): boolean {
   return normalizeHostname(url.hostname) === 'instagram.com'
-    && /^\/p\/[A-Za-z0-9_-]{1,64}\/?$/i.test(url.pathname);
+    && /^\/(?:p|reel|reels|tv)\/[A-Za-z0-9_-]{1,64}\/?$/i.test(url.pathname);
 }

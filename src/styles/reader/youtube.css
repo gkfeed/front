@@ -177,6 +177,10 @@ html.reader-theater-open {
   overflow: hidden;
 }
 
+html.reader-theater-open main .reader__fullscreen-toolbar {
+  display: none;
+}
+
 @media (min-aspect-ratio: 8 / 5) {
   .reader-card__player-shell--theater .reader-card__player-stage {
     width: min(100%, 145dvh, 1600px);

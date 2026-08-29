@@ -79,3 +79,6 @@ export function getSasflixPublicationId(url: URL): string | null {
   );
   return match?.[1] ?? null;
 }
+
+// Re-export shared helper for server/client consistency checks.
+export { isSasflixPublicationUrl } from '../../../shared/urlRules';

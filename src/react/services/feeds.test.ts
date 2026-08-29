@@ -30,7 +30,10 @@ function respondWithoutBody(status = 201) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status })));
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 afterAll(() => vi.unstubAllEnvs());
 
 describe('feed service', () => {
@@ -144,6 +147,7 @@ describe('feed service', () => {
   });
 
   it('follows item cursors using bounded pages', async () => {
+    const onProgress = vi.fn();
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(Response.json({
         items: [{ id: 10, feed_id: 2, link: 'https://example.com/10', title: 'Ten', text: '' }],
@@ -153,7 +157,14 @@ describe('feed service', () => {
         items: [{ id: 9, feed_id: 2, link: 'https://example.com/9', title: 'Nine', text: '' }],
       })));
 
-    await expect(getFeedItems(CREDENTIALS, 150)).resolves.toEqual([
+    await expect(getFeedItems(CREDENTIALS, 150, undefined, onProgress)).resolves.toEqual([
+      { id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' },
+      { id: 9, feedId: 2, link: 'https://example.com/9', title: 'Nine', text: '' },
+    ]);
+    expect(onProgress).toHaveBeenNthCalledWith(1, [
+      { id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' },
+    ]);
+    expect(onProgress).toHaveBeenNthCalledWith(2, [
       { id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' },
       { id: 9, feedId: 2, link: 'https://example.com/9', title: 'Nine', text: '' },
     ]);
@@ -164,6 +175,59 @@ describe('feed service', () => {
     );
     expect(fetch).toHaveBeenNthCalledWith(
       2,
+      'https://feed.gws.freemyip.com/api/v1/get_items?limit=100&cursor=10',
+      expect.any(Object),
+    );
+  });
+
+  it('applies the request timeout to each item page', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn((_input: RequestInfo | URL, init?: RequestInit) => (
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      })
+    )));
+
+    const rejection = expect(getFeedItems(CREDENTIALS)).rejects.toMatchObject({
+      name: 'ApiTimeoutError',
+      timeoutMs: 100_000,
+    });
+    await vi.advanceTimersByTimeAsync(99_999);
+    expect(fetch).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(1);
+
+    await rejection;
+  });
+
+  it('loads beyond 1000 items when no explicit limit is provided', async () => {
+    let pageIndex = 0;
+    const fetchMock = vi.fn().mockImplementation(() => {
+      const currentPage = pageIndex;
+      pageIndex += 1;
+      return Promise.resolve(Response.json({
+        items: Array.from({ length: 100 }, (_, itemIndex) => {
+          const id = 2_000 - currentPage * 100 - itemIndex;
+          return {
+            id,
+            feed_id: 2,
+            link: `https://example.com/${id}`,
+            title: `Item ${id}`,
+            text: '',
+          };
+        }),
+        next_cursor: currentPage < 10 ? currentPage + 1 : null,
+      }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const items = await getFeedItems(CREDENTIALS);
+
+    expect(items).toHaveLength(1_100);
+    expect(items.at(-1)?.id).toBe(901);
+    expect(fetchMock).toHaveBeenCalledTimes(11);
+    expect(fetchMock).toHaveBeenLastCalledWith(
       'https://feed.gws.freemyip.com/api/v1/get_items?limit=100&cursor=10',
       expect.any(Object),
     );

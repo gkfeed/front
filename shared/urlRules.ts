@@ -46,3 +46,19 @@ export function isVkHost(hostname: string): boolean {
 export function isVkImageHost(hostname: string): boolean {
   return isHostnameOrSubdomain(hostname, VK_IMAGE_HOSTS);
 }
+
+const SASFLIX_PUBLICATION_PATH = /^\/[a-z0-9_-]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/?$/i;
+
+export function isSasflixPublicationUrl(url: URL): boolean {
+  return normalizeHostname(url.hostname) === 'sasflix.ru'
+    && url.protocol === 'https:'
+    && !url.username
+    && !url.password
+    && !url.port
+    && SASFLIX_PUBLICATION_PATH.test(url.pathname);
+}
+
+export function getSasflixPublicationIdFromUrl(url: URL): string | null {
+  if (!isSasflixPublicationUrl(url)) return null;
+  return url.pathname.match(SASFLIX_PUBLICATION_PATH)?.[0].split('/').filter(Boolean).at(-1) ?? null;
+}

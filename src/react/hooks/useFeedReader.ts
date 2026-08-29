@@ -11,13 +11,21 @@ import { useReviewPreviewPrefetch } from './useReviewPreviewPrefetch';
 export function useFeedReader({ prefetchNextPreviews = false }: { prefetchNextPreviews?: boolean } = {}) {
   const { credentials } = useAuth();
   const { nsfwMode } = useNsfwPreferences();
-  const { loadedItems, status, error: loadError, isLoading, retry } = useFeedItems(credentials);
+  const {
+    loadedItems,
+    status,
+    error: loadError,
+    isLoading,
+    isSyncComplete,
+    invalidateCache,
+    retry,
+  } = useFeedItems(credentials);
   const {
     deleteItem: deleteRemoteItem,
     failedDeletions,
     isItemPending,
     retryItem,
-  } = useFeedItemDeletion(credentials);
+  } = useFeedItemDeletion(credentials, invalidateCache);
   const [deletedItemIds, setDeletedItemIds] = useState<Set<number>>(() => new Set());
   const [requeuedItemIds, setRequeuedItemIds] = useState<Set<number>>(() => new Set());
 
@@ -53,6 +61,7 @@ export function useFeedReader({ prefetchNextPreviews = false }: { prefetchNextPr
     reviewableIds,
     visibleItemIds,
     username: credentials?.username ?? null,
+    isSyncComplete,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
 

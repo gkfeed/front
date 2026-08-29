@@ -12,7 +12,7 @@ import type { RemotePreview } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
 import {
   getInstagramEmbedPreview,
-  isAmbiguousInstagramPostUrl,
+  isInstagramMediaUrl,
 } from './instagramPreview';
 
 export type FeedItemCardPreviewResolution = {
@@ -31,8 +31,8 @@ export function shouldLoadRemotePreview(
   const isRezka = isRezkaUrl(url);
   const usesVkDescription = policy.description === 'vk';
   const isReddit = isRedditUrl(url);
-  const needsInstagramMediaType = analysis.provider === 'instagram'
-    && Boolean(url && isAmbiguousInstagramPostUrl(url));
+  const needsInstagramMetadata = analysis.provider === 'instagram'
+    && Boolean(url && isInstagramMediaUrl(url));
   const needsSasflixMetadata = analysis.provider === 'sasflix';
   const feedDescription = usesVkDescription
     ? getFeedItemDescription(item.text, item.title)
@@ -42,7 +42,7 @@ export function shouldLoadRemotePreview(
     && policy.remotePreview
     && (isReddit
       || isRezka
-      || needsInstagramMediaType
+      || needsInstagramMetadata
       || needsSasflixMetadata
       || !(localPreview?.src && (!usesVkDescription || feedDescription)));
 }

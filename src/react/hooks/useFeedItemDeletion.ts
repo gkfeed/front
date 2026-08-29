@@ -13,7 +13,10 @@ export type FeedItemDeletion = {
 
 type MutableDeletion = FeedItemDeletion;
 
-export function useFeedItemDeletion(credentials: Credentials | null) {
+export function useFeedItemDeletion(
+  credentials: Credentials | null,
+  onDeleted?: (itemId: number) => void,
+) {
   const { feeds } = useFeatureUseCases();
   const [operations, setOperations] = useState<FeedItemDeletion[]>([]);
   const operationsRef = useRef(new Map<number, MutableDeletion>());
@@ -44,6 +47,7 @@ export function useFeedItemDeletion(credentials: Credentials | null) {
         try {
           await feeds.deleteFeedItem(itemId, credentials);
           if (operationsRef.current.get(itemId) === operation) {
+            onDeleted?.(itemId);
             operationsRef.current.delete(itemId);
             publishOperations();
           }
@@ -61,7 +65,7 @@ export function useFeedItemDeletion(credentials: Credentials | null) {
     } finally {
       isProcessingRef.current = false;
     }
-  }, [credentials, feeds, publishOperations]);
+  }, [credentials, feeds, onDeleted, publishOperations]);
 
   const retryItem = useCallback((itemId: number): boolean => {
     const operation = operationsRef.current.get(itemId);

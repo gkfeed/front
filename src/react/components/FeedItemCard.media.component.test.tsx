@@ -158,21 +158,33 @@ describe('FeedItemCard media providers', () => {
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
-  it('renders an Instagram Reel with the official embed player', () => {
+  it('plays an Instagram Reel from the extracted media URL', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.instagram.com/reel/AbC_123/?igsh=example',
+      title: 'Video',
+      description: null,
+      image: 'https://example.com/poster.jpg',
+      video: 'https://scontent.cdninstagram.com/reel.mp4?token=example',
+      siteName: 'Instagram',
+      type: 'video',
+      providerData: null,
+    });
     render(<FeedItemCard item={{
       ...item,
       link: 'https://www.instagram.com/reel/AbC_123/?igsh=example',
       title: 'inst: creator',
     }} />);
 
-    const player = screen.getByTitle('Video preview for inst: creator');
-    expect(player.tagName).toBe('IFRAME');
+    const player = await screen.findByLabelText('Video preview for Video');
+    expect(player.tagName).toBe('VIDEO');
     expect(player.getAttribute('src'))
-      .toBe('https://www.instagram.com/reel/AbC_123/embed/');
-    expect(player.getAttribute('allow')).toContain('encrypted-media');
-    expect(player.closest('.reader-card__preview--instagram')).toBeTruthy();
+      .toBe('https://scontent.cdninstagram.com/reel.mp4?token=example');
+    expect(player.getAttribute('poster')).toBe('https://example.com/poster.jpg');
     expect(player.closest('.reader-card--instagram')).toBeTruthy();
-    expect(getPreview).not.toHaveBeenCalled();
+    expect(getPreview).toHaveBeenCalledWith(
+      'https://www.instagram.com/reel/AbC_123/?igsh=example',
+      expect.anything(),
+    );
   });
 
   it('keeps a photo from a universal Instagram post path as an image', async () => {

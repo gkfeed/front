@@ -23,10 +23,12 @@ export function createFeedUseCases(port: FeedApplicationPort) {
 
   function loadFeedItems(
     credentials: Credentials | null,
-    limit = 1000,
+    limit?: number,
     signal?: AbortSignal,
+    onProgress?: (items: FeedItem[]) => boolean | void,
+    initialPageSize?: number,
   ): Promise<FeedItem[]> {
-    return port.getFeedItems(credentials, limit, signal);
+    return port.getFeedItems(credentials, limit, signal, onProgress, initialPageSize);
   }
 
   function deleteFeedItem(id: number, credentials: Credentials | null): Promise<void> {

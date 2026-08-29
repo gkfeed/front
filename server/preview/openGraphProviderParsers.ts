@@ -34,11 +34,11 @@ function decodeInstagramVideoUrl(value: string | undefined): string | null {
     return null;
   }
   if (typeof decoded !== 'string') return null;
-  decoded = decodeHtml(decoded);
+  const decodedUrl = decodeHtml(decoded);
 
   let url: URL;
   try {
-    url = new URL(decoded);
+    url = new URL(decodedUrl);
   } catch {
     return null;
   }
