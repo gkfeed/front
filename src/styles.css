@@ -1,7 +1,4 @@
 @import "./styles/base.css";
 @import "./styles/motion.css";
 @import "./styles/controls.css";
-@import "./styles/navigation.css";
-@import "./styles/settings-menu.css";
-@import "./styles/reader-fullscreen-button.css";
 @import "./styles/form-primitives.css";

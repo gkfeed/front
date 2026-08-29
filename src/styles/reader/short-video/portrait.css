@@ -4,19 +4,19 @@
   }
 
   .reader__item
-  .reader-card.reader-card--tiktok:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) {
+  .reader-card.reader-card--tiktok[data-comments-expanded="false"] {
     grid-template-columns: minmax(0, auto);
   }
 
   .reader__item
-  .reader-card--tiktok:not(:has(.tiktok-comments__toggle[aria-expanded="true"]))
+  .reader-card--tiktok[data-comments-expanded="false"]
   .tiktok-comments__toolbar {
     justify-content: center;
   }
 }
 
 @media (min-width: 1024px) and (orientation: portrait) {
-  .reader__item .reader-card--short-video:has(.tiktok-comments__toggle[aria-expanded="true"]) {
+  .reader__item .reader-card--short-video[data-comments-expanded="true"] {
     height: min(calc(100dvh - 340px), 177.778cqw);
   }
 }

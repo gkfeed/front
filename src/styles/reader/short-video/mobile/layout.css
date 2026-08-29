@@ -2,7 +2,7 @@
   .reader__item--short-video,
   .reader__item--short-video .reader-card.reader-card--short-video,
   .reader__item--short-video
-  .reader-card.reader-card--short-video:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) {
+  .reader-card.reader-card--short-video:not([data-comments-expanded="true"]) {
     position: relative;
     width: 100%;
     max-width: 100%;
@@ -10,7 +10,7 @@
 
   .reader__item--short-video .reader-card.reader-card--short-video,
   .reader__item--short-video
-  .reader-card.reader-card--short-video:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) {
+  .reader-card.reader-card--short-video:not([data-comments-expanded="true"]) {
     display: block;
   }
 

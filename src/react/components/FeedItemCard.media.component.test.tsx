@@ -258,7 +258,12 @@ describe('FeedItemCard media providers', () => {
     expect(screen.queryByText('Feed #2')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Story' })).toBeNull();
     expect(screen.queryByText(/read original/i)).toBeNull();
-    expect(player.closest('.reader-card--tiktok')).toBeTruthy();
+    const card = player.closest('.reader-card--tiktok');
+    expect(card?.getAttribute('data-comments-expanded')).toBe('false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show comments' }));
+
+    expect(card?.getAttribute('data-comments-expanded')).toBe('true');
     expect(getPreview).not.toHaveBeenCalled();
   });
 

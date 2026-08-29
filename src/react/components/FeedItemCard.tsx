@@ -9,6 +9,7 @@ import {
 import { useFeedItemCardModel } from './useFeedItemCardModel';
 import { ArticleReaderOverlay } from './ArticleReader';
 import { useArticleReader } from '../hooks/useArticleReader';
+import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
 import { isRezkaUrl, parseUrl } from '../domain/feedItemUrls';
 
 export const FeedItemCard = memo(function FeedItemCard({
@@ -18,6 +19,7 @@ export const FeedItemCard = memo(function FeedItemCard({
 }) {
   const { t } = useTranslation();
   const model = useFeedItemCardModel(item);
+  const [areTikTokCommentsExpanded] = useTikTokCommentsPreference();
   const articleReader = useArticleReader(item.link);
   const { cardRef, isPreviewPending, descriptor, shouldBlurNsfw, shouldHideNsfw } = model;
   const canReadArticle = model.provider !== 'vk' && (
@@ -38,6 +40,7 @@ export const FeedItemCard = memo(function FeedItemCard({
         isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
+      data-comments-expanded={model.provider === 'tiktok' ? areTikTokCommentsExpanded : undefined}
       inert={shouldBlurNsfw}
       onClickCapture={(event) => {
         if (!canReadArticle || articleReader.isOpen) return;

@@ -2,6 +2,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import '../../styles/settings-menu.css';
+
 import type { ReaderMode } from '../state/readerMode';
 import type { ReaderItemOrder } from '../state/readerItemOrder';
 import { NsfwPicker } from './NsfwPicker';

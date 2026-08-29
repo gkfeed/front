@@ -82,15 +82,15 @@
   font-weight: 800;
 }
 
-.reader-card--tiktok:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) .tiktok-comments {
+.reader-card--tiktok[data-comments-expanded="false"] .tiktok-comments {
   width: auto;
 }
 
-.reader-card--tiktok:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) .tiktok-comments__title {
+.reader-card--tiktok[data-comments-expanded="false"] .tiktok-comments__title {
   display: none;
 }
 
-.reader-card--tiktok:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) .tiktok-comments__toolbar {
+.reader-card--tiktok[data-comments-expanded="false"] .tiktok-comments__toolbar {
   min-height: 34px;
   justify-content: flex-start;
 }

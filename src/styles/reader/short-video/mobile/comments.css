@@ -4,7 +4,7 @@
   }
 
   .reader__item--tiktok
-  .reader-card--tiktok:has(.tiktok-comments__toggle[aria-expanded="true"])
+  .reader-card--tiktok[data-comments-expanded="true"]
   .tiktok-comments {
     position: fixed;
     z-index: 11;

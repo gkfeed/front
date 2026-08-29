@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import '../../styles/reader-fullscreen-button.css';
+
 import {
   FALLBACK_FULLSCREEN_EVENT,
   clearReviewActionsSize,

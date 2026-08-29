@@ -15,24 +15,16 @@
 
   /* A 16:9 canvas is useful for media, but makes text-only cards awkwardly wide. */
   main[data-reader-fullscreen="true"] .reader__item:has(
-    .reader-card--youtube,
-    .reader-card--twitch,
-    .reader-card--matreshka,
-    .reader-card--sasflix,
+    .reader-card--landscape-media,
     .reader-card--image-preview,
     .reader-card--simple-image
   ) {
     width: min(100%, 960px);
   }
 
-  /* YouTube thumbnails are 16:9, so sizing the item from the available height
-     also removes the empty side strips caused by a separately capped image. */
-  main[data-reader-fullscreen="true"] :is(
-    .reader-card--youtube,
-    .reader-card--twitch,
-    .reader-card--matreshka,
-    .reader-card--sasflix
-  ) .reader-card__preview > img {
+  /* Landscape thumbnails size from the available height without introducing
+     empty side strips from a separately capped image. */
+  main[data-reader-fullscreen="true"] .reader-card--landscape-media .reader-card__preview > img {
     max-height: none;
   }
 

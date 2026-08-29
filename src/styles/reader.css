@@ -1,12 +1,10 @@
-/* Provider-specific card presentations. */
-@import "./reader/liquipedia.css";
-@import "./reader/hltv.css";
-
 /* Reader and card foundations. */
 @import "./reader/layout.css";
 @import "./reader/card.css";
 
-/* Provider variants that build on the generic card foundation. */
+/* Provider variants build on the generic card foundation. */
+@import "./reader/liquipedia.css";
+@import "./reader/hltv.css";
 @import "./reader/vk.css";
 
 /* Feature styles. */

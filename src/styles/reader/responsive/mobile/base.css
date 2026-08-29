@@ -18,12 +18,7 @@
     padding: 16px;
   }
 
-  .reader-card:is(
-    .reader-card--youtube,
-    .reader-card--twitch,
-    .reader-card--matreshka,
-    .reader-card--sasflix
-  ) {
+  .reader-card--landscape-media {
     padding: 0;
   }
 

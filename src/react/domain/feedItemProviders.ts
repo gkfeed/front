@@ -79,13 +79,17 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
     resolveVariant: ({ matreshkaVideoId }) => matreshkaVideoId
       ? { type: 'matreshka', videoId: matreshkaVideoId }
       : { type: 'standard' },
-    classNames: (variant) => variant.type === 'matreshka' ? ['reader-card--matreshka'] : [],
+    classNames: (variant) => variant.type === 'matreshka'
+      ? ['reader-card--matreshka', 'reader-card--landscape-media']
+      : [],
   }),
   sasflix: createFeedItemProviderAdapter({
     resolveVariant: ({ sasflixPublicationId }) => sasflixPublicationId
       ? { type: 'sasflix', publicationId: sasflixPublicationId }
       : { type: 'standard' },
-    classNames: (variant) => variant.type === 'sasflix' ? ['reader-card--sasflix'] : [],
+    classNames: (variant) => variant.type === 'sasflix'
+      ? ['reader-card--sasflix', 'reader-card--landscape-media']
+      : [],
   }),
   tiktok: createFeedItemProviderAdapter({
     supplementary: 'tiktok',
@@ -98,7 +102,9 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
     resolveVariant: ({ twitchChannel }) => twitchChannel
       ? { type: 'twitch', channel: twitchChannel }
       : { type: 'standard' },
-    classNames: (variant) => variant.type === 'twitch' ? ['reader-card--twitch'] : [],
+    classNames: (variant) => variant.type === 'twitch'
+      ? ['reader-card--twitch', 'reader-card--landscape-media']
+      : [],
   }),
   vk: createFeedItemProviderAdapter({
     classNames: () => ['reader-card--vk'],
@@ -107,7 +113,9 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
     resolveVariant: ({ youtubeVideoId }) => youtubeVideoId
       ? { type: 'youtube', videoId: youtubeVideoId }
       : { type: 'standard' },
-    classNames: (variant) => variant.type === 'youtube' ? ['reader-card--youtube'] : [],
+    classNames: (variant) => variant.type === 'youtube'
+      ? ['reader-card--youtube', 'reader-card--landscape-media']
+      : [],
   }),
 };
 

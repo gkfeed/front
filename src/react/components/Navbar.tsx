@@ -1,6 +1,8 @@
 import { NavLink, useLocation, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
+import '../../styles/navigation.css';
+
 import { getReaderMode, type ReaderMode } from '../state/readerMode';
 import { useReaderItemOrderPreferences } from '../state/useReaderItemOrderPreferences';
 import { BrandMark } from './Icons';
