@@ -12,6 +12,8 @@ Keep styles with the smallest unit that fully owns the behaviour:
 Prefer a semantic modifier class or `data-*` state when React already knows the presentation state. Use `:has()` when the layout genuinely depends on child content that the parent does not otherwise know about.
 
 Generic contexts depend on presentation contracts such as `reader-card--landscape-media`
-and `reader__item--card-flow`, not on provider or feature names.
+and `reader__item--card-flow`, not on provider or feature names. Shared player
+presentation uses `reader-card--player` and `reader-card__copy--player`; provider
+classes are reserved for provider-specific styling.
 
 The Reader entry point orders the cascade as foundations, features, responsive context, fullscreen context, and finally the independent article reader.

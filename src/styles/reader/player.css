@@ -1,10 +1,5 @@
 /* Shared player cards and theater controls for video-capable providers. */
-:is(
-  .reader-card--youtube,
-  .reader-card--twitch,
-  .reader-card--matreshka,
-  .reader-card--sasflix
-) {
+.reader-card--player {
   position: relative;
   gap: 0;
   min-height: 0;
@@ -34,12 +29,7 @@
   outline-offset: -3px;
 }
 
-:is(
-  .reader-card--youtube,
-  .reader-card--twitch,
-  .reader-card--matreshka,
-  .reader-card--sasflix
-) .reader-card__preview {
+.reader-card--player .reader-card__preview {
   border: 0;
   border-radius: 0;
 }

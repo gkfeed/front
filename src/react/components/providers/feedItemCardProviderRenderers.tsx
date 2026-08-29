@@ -183,7 +183,7 @@ export function TikTokSupplementary({ model }: FeedItemCardProviderRendererProps
 const renderYoutubeCopy = createVariantRenderer(
   'youtube',
   ({ model }: VariantRendererProps<'youtube'>) => (
-    <div className="reader-card__copy reader-card__youtube-copy">
+    <div className="reader-card__copy reader-card__copy--player reader-card__youtube-copy">
       <h2 className="reader-card__title">{model.item.text || model.item.title}</h2>
       <p className="reader-card__channel">{getYoutubeChannelName(model.item.title)}</p>
     </div>
@@ -198,7 +198,7 @@ export function YoutubeCopy(props: FeedItemCardProviderRendererProps) {
 const renderTwitchCopy = createVariantRenderer('twitch', ({ model }: VariantRendererProps<'twitch'>) => {
   const streamTitle = getTwitchStreamTitle(model.item.title, model.variant.channel);
   return (
-    <div className="reader-card__copy reader-card__twitch-copy">
+    <div className="reader-card__copy reader-card__copy--player reader-card__twitch-copy">
       <h2 className="reader-card__title"><TwitchTitle text={streamTitle} /></h2>
       <p className="reader-card__channel">{model.variant.channel}</p>
     </div>
@@ -214,7 +214,7 @@ const renderMatreshkaCopy = createVariantRenderer('matreshka', ({
 }: VariantRendererProps<'matreshka'>) => {
   const matreshkaTitle = parseMatreshkaTitle(model.item.title, model.item.text);
   return (
-    <div className="reader-card__copy reader-card__matreshka-copy">
+    <div className="reader-card__copy reader-card__copy--player reader-card__matreshka-copy">
       <h2 className="reader-card__title">{matreshkaTitle.title}</h2>
       {matreshkaTitle.channel ? (
         <p className="reader-card__channel">{matreshkaTitle.channel}</p>
@@ -230,7 +230,7 @@ export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
 const renderSasflixCopy = createVariantRenderer('sasflix', ({
   model,
 }: VariantRendererProps<'sasflix'>) => (
-  <div className="reader-card__copy reader-card__sasflix-copy">
+  <div className="reader-card__copy reader-card__copy--player reader-card__sasflix-copy">
     <h2 className="reader-card__title">{model.item.title}</h2>
   </div>
 ), StandardCopy);

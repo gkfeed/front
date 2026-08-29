@@ -32,6 +32,9 @@ describe('FeedItemCard Twitch player', () => {
     }} />);
 
     expect(screen.getByRole('article').classList.contains('reader-card--twitch')).toBe(true);
+    expect(screen.getByRole('article').classList.contains('reader-card--player')).toBe(true);
+    expect(screen.getByRole('heading', { name: 'Story' }).parentElement?.classList
+      .contains('reader-card__copy--player')).toBe(true);
     expect(screen.getByRole('heading', { name: 'Story' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Play some_channel on Twitch' })
       .closest('.reader-card__preview-trigger-wrap')?.contains(screen.getByRole('heading', { name: 'Story' })))

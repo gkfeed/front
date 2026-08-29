@@ -1,3 +1,13 @@
+main[data-reader-fullscreen="true"] .reader {
+  max-width: none;
+  padding-right: clamp(12px, 3vw, 48px);
+  padding-left: clamp(12px, 3vw, 48px);
+}
+
+main[data-reader-fullscreen="true"] :is(.reader__item, .reader__scroll-panel) {
+  max-width: min(100%, 1600px);
+}
+
 /* Keep a regular review card and its actions inside the fullscreen viewport. */
 @media (min-width: 641px) {
   main[data-reader-fullscreen="true"] .reader {
@@ -5,45 +15,13 @@
     gap: clamp(14px, 1.8vh, 22px);
     min-height: 100dvh;
     padding-top: max(28px, calc(env(safe-area-inset-top) + 20px));
+    padding-right: clamp(20px, 4vw, 72px);
     padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
+    padding-left: clamp(20px, 4vw, 72px);
   }
 
   main[data-reader-fullscreen="true"] .reader__item--card-flow {
     width: min(100%, 960px);
     max-width: none;
-  }
-
-  /* A 16:9 canvas is useful for media, but makes text-only cards awkwardly wide. */
-  main[data-reader-fullscreen="true"] .reader__item:has(
-    .reader-card--landscape-media,
-    .reader-card--image-preview,
-    .reader-card--simple-image
-  ) {
-    width: min(100%, 960px);
-  }
-
-  /* Landscape thumbnails size from the available height without introducing
-     empty side strips from a separately capped image. */
-  main[data-reader-fullscreen="true"] .reader-card--landscape-media .reader-card__preview > img {
-    max-height: none;
-  }
-
-  main[data-reader-fullscreen="true"] :is(.reader-card--image-preview, .reader-card--simple-image) {
-    width: 100%;
-    max-width: 100%;
-    justify-self: center;
-  }
-
-  main[data-reader-fullscreen="true"] :is(.reader-card--image-preview, .reader-card--simple-image) .reader-card__preview {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  main[data-reader-fullscreen="true"] :is(.reader-card--image-preview, .reader-card--simple-image) .reader-card__preview > img {
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(100dvh - 300px);
-    margin-inline: auto;
-    object-fit: contain;
   }
 }

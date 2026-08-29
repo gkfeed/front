@@ -68,10 +68,13 @@
   font-weight: 800;
 }
 
-
 .nav__link:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 3px;
+}
+
+html[data-reader-fullscreen="true"] .nav {
+  display: none;
 }
 
 @media (max-width: 760px) {

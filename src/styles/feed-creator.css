@@ -147,6 +147,10 @@
 }
 
 @media (max-width: 640px) {
+  .field--type {
+    position: relative;
+  }
+
   .creator {
     padding: 24px 12px 36px;
   }

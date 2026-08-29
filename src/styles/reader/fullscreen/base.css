@@ -16,10 +16,6 @@ html[data-reader-fullscreen="true"] body {
   overflow: hidden;
 }
 
-html[data-reader-fullscreen="true"] .nav {
-  display: none;
-}
-
 html[data-reader-fullscreen="true"] main {
   position: fixed;
   inset: 0;

@@ -80,7 +80,7 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
       ? { type: 'matreshka', videoId: matreshkaVideoId }
       : { type: 'standard' },
     classNames: (variant) => variant.type === 'matreshka'
-      ? ['reader-card--matreshka', 'reader-card--landscape-media']
+      ? ['reader-card--matreshka', 'reader-card--player', 'reader-card--landscape-media']
       : [],
   }),
   sasflix: createFeedItemProviderAdapter({
@@ -88,7 +88,7 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
       ? { type: 'sasflix', publicationId: sasflixPublicationId }
       : { type: 'standard' },
     classNames: (variant) => variant.type === 'sasflix'
-      ? ['reader-card--sasflix', 'reader-card--landscape-media']
+      ? ['reader-card--sasflix', 'reader-card--player', 'reader-card--landscape-media']
       : [],
   }),
   tiktok: createFeedItemProviderAdapter({
@@ -103,7 +103,7 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
       ? { type: 'twitch', channel: twitchChannel }
       : { type: 'standard' },
     classNames: (variant) => variant.type === 'twitch'
-      ? ['reader-card--twitch', 'reader-card--landscape-media']
+      ? ['reader-card--twitch', 'reader-card--player', 'reader-card--landscape-media']
       : [],
   }),
   vk: createFeedItemProviderAdapter({
@@ -114,7 +114,7 @@ const feedItemProviderRegistry: Record<FeedItemProvider, FeedItemProviderAdapter
       ? { type: 'youtube', videoId: youtubeVideoId }
       : { type: 'standard' },
     classNames: (variant) => variant.type === 'youtube'
-      ? ['reader-card--youtube', 'reader-card--landscape-media']
+      ? ['reader-card--youtube', 'reader-card--player', 'reader-card--landscape-media']
       : [],
   }),
 };

@@ -183,18 +183,12 @@
 
 
 @media (max-width: 640px) {
-
   .type-picker {
     position: static;
-  }
-
-  .field--type {
-    position: relative;
   }
 
   .type-picker__panel {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     max-height: 246px;
   }
-
 }
