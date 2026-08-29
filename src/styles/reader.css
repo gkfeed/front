@@ -1,10 +1,13 @@
+@import "./reader/fullscreen.css";
 @import "./reader/liquipedia.css";
 @import "./reader/hltv.css";
 @import "./reader/layout.css";
 @import "./reader/card.css";
+@import "./reader/short-video.css";
 @import "./reader/comments.css";
 @import "./reader/player.css";
 @import "./reader/content.css";
 @import "./reader/actions.css";
+@import "./reader/states.css";
 @import "./reader/responsive.css";
 @import "./reader/article.css";

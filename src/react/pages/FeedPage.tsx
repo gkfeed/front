@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 
-import '../../styles/actions.css';
 import '../../styles/feeds.css';
 import { FeedCard } from '../components/FeedCard';
 import {

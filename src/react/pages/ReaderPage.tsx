@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 
-import '../../styles/actions.css';
 import '../../styles/reader.css';
 import { ReaderReview } from '../components/ReaderReview';
 import { ReaderScroll } from '../components/ReaderScroll';

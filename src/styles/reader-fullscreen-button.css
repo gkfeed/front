@@ -1,0 +1,40 @@
+.reader-fullscreen {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in oklch, var(--color-border) 88%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--color-page) 82%, var(--color-border));
+  color: var(--color-ink-inverse);
+  transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease);
+}
+
+.reader-fullscreen:hover:not(:disabled) {
+  border-color: color-mix(in oklch, var(--color-ink-inverse) 44%, var(--color-border));
+  background: color-mix(in oklch, var(--color-page) 68%, var(--color-border));
+}
+
+.reader-fullscreen__icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.reader-fullscreen:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .reader-fullscreen {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+}

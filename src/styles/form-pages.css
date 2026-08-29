@@ -1,0 +1,395 @@
+.creator,
+.login {
+  margin: 0 auto;
+}
+
+.creator {
+  max-width: 496px;
+  padding: 32px 16px 48px;
+}
+
+.login {
+  width: 100%;
+  max-width: 496px;
+  padding: 32px 16px 48px;
+}
+
+.creator__form {
+  display: grid;
+  max-width: 464px;
+  gap: 24px;
+  padding: 0;
+  color: var(--color-ink-inverse);
+}
+
+.login__form {
+  display: grid;
+  width: 100%;
+  max-width: 464px;
+  margin: 0 auto;
+  gap: 24px;
+  padding: 0;
+  color: var(--color-ink-inverse);
+}
+
+.login__form--saved {
+  max-width: 464px;
+  gap: 16px;
+}
+
+.creator__fields {
+  display: grid;
+  gap: 15px;
+}
+
+.login__fields {
+  display: grid;
+  gap: 16px;
+}
+
+.creator h1 {
+  margin: 0;
+  color: var(--color-ink-strong);
+  font-size: 1.72rem;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.creator label,
+.creator .field__label,
+.login label {
+  color: color-mix(in oklch, var(--color-ink-inverse) 78%, var(--color-page));
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.creator .field__control {
+  display: block;
+  border-color: var(--color-input-border);
+  background: var(--color-input-surface);
+  transition: background-color var(--ease), border-color var(--ease);
+}
+
+.login .field__control,
+.login__account {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border-color: var(--color-input-border);
+  background: var(--color-input-surface);
+  color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
+  transition: background-color var(--ease), border-color var(--ease);
+}
+
+.login__account {
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-control-border);
+  border-radius: 12px;
+  background: var(--color-control-well);
+}
+
+.login__account-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: color-mix(in oklch, var(--color-ink-inverse) 66%, var(--color-page));
+  font-size: 0.84rem;
+  line-height: 1.25;
+}
+
+.login__account-copy strong {
+  display: block;
+  color: var(--color-ink-inverse);
+  font-size: 1.05rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.creator .field__control:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-accent-focus) 22%, transparent);
+}
+
+.creator .field__control:has([aria-invalid="true"]),
+.creator .field--invalid .field__control,
+.login .field__control:has([aria-invalid="true"]) {
+  border-color: color-mix(in oklch, var(--color-danger) 78%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 78%, var(--color-danger));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-danger) 70%, var(--color-page));
+}
+
+.creator input,
+.login input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-ink);
+}
+
+.creator input {
+  min-height: 46px;
+  color: color-mix(in oklch, var(--color-ink-strong) 84%, var(--color-page));
+}
+
+.creator input::placeholder {
+  color: color-mix(in oklch, var(--color-muted) 76%, var(--color-page));
+}
+
+
+.login .field__icon {
+  color: color-mix(in oklch, var(--color-ink-strong) 62%, var(--color-accent));
+}
+
+.login__account .field__icon {
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid color-mix(in oklch, var(--color-field) 22%, var(--color-page));
+  border-radius: 10px;
+  background: color-mix(in oklch, var(--color-page) 88%, var(--color-field));
+  color: color-mix(in oklch, var(--color-ink-inverse) 82%, var(--color-surface));
+}
+
+.login .field__hint {
+  color: color-mix(in oklch, var(--color-ink-inverse) 64%, var(--color-page));
+}
+
+.login .field__error {
+  color: color-mix(in oklch, var(--color-danger) 62%, var(--color-focus-light));
+}
+
+.creator .field__error {
+  padding-left: 1px;
+  color: color-mix(in oklch, var(--color-danger) 62%, var(--color-focus-light));
+  font-size: 0.84rem;
+}
+
+.creator__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-control-border);
+  border-radius: 12px;
+  background: var(--color-control-well);
+}
+
+.creator__actions,
+.login__actions {
+  align-items: center;
+  gap: 12px;
+}
+
+.creator__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-content: flex-end;
+}
+
+.login__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.login__form--saved .login__actions {
+  justify-content: end;
+}
+
+.login__logout-confirmation {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in oklch, var(--color-danger) 52%, var(--color-page));
+  border-radius: 12px;
+  background: color-mix(in oklch, var(--color-danger) 12%, var(--color-page));
+}
+
+.login__logout-confirmation p {
+  margin: 0;
+  color: var(--color-ink-inverse);
+  font-weight: 650;
+}
+
+.creator__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 20px;
+  color: color-mix(in oklch, var(--color-ink-inverse) 72%, var(--color-page));
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.creator__status:empty {
+  display: none;
+}
+
+.creator__status--success {
+  color: color-mix(in oklch, var(--color-accent) 46%, var(--color-focus-light));
+}
+
+.creator__status--error {
+  color: color-mix(in oklch, var(--color-danger) 58%, var(--color-focus-light));
+}
+
+.creator button,
+.login button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.creator button,
+.login button {
+  min-width: 128px;
+  border: 1px solid var(--color-accent-border);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease), transform var(--ease);
+}
+
+.login button[type="submit"]:not(:disabled):hover {
+  background: color-mix(in oklch, var(--color-accent) 88%, var(--color-focus-light));
+  transform: translateY(-1px);
+}
+
+.login button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.creator button:focus-visible,
+.login button:focus-visible {
+  outline: 2px solid var(--color-focus-light);
+  outline-offset: 3px;
+}
+
+.creator button {
+  gap: 10px;
+}
+
+.creator button:disabled {
+  border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 64%, var(--color-page));
+  color: color-mix(in oklch, var(--color-ink-strong) 66%, var(--color-field));
+  cursor: not-allowed;
+}
+
+.login button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.login .danger {
+  min-width: 128px;
+  min-height: 44px;
+  border-color: color-mix(in oklch, var(--color-danger) 66%, var(--color-page));
+  background: color-mix(in oklch, var(--color-danger) 88%, var(--color-page));
+  color: var(--color-on-login-danger);
+}
+
+.login .danger:hover {
+  border-color: var(--color-danger-border);
+  background: color-mix(in oklch, var(--color-danger) 90%, var(--color-focus-light));
+  box-shadow: 0 10px 24px oklch(10% 0.018 28 / 0.18);
+}
+
+.login .login__cancel {
+  border-color: color-mix(in oklch, var(--color-field) 48%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 76%, var(--color-page));
+  color: var(--color-ink-strong);
+}
+
+.login .login__cancel:hover {
+  background: var(--color-field-focus);
+}
+
+.creator__submit {
+  grid-column: 2;
+  min-width: 118px;
+  transition: background-color var(--ease), border-color var(--ease), transform var(--ease);
+}
+
+.creator__submit:not(:disabled):hover {
+  background: color-mix(in oklch, var(--color-accent) 88%, var(--color-focus-light));
+  transform: translateY(-1px);
+}
+
+.creator__tabs button {
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-ink-inverse);
+  font-size: 0.95rem;
+  transform: none;
+  transition: background-color var(--ease), border-color var(--ease), color var(--ease);
+}
+
+.creator__tabs button[aria-selected="true"] {
+  border-color: color-mix(in oklch, var(--color-field) 42%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 86%, var(--color-page));
+  color: color-mix(in oklch, var(--color-ink-strong) 86%, var(--color-page));
+}
+
+.creator__tabs button:disabled:not([aria-selected="true"]) {
+  color: color-mix(in oklch, var(--color-ink-inverse) 54%, var(--color-page));
+}
+
+.creator__tabs button:not([aria-selected="true"]):hover {
+  background: color-mix(in oklch, var(--color-field) 18%, transparent);
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .creator,
+  .login {
+    padding: 24px 12px 36px;
+  }
+
+  .creator__form,
+  .login__form {
+    padding: 22px 18px 20px;
+  }
+
+  .creator__form {
+    padding: 0;
+  }
+
+  .login__form--saved {
+    padding: 0;
+  }
+
+  .login__account {
+    padding: 10px 12px;
+  }
+
+  .creator__actions,
+  .login__actions,
+  .login button,
+  .creator__submit {
+    width: 100%;
+  }
+
+  .creator__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .creator__submit {
+    grid-column: auto;
+  }
+
+
+}

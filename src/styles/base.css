@@ -174,82 +174,6 @@ main:focus {
   outline: 0;
 }
 
-main:fullscreen {
-  width: 100vw;
-  max-width: 100vw;
-  min-height: 100dvh;
-  overflow-y: auto;
-  background: var(--color-page);
-}
-
-main:fullscreen::backdrop {
-  background: var(--color-page);
-}
-
-main:-webkit-full-screen {
-  width: 100vw;
-  max-width: 100vw;
-  min-height: 100dvh;
-  overflow-y: auto;
-  background: var(--color-page);
-}
-
-html[data-reader-fullscreen="true"] {
-  overflow: hidden;
-}
-
-html[data-reader-fullscreen="true"] body {
-  overflow: hidden;
-}
-
-html[data-reader-fullscreen="true"] .nav {
-  display: none;
-}
-
-html[data-reader-fullscreen="true"] main {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  width: 100vw;
-  max-width: 100vw;
-  min-height: 100dvh;
-  overflow-y: auto;
-  background: var(--color-page);
-}
-
-html[data-reader-fullscreen="true"] main .reader {
-  min-height: 100dvh;
-}
-
-:is(
-  main:fullscreen,
-  main:-webkit-full-screen,
-  html[data-reader-fullscreen="true"] main
-) .reader__actions {
-  width: 100%;
-}
-
-:is(
-  main:fullscreen,
-  main:-webkit-full-screen,
-  html[data-reader-fullscreen="true"] main
-) .reader__actions button {
-  height: var(--reader-actions-height, 52px);
-  min-height: var(--reader-actions-height, 52px);
-}
-
-:is(
-  main:fullscreen,
-  main:-webkit-full-screen,
-  html[data-reader-fullscreen="true"] main
-) .reader__fullscreen-toolbar {
-  display: block;
-  position: fixed;
-  inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) auto auto;
-  z-index: 110;
-  width: auto;
-}
-
 .skip-link {
   position: fixed;
   inset: 8px auto auto 8px;
@@ -278,19 +202,6 @@ html[data-reader-fullscreen="true"] main .reader {
   border: 0;
 }
 
-.container,
-.loading,
-.empty,
-.feed,
-.feed-skeleton,
-.creator__form,
-.login__form,
-.creator__fields,
-.login__fields,
-.field,
-.actions {
-  display: grid;
-}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -299,9 +210,4 @@ html[data-reader-fullscreen="true"] main .reader {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-@keyframes feed-loading {
-  from { background-position: 120% 0; }
-  to { background-position: -120% 0; }
 }

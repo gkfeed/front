@@ -1,0 +1,151 @@
+.reader-card__preview--short-video {
+  width: 100%;
+  justify-self: center;
+  aspect-ratio: 9 / 16;
+  background: #09090b;
+}
+
+.reader-card.reader-card--short-video {
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: auto minmax(280px, 1fr);
+  align-items: start;
+  gap: clamp(18px, 3vw, 30px);
+  width: 100%;
+  min-height: 0;
+  justify-self: center;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.reader-card.reader-card--short-video:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) {
+  grid-template-columns: auto auto;
+  align-items: start;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.reader-card.reader-card--short-video.reader-card--instagram:not(
+  :has(.tiktok-comments__toggle[aria-expanded="true"])
+) {
+  grid-template-columns: minmax(0, auto);
+  gap: 0;
+}
+
+.reader__item .reader-card--short-video {
+  width: 100%;
+  max-width: 100%;
+}
+
+.reader__item .reader-card--short-video:not(:has(.tiktok-comments__toggle[aria-expanded="true"])) {
+  width: fit-content;
+}
+
+.reader__item .reader-card__preview--short-video {
+  /* Resolve the 9:16 width first so Safari does not collapse the auto-sized grid track. */
+  width: calc(56.25dvh - 123.75px);
+  max-width: 100%;
+  height: auto;
+}
+
+.reader__scroll-item .reader-card__preview--short-video {
+  width: auto;
+  max-width: 100%;
+  height: min(calc(100dvh - 220px), 720px);
+}
+
+.reader-card.reader-card--instagram-photo {
+  grid-template-columns: minmax(0, auto);
+}
+
+.reader-card--instagram-photo .reader-card__preview--short-video {
+  width: fit-content;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 220px);
+  aspect-ratio: auto;
+  background: transparent;
+}
+
+.reader-card--instagram-photo .reader-card__preview--short-video img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 220px);
+  object-fit: contain;
+}
+
+.reader-card--short-video .reader-card__preview {
+  overflow: hidden;
+  border: 1px solid var(--color-card-border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-card);
+}
+
+.reader-card--instagram .reader-card__preview {
+  box-shadow: none;
+}
+
+.reader-card__preview--short-video img,
+.reader-card__preview--short-video video {
+  position: relative;
+  z-index: 0;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reader-card__preview--short-video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.reader-card__short-video-identity {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 44px;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 68%), transparent);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  pointer-events: none;
+  text-shadow: 0 1px 5px rgb(0 0 0 / 65%);
+}
+
+.reader-card__short-video-identity > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-card__short-video-logo {
+  display: grid;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 14px;
+  background: rgb(0 0 0 / 28%);
+}
+
+.reader-card__short-video-logo svg {
+  width: 31px;
+  height: 31px;
+}
