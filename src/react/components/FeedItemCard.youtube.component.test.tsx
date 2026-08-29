@@ -81,6 +81,31 @@ describe('FeedItemCard YouTube and general states', () => {
       .toBe('https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg');
   });
 
+  it('rejects YouTube placeholder images that load successfully', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    const maxResolutionImage = screen.getByAltText('Preview for Story');
+    Object.defineProperties(maxResolutionImage, {
+      naturalWidth: { configurable: true, value: 120 },
+      naturalHeight: { configurable: true, value: 90 },
+    });
+    fireEvent.load(maxResolutionImage);
+
+    const fallbackImage = screen.getByAltText('Preview for Story');
+    expect(fallbackImage.getAttribute('src'))
+      .toBe('https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg');
+    Object.defineProperties(fallbackImage, {
+      naturalWidth: { configurable: true, value: 120 },
+      naturalHeight: { configurable: true, value: 90 },
+    });
+    fireEvent.load(fallbackImage);
+
+    expect(screen.queryByAltText('Preview for Story')).toBeNull();
+  });
+
   it('opens a YouTube player in theater mode when the card is clicked', () => {
     render(<FeedItemCard item={{
       ...item,

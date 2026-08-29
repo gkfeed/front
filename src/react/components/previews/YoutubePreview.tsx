@@ -152,6 +152,9 @@ export function YoutubePreview({
               src={preview.src}
               alt={preview.alt}
               referrerPolicy="no-referrer"
+              onLoad={(event) => {
+                if (isYoutubeMissingThumbnail(event.currentTarget)) onPreviewError();
+              }}
               onError={onPreviewError}
             />
           </div>
@@ -159,6 +162,24 @@ export function YoutubePreview({
       </div>
     </>
   );
+}
+
+function isYoutubeMissingThumbnail(image: HTMLImageElement): boolean {
+  // i.ytimg.com serves a valid 120x90 placeholder JPEG for missing thumbnails,
+  // including on 404 responses, so browsers fire `load` instead of `error`.
+  // Valid 120x90 default.jpg would otherwise be flagged as missing, so only
+  // treat 120x90 as a placeholder when the requested thumbnail was expected to
+  // be larger (maxresdefault/hqdefault etc). The default.jpg itself is exactly
+  // 120x90 and must not trigger the fallback.
+  if (image.naturalWidth !== 120 || image.naturalHeight !== 90) return false;
+  // `default.jpg` is the only legitimate 120x90 thumbnail; larger variants
+  // (maxresdefault.jpg, hqdefault.jpg, etc.) should never be 120x90.
+  try {
+    const url = new URL(image.src, window.location.href);
+    return !url.pathname.endsWith('/default.jpg');
+  } catch {
+    return !image.src.endsWith('/default.jpg');
+  }
 }
 
 type YoutubePlayerProps = {
