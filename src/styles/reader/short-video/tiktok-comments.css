@@ -1,3 +1,4 @@
+/* TikTok description, comment rail, and comment states. */
 .tiktok-comments {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);

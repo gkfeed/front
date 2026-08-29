@@ -6,7 +6,7 @@
     overflow: hidden;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) {
+  .reader__item--fullscreen.reader__item--card-flow {
     --reader-fullscreen-gap: clamp(14px, 1.8vh, 22px);
     --reader-fullscreen-padding-y: max(28px, calc(env(safe-area-inset-top) + 20px));
     --reader-fullscreen-count-height: 34px;
@@ -29,11 +29,11 @@
     justify-self: center;
   }
 
-  .reader__item--fullscreen.reader__item--compact-actions:not(.reader__item--short-video) {
+  .reader__item--fullscreen.reader__item--card-flow.reader__item--compact-actions {
     --reader-actions-height: 0px;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview) {
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview) {
     min-height: 0;
     height: auto;
     max-height: var(--reader-fullscreen-content-height);
@@ -41,20 +41,20 @@
     min-width: 0;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video)
+  .reader__item--fullscreen.reader__item--card-flow
   > :is(.reader__actions, .reader__count-row) {
     width: 100%;
     min-width: 0;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview)
   .reader-card__preview {
     min-height: 0;
     height: auto;
     max-height: var(--reader-fullscreen-content-height);
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) > .reader-card:has(.reader-card__preview)
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview)
   .reader-card__preview > :is(img, video) {
     width: 100%;
     height: auto;
@@ -65,18 +65,18 @@
 
   /* Portrait image cards should size to the image instead of leaving wide
      side gutters inside a fullscreen card. */
-  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card--simple-image) {
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card--simple-image) {
     max-height: none;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card > .reader-card__preview > img) {
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card > .reader-card__preview > img) {
     width: min(100%, 960px);
     max-width: none;
     justify-self: center;
     margin-inline: auto;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video)
+  .reader__item--fullscreen.reader__item--card-flow
   > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img) {
     width: 100%;
     max-width: none;
@@ -87,7 +87,7 @@
     margin-inline: auto;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video)
+  .reader__item--fullscreen.reader__item--card-flow
   > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
   > .reader-card__preview {
     width: fit-content;
@@ -99,7 +99,7 @@
     background: transparent;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video)
+  .reader__item--fullscreen.reader__item--card-flow
   > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
   > .reader-card__preview > img {
     width: auto;
@@ -107,19 +107,19 @@
     height: auto;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video):has(> .reader-card > .reader-card__preview > img)
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card > .reader-card__preview > img)
   .reader-card__copy {
     width: 100%;
     max-width: 100%;
     justify-self: center;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) .reader-card__copy {
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__copy {
     min-height: 0;
     overflow: hidden;
   }
 
-  .reader__item--fullscreen:not(.reader__item--short-video) .reader-card__description {
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__description {
     -webkit-line-clamp: 3;
   }
 }

@@ -102,6 +102,7 @@ export function ReaderReview({
       id="reader-review-panel"
       className={[
         'reader__item',
+        !isShortVideo ? 'reader__item--card-flow' : '',
         isFullscreen ? 'reader__item--fullscreen' : '',
         useCompactActions ? 'reader__item--compact-actions' : '',
         isShortVideo ? 'reader__item--short-video' : '',

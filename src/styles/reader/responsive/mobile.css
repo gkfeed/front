@@ -2,4 +2,4 @@
 @import "./mobile/base.css";
 @import "../short-video/mobile.css";
 @import "./mobile/count.css";
-@import "./mobile/liquipedia.css";
+@import "../liquipedia/mobile.css";

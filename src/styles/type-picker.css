@@ -2,7 +2,7 @@
   position: relative;
 }
 
-.creator .type-picker__trigger {
+.type-picker__trigger {
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) 18px;
   align-items: center;
@@ -20,25 +20,25 @@
   transition: background-color var(--ease), border-color var(--ease), box-shadow var(--ease);
 }
 
-.creator .type-picker__trigger:hover:not(:disabled),
-.creator .type-picker__trigger[aria-expanded="true"] {
+.type-picker__trigger:hover:not(:disabled),
+.type-picker__trigger[aria-expanded="true"] {
   border-color: color-mix(in oklch, var(--color-ink-strong) 36%, var(--color-field));
   background: var(--color-field-focus);
 }
 
-.creator .type-picker__trigger:focus-visible {
+.type-picker__trigger:focus-visible {
   outline: 2px solid var(--color-focus-light);
   outline-offset: 3px;
   box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-ink-strong) 18%, transparent);
 }
 
-.creator .field--invalid .type-picker__trigger {
+.type-picker__trigger[aria-invalid="true"] {
   border-color: color-mix(in oklch, var(--color-danger) 78%, var(--color-page));
   background: color-mix(in oklch, var(--color-field) 78%, var(--color-danger));
   box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-danger) 70%, var(--color-page));
 }
 
-.creator .type-picker__trigger:disabled {
+.type-picker__trigger:disabled {
   color: color-mix(in oklch, var(--color-ink-strong) 66%, var(--color-field));
 }
 

@@ -31,17 +31,17 @@ main[data-reader-fullscreen="true"] .reader__item:has(
     padding-left: clamp(20px, 4vw, 72px);
   }
 
-  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) > .reader-card {
+  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card {
     width: 100%;
     max-width: none;
   }
 
-  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) > .reader-card .reader-card__preview {
+  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card .reader-card__preview {
     width: 100%;
     max-width: none;
   }
 
-  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) > .reader-card .reader-card__preview > img {
+  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card .reader-card__preview > img {
     width: 100%;
     max-width: none;
     height: auto;

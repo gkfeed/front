@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
+import '../../styles/feed-card.css';
 import type { Feed } from '../types';
 import { getFeedIcon } from './feedIcons';
 

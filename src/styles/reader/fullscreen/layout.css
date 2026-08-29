@@ -8,7 +8,7 @@
     padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
   }
 
-  main[data-reader-fullscreen="true"] .reader__item:not(.reader__item--short-video) {
+  main[data-reader-fullscreen="true"] .reader__item--card-flow {
     width: min(100%, 960px);
     max-width: none;
   }

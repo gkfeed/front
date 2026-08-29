@@ -14,7 +14,7 @@
 
 /* Feature styles. */
 @import "./reader/short-video/base.css";
-@import "./reader/comments.css";
+@import "./reader/short-video/tiktok-comments.css";
 @import "./reader/player.css";
 @import "./reader/content.css";
 @import "./reader/actions.css";
