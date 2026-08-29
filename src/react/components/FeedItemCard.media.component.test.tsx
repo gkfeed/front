@@ -7,6 +7,69 @@ import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 
 describe('FeedItemCard media providers', () => {
+  it('replaces a Spotify playlist cover with the embed player when clicked', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://open.spotify.com/playlist/37i9dQZEVXbeUwP0nygk6B',
+      title: 'Release Radar',
+      description: null,
+      image: 'https://example.com/release-radar.jpg',
+      video: null,
+      siteName: 'Spotify',
+      type: 'music.playlist',
+      providerData: null,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://open.spotify.com/playlist/37i9dQZEVXbeUwP0nygk6B?si=example',
+      title: 'Release Radar',
+    }} />);
+
+    const cover = await screen.findByRole('button', {
+      name: 'Play Release Radar on Spotify',
+    });
+    expect(screen.queryByTitle('Spotify player: Release Radar')).toBeNull();
+
+    fireEvent.click(cover);
+
+    const player = screen.getByTitle('Spotify player: Release Radar');
+    expect(player.tagName).toBe('IFRAME');
+    expect(player.getAttribute('src')).toBe(
+      'https://open.spotify.com/embed/playlist/37i9dQZEVXbeUwP0nygk6B',
+    );
+    expect(player.getAttribute('allow')).toContain('encrypted-media');
+    expect(player.getAttribute('height')).toBe('352');
+  });
+
+  it('replaces a Spotify album cover with a large album embed', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://open.spotify.com/album/5n9oHQlYB2XRQZqFrJILxx',
+      title: 'Badcurt - Нокаут',
+      description: null,
+      image: 'https://example.com/badcurt.jpg',
+      video: null,
+      siteName: 'Spotify',
+      type: 'music.album',
+      providerData: null,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://open.spotify.com/album/5n9oHQlYB2XRQZqFrJILxx',
+      title: 'Badcurt - Нокаут',
+    }} />);
+
+    fireEvent.click(await screen.findByRole('button', {
+      name: 'Play Badcurt - Нокаут on Spotify',
+    }));
+
+    const player = screen.getByTitle('Spotify player: Badcurt - Нокаут');
+    expect(player.getAttribute('src')).toBe(
+      'https://open.spotify.com/embed/album/5n9oHQlYB2XRQZqFrJILxx',
+    );
+    expect(player.getAttribute('height')).toBe('352');
+  });
+
   it('renders direct Open Graph video with its image as a poster', async () => {
     getPreview.mockResolvedValue({
       url: item.link,

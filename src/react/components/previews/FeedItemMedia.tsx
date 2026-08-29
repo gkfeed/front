@@ -7,6 +7,8 @@ import { useSoundGesture } from '../../hooks/useSoundGesture';
 import { TikTokEmbed } from './TikTokEmbed';
 import { VideoEmbed } from './VideoEmbed';
 import { HltvImageScore } from './HltvMatch';
+import { SpotifyPlaylistPreview } from './SpotifyPlaylistPreview';
+import { getSpotifyEmbed } from '../../domain/spotifyPreview';
 import { InstagramEmbed } from './InstagramEmbed';
 
 type FeedItemMediaProps = {
@@ -101,6 +103,21 @@ export function FeedItemMedia({
       <InstagramEmbed src={preview.src} title={preview.alt} />
     ) : (
       <VideoEmbed src={preview.src} title={preview.alt} />
+    );
+  }
+
+  const spotifyEmbed = getSpotifyEmbed(href);
+  if (spotifyEmbed) {
+    return (
+      <SpotifyPlaylistPreview
+        embedUrl={spotifyEmbed.url}
+        embedHeight={spotifyEmbed.height}
+        spotifyUrl={href}
+        imageSrc={preview.src}
+        imageAlt={preview.alt}
+        title={hostname}
+        onPreviewError={onPreviewError}
+      />
     );
   }
 

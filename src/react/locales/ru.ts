@@ -215,6 +215,8 @@ const ru = {
     matreshkaVideo: 'Предпросмотр видео Матрешки',
     sasflixVideo: 'Предпросмотр видео Сасфликса',
     vkVideo: 'Предпросмотр видео VK',
+    playSpotify: 'Воспроизвести в Spotify: {{title}}',
+    spotifyPlayer: 'Плеер Spotify: {{title}}',
     playVideo: 'Воспроизвести видео: {{title}}',
     continueVideo: 'Продолжить с {{position}}',
     playTwitch: 'Воспроизвести {{channel}} на Twitch',

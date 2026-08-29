@@ -207,6 +207,8 @@ const en = {
     matreshkaVideo: 'Matreshka video preview',
     sasflixVideo: 'Sasflix video preview',
     vkVideo: 'VK video preview',
+    playSpotify: 'Play {{title}} on Spotify',
+    spotifyPlayer: 'Spotify player: {{title}}',
     playVideo: 'Play video {{title}}',
     continueVideo: 'Continue from {{position}}',
     playTwitch: 'Play {{channel}} on Twitch',
