@@ -146,6 +146,10 @@ describe('FeedItemCard remote and feed previews', () => {
 
     expect(screen.getByRole('heading', { name: 'Рифмы и Панчи' })).toBeTruthy();
     expect(screen.getByText('Новый пост сообщества')).toBeTruthy();
+    const copy = screen.getByText('Новый пост сообщества').closest('.reader-card__copy');
+    expect(copy?.querySelector('.reader-card__description')?.nextElementSibling)
+      .toBe(screen.getByRole('heading', { name: 'Рифмы и Панчи' }));
+    expect(copy?.querySelector('.reader-card__vk-icon svg')).toBeTruthy();
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
   });
 
