@@ -12,6 +12,12 @@
   justify-self: center;
 }
 
+/* Embedded players have a small browser-default intrinsic width. Let video
+   cards use the reader column instead of shrinking the whole VK card to it. */
+.reader-card--vk:has(> .reader-card__preview--video) {
+  width: 100%;
+}
+
 .reader-card--vk .reader-card__preview {
   border: 0;
   border-radius: 22px;

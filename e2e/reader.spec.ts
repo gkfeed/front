@@ -468,6 +468,34 @@ test.describe('TikTok player on iPad-sized readers', () => {
     await expect(image).toHaveCSS('object-fit', 'contain');
   });
 
+  test('uses the reader width for VK video embeds', async ({ page }) => {
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 25,
+          feed_id: 567,
+          link: 'https://vk.com/video-123_456',
+          title: 'VK video',
+          text: 'Video description',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+
+    const card = page.locator('.reader-card--vk');
+    const player = card.locator('.reader-card__preview--video');
+    await expect(player).toBeVisible();
+    const cardBox = await card.boundingBox();
+    const actionsBox = await page.locator('.reader__actions').boundingBox();
+
+    expect(cardBox).not.toBeNull();
+    expect(actionsBox).not.toBeNull();
+    expect(cardBox!.width).toBeGreaterThan(600);
+    expect(Math.abs(cardBox!.width - actionsBox!.width)).toBeLessThan(2);
+  });
+
   test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {
     await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
       json: {
