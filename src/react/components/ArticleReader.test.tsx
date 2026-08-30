@@ -22,7 +22,7 @@ describe('ArticleReaderLink', () => {
     const composition = createFeatureComposition();
     const useCases = {
       ...composition,
-      preview: { ...composition.preview, getArticle },
+      preview: { ...composition.preview, loadArticle: getArticle },
     };
 
     render(
@@ -55,7 +55,7 @@ describe('ArticleReaderLink', () => {
     const composition = createFeatureComposition();
     const useCases = {
       ...composition,
-      preview: { ...composition.preview, getArticle },
+      preview: { ...composition.preview, loadArticle: getArticle },
     };
 
     render(
@@ -96,7 +96,7 @@ describe('ArticleReaderLink', () => {
     const composition = createFeatureComposition();
     const useCases = {
       ...composition,
-      preview: { ...composition.preview, getArticle },
+      preview: { ...composition.preview, loadArticle: getArticle },
     };
     const main = document.createElement('main');
     document.body.append(main);

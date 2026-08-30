@@ -9,7 +9,7 @@ export type TikTokCommentsLoadStatus = 'idle' | 'loading' | 'success' | 'error';
 export function useTikTokComments(link: string, enabled: boolean) {
   const { preview } = useFeatureUseCases();
   const load = useCallback(
-    (signal: AbortSignal) => preview.fetchTikTokComments(link, signal),
+    (signal: AbortSignal) => preview.loadTikTokComments(link, signal),
     [link, preview],
   );
   const {

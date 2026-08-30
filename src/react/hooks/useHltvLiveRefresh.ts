@@ -8,6 +8,7 @@ import {
 
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
 import type { RemotePreview } from '../domain/feedItemCardContracts';
+import { mergeHltvLiveData } from '../domain/remotePreview';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useAsyncResource } from './useAsyncResource';
 
@@ -35,7 +36,7 @@ export function useHltvLiveRefresh({
     && currentPreview?.providerData?.provider === 'hltv'
     && currentPreview.providerData.snapshot.status === 'live';
   const load = useCallback(
-    (signal: AbortSignal) => previewUseCases.getOpenGraphPreview(url, signal),
+    (signal: AbortSignal) => previewUseCases.loadOpenGraphPreview(url, signal),
     [previewUseCases, url],
   );
   const { result, isLoading, retry } = useAsyncResource<OpenGraphPreview>(load, {
@@ -51,9 +52,9 @@ export function useHltvLiveRefresh({
     if (!result) return;
     setPreview((previous) => ({
       liquipediaMatch: null,
-      openGraphPreview: previewUseCases.mergeHltvLiveData(result, previous.openGraphPreview),
+      openGraphPreview: mergeHltvLiveData(result, previous.openGraphPreview),
     }));
-  }, [previewUseCases, result, setPreview]);
+  }, [result, setPreview]);
 
   useEffect(() => {
     if (!refreshEnabled) return undefined;

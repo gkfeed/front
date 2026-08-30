@@ -7,7 +7,7 @@ export function useArticleReader(url: string) {
   const [isOpen, setIsOpen] = useState(false);
   const { preview } = useFeatureUseCases();
   const load = useCallback(
-    (signal: AbortSignal) => preview.getArticle(url, signal),
+    (signal: AbortSignal) => preview.loadArticle(url, signal),
     [preview, url],
   );
   const resource = useAsyncResource(load, { enabled: isOpen, key: url, timeoutMs: 20_000 });

@@ -8,7 +8,8 @@ import {
 import { getLiquipediaMatchPreview } from './liquipedia';
 import { getOpenGraphPreview, type OpenGraphPreview } from './openGraph';
 import { clearPreviewCache } from './previewQueue';
-import { loadRemotePreview, mergeHltvLiveData } from './remotePreview';
+import { mergeHltvLiveData } from '../domain/remotePreview';
+import { loadRemotePreview } from './remotePreview';
 
 vi.mock('./liquipedia');
 vi.mock('./openGraph');

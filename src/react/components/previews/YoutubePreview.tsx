@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
-import { readYoutubeProgress } from '../../services/youtubeProgress';
 import {
   sendPlaybackRate,
   useYoutubePlayerController,
 } from './useYoutubePlayerController';
-import { useTheaterDialog } from './useTheaterDialog';
+import { useYoutubePreviewSession } from './useYoutubePreviewSession';
 
 type YoutubePreviewProps = {
   onPreviewError: () => void;
@@ -24,56 +22,20 @@ export function YoutubePreview({
   videoId,
 }: YoutubePreviewProps) {
   const { t } = useTranslation();
-  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
-  const [isTheaterOpen, setIsTheaterOpen] = useState(false);
-  const [isDoubleSpeed, setIsDoubleSpeed] = useState(true);
-  const [resumeProgress, setResumeProgress] = useState(() => readYoutubeProgress(videoId));
-  const [isPlaying, setIsPlaying] = useState(() => resumeProgress === null);
-  const isPlayingRef = useRef(isPlaying);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const playerRef = useRef<HTMLDivElement>(null);
-  isPlayingRef.current = isPlaying;
+  const session = useYoutubePreviewSession(videoId);
 
-  useEffect(() => {
-    setIsPlayerOpen(false);
-    setIsTheaterOpen(false);
-    setIsDoubleSpeed(true);
-    const nextResumeProgress = readYoutubeProgress(videoId);
-    setResumeProgress(nextResumeProgress);
-    const nextIsPlaying = nextResumeProgress === null;
-    isPlayingRef.current = nextIsPlaying;
-    setIsPlaying(nextIsPlaying);
-  }, [videoId]);
-
-  const handleTheaterChange = useCallback((isOpen: boolean) => {
-    setIsTheaterOpen(isOpen);
-  }, []);
-  const handlePlaybackChange = useCallback((nextIsPlaying: boolean) => {
-    isPlayingRef.current = nextIsPlaying;
-    setIsPlaying(nextIsPlaying);
-  }, []);
-
-  useTheaterDialog({
-    isOpen: isTheaterOpen,
-    isPlayingRef,
-    onOpenChange: handleTheaterChange,
-    onPlaybackChange: handlePlaybackChange,
-    playerRef,
-    triggerRef,
-  });
-
-  if (isPlayerOpen) {
+  if (session.isPlayerOpen) {
     return (
       <YoutubePlayer
         videoId={videoId}
         title={title}
-        isTheaterOpen={isTheaterOpen}
-        isDoubleSpeed={isDoubleSpeed}
-        resumePosition={resumeProgress?.position ?? null}
-        shellRef={playerRef}
-        onPlaybackStateChange={handlePlaybackChange}
-        onToggleTheater={() => setIsTheaterOpen((isOpen) => !isOpen)}
-        onTogglePlaybackSpeed={() => setIsDoubleSpeed((currentSpeed) => !currentSpeed)}
+        isTheaterOpen={session.isTheaterOpen}
+        isDoubleSpeed={session.isDoubleSpeed}
+        resumePosition={session.resumePosition}
+        shellRef={session.playerRef}
+        onPlaybackStateChange={session.handlePlaybackChange}
+        onToggleTheater={session.toggleTheater}
+        onTogglePlaybackSpeed={session.togglePlaybackSpeed}
       />
     );
   }
@@ -82,13 +44,10 @@ export function YoutubePreview({
     <div className="reader-card__preview-trigger-wrap">
       <button
         type="button"
-        ref={triggerRef}
+        ref={session.triggerRef}
         className="reader-card__preview-trigger"
         aria-label={t('preview.playVideo', { title })}
-        onClick={() => {
-          setIsPlayerOpen(true);
-          setIsTheaterOpen(true);
-        }}
+        onClick={session.openPlayer}
       />
       {preview ? (
         <div className="reader-card__preview">

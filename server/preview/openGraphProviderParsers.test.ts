@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  parseInstagramEmbedMedia,
-  parseMatreshkaVideoUrl,
-  parseRezkaOriginalCover,
-  parseSasflixVideoUrl,
-  parseVkStructuredVideo,
-} from './openGraphProviderParsers.js';
+import { parseInstagramEmbedMedia } from './providers/instagram.js';
+import { parseMatreshkaVideoUrl } from './providers/matreshka.js';
+import { parseRezkaOriginalCover } from './providers/rezka.js';
+import { parseSasflixVideoUrl } from './providers/sasflix.js';
+import { parseVkStructuredVideo } from './providers/vk.js';
 
 describe('parseInstagramEmbedMedia', () => {
   it('extracts a playable video URL from escaped embed data', () => {

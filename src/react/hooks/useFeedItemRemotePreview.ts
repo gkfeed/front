@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 import type { RemotePreview } from '../domain/feedItemCardContracts';
+import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useHltvLiveRefresh } from './useHltvLiveRefresh';
 import { useAsyncResource } from './useAsyncResource';
@@ -38,16 +39,16 @@ export function useFeedItemRemotePreview(
   } | null>(null);
   const preview = (livePreview?.key === previewKey ? livePreview.value : null)
     ?? resource.result
-    ?? previewUseCases.EMPTY_REMOTE_PREVIEW;
+    ?? EMPTY_REMOTE_PREVIEW;
   const setPreview = useCallback<Dispatch<SetStateAction<RemotePreview>>>((update) => {
     setLivePreview((previous) => {
       const current = previous?.key === previewKey
         ? previous.value
-        : resource.result ?? previewUseCases.EMPTY_REMOTE_PREVIEW;
+        : resource.result ?? EMPTY_REMOTE_PREVIEW;
       const value = typeof update === 'function' ? update(current) : update;
       return { key: previewKey, value };
     });
-  }, [previewKey, previewUseCases.EMPTY_REMOTE_PREVIEW, resource.result]);
+  }, [previewKey, resource.result]);
   const previewStatus: RemotePreviewStatus = !enabled
     ? 'idle'
     : !isVisible

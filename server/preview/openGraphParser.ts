@@ -12,13 +12,11 @@ import {
   parseHltvPlayerStats,
   parseHltvRoundHistory,
 } from './hltvHtmlParser.js';
-import {
-  parseInstagramEmbedMedia,
-  parseMatreshkaVideoUrl,
-  parseRezkaOriginalCover,
-  parseSasflixVideoUrl,
-  parseVkStructuredVideo,
-} from './openGraphProviderParsers.js';
+import { parseInstagramEmbedMedia } from './providers/instagram.js';
+import { parseMatreshkaVideoUrl } from './providers/matreshka.js';
+import { parseRezkaOriginalCover } from './providers/rezka.js';
+import { parseSasflixVideoUrl } from './providers/sasflix.js';
+import { parseVkStructuredVideo } from './providers/vk.js';
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
   const isHltvMatch = isHltvMatchUrl(pageUrl);
