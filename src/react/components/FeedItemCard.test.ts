@@ -75,6 +75,17 @@ describe('getFeedItemPreview', () => {
     });
   });
 
+  it('uses extensionless Instagram story download links as video media', () => {
+    expect(getFeedItemPreview(item({
+      link: 'https://tempfile.org/XGVf8L8Htm1/download',
+      title: 'inst: kozyrevaaaaaaa',
+    }))).toEqual({
+      src: 'https://tempfile.org/XGVf8L8Htm1/download',
+      alt: { kind: 'video', title: 'inst: kozyrevaaaaaaa' },
+      type: 'video',
+    });
+  });
+
   it('builds VK video embeds from video links and feed iframe markup', () => {
     expect(getFeedItemPreview(item({
       link: 'https://vk.com/video-123_456',

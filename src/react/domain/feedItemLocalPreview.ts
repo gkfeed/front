@@ -20,7 +20,10 @@ import {
   parseUrl,
 } from './feedItemUrls';
 import { getYoutubePreview } from './youtubePreview';
-import { getKnownInstagramVideoEmbedPreview } from './instagramPreview';
+import {
+  getKnownInstagramVideoEmbedPreview,
+  isInstagramMediaUrl,
+} from './instagramPreview';
 
 export { isGenericHltvPreview } from './hltvPreview';
 export { getTikTokEmbedPreview } from './tiktokPreview';
@@ -103,6 +106,21 @@ function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPre
   }
 
   if (isDirectVideo(url)) {
+    return {
+      src: url.href,
+      alt: { kind: 'video', title: item.title || null },
+      type: 'video',
+    };
+  }
+
+  // Imported Instagram stories can use extensionless download endpoints (for
+  // example, tempfile.org/.../download). The `inst:` marker is the only media
+  // type information available in those feed items.
+  if (
+    getFeedItemProviderFromUrl(item, url) === 'instagram'
+    && !isInstagramMediaUrl(url)
+    && (url.protocol === 'http:' || url.protocol === 'https:')
+  ) {
     return {
       src: url.href,
       alt: { kind: 'video', title: item.title || null },

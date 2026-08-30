@@ -158,6 +158,21 @@ describe('FeedItemCard media providers', () => {
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
+  it('renders an extensionless Instagram story download as a story card', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://tempfile.org/XGVf8L8Htm1/download',
+      title: 'inst: kozyrevaaaaaaa',
+    }} />);
+
+    const video = screen.getByLabelText('Video preview for inst: kozyrevaaaaaaa');
+    const card = video.closest('.reader-card');
+    expect(card?.classList.contains('reader-card--short-video')).toBe(true);
+    expect(card?.classList.contains('reader-card--instagram')).toBe(true);
+    expect(video.closest('.reader-card__preview--short-video')).toBeTruthy();
+    expect(screen.getByText('kozyrevaaaaaaa')).toBeTruthy();
+  });
+
   it('plays an Instagram Reel from the extracted media URL', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.instagram.com/reel/AbC_123/?igsh=example',
