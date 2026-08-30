@@ -119,7 +119,7 @@ export function getFeedItemCardPresentationDescriptor({
       imagePreview.type === 'hltv' ? 'reader-card--hltv-preview' : '',
     ].filter(Boolean).join(' '),
     preview: resolvePreviewDescriptor(variant, isShortVideo, adapter.isTikTok),
-    copy: resolveCopyDescriptor(variant, imagePreview, isShortVideo),
+    copy: resolveCopyDescriptor(provider, variant, imagePreview, isShortVideo),
     showInstagramIdentity: adapter.showInstagramIdentity,
     showHltvCountdown: adapter.supplementary === 'hltv',
     showTikTokComments: adapter.supplementary === 'tiktok',
@@ -152,10 +152,12 @@ function resolvePreviewDescriptor(
 }
 
 function resolveCopyDescriptor(
+  provider: FeedItemProvider,
   variant: FeedItemCardVariant,
   imagePreview: FeedItemCardImagePreview,
   isShortVideo: boolean,
 ): FeedItemCardCopyDescriptor {
+  if (provider === 'vk') return 'standard';
   if (imagePreview.type !== 'none' || isShortVideo) return 'none';
   switch (variant.type) {
     case 'matreshka':

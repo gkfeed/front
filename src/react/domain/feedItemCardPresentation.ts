@@ -63,8 +63,20 @@ export function buildFeedItemCardPresentation({
   return {
     item,
     ...metadata,
+    canReadArticle: canReadFeedItemArticle(metadata),
     descriptor,
     preview: previews.preview,
     visiblePreview,
   };
+}
+
+function canReadFeedItemArticle({
+  provider,
+  hostname,
+  openGraphPreview,
+}: Pick<FeedItemCardPresentation, 'provider' | 'hostname' | 'openGraphPreview'>): boolean {
+  if (provider === 'vk') return false;
+  return openGraphPreview?.type?.toLowerCase() === 'article'
+    || hostname === 'trashbox.ru'
+    || hostname?.endsWith('.trashbox.ru') === true;
 }

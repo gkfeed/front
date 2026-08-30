@@ -136,7 +136,7 @@ describe('FeedItemCard remote and feed previews', () => {
       .toBe('https://static.hdrezka.ac/covers/thumbnail.jpg');
   });
 
-  it('keeps VK image cards focused on the media', () => {
+  it('shows the VK channel and post description alongside local media', () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://vk.com/wall-123_456',
@@ -144,11 +144,12 @@ describe('FeedItemCard remote and feed previews', () => {
       text: '<p>Новый пост сообщества</p><img src="https://example.com/vk-cover.jpg">',
     }} />);
 
-    expect(screen.queryByText('Новый пост сообщества')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Рифмы и Панчи' })).toBeTruthy();
+    expect(screen.getByText('Новый пост сообщества')).toBeTruthy();
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
   });
 
-  it('does not show generic remote descriptions for VK items', async () => {
+  it('shows the VK channel but not a generic remote description', async () => {
     getPreview.mockResolvedValue({
       url: 'https://vk.com/wall-123_456',
       title: 'Рифмы и Панчи',
@@ -167,7 +168,7 @@ describe('FeedItemCard remote and feed previews', () => {
       text: '',
     }} />);
 
-    expect(await screen.findByText('Рифмы и Панчи')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Рифмы и Панчи' })).toBeTruthy();
     expect(screen.queryByText('Описание публикации')).toBeNull();
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
     expect(getPreview).toHaveBeenCalled();
@@ -220,7 +221,8 @@ describe('FeedItemCard remote and feed previews', () => {
     const card = image.closest('.reader-card--vk');
     expect(card).toBeTruthy();
     expect(image.closest('.reader-card__preview')?.parentElement).toBe(card);
-    expect(card?.querySelector('.reader-card__copy')).toBeNull();
+    expect(card?.querySelector('.reader-card__copy')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Рифмы и Панчи' })).toBeTruthy();
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
   });
 

@@ -33,10 +33,23 @@ describe('module architecture', () => {
     }
   });
 
-  it('keeps feature and server application modules on their contract side of the boundary', () => {
+  it('keeps domain, feature, and server modules on their contract side of the boundary', () => {
     const violations = sourceFiles.flatMap((file) => getRelativeImports(file).flatMap((importedFile) => {
       const source = displayPath(file);
       const target = displayPath(importedFile);
+      if (source.startsWith('src/react/domain/')
+        && [
+          'application',
+          'services',
+          'state',
+          'hooks',
+          'features',
+          'components',
+          'pages',
+          'adapters',
+        ].some((layer) => target.startsWith(`src/react/${layer}/`))) {
+        return [`${source} -> ${target}`];
+      }
       if (source.startsWith('src/react/features/')
         && (target.startsWith('src/react/application/') || target.startsWith('src/react/services/'))) {
         return [`${source} -> ${target}`];

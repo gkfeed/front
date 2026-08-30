@@ -86,4 +86,40 @@ describe('feed item card presentation', () => {
     expect(presentation.preview?.src).toBe('https://example.com/original.jpg');
     expect(presentation.preview?.fallbackSrc).toBe('https://example.com/local.jpg');
   });
+
+  it('centralizes article reader eligibility in the presentation model', () => {
+    const trashboxItem = item({ link: 'https://trashbox.ru/link/story' });
+    const presentation = buildFeedItemCardPresentation({
+      item: trashboxItem,
+      analysis: analyzeFeedItem(trashboxItem),
+      nsfwMode: 'show',
+      remotePreview: { liquipediaMatch: null, openGraphPreview: null },
+      previewFailures: 0,
+    });
+
+    expect(presentation.canReadArticle).toBe(true);
+
+    const vkItem = item({ link: 'https://vk.com/wall-1_2' });
+    const vkPresentation = buildFeedItemCardPresentation({
+      item: vkItem,
+      analysis: analyzeFeedItem(vkItem),
+      nsfwMode: 'show',
+      remotePreview: {
+        liquipediaMatch: null,
+        openGraphPreview: {
+          url: vkItem.link,
+          title: 'Story',
+          description: null,
+          image: null,
+          video: null,
+          siteName: 'VK',
+          type: 'article',
+          providerData: null,
+        },
+      },
+      previewFailures: 0,
+    });
+
+    expect(vkPresentation.canReadArticle).toBe(false);
+  });
 });

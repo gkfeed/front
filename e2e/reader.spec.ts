@@ -382,7 +382,8 @@ test.describe('TikTok player on iPad-sized readers', () => {
     const image = preview.locator('img');
     await expect(preview).toBeVisible();
     await expect(image).toHaveCSS('object-fit', 'contain');
-    await expect(page.locator('.reader-card--vk .reader-card__copy')).toHaveCount(0);
+    await expect(page.locator('.reader-card--vk .reader-card__copy')).toContainText('Рифмы и Панчи');
+    await expect(page.locator('.reader-card--vk .reader-card__description')).toHaveText('Post description');
     await expect(page.getByRole('link', { name: 'Open original' })).toHaveCount(0);
     const box = await preview.boundingBox();
 

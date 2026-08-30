@@ -3,23 +3,18 @@ import type { FeedItemProvider } from '../../domain/feedItemPreviewTypes';
 import {
   EmptyRenderer,
   FeedItemMediaPreview,
-  HltvPreview,
-  HltvSupplementary,
-  InstagramIdentity,
-  LiquipediaPreview,
-  MatreshkaCopy,
-  MatreshkaVideoPreview,
-  SasflixCopy,
-  SasflixVideoPreview,
   StandardCopy,
-  TikTokSupplementary,
-  TwitchCopy,
-  TwitchVideoPreview,
-  VkCopy,
-  YoutubeCopy,
-  YoutubeVideoPreview,
   type FeedItemCardProviderRenderer,
-} from './feedItemCardProviderRenderers';
+} from './providerRenderers/common';
+import { HltvPreview, HltvSupplementary } from './providerRenderers/hltv';
+import { InstagramIdentity } from './providerRenderers/instagram';
+import { LiquipediaPreview } from './providerRenderers/liquipedia';
+import { MatreshkaCopy, MatreshkaVideoPreview } from './providerRenderers/matreshka';
+import { SasflixCopy, SasflixVideoPreview } from './providerRenderers/sasflix';
+import { TikTokSupplementary } from './providerRenderers/tiktok';
+import { TwitchCopy, TwitchVideoPreview } from './providerRenderers/twitch';
+import { VkCopy } from './providerRenderers/vk';
+import { YoutubeCopy, YoutubeVideoPreview } from './providerRenderers/youtube';
 
 export const feedItemCardProviderRendererMap = {
   generic: createProviderRenderer({

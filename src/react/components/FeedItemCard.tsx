@@ -22,12 +22,6 @@ export const FeedItemCard = memo(function FeedItemCard({
   const [areTikTokCommentsExpanded] = useTikTokCommentsPreference();
   const articleReader = useArticleReader(item.link);
   const { cardRef, isPreviewPending, descriptor, shouldBlurNsfw, shouldHideNsfw } = model;
-  const canReadArticle = model.provider !== 'vk' && (
-    model.openGraphPreview?.type?.toLowerCase() === 'article'
-    || model.hostname === 'trashbox.ru'
-    || model.hostname?.endsWith('.trashbox.ru') === true
-  );
-
   if (shouldHideNsfw) return null;
 
   return (
@@ -43,7 +37,7 @@ export const FeedItemCard = memo(function FeedItemCard({
       data-comments-expanded={model.provider === 'tiktok' ? areTikTokCommentsExpanded : undefined}
       inert={shouldBlurNsfw}
       onClickCapture={(event) => {
-        if (!canReadArticle || articleReader.isOpen) return;
+        if (!model.canReadArticle || articleReader.isOpen) return;
         const target = event.target instanceof Element ? event.target : null;
         const previewLink = target?.closest('.reader-card__preview[href]');
         if (!previewLink) return;

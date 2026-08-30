@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { isNsfwLink } from '../domain/nsfw';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import { useAuth } from '../state/useAuth';
-import { orderReaderItems, type ReaderItemOrder } from '../state/readerItemOrder';
+import type { ReaderItemOrder } from '../state/readerItemOrder';
+import { projectReaderItems } from './readerItemsProjection';
 import { useFeedItemDeletion } from './useFeedItemDeletion';
 import { useFeedItems } from './useFeedItems';
+import { useReaderDeletionProjection } from './useReaderDeletionProjection';
 import { useReviewSession } from './useReviewSession';
 import { useReviewPreviewPrefetch } from './useReviewPreviewPrefetch';
 
@@ -33,40 +34,25 @@ export function useFeedReader({
     isItemPending,
     retryItem,
   } = useFeedItemDeletion(credentials, invalidateCache);
-  const [deletedItemIds, setDeletedItemIds] = useState<Set<number>>(() => new Set());
-  const [requeuedItemIds, setRequeuedItemIds] = useState<Set<number>>(() => new Set());
-
-  const orderedLoadedItems = useMemo(
-    () => loadedItems ? orderReaderItems(loadedItems, itemOrder) : undefined,
-    [itemOrder, loadedItems],
-  );
-  const items = useMemo(
-    () => orderedLoadedItems?.filter((item) => (
-      !deletedItemIds.has(item.id)
-      && (nsfwMode !== 'hide' || !isNsfwLink(item.link))
-    )),
-    [deletedItemIds, nsfwMode, orderedLoadedItems],
-  );
-  const visibleReviewableIds = useMemo(
-    () => orderedLoadedItems
-      ?.filter((item) => !deletedItemIds.has(item.id))
-      .map((item) => item.id) ?? [],
-    [deletedItemIds, orderedLoadedItems],
-  );
-  const reviewableIds = useMemo(() => {
-    const requeued = visibleReviewableIds.filter((id) => requeuedItemIds.has(id));
-    return [
-      ...visibleReviewableIds.filter((id) => !requeuedItemIds.has(id)),
-      ...requeued,
-    ];
-  }, [requeuedItemIds, visibleReviewableIds]);
-
-  useEffect(() => {
-    if (loadedItems === undefined || requeuedItemIds.size === 0) return;
-    setRequeuedItemIds(new Set());
-  }, [loadedItems, requeuedItemIds.size]);
-
-  const visibleItemIds = useMemo(() => new Set(items?.map((item) => item.id) ?? []), [items]);
+  const {
+    deletedItemIds,
+    requeuedItemIds,
+    markDeleted,
+    restoreFailed,
+  } = useReaderDeletionProjection(loadedItems);
+  const { items, reviewableIds, visibleItemIds } = useMemo(() => projectReaderItems({
+    loadedItems,
+    itemOrder,
+    nsfwMode,
+    deletedItemIds,
+    requeuedItemIds,
+  }), [
+    deletedItemIds,
+    itemOrder,
+    loadedItems,
+    nsfwMode,
+    requeuedItemIds,
+  ]);
   const { activeReviewIds, keep, remove, reset } = useReviewSession({
     loadedItems,
     reviewableIds,
@@ -95,9 +81,9 @@ export function useFeedReader({
     const deleted = deleteRemoteItem(currentItem.id, getItemTitle(currentItem));
     if (!deleted) return;
 
-    setDeletedItemIds((ids) => new Set(ids).add(currentItem.id));
+    markDeleted(currentItem.id);
     remove(currentItem.id);
-  }, [currentItem, deleteRemoteItem, remove]);
+  }, [currentItem, deleteRemoteItem, markDeleted, remove]);
 
   const retryFailedDeletion = useCallback((itemId: number) => {
     retryItem(itemId);
@@ -106,18 +92,13 @@ export function useFeedReader({
   const retryLoad = useCallback(() => {
     const failedIds = failedDeletions.map((operation) => operation.itemId);
     if (failedIds.length > 0) {
-      const failedIdSet = new Set(failedIds);
-      setDeletedItemIds((ids) => {
-        const nextIds = new Set([...ids].filter((id) => !failedIdSet.has(id)));
-        return nextIds.size === ids.size ? ids : nextIds;
-      });
-      setRequeuedItemIds(failedIdSet);
+      restoreFailed(failedIds);
       reset([...reviewableIds, ...failedIds]);
     } else {
       reset();
     }
     retry();
-  }, [failedDeletions, reset, retry, reviewableIds]);
+  }, [failedDeletions, reset, restoreFailed, retry, reviewableIds]);
 
   const resetReview = useCallback(() => {
     reset();

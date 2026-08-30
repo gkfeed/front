@@ -95,6 +95,7 @@ export type FeedItemCardMetadata = {
 
 export type FeedItemCardPresentation = FeedItemCardMetadata & {
   item: FeedItem;
+  canReadArticle: boolean;
   descriptor: FeedItemCardPresentationDescriptor;
   preview: FeedItemPreview | null;
   visiblePreview: FeedItemPreview | null;
