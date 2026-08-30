@@ -34,6 +34,14 @@ describe('feed item card presentation', () => {
     expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
   });
 
+  it('requests an original VK image when the feed includes text and a thumbnail', () => {
+    const feedItem = item({
+      link: 'https://vk.com/wall-1_2',
+      text: '<p>Readable post text</p><img src="https://example.com/cropped.jpg">',
+    });
+    expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
+  });
+
   it('requests a remote preview for Reddit media even when the feed has a thumbnail', () => {
     const feedItem = item({
       link: 'https://www.reddit.com/r/example/comments/abc123/post/',
@@ -85,6 +93,35 @@ describe('feed item card presentation', () => {
 
     expect(presentation.preview?.src).toBe('https://example.com/original.jpg');
     expect(presentation.preview?.fallbackSrc).toBe('https://example.com/local.jpg');
+  });
+
+  it('prefers the original VK image and keeps the feed thumbnail as a fallback', () => {
+    const feedItem = item({
+      link: 'https://vk.com/wall-1_2',
+      text: '<p>Post text</p><img src="https://example.com/cropped.jpg">',
+    });
+    const presentation = buildFeedItemCardPresentation({
+      item: feedItem,
+      analysis: analyzeFeedItem(feedItem),
+      nsfwMode: 'show',
+      remotePreview: {
+        liquipediaMatch: null,
+        openGraphPreview: {
+          url: feedItem.link,
+          title: 'VK post',
+          description: null,
+          image: 'https://example.com/original.jpg',
+          video: null,
+          siteName: 'VK',
+          type: 'article',
+          providerData: null,
+        },
+      },
+      previewFailures: 0,
+    });
+
+    expect(presentation.preview?.src).toBe('https://example.com/original.jpg');
+    expect(presentation.preview?.fallbackSrc).toBe('https://example.com/cropped.jpg');
   });
 
   it('centralizes article reader eligibility in the presentation model', () => {

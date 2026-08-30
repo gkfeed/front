@@ -366,12 +366,28 @@ test.describe('TikTok player on iPad-sized readers', () => {
           feed_id: 567,
           link: 'https://vk.com/wall-123_456',
           title: 'Рифмы и Панчи',
-          text: '<img src="https://example.com/vk-card.jpg"><br>Post description',
+          text: '<img src="https://example.com/vk-card-cropped.jpg"><br>Post description',
         }],
         next_cursor: null,
       },
     }));
-    await page.route('https://example.com/vk-card.jpg', (route) => route.fulfill({
+    await page.route('https://example.com/vk-card-cropped.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><rect width="640" height="360" fill="#11111b"/></svg>',
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://vk.com/wall-123_456',
+        title: 'Рифмы и Панчи',
+        description: null,
+        image: 'https://example.com/vk-card-original.jpg',
+        video: null,
+        siteName: 'VK',
+        type: 'article',
+        providerData: null,
+      },
+    }));
+    await page.route('https://example.com/vk-card-original.jpg', (route) => route.fulfill({
       contentType: 'image/svg+xml',
       body: '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200"><rect width="900" height="1200" fill="#447bba"/></svg>',
     }));
@@ -381,6 +397,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
     const preview = page.locator('.reader-card--vk .reader-card__preview');
     const image = preview.locator('img');
     await expect(preview).toBeVisible();
+    await expect(image).toHaveAttribute('src', 'https://example.com/vk-card-original.jpg');
     await expect(image).toHaveCSS('object-fit', 'contain');
     await expect(page.locator('.reader-card--vk .reader-card__copy')).toContainText('Рифмы и Панчи');
     await expect(page.locator('.reader-card--vk .reader-card__description')).toHaveText('Post description');

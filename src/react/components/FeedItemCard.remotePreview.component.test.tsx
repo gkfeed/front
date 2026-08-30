@@ -136,14 +136,29 @@ describe('FeedItemCard remote and feed previews', () => {
       .toBe('https://static.hdrezka.ac/covers/thumbnail.jpg');
   });
 
-  it('shows the VK channel and post description alongside local media', () => {
+  it('replaces a cropped VK feed image while keeping the channel and post description', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.com/wall-123_456',
+      title: 'Рифмы и Панчи',
+      description: null,
+      image: 'https://example.com/vk-original.jpg',
+      video: null,
+      siteName: 'VK',
+      type: 'article',
+      providerData: null,
+    });
+
     render(<FeedItemCard item={{
       ...item,
       link: 'https://vk.com/wall-123_456',
       title: 'Рифмы и Панчи',
-      text: '<p>Новый пост сообщества</p><img src="https://example.com/vk-cover.jpg">',
+      text: '<p>Новый пост сообщества</p><img src="https://example.com/vk-cropped.jpg">',
     }} />);
 
+    expect(screen.getByAltText('Preview for Рифмы и Панчи').getAttribute('src'))
+      .toBe('https://example.com/vk-cropped.jpg');
+    expect((await screen.findByAltText('Preview for Рифмы и Панчи')).getAttribute('src'))
+      .toBe('https://example.com/vk-original.jpg');
     expect(screen.getByRole('heading', { name: 'Рифмы и Панчи' })).toBeTruthy();
     expect(screen.getByText('Новый пост сообщества')).toBeTruthy();
     const copy = screen.getByText('Новый пост сообщества').closest('.reader-card__copy');
@@ -151,6 +166,14 @@ describe('FeedItemCard remote and feed previews', () => {
       .toBe(screen.getByRole('heading', { name: 'Рифмы и Панчи' }));
     expect(copy?.querySelector('.reader-card__vk-icon svg')).toBeTruthy();
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
+    expect(getPreview).toHaveBeenCalledWith(
+      'https://vk.com/wall-123_456',
+      expect.any(AbortSignal),
+    );
+
+    fireEvent.error(screen.getByAltText('Preview for Рифмы и Панчи'));
+    expect(screen.getByAltText('Preview for Рифмы и Панчи').getAttribute('src'))
+      .toBe('https://example.com/vk-cropped.jpg');
   });
 
   it('shows the VK channel but not a generic remote description', async () => {

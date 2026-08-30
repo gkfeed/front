@@ -30,6 +30,7 @@ export function shouldLoadRemotePreview(
   const policy = getFeedItemProviderPolicy(analysis.provider);
   const isRezka = isRezkaUrl(url);
   const usesVkDescription = policy.description === 'vk';
+  const isVk = analysis.provider === 'vk';
   const isReddit = isRedditUrl(url);
   const needsInstagramMetadata = analysis.provider === 'instagram'
     && Boolean(url && isInstagramMediaUrl(url));
@@ -41,6 +42,7 @@ export function shouldLoadRemotePreview(
   return !shouldHideNsfw
     && policy.remotePreview
     && (isReddit
+      || isVk
       || isRezka
       || needsInstagramMetadata
       || needsSasflixMetadata
@@ -61,6 +63,7 @@ export function resolveFeedItemCardPreviews({
   const localPreviewSource = localPreview?.src;
   const isRezka = isRezkaUrl(analysis.url);
   const isReddit = isRedditUrl(analysis.url);
+  const isVk = analysis.provider === 'vk';
   const usesTikTokEmbed = policy.previewMode === 'tiktok-embed';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
   const instagramEmbedPreview = analysis.provider === 'instagram'
@@ -72,7 +75,8 @@ export function resolveFeedItemCardPreviews({
     && remotePreview.openGraphPreview?.type === 'video'
     ? loadedRemotePreview ?? instagramEmbedPreview
     : null;
-  const remoteItemPreview = isRezka && loadedRemotePreview && localPreviewSource
+  const prefersRemotePreview = isRezka || isVk;
+  const remoteItemPreview = prefersRemotePreview && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
   const tiktokEmbedPreview = usesTikTokEmbed ? getTikTokEmbedPreview(item) : null;
@@ -80,7 +84,7 @@ export function resolveFeedItemCardPreviews({
     ? tiktokEmbedPreview ?? localPreview
     : instagramVideoPreview
       ? instagramVideoPreview
-    : isRezka
+    : prefersRemotePreview
       ? remoteItemPreview ?? localPreview
       : isReddit && remoteItemPreview?.type === 'video'
         ? remoteItemPreview
