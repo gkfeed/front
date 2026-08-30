@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { useAsyncLoad } from '../../hooks/useAsyncLoad';
 import { useAuth } from '../../state/useAuth';
 import { useFeatureUseCases } from '../../state/useFeatureUseCases';
-import { isNotFoundError } from '../../services/authError';
+import { getRequestErrorMessage, isNotFoundError } from '../../services/authError';
 
 type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
 export type FeedLoadStatus = 'loading' | 'success' | 'error' | 'not-found';
@@ -12,6 +12,7 @@ export type FeedDeleteStatus = DeleteState;
 export function useFeedPageModel(
   feedIdParam: string | undefined,
   onDeleted: () => void,
+  t: (key: string) => string,
 ) {
   const { credentials } = useAuth();
   const { feeds } = useFeatureUseCases();
@@ -31,6 +32,9 @@ export function useFeedPageModel(
     || isNotFoundError(loadError))
     ? 'not-found'
     : asyncLoadStatus;
+  const loadErrorMessage = loadStatus === 'error'
+    ? getRequestErrorMessage(loadError, t, 'feedDetails.loadError')
+    : '';
   const isDeleting = deleteState === 'deleting';
 
   const deleteLoadedFeed = useCallback(async () => {
@@ -58,6 +62,7 @@ export function useFeedPageModel(
     feed,
     loadStatus,
     loadError,
+    loadErrorMessage,
     deleteStatus: deleteState,
     retryLoad,
     requestDelete,

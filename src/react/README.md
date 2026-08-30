@@ -1,0 +1,18 @@
+# React architecture
+
+The frontend uses inward-facing domain and feature contracts with React adapters at the UI edge.
+
+- `domain/` contains pure feed and preview rules. It must not depend on React, state, services, or UI modules.
+- `features/` contains application rules and port types. It must not import concrete services or the composition root.
+- `services/` implements HTTP, browser, storage, and third-party integration details.
+- `application/` is the composition root that binds feature contracts to services.
+- `state/` provides application-wide React contexts. `FeatureUseCasesProvider` owns the composed use cases; `AuthProvider` owns only the authentication session.
+- `hooks/` contains reusable React mechanisms. Hooks may use feature contracts through `useFeatureUseCases`.
+- `adapters/` coordinates hooks, routing, state, and localized errors into page models.
+- `pages/` renders page models and components. Production pages may depend on `adapters/` and `components/`, but not directly on domain, feature, hook, service, or state modules.
+- `components/` contains reusable UI. Provider-specific feed card rendering lives under `components/providers/`.
+
+The application root always supplies composed use cases through `AppProviders`. `useFeatureUseCases`
+creates a lazy standalone composition only for isolated component and hook rendering.
+
+`server/architecture.test.ts` enforces the dependency rules that are important enough to prevent accidental erosion.

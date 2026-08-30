@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getAllFeeds } from '../services/feeds';
-import { AuthProvider } from '../state/AuthProvider';
+import { AppProviders } from '../state/AppProviders';
 import { createStatusError, getControlValue } from '../testUtils';
 import { FeedsList } from './FeedsList';
 import { Navbar } from './Navbar';
@@ -15,7 +15,7 @@ vi.mock('../services/feeds');
 
 const getFeeds = vi.mocked(getAllFeeds);
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <MemoryRouter><AuthProvider>{children}</AuthProvider></MemoryRouter>
+  <MemoryRouter><AppProviders>{children}</AppProviders></MemoryRouter>
 );
 
 afterEach(() => {

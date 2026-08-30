@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useMemo } from 'react';
 
 import {
   createFeatureComposition,
@@ -8,6 +8,5 @@ import { FeatureUseCasesContext } from './featureUseCasesContext';
 
 export function useFeatureUseCases(): FeatureUseCases {
   const value = useContext(FeatureUseCasesContext);
-  const [fallback] = useState(createFeatureComposition);
-  return value ?? fallback;
+  return useMemo(() => value ?? createFeatureComposition(), [value]);
 }

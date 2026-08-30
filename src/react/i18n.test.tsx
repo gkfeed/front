@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { LoginPage } from './pages/LoginPage';
-import { AuthProvider } from './state/AuthProvider';
+import { AppProviders } from './state/AppProviders';
 import { i18n, resolveLanguage } from './i18n';
 
 afterEach(async () => {
@@ -31,9 +31,9 @@ describe('i18n', () => {
     const renderLogin = () => render(
       <I18nextProvider i18n={i18n}>
         <MemoryRouter>
-          <AuthProvider>
+          <AppProviders>
             <LoginPage />
-          </AuthProvider>
+          </AppProviders>
         </MemoryRouter>
       </I18nextProvider>,
     );

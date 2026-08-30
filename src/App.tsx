@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Navbar } from './react/components/Navbar';
 import { RequireAuth } from './react/components/RequireAuth';
-import { AuthProvider } from './react/state/AuthProvider';
+import { AppProviders } from './react/state/AppProviders';
 import { NsfwPreferencesProvider } from './react/state/NsfwPreferencesProvider';
 import { ReaderItemOrderPreferencesProvider } from './react/state/ReaderItemOrderPreferencesProvider';
 import { useAuth } from './react/state/useAuth';
@@ -46,7 +46,7 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <AppProviders>
         <NsfwPreferencesProvider>
           <ReaderItemOrderPreferencesProvider>
             <RouteEffects />
@@ -67,7 +67,7 @@ export function App() {
             </main>
           </ReaderItemOrderPreferencesProvider>
         </NsfwPreferencesProvider>
-      </AuthProvider>
+      </AppProviders>
     </BrowserRouter>
   );
 }

@@ -32,6 +32,10 @@ export type LiveApplicationPort = {
   ) => Promise<FeedItem[]>;
 };
 
+export type LiveUseCases = {
+  loadLiveTwitchItems: LiveApplicationPort['getLiveTwitchItems'];
+};
+
 export type AuthApplicationPort = {
   validateCredentials: (credentials: Credentials, signal?: AbortSignal) => Promise<void>;
   isAuthenticationError: (error: unknown) => boolean;
@@ -52,5 +56,7 @@ export type PreviewApplicationPort = {
     previous: OpenGraphPreview | null,
   ) => OpenGraphPreview;
 };
+
+export type PreviewUseCases = PreviewApplicationPort;
 
 export type { TikTokComment, TikTokCommentsPreview } from '../../../shared/tiktokContracts';

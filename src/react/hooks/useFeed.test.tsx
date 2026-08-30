@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedById, getFeedById } from '../services/feeds';
-import { AuthProvider } from '../state/AuthProvider';
+import { AppProviders } from '../state/AppProviders';
 import { useFeedPageModel as useFeed } from '../adapters/feeds/useFeedPageModel';
 
 vi.mock('../services/feeds');
@@ -13,13 +13,14 @@ vi.mock('../services/feeds');
 const feed = { id: 1, title: 'News', type: 'rss', url: 'https://example.com/feed.xml' };
 const getFeed = vi.mocked(getFeedById);
 const deleteFeed = vi.mocked(deleteFeedById);
-const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
+const wrapper = ({ children }: { children: ReactNode }) => <AppProviders>{children}</AppProviders>;
+const translate = (key: string) => key;
 
 afterEach(() => vi.resetAllMocks());
 
 describe('useFeed', () => {
   it('rejects invalid route ids without requesting data', async () => {
-    const { result } = renderHook(() => useFeed('0', vi.fn()), { wrapper });
+    const { result } = renderHook(() => useFeed('0', vi.fn(), translate), { wrapper });
 
     await waitFor(() => expect(result.current.loadStatus).toBe('not-found'));
     expect(getFeed).not.toHaveBeenCalled();
@@ -29,7 +30,7 @@ describe('useFeed', () => {
     const onDeleted = vi.fn();
     getFeed.mockResolvedValue(feed);
     deleteFeed.mockResolvedValue(undefined);
-    const { result } = renderHook(() => useFeed('1', onDeleted), { wrapper });
+    const { result } = renderHook(() => useFeed('1', onDeleted, translate), { wrapper });
 
     await waitFor(() => expect(result.current.feed).toEqual(feed));
     act(result.current.requestDelete);
@@ -41,7 +42,7 @@ describe('useFeed', () => {
 
   it('retries load failures', async () => {
     getFeed.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(feed);
-    const { result } = renderHook(() => useFeed('1', vi.fn()), { wrapper });
+    const { result } = renderHook(() => useFeed('1', vi.fn(), translate), { wrapper });
 
     await waitFor(() => expect(result.current.loadStatus).toBe('error'));
     act(result.current.retryLoad);
@@ -52,7 +53,7 @@ describe('useFeed', () => {
   it('exposes delete failures without closing confirmation', async () => {
     getFeed.mockResolvedValue(feed);
     deleteFeed.mockRejectedValue(new Error('failed'));
-    const { result } = renderHook(() => useFeed('1', vi.fn()), { wrapper });
+    const { result } = renderHook(() => useFeed('1', vi.fn(), translate), { wrapper });
 
     await waitFor(() => expect(result.current.feed).toEqual(feed));
     act(result.current.requestDelete);

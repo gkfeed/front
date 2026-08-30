@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '../services/apiClient';
 import { validateCredentials } from '../services/auth';
-import { AuthProvider } from '../state/AuthProvider';
+import { AppProviders } from '../state/AppProviders';
 import { AUTH_STORAGE_KEY } from '../state/authStorage';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { LoginPage } from './LoginPage';
@@ -29,7 +29,7 @@ afterEach(() => {
 
 describe('LoginPage', () => {
   it('shows an empty username field without a misleading example value', () => {
-    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+    render(<MemoryRouter><AppProviders><LoginPage /></AppProviders></MemoryRouter>);
 
     const username = screen.getByLabelText('Username') as HTMLInputElement;
     expect(username.value).toBe('');
@@ -39,7 +39,7 @@ describe('LoginPage', () => {
   it('validates with the server before saving and can clear credentials', async () => {
     const storage = stubLocalStorage();
     validateLogin.mockResolvedValue();
-    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+    render(<MemoryRouter><AppProviders><LoginPage /></AppProviders></MemoryRouter>);
 
     const signInButton = screen.getByRole('button', { name: 'Sign in' }) as HTMLButtonElement;
     expect(signInButton.disabled).toBe(true);
@@ -72,7 +72,7 @@ describe('LoginPage', () => {
     storage.set(AUTH_STORAGE_KEY, JSON.stringify({ username: 'alice', password: 'secret' }));
     validateLogin.mockResolvedValue();
 
-    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+    render(<MemoryRouter><AppProviders><LoginPage /></AppProviders></MemoryRouter>);
 
     expect(screen.getByRole('status').textContent).toContain('Checking authentication');
     expect((await screen.findByText(/Logged in as/)).textContent).toContain('alice');
@@ -81,7 +81,7 @@ describe('LoginPage', () => {
   it('rejects invalid credentials without saving them', async () => {
     const storage = stubLocalStorage();
     validateLogin.mockRejectedValue(new ApiError('Request failed with 401', 401));
-    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+    render(<MemoryRouter><AppProviders><LoginPage /></AppProviders></MemoryRouter>);
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'alice' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong' } });
@@ -97,7 +97,7 @@ describe('LoginPage', () => {
     storage.set(AUTH_STORAGE_KEY, JSON.stringify({ username: 'alice', password: 'wrong' }));
     validateLogin.mockRejectedValue(new ApiError('Request failed with 401', 401));
 
-    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+    render(<MemoryRouter><AppProviders><LoginPage /></AppProviders></MemoryRouter>);
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Sign in to GKFEED' })).toBeTruthy());
     expect(storage.has(AUTH_STORAGE_KEY)).toBe(false);
@@ -107,7 +107,7 @@ describe('LoginPage', () => {
     const storage = stubLocalStorage();
     storage.set(AUTH_STORAGE_KEY, JSON.stringify({ username: 'alice' }));
 
-    render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>);
+    render(<MemoryRouter><AppProviders><LoginPage /></AppProviders></MemoryRouter>);
 
     expect(screen.getByRole('heading', { name: 'Sign in to GKFEED' })).toBeTruthy();
     expect(storage.has(AUTH_STORAGE_KEY)).toBe(true);

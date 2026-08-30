@@ -1,7 +1,9 @@
 import { createFeedUseCases } from '../features/feeds/feedUseCases';
 import { createAuthUseCases } from '../features/auth/authUseCaseFactory';
-import { createLiveUseCases } from '../features/live/liveUseCases';
-import { createPreviewUseCases } from '../features/preview/previewUseCases';
+import type {
+  LiveUseCases,
+  PreviewUseCases,
+} from '../features/featurePorts';
 import {
   createFeed as createFeedRequest,
   createFeedFromUrl as createFeedFromUrlRequest,
@@ -40,15 +42,17 @@ export function createFeatureComposition() {
       getFeedById,
       getFeedItems,
     }),
-    live: createLiveUseCases({ getLiveTwitchItems }),
-    preview: createPreviewUseCases({
+    live: {
+      loadLiveTwitchItems: getLiveTwitchItems,
+    } satisfies LiveUseCases,
+    preview: {
       getArticle,
       EMPTY_REMOTE_PREVIEW,
       fetchTikTokComments,
       getOpenGraphPreview,
       loadRemotePreview: loadRemotePreviewRequest,
       mergeHltvLiveData,
-    }),
+    } satisfies PreviewUseCases,
   } as const;
 }
 

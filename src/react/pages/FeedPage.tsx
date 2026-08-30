@@ -9,7 +9,6 @@ import {
   useFeedPageModel,
   type FeedDeleteStatus,
 } from '../adapters/feeds/useFeedPageModel';
-import { getRequestErrorMessage } from '../services/authError';
 
 export function FeedPage() {
   const { t } = useTranslation();
@@ -19,13 +18,13 @@ export function FeedPage() {
   const {
     feed,
     loadStatus,
-    loadError,
+    loadErrorMessage,
     deleteStatus,
     requestDelete,
     cancelDelete,
     deleteFeed,
     retryLoad,
-  } = useFeedPageModel(id, handleDeleted);
+  } = useFeedPageModel(id, handleDeleted, t);
 
   let content: ReactNode = null;
 
@@ -36,7 +35,7 @@ export function FeedPage() {
       <LoadErrorState
         message={loadStatus === 'not-found'
           ? t('feedDetails.notFound')
-          : getRequestErrorMessage(loadError, t, 'feedDetails.loadError')}
+          : loadErrorMessage}
         canRetry={loadStatus === 'error'}
         onRetry={retryLoad}
       />

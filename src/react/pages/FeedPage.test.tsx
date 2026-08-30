@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedById, getFeedById } from '../services/feeds';
 import { createStatusError } from '../testUtils';
-import { AuthProvider } from '../state/AuthProvider';
+import { AppProviders } from '../state/AppProviders';
 import { FeedPage } from './FeedPage';
 
 vi.mock('../services/feeds');
@@ -20,9 +20,9 @@ describe('FeedPage', () => {
   it('does not offer retry for missing feed routes', async () => {
     render(
       <MemoryRouter initialEntries={['/feed/0']}>
-        <AuthProvider>
+        <AppProviders>
           <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
-        </AuthProvider>
+        </AppProviders>
       </MemoryRouter>,
     );
 
@@ -43,9 +43,9 @@ describe('FeedPage', () => {
 
     render(
       <MemoryRouter initialEntries={['/feed/1']}>
-        <AuthProvider>
+        <AppProviders>
           <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
-        </AuthProvider>
+        </AppProviders>
       </MemoryRouter>,
     );
 
@@ -67,9 +67,9 @@ describe('FeedPage', () => {
 
     render(
       <MemoryRouter initialEntries={['/feed/1']}>
-        <AuthProvider>
+        <AppProviders>
           <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
-        </AuthProvider>
+        </AppProviders>
       </MemoryRouter>,
     );
 
@@ -84,9 +84,9 @@ describe('FeedPage', () => {
 
     render(
       <MemoryRouter initialEntries={['/feed/1']}>
-        <AuthProvider>
+        <AppProviders>
           <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
-        </AuthProvider>
+        </AppProviders>
       </MemoryRouter>,
     );
 
@@ -104,9 +104,9 @@ describe('FeedPage', () => {
     vi.mocked(deleteFeedById).mockRejectedValue(new Error('offline'));
     render(
       <MemoryRouter initialEntries={['/feed/1']}>
-        <AuthProvider>
+        <AppProviders>
           <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
-        </AuthProvider>
+        </AppProviders>
       </MemoryRouter>,
     );
 

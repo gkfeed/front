@@ -1,15 +1,16 @@
 import { useCallback, useMemo } from 'react';
 
-import { useNsfwPreferences } from '../state/useNsfwPreferences';
-import { useAuth } from '../state/useAuth';
-import type { ReaderItemOrder } from '../state/readerItemOrder';
-import { projectReaderItems } from './readerItemsProjection';
-import { useFeedItemDeletion } from './useFeedItemDeletion';
-import { useFeedItems } from './useFeedItems';
-import { useReaderDeletionProjection } from './useReaderDeletionProjection';
-import { useReviewSession } from './useReviewSession';
-import { useReviewPreviewPrefetch } from './useReviewPreviewPrefetch';
+import { useNsfwPreferences } from '../../state/useNsfwPreferences';
+import { useAuth } from '../../state/useAuth';
+import type { ReaderItemOrder } from '../../state/readerItemOrder';
+import { projectReaderItems } from '../../hooks/readerItemsProjection';
+import { useFeedItemDeletion } from '../../hooks/useFeedItemDeletion';
+import { useFeedItems } from '../../hooks/useFeedItems';
+import { useReaderDeletionProjection } from '../../hooks/useReaderDeletionProjection';
+import { useReviewSession } from '../../hooks/useReviewSession';
+import { useReviewPreviewPrefetch } from '../../hooks/useReviewPreviewPrefetch';
 
+/** Coordinates the reader use case; lower-level hooks own the individual mechanisms. */
 export function useFeedReader({
   prefetchNextPreviews = false,
   itemOrder = 'desc',

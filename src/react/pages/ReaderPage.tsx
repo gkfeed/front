@@ -4,8 +4,10 @@ import '../../styles/reader.css';
 import { ReaderReview } from '../components/ReaderReview';
 import { ReaderScroll } from '../components/ReaderScroll';
 import { ReaderFullscreenButton } from '../components/ReaderFullscreenButton';
-import type { FeedItemDeletion } from '../hooks/useFeedItemDeletion';
-import { useReaderPageModel } from '../adapters/reader/useReaderPageModel';
+import {
+  useReaderPageModel,
+  type FeedItemDeletion,
+} from '../adapters/reader/useReaderPageModel';
 
 export function ReaderPage() {
   const { t } = useTranslation();

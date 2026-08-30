@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '../services/apiClient';
 import { validateCredentials } from '../services/auth';
-import { AuthProvider } from '../state/AuthProvider';
+import { AppProviders } from '../state/AppProviders';
 import { AUTH_STORAGE_KEY } from '../state/authStorage';
 import { getRouteLocation } from '../state/routes';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
@@ -32,12 +32,12 @@ describe('RequireAuth', () => {
   it('redirects anonymous users to login without mounting protected content', () => {
     render(
       <MemoryRouter initialEntries={['/create?draft=1']}>
-        <AuthProvider>
+        <AppProviders>
           <Routes>
             <Route path="/create" element={<RequireAuth><ProtectedContent /></RequireAuth>} />
             <Route path="/login" element={<LoginLocation />} />
           </Routes>
-        </AuthProvider>
+        </AppProviders>
       </MemoryRouter>,
     );
 
@@ -52,12 +52,12 @@ describe('RequireAuth', () => {
 
     render(
       <MemoryRouter initialEntries={['/create']}>
-        <AuthProvider>
+        <AppProviders>
           <Routes>
             <Route path="/create" element={<RequireAuth><ProtectedContent /></RequireAuth>} />
             <Route path="/login" element={<LoginLocation />} />
           </Routes>
-        </AuthProvider>
+        </AppProviders>
       </MemoryRouter>,
     );
 
@@ -74,12 +74,12 @@ describe('RequireAuth', () => {
 
     render(
       <MemoryRouter initialEntries={['/create']}>
-        <AuthProvider>
+        <AppProviders>
           <Routes>
             <Route path="/create" element={<RequireAuth><ProtectedContent /></RequireAuth>} />
             <Route path="/login" element={<LoginLocation />} />
           </Routes>
-        </AuthProvider>
+        </AppProviders>
       </MemoryRouter>,
     );
 
