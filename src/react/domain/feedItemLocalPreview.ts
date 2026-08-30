@@ -5,7 +5,7 @@ import type {
   FeedItemPreview,
 } from './feedItemPreviewTypes';
 import { getEmbeddedPreview } from './embeddedPreview';
-import { getFeedItemProviderFromUrl } from './feedItemProviders';
+import { getFeedItemProviderFromUrl } from './feedItemProviderDetection';
 import { getTwitchChannel, getTwitchPreview } from './twitchPreview';
 import { getVkVideoPreview } from './vkPreview';
 import {

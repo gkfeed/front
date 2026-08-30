@@ -1,6 +1,6 @@
 import {
   getFeedItemCardPresentationDescriptor,
-} from './feedItemProviders';
+} from './feedItemProviderPresentation';
 import { resolveFeedItemCardMetadata } from './feedItemCardMetadata';
 import {
   resolveFeedItemCardPreviews,
