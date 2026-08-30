@@ -4,20 +4,27 @@ import { Link } from 'react-router';
 
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { filterFeeds } from '../features/feeds/feedsListViewModel';
-import { useFeedsList } from '../adapters/feeds/useFeedsList';
+import type { Feed } from '../types';
 import { FeedCard } from './FeedCard';
 
 const SEARCH_DEBOUNCE_MS = 80;
 const SKELETON_ITEMS = [1, 2, 3] as const;
 
-export function FeedsList() {
+export type FeedsListModel = {
+  feeds: Feed[];
+  errorMessage: string;
+  isLoading: boolean;
+  retry: () => void;
+};
+
+export function FeedsList({ model }: { model: FeedsListModel }) {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [draftSearchTerm, setDraftSearchTerm] = useState(searchTerm);
   const [, startSearchTransition] = useTransition();
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const settledSearchTerm = useDebouncedValue(deferredSearchTerm, SEARCH_DEBOUNCE_MS);
-  const { feeds, errorMessage, isLoading, retry } = useFeedsList(t);
+  const { feeds, errorMessage, isLoading, retry } = model;
   const displayQuery = settledSearchTerm.trim();
   const normalizedQuery = displayQuery.toLowerCase();
   const filteredFeeds = useMemo(() => filterFeeds(feeds, normalizedQuery), [feeds, normalizedQuery]);

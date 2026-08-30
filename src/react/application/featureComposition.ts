@@ -33,15 +33,18 @@ export function createFeatureComposition() {
         ? validateCredentials(credentials)
         : validateCredentials(credentials, signal),
     }),
-    feeds: createFeedUseCases({
-      createFeed: createFeedRequest,
-      createFeedFromUrl: createFeedFromUrlRequest,
-      deleteFeedById,
-      deleteFeedItemById,
-      getAllFeeds,
-      getFeedById,
-      getFeedItems,
-    }),
+    feeds: createFeedUseCases(
+      {
+        createFeed: createFeedRequest,
+        createFeedFromUrl: createFeedFromUrlRequest,
+        deleteFeedById,
+        deleteFeedItemById,
+        getAllFeeds,
+        getFeedById,
+        getFeedItems,
+      },
+      { getOpenGraphPreview },
+    ),
     live: {
       loadLiveTwitchItems: getLiveTwitchItems,
     } satisfies LiveUseCases,

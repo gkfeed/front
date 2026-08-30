@@ -10,7 +10,7 @@ import { ReaderItemOrderPreferencesProvider } from './react/state/ReaderItemOrde
 import { useAuth } from './react/state/useAuth';
 
 const FeedListPage = lazy(() => import('./react/pages/FeedListPage').then(({ FeedListPage: page }) => ({ default: page })));
-const FeedCreator = lazy(() => import('./react/components/FeedCreator').then(({ FeedCreator: page }) => ({ default: page })));
+const CreateFeedPage = lazy(() => import('./react/pages/CreateFeedPage').then(({ CreateFeedPage: page }) => ({ default: page })));
 const FeedPage = lazy(() => import('./react/pages/FeedPage').then(({ FeedPage: page }) => ({ default: page })));
 const LoginPage = lazy(() => import('./react/pages/LoginPage').then(({ LoginPage: page }) => ({ default: page })));
 const LivePage = lazy(() => import('./react/pages/LivePage').then(({ LivePage: page }) => ({ default: page })));
@@ -56,7 +56,7 @@ export function App() {
               <Suspense fallback={<p className="ui-status" role="status">{t('app.loading')}</p>}>
                 <Routes>
                   <Route path="/" element={<RequireAuth><FeedListPage /></RequireAuth>} />
-                  <Route path="/create" element={<RequireAuth><FeedCreator /></RequireAuth>} />
+                  <Route path="/create" element={<RequireAuth><CreateFeedPage /></RequireAuth>} />
                   <Route path="/reader" element={<RequireAuth><ReaderPage /></RequireAuth>} />
                   <Route path="/live" element={<RequireAuth><LivePage /></RequireAuth>} />
                   <Route path="/login" element={<LoginPage />} />

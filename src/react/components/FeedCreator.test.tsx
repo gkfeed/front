@@ -7,7 +7,7 @@ import { createFeed, createFeedFromUrl } from '../services/feeds';
 import { getOpenGraphPreview } from '../services/openGraph';
 import { AppProviders } from '../state/AppProviders';
 import { getControlValue } from '../testUtils';
-import { FeedCreator } from './FeedCreator';
+import { CreateFeedPage } from '../pages/CreateFeedPage';
 
 vi.mock('../services/feeds');
 vi.mock('../services/openGraph');
@@ -21,9 +21,9 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-describe('FeedCreator', () => {
+describe('CreateFeedPage', () => {
   it('uses URL-only creation by default', async () => {
-    render(<AppProviders><FeedCreator /></AppProviders>);
+    render(<AppProviders><CreateFeedPage /></AppProviders>);
 
     expect(screen.getByRole('tab', { name: 'URL only' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Manual' }).getAttribute('aria-selected')).toBe('false');
@@ -56,7 +56,7 @@ describe('FeedCreator', () => {
   });
 
   it('canonicalizes a shared YouTube channel URL for lazy creation', async () => {
-    render(<AppProviders><FeedCreator /></AppProviders>);
+    render(<AppProviders><CreateFeedPage /></AppProviders>);
     createLazy.mockResolvedValueOnce();
     getPreview.mockResolvedValueOnce({
       url: 'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ',
@@ -89,7 +89,7 @@ describe('FeedCreator', () => {
   });
 
   it('saves title and type from the extended tab', async () => {
-    render(<AppProviders><FeedCreator /></AppProviders>);
+    render(<AppProviders><CreateFeedPage /></AppProviders>);
 
     fireEvent.click(screen.getByRole('tab', { name: 'Manual' }));
     expect(screen.getByRole('tab', { name: 'URL only' }).getAttribute('aria-selected')).toBe('false');

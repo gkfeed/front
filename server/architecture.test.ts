@@ -10,6 +10,7 @@ const sourceRoots = [
   join(repositoryRoot, 'src/react'),
 ];
 const sourceFiles = sourceRoots.flatMap(collectSourceFiles);
+sourceFiles.push(join(repositoryRoot, 'src/App.tsx'));
 const sourceFileSet = new Set(sourceFiles);
 
 describe('module architecture', () => {
@@ -65,6 +66,18 @@ describe('module architecture', () => {
         ].some((layer) => target.startsWith(`src/react/${layer}/`))) {
         return [`${source} -> ${target}`];
       }
+      if (source.startsWith('src/react/components/')
+        && ['application', 'adapters', 'pages'].some((layer) => (
+          target.startsWith(`src/react/${layer}/`)
+        ))) {
+        return [`${source} -> ${target}`];
+      }
+      if (source.startsWith('src/react/adapters/')
+        && ['application', 'components', 'pages'].some((layer) => (
+          target.startsWith(`src/react/${layer}/`)
+        ))) {
+        return [`${source} -> ${target}`];
+      }
       if (source.startsWith('server/application/')
         && (target.startsWith('server/http/')
           || target.startsWith('server/preview/')
@@ -88,6 +101,15 @@ describe('module architecture', () => {
     }));
 
     expect(violations).toEqual([]);
+  });
+
+  it('keeps lazy route entry points under pages', () => {
+    const appSource = readFileSync(join(repositoryRoot, 'src/App.tsx'), 'utf8');
+    const lazyRouteImports = [...appSource.matchAll(/lazy\(\(\) => import\((['"])([^'"]+)\1\)/g)]
+      .map((match) => match[2]);
+
+    expect(lazyRouteImports.length).toBeGreaterThan(0);
+    expect(lazyRouteImports.filter((specifier) => !specifier.startsWith('./react/pages/'))).toEqual([]);
   });
 });
 

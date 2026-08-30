@@ -12,6 +12,8 @@ The frontend uses inward-facing domain and feature contracts with React adapters
 - `pages/` renders page models and components. Production pages may depend on `adapters/` and `components/`, but not directly on domain, feature, hook, service, or state modules.
 - `components/` contains reusable UI. Provider-specific feed card rendering lives under `components/providers/`.
 
+Lazy route entry points in `src/App.tsx` live under `pages/`; route-specific coordination belongs in an adapter rather than a reusable component.
+
 The application root always supplies composed use cases through `AppProviders`. `useFeatureUseCases`
 creates a lazy standalone composition only for isolated component and hook rendering.
 

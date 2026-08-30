@@ -25,6 +25,10 @@ export type FeedApplicationPort = {
   createFeedFromUrl: (feed: FeedLazyInput, credentials: Credentials | null) => Promise<void>;
 };
 
+export type FeedMetadataPort = {
+  getOpenGraphPreview: (url: string, signal?: AbortSignal) => Promise<OpenGraphPreview>;
+};
+
 export type LiveApplicationPort = {
   getLiveTwitchItems: (
     credentials: Credentials | null,

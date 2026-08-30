@@ -1,32 +1,27 @@
 import { useState } from 'react';
 
-import { useAuth } from '../state/useAuth';
-import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import {
   EMPTY_FEED,
   getFeedCreatorFields,
-  inferFeedSourceFromLazyUrl,
   isFeedFieldValid,
-  normalizeLazyFeedUrl,
-  trimFeed,
   type FeedCreatorMode,
-} from '../domain/feedCreator';
-import type { FeedInput } from '../types';
+} from '../../domain/feedCreator';
+import { useAuth } from '../../state/useAuth';
+import { useFeatureUseCases } from '../../state/useFeatureUseCases';
+import type { FeedInput } from '../../types';
 
 export type FeedCreatorSaveStatus = 'idle' | 'saving' | 'success' | 'error';
 
-export type { FeedCreatorMode } from '../domain/feedCreator';
-
-export function useFeedCreator() {
+export function useCreateFeedPageModel() {
   const { credentials } = useAuth();
-  const { feeds, preview } = useFeatureUseCases();
+  const { feeds } = useFeatureUseCases();
   const [feed, setFeed] = useState<FeedInput>(EMPTY_FEED);
   const [mode, setMode] = useState<FeedCreatorMode>('lazy');
   const [submitted, setSubmitted] = useState(false);
   const [saveStatus, setSaveStatus] = useState<FeedCreatorSaveStatus>('idle');
   const isSaving = saveStatus === 'saving';
-  const visibleFields = getFeedCreatorFields(mode);
-  const isValid = visibleFields.every((field) => isFeedFieldValid(feed, field.id));
+  const fields = getFeedCreatorFields(mode);
+  const isValid = fields.every((field) => isFeedFieldValid(feed, field.id));
 
   function updateFeed(field: keyof FeedInput, value: string) {
     setFeed((current) => ({ ...current, [field]: value }));
@@ -41,25 +36,11 @@ export function useFeedCreator() {
 
   async function submitFeed() {
     setSubmitted(true);
-
     if (!isValid || isSaving) return;
 
     setSaveStatus('saving');
-
     try {
-      if (mode === 'extended') {
-        await feeds.createFeed(trimFeed(feed), credentials);
-      } else {
-        const inferredSource = inferFeedSourceFromLazyUrl(feed.url);
-        if (inferredSource) {
-          const metadata = await preview.getOpenGraphPreview(inferredSource.url);
-          const title = metadata.title?.trim();
-          if (!title) throw new Error('YouTube channel title is unavailable');
-          await feeds.createFeed({ ...inferredSource, title }, credentials);
-        } else {
-          await feeds.createFeedFromUrl({ url: normalizeLazyFeedUrl(feed.url) }, credentials);
-        }
-      }
+      await feeds.saveFeed(feed, mode, credentials);
       setFeed(EMPTY_FEED);
       setSubmitted(false);
       setSaveStatus('success');
@@ -71,6 +52,7 @@ export function useFeedCreator() {
   return {
     feed,
     mode,
+    fields,
     submitted,
     saveStatus,
     isSaving,

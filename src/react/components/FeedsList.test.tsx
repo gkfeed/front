@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getAllFeeds } from '../services/feeds';
 import { AppProviders } from '../state/AppProviders';
 import { createStatusError, getControlValue } from '../testUtils';
-import { FeedsList } from './FeedsList';
+import { FeedListPage } from '../pages/FeedListPage';
 import { Navbar } from './Navbar';
 
 vi.mock('../services/feeds');
@@ -23,10 +23,10 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-describe('FeedsList', () => {
+describe('FeedListPage', () => {
   it('shows loading and loaded feed states', async () => {
     getFeeds.mockResolvedValue([{ id: 1, title: 'News', type: 'rss', url: 'https://example.com/feed.xml' }]);
-    render(<><Navbar /><FeedsList /></>, { wrapper });
+    render(<><Navbar /><FeedListPage /></>, { wrapper });
 
     expect(screen.getByLabelText('Loading feeds')).toBeTruthy();
     expect(screen.getByText('Loading feeds.')).toBeTruthy();
@@ -39,7 +39,7 @@ describe('FeedsList', () => {
 
   it('keeps typing local and does not refetch while searching', async () => {
     getFeeds.mockResolvedValue([{ id: 1, title: 'News', type: 'rss', url: 'https://example.com/feed.xml' }]);
-    render(<><Navbar /><FeedsList /></>, { wrapper });
+    render(<><Navbar /><FeedListPage /></>, { wrapper });
 
     await screen.findByText('News');
 
@@ -56,7 +56,7 @@ describe('FeedsList', () => {
     getFeeds
       .mockRejectedValueOnce(createStatusError('unauthorized', 401))
       .mockResolvedValueOnce([]);
-    render(<FeedsList />, { wrapper });
+    render(<FeedListPage />, { wrapper });
 
     expect(await screen.findByText('Your session has expired. Please sign in again.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));

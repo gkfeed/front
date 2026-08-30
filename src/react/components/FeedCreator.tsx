@@ -3,19 +3,33 @@ import { useTranslation } from 'react-i18next';
 
 import '../../styles/feed-creator.css';
 import {
-  getFeedCreatorFields,
   type FeedCreatorFieldConfig,
+  type FeedCreatorMode,
 } from '../domain/feedCreator';
-import { useFeedCreator } from '../hooks/useFeedCreator';
-import type { FeedCreatorMode, FeedCreatorSaveStatus } from '../hooks/useFeedCreator';
 import type { FeedInput } from '../types';
 import { FeedTypePicker } from './FeedTypePicker';
 
-export function FeedCreator() {
+type FeedCreatorSaveStatus = 'idle' | 'saving' | 'success' | 'error';
+
+export type FeedCreatorModel = {
+  feed: FeedInput;
+  mode: FeedCreatorMode;
+  fields: readonly FeedCreatorFieldConfig[];
+  submitted: boolean;
+  saveStatus: FeedCreatorSaveStatus;
+  isSaving: boolean;
+  isFeedFieldValid: (field: keyof FeedInput) => boolean;
+  updateMode: (mode: FeedCreatorMode) => void;
+  updateFeed: (field: keyof FeedInput, value: string) => void;
+  submitFeed: () => Promise<void>;
+};
+
+export function FeedCreator({ model }: { model: FeedCreatorModel }) {
   const { t } = useTranslation();
   const {
     feed,
     mode,
+    fields,
     submitted,
     saveStatus,
     isSaving,
@@ -23,7 +37,7 @@ export function FeedCreator() {
     updateMode,
     updateFeed,
     submitFeed,
-  } = useFeedCreator();
+  } = model;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,29 +52,16 @@ export function FeedCreator() {
           <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>{t('creator.urlOnly')}</ModeTab>
           <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>{t('creator.manual')}</ModeTab>
         </div>
-        {mode === 'lazy' ? (
-          <CreatorPanel
-            id="feed-create-lazy-panel"
-            labelledBy="feed-create-lazy-tab"
-            fields={getFeedCreatorFields('lazy')}
-            feed={feed}
-            submitted={submitted}
-            isSaving={isSaving}
-            isFeedFieldValid={isFeedFieldValid}
-            updateFeed={updateFeed}
-          />
-        ) : (
-          <CreatorPanel
-            id="feed-create-extended-panel"
-            labelledBy="feed-create-extended-tab"
-            fields={getFeedCreatorFields('extended')}
-            feed={feed}
-            submitted={submitted}
-            isSaving={isSaving}
-            isFeedFieldValid={isFeedFieldValid}
-            updateFeed={updateFeed}
-          />
-        )}
+        <CreatorPanel
+          id={`feed-create-${mode}-panel`}
+          labelledBy={`feed-create-${mode}-tab`}
+          fields={fields}
+          feed={feed}
+          submitted={submitted}
+          isSaving={isSaving}
+          isFeedFieldValid={isFeedFieldValid}
+          updateFeed={updateFeed}
+        />
         <div className="creator__actions">
           <span
             className={`creator__status creator__status--${saveStatus}`}

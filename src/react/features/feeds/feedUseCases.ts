@@ -1,7 +1,13 @@
 import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../../types';
-import type { FeedApplicationPort } from '../featurePorts';
+import {
+  inferFeedSourceFromLazyUrl,
+  normalizeLazyFeedUrl,
+  trimFeed,
+  type FeedCreatorMode,
+} from '../../domain/feedCreator';
+import type { FeedApplicationPort, FeedMetadataPort } from '../featurePorts';
 
-export function createFeedUseCases(port: FeedApplicationPort) {
+export function createFeedUseCases(port: FeedApplicationPort, metadataPort: FeedMetadataPort) {
   async function loadFeeds(
     credentials: Credentials | null,
     signal?: AbortSignal,
@@ -47,19 +53,40 @@ export function createFeedUseCases(port: FeedApplicationPort) {
     return port.createFeedFromUrl(feed, credentials);
   }
 
+  async function saveFeed(
+    feed: FeedInput,
+    mode: FeedCreatorMode,
+    credentials: Credentials | null,
+  ): Promise<void> {
+    if (mode === 'extended') {
+      await createFeed(trimFeed(feed), credentials);
+      return;
+    }
+
+    const inferredSource = inferFeedSourceFromLazyUrl(feed.url);
+    if (!inferredSource) {
+      await createFeedFromUrl({ url: normalizeLazyFeedUrl(feed.url) }, credentials);
+      return;
+    }
+
+    const metadata = await metadataPort.getOpenGraphPreview(inferredSource.url);
+    const title = metadata.title?.trim();
+    if (!title) throw new Error('YouTube channel title is unavailable');
+    await createFeed({ ...inferredSource, title }, credentials);
+  }
+
   function isFeedNotFoundError(error: unknown): boolean {
     return error instanceof FeedNotFoundError;
   }
 
   return {
-    createFeed,
-    createFeedFromUrl,
     deleteFeed,
     deleteFeedItem,
     isFeedNotFoundError,
     loadFeed,
     loadFeedItems,
     loadFeeds,
+    saveFeed,
   };
 }
 
