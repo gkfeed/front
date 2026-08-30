@@ -420,6 +420,54 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(Math.abs(fullscreenImageBox!.width / fullscreenImageBox!.height - 3 / 4)).toBeLessThan(0.01);
   });
 
+  test('expands a landscape VK image to the fullscreen card width', async ({ page }) => {
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 24,
+          feed_id: 567,
+          link: 'https://vk.com/wall-123_789',
+          title: '36 студия',
+          text: '<img src="https://example.com/vk-landscape.jpg"><br>Post description',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('https://example.com/vk-landscape.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><rect width="640" height="360" fill="#551044"/></svg>',
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://vk.com/wall-123_789',
+        title: '36 студия',
+        description: null,
+        image: 'https://example.com/vk-landscape.jpg',
+        video: null,
+        siteName: 'VK',
+        type: 'article',
+        providerData: null,
+      },
+    }));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+
+    const image = page.locator('.reader-card--vk .reader-card__preview img');
+    await expect(image).toBeVisible();
+    const regularBox = await image.boundingBox();
+
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('#main').getByRole('button', { name: 'Exit Reader fullscreen' })).toBeVisible();
+    const fullscreenBox = await image.boundingBox();
+
+    expect(regularBox).not.toBeNull();
+    expect(fullscreenBox).not.toBeNull();
+    expect(fullscreenBox!.width).toBeGreaterThan(regularBox!.width);
+    expect(fullscreenBox!.width).toBeGreaterThan(900);
+    expect(fullscreenBox!.height).toBeGreaterThan(400);
+    await expect(image).toHaveCSS('object-fit', 'contain');
+  });
+
   test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {
     await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
       json: {
