@@ -30,6 +30,10 @@ export async function fetchOpenGraph(input: string, context?: RequestExecutionCo
     return fetchRezkaOpenGraph(requestedUrl, context);
   }
 
+  if (isMatreshkaVideoUrl(requestedUrl)) {
+    return fetchMatreshkaOpenGraph(requestedUrl, context);
+  }
+
   if (isInstagramMediaUrl(requestedUrl)) {
     const embedUrl = new URL(requestedUrl.href);
     embedUrl.protocol = 'https:';
@@ -54,9 +58,20 @@ export async function fetchOpenGraph(input: string, context?: RequestExecutionCo
     TWITTERBOT_USER_AGENT,
     isSasflixPublicationUrl(requestedUrl)
       ? { maxBytes: 256_000, truncateAtLimit: true }
-      : { metadataOnly: isMatreshkaVideoUrl(requestedUrl) },
+      : {},
     context,
   );
+  return parseOpenGraph(page.html, page.url);
+}
+
+async function fetchMatreshkaOpenGraph(
+  requestedUrl: URL,
+  context?: RequestExecutionContext,
+): Promise<OpenGraphPreview> {
+  const page = await fetchHtml(requestedUrl, TWITTERBOT_USER_AGENT, {
+    maxBytes: 2_000_000,
+    truncateAtLimit: true,
+  }, context);
   return parseOpenGraph(page.html, page.url);
 }
 

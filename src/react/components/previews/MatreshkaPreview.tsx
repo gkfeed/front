@@ -7,6 +7,7 @@ import type { LocalizedFeedItemPreview } from '../previewLocalization';
 type MatreshkaPreviewProps = {
   videoId: string;
   title: string;
+  videoSrc: string | null;
   preview: LocalizedFeedItemPreview | null;
   onPreviewError: () => void;
 };
@@ -14,6 +15,7 @@ type MatreshkaPreviewProps = {
 export function MatreshkaPreview({
   videoId,
   title,
+  videoSrc,
   preview,
   onPreviewError,
 }: MatreshkaPreviewProps) {
@@ -92,16 +94,82 @@ export function MatreshkaPreview({
         }}
       />
       {preview ? (
-        <div className="reader-card__preview">
+        <div className="reader-card__preview reader-card__preview--matreshka-frame">
           <img
             src={preview.src}
             alt={preview.alt}
             referrerPolicy="no-referrer"
             onError={onPreviewError}
           />
+          {videoSrc ? <MatreshkaStreamFrame src={videoSrc} /> : null}
         </div>
       ) : null}
     </div>
+  );
+}
+
+function MatreshkaStreamFrame({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    let active = true;
+    let destroyPlayer: (() => void) | undefined;
+
+    setIsReady(false);
+    setHasFailed(false);
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;
+    } else {
+      void import('hls.js').then(({ default: Hls }) => {
+        if (!active || !Hls.isSupported()) {
+          if (active) setHasFailed(true);
+          return;
+        }
+        const hls = new Hls({
+          startLevel: -1,
+          capLevelToPlayerSize: true,
+        });
+        destroyPlayer = () => hls.destroy();
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal && active) setHasFailed(true);
+        });
+        hls.loadSource(src);
+        hls.attachMedia(video);
+      }).catch(() => {
+        if (active) setHasFailed(true);
+      });
+    }
+
+    return () => {
+      active = false;
+      destroyPlayer?.();
+      video.removeAttribute('src');
+    };
+  }, [src]);
+
+  if (hasFailed) return null;
+  return (
+    <video
+      ref={videoRef}
+      className={isReady ? 'reader-card__matreshka-frame--ready' : undefined}
+      muted
+      playsInline
+      preload="auto"
+      aria-hidden="true"
+      tabIndex={-1}
+      onLoadedMetadata={(event) => {
+        const { duration } = event.currentTarget;
+        event.currentTarget.currentTime = Number.isFinite(duration)
+          ? Math.min(2, Math.max(0, duration - 0.1))
+          : 2;
+      }}
+      onSeeked={() => setIsReady(true)}
+      onError={() => setHasFailed(true)}
+    />
   );
 }
 

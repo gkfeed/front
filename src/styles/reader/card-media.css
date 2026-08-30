@@ -22,6 +22,18 @@
   object-fit: contain;
 }
 
+.reader-card__preview--matreshka-frame > video {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease-out;
+}
+
+.reader-card__preview--matreshka-frame > .reader-card__matreshka-frame--ready {
+  opacity: 1;
+}
+
 .reader-card__sound-toggle {
   position: absolute;
   z-index: 6;

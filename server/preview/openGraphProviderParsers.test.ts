@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   parseInstagramEmbedMedia,
+  parseMatreshkaVideoUrl,
   parseRezkaOriginalCover,
   parseSasflixVideoUrl,
   parseVkStructuredVideo,
@@ -144,5 +145,26 @@ describe('parseSasflixVideoUrl', () => {
   it('does not expose poster identifiers from other hosts', () => {
     const html = '<img src="https://sasflix.ru/api/poster/eb1ddca7-d933-4ccf-99b6-4129a4a6730e">';
     expect(parseSasflixVideoUrl(html, new URL('https://example.com/topics/topic'))).toBeNull();
+  });
+});
+
+describe('parseMatreshkaVideoUrl', () => {
+  it('selects the highest-quality signed HLS stream', () => {
+    const html = String.raw`<script>{"720":"https:\u002F\u002Fc4-video.cmtv.ru\u002Fhm\u002Fchannel\u002FdG9rZW4=\u002Fmaster.m3u8?expires=10\u0026md5=720","1080":"https:\u002F\u002Fc4-video.cmtv.ru\u002Fhm\u002Fchannel\u002FdG9rZW4=\u002Fmaster.m3u8?expires=10\u0026md5=1080"}</script>`;
+
+    expect(parseMatreshkaVideoUrl(
+      html,
+      new URL('https://matreshka.tv/video/video'),
+    )).toBe(
+      'https://c4-video.cmtv.ru/hm/channel/dG9rZW4=/master.m3u8?expires=10&md5=1080',
+    );
+  });
+
+  it('rejects stream URLs from untrusted hosts', () => {
+    const html = '{"1080":"https://example.com/hm/channel/token/master.m3u8?expires=10&md5=x"}';
+    expect(parseMatreshkaVideoUrl(
+      html,
+      new URL('https://matreshka.tv/video/video'),
+    )).toBeNull();
   });
 });

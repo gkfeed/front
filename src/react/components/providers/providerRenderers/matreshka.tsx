@@ -11,7 +11,7 @@ import { createVariantRenderer } from './createVariantRenderer';
 
 const renderMatreshkaVideoPreview = createVariantRenderer('matreshka', ({ model, localizedPreview }: VariantRendererProps<'matreshka'>) => {
   const title = parseMatreshkaTitle(model.item.title, model.item.text);
-  return <MatreshkaPreview videoId={model.variant.videoId} title={title.title} preview={localizedPreview} onPreviewError={model.onPreviewError} />;
+  return <MatreshkaPreview videoId={model.variant.videoId} title={title.title} videoSrc={model.openGraphPreview?.video ?? null} preview={localizedPreview} onPreviewError={model.onPreviewError} />;
 });
 
 const renderMatreshkaCopy = createVariantRenderer('matreshka', ({ model }: VariantRendererProps<'matreshka'>) => {

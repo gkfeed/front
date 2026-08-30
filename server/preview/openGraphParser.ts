@@ -14,6 +14,7 @@ import {
 } from './hltvHtmlParser.js';
 import {
   parseInstagramEmbedMedia,
+  parseMatreshkaVideoUrl,
   parseRezkaOriginalCover,
   parseSasflixVideoUrl,
   parseVkStructuredVideo,
@@ -32,7 +33,8 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     'twitter:image',
     'twitter:image:src',
   ]) ?? instagramMedia?.imageUrl ?? structuredVideo?.image ?? null;
-  const video = parseSasflixVideoUrl(html, pageUrl) ?? firstMetadata(metadata, [
+  const video = parseMatreshkaVideoUrl(html, pageUrl)
+    ?? parseSasflixVideoUrl(html, pageUrl) ?? firstMetadata(metadata, [
     'og:video:secure_url',
     'og:video',
     'og:video:url',

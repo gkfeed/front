@@ -41,6 +41,7 @@ describe('Matreshka player', () => {
       <MatreshkaPreview
         videoId="LHAN5jgduhC"
         title="Story"
+        videoSrc={null}
         preview={{
           src: 'https://c4-images.cmtv.ru/video/channel/LHAN5jgduhC/1280x720_preview.png',
           alt: 'Matreshka video preview',
@@ -73,6 +74,7 @@ describe('Matreshka player', () => {
       <MatreshkaPreview
         videoId="LHAN5jgduhC"
         title="Story"
+        videoSrc={null}
         preview={null}
         onPreviewError={vi.fn()}
       />,
@@ -80,5 +82,52 @@ describe('Matreshka player', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Play Matreshka video Story' }));
     expect(screen.queryByRole('button', { name: /Playback speed/ })).toBeNull();
+  });
+
+  it('shows a decoded high-quality stream frame over the Open Graph fallback', () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockReturnValue('maybe');
+    const onPreviewError = vi.fn();
+    const fallback = 'https://c4-images.cmtv.ru/video/channel/video/user-cover/1280x720.jpg';
+    const { container } = render(
+      <MatreshkaPreview
+        videoId="video"
+        title="Story"
+        videoSrc="https://c4-video.cmtv.ru/hm/channel/token/master.m3u8?expires=1&md5=token"
+        preview={{ src: fallback, alt: 'Matreshka video preview' }}
+        onPreviewError={onPreviewError}
+      />,
+    );
+
+    const image = screen.getByAltText('Matreshka video preview');
+    expect(image.getAttribute('src')).toBe(fallback);
+    const video = container.querySelector('video')!;
+    expect(video.getAttribute('src')).toContain('/master.m3u8');
+    expect(video.classList.contains('reader-card__matreshka-frame--ready')).toBe(false);
+
+    fireEvent.loadedMetadata(video);
+    expect(video.currentTime).toBe(2);
+    fireEvent.seeked(video);
+    expect(video.classList.contains('reader-card__matreshka-frame--ready')).toBe(true);
+    expect(onPreviewError).not.toHaveBeenCalled();
+  });
+
+  it('keeps the Open Graph image when the high-quality stream fails', () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockReturnValue('maybe');
+    const { container } = render(
+      <MatreshkaPreview
+        videoId="video"
+        title="Story"
+        videoSrc="https://c4-video.cmtv.ru/hm/channel/token/master.m3u8?expires=1&md5=token"
+        preview={{
+          src: 'https://c4-images.cmtv.ru/video/channel/video/1280x720_preview.png',
+          alt: 'Fallback Matreshka cover',
+        }}
+        onPreviewError={vi.fn()}
+      />,
+    );
+
+    fireEvent.error(container.querySelector('video')!);
+    expect(screen.getByAltText('Fallback Matreshka cover')).toBeTruthy();
+    expect(container.querySelector('video')).toBeNull();
   });
 });
