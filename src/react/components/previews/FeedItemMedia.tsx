@@ -33,11 +33,13 @@ export function FeedItemMedia({
   const { t } = useTranslation();
   const requiresSoundGesture = isAppleMobileDevice();
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
+  const [imageOrientation, setImageOrientation] = useState<'portrait' | 'landscape' | 'square' | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const soundGesture = useSoundGesture(requiresSoundGesture, preview.src);
 
   useEffect(() => {
     setVideoAspectRatio(null);
+    setImageOrientation(null);
   }, [preview.src]);
 
   if (preview.type === 'video') {
@@ -134,11 +136,21 @@ export function FeedItemMedia({
       aria-label={hltvImageScore
         ? t('preview.openScore', { hostname, first: hltvImageScore[0], second: hltvImageScore[1] })
         : t('preview.open', { hostname })}
+      data-media-orientation={imageOrientation ?? undefined}
     >
       <img
         src={preview.src}
         alt={preview.alt}
         referrerPolicy="no-referrer"
+        onLoad={(event) => {
+          const { naturalHeight, naturalWidth } = event.currentTarget;
+          if (naturalHeight <= 0 || naturalWidth <= 0) return;
+          setImageOrientation(
+            naturalWidth === naturalHeight
+              ? 'square'
+              : naturalWidth > naturalHeight ? 'landscape' : 'portrait',
+          );
+        }}
         onError={onPreviewError}
       />
       {hltvImageScore ? <HltvImageScore score={hltvImageScore} /> : null}

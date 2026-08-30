@@ -410,14 +410,19 @@ test.describe('TikTok player on iPad-sized readers', () => {
 
     await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
     await expect(image).toHaveCSS('object-fit', 'contain');
+    await expect(preview).toHaveAttribute('data-media-orientation', 'portrait');
+    await expect(page.locator('.reader__item')).toHaveClass(/reader__item--fullscreen/);
     const fullscreenPreviewBox = await preview.boundingBox();
     const fullscreenImageBox = await image.boundingBox();
+    const fullscreenCopyBox = await page.locator('.reader-card--vk .reader-card__copy').boundingBox();
 
     expect(fullscreenPreviewBox).not.toBeNull();
     expect(fullscreenImageBox).not.toBeNull();
+    expect(fullscreenCopyBox).not.toBeNull();
     expect(Math.abs(fullscreenPreviewBox!.width - fullscreenImageBox!.width)).toBeLessThan(2);
     expect(Math.abs(fullscreenPreviewBox!.height - fullscreenImageBox!.height)).toBeLessThan(2);
     expect(Math.abs(fullscreenImageBox!.width / fullscreenImageBox!.height - 3 / 4)).toBeLessThan(0.01);
+    expect(fullscreenCopyBox!.x).toBeGreaterThan(fullscreenImageBox!.x + fullscreenImageBox!.width);
   });
 
   test('expands a landscape VK image to the fullscreen card width', async ({ page }) => {
@@ -452,7 +457,8 @@ test.describe('TikTok player on iPad-sized readers', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/reader');
 
-    const image = page.locator('.reader-card--vk .reader-card__preview img');
+    const preview = page.locator('.reader-card--vk .reader-card__preview');
+    const image = preview.locator('img');
     await expect(image).toBeVisible();
     const regularBox = await image.boundingBox();
 
@@ -465,7 +471,17 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(fullscreenBox!.width).toBeGreaterThan(regularBox!.width);
     expect(fullscreenBox!.width).toBeGreaterThan(900);
     expect(fullscreenBox!.height).toBeGreaterThan(400);
+    await expect(preview).toHaveCSS('border-radius', '22px');
     await expect(image).toHaveCSS('object-fit', 'contain');
+    const fullscreenPreviewBox = await preview.boundingBox();
+    const fullscreenCopyBox = await page.locator('.reader-card--vk .reader-card__copy').boundingBox();
+    expect(fullscreenPreviewBox).not.toBeNull();
+    expect(fullscreenCopyBox).not.toBeNull();
+    expect(fullscreenPreviewBox!.height).toBeGreaterThanOrEqual(fullscreenBox!.height);
+    await expect(image).toHaveCSS('border-radius', '22px');
+    expect(fullscreenCopyBox!.y).toBeGreaterThanOrEqual(
+      fullscreenPreviewBox!.y + fullscreenPreviewBox!.height,
+    );
   });
 
   test('uses the reader width for VK video embeds', async ({ page }) => {
