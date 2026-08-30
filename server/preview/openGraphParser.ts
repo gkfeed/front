@@ -31,7 +31,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     'og:image:url',
     'twitter:image',
     'twitter:image:src',
-  ]) ?? structuredVideo?.image ?? null;
+  ]) ?? instagramMedia?.imageUrl ?? structuredVideo?.image ?? null;
   const video = parseSasflixVideoUrl(html, pageUrl) ?? firstMetadata(metadata, [
     'og:video:secure_url',
     'og:video',

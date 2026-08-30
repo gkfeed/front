@@ -202,6 +202,29 @@ describe('FeedItemCard media providers', () => {
     );
   });
 
+  it('shows the Instagram poster instead of an embed when the video URL is unavailable', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.instagram.com/p/DceBK9qkav0/',
+      title: 'Video',
+      description: null,
+      image: 'https://scontent.cdninstagram.com/poster.jpg',
+      video: null,
+      siteName: 'Instagram',
+      type: 'video',
+      providerData: null,
+    });
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.instagram.com/p/DceBK9qkav0/',
+      title: 'inst: creator',
+    }} />);
+
+    const poster = await screen.findByAltText('Preview for Video');
+    expect(poster.tagName).toBe('IMG');
+    expect(poster.getAttribute('src')).toBe('https://scontent.cdninstagram.com/poster.jpg');
+    expect(screen.queryByTitle('Video preview for inst: creator')).toBeNull();
+  });
+
   it('keeps a photo from a universal Instagram post path as an image', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.instagram.com/p/example/',

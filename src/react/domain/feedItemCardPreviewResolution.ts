@@ -10,10 +10,7 @@ import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
 import type { RemotePreview } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
-import {
-  getInstagramEmbedPreview,
-  isInstagramMediaUrl,
-} from './instagramPreview';
+import { isInstagramMediaUrl } from './instagramPreview';
 
 export type FeedItemCardPreviewResolution = {
   preview: FeedItemPreview | null;
@@ -66,14 +63,9 @@ export function resolveFeedItemCardPreviews({
   const isVk = analysis.provider === 'vk';
   const usesTikTokEmbed = policy.previewMode === 'tiktok-embed';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
-  const instagramEmbedPreview = analysis.provider === 'instagram'
-    && analysis.url
-    && remotePreview.openGraphPreview?.type === 'video'
-    ? getInstagramEmbedPreview(analysis.url, item.title)
-    : null;
   const instagramVideoPreview = analysis.provider === 'instagram'
     && remotePreview.openGraphPreview?.type === 'video'
-    ? loadedRemotePreview ?? instagramEmbedPreview
+    ? loadedRemotePreview
     : null;
   const prefersRemotePreview = isRezka || isVk;
   const remoteItemPreview = prefersRemotePreview && loadedRemotePreview && localPreviewSource

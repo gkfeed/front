@@ -21,12 +21,55 @@ describe('parseInstagramEmbedMedia', () => {
     expect(parseInstagramEmbedMedia(html)).toEqual({
       type: 'video',
       videoUrl: 'https://scontent.cdninstagram.com/video.mp4?token=example&expires=123',
+      imageUrl: null,
     });
   });
 
   it('does not invent a video URL for a photo', () => {
     const html = '<script>"shortcode_media":{"is_video":false}</script>';
-    expect(parseInstagramEmbedMedia(html)).toEqual({ type: 'photo', videoUrl: null });
+    expect(parseInstagramEmbedMedia(html)).toEqual({
+      type: 'photo',
+      videoUrl: null,
+      imageUrl: null,
+    });
+  });
+
+  it('extracts a playable video URL from modern media info', () => {
+    const payload = JSON.stringify({
+      xdt_api__v1__media__shortcode__web_info: {
+        items: [{
+          media_type: 2,
+          video_versions: [{
+            type: 101,
+            url: 'https://scontent.cdninstagram.com/reel.mp4?token=modern&amp;expires=456',
+          }],
+        }],
+      },
+    });
+    const html = `<script type="application/json">${payload}</script>`;
+
+    expect(parseInstagramEmbedMedia(html)).toEqual({
+      type: 'video',
+      videoUrl: 'https://scontent.cdninstagram.com/reel.mp4?token=modern&expires=456',
+      imageUrl: null,
+    });
+  });
+
+  it('extracts the poster when Instagram withholds the video URL', () => {
+    const payload = JSON.stringify({
+      shortcode_media: {
+        __typename: 'GraphVideo',
+        is_video: true,
+        display_url: 'https:\\/\\/scontent.cdninstagram.com\\/poster.jpg?token=example&amp;size=1080',
+      },
+    });
+    const html = `<script>window.__data = ${JSON.stringify(payload)};</script>`;
+
+    expect(parseInstagramEmbedMedia(html)).toEqual({
+      type: 'video',
+      videoUrl: null,
+      imageUrl: 'https://scontent.cdninstagram.com/poster.jpg?token=example&size=1080',
+    });
   });
 });
 
