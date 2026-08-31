@@ -1,6 +1,7 @@
 import { isOpenGraphPreview } from '../../../shared/previewGuards';
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
 import { isVkImageHost } from '../../../shared/urlRules';
+import { getShikimoriHighQualityImageUrl } from '../domain/shikimoriPreview';
 import { requestBffJson } from './bffClient';
 
 export type {
@@ -25,6 +26,9 @@ export async function getOpenGraphPreview(url: string, signal?: AbortSignal): Pr
 }
 
 function getBrowserImageUrl(imageUrl: string): string {
+  const highQualityImageUrl = getShikimoriHighQualityImageUrl(imageUrl);
+  if (highQualityImageUrl !== imageUrl) return highQualityImageUrl;
+
   try {
     const url = new URL(imageUrl);
     if (url.hostname.toLowerCase() === 'share.redd.it' && url.pathname.startsWith('/preview/post/')) {

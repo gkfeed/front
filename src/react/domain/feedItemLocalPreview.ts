@@ -6,6 +6,7 @@ import type {
 } from './feedItemPreviewTypes';
 import { getEmbeddedPreview } from './embeddedPreview';
 import { getFeedItemProviderFromUrl } from './feedItemProviderDetection';
+import { getShikimoriHighQualityImageUrl } from './shikimoriPreview';
 import { getTwitchChannel, getTwitchPreview } from './twitchPreview';
 import { getVkVideoPreview } from './vkPreview';
 import {
@@ -88,7 +89,10 @@ function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPre
   if (vkVideoEmbed) return vkVideoEmbed;
 
   if (isDirectImage(url)) {
-    return { src: url.href, alt: { kind: 'item', title: item.title || null } };
+    return {
+      src: getShikimoriHighQualityImageUrl(url.href),
+      alt: { kind: 'item', title: item.title || null },
+    };
   }
 
   if (isRedditVideoUrl(url)) {

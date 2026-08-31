@@ -1,6 +1,7 @@
 import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getVkVideoPreview } from './vkPreview';
 import { isVkImageHost, parseUrl } from './feedItemUrls';
+import { getShikimoriHighQualityImageUrl } from './shikimoriPreview';
 
 export function getEmbeddedPreview(html: string, title: string): FeedItemPreview | null {
   if (!html || typeof DOMParser === 'undefined') return null;
@@ -47,6 +48,9 @@ function isSafeImageSource(source: string): boolean {
 }
 
 function normalizeImageSource(source: string): string {
+  const highQualitySource = getShikimoriHighQualityImageUrl(source);
+  if (highQualitySource !== source) return highQualitySource;
+
   const url = parseUrl(source);
   if (url?.protocol === 'http:' && isVkImageHost(url.hostname)) {
     url.protocol = 'https:';

@@ -84,4 +84,22 @@ describe('getOpenGraphPreview', () => {
         image: 'https://sun9-67.vkuserphoto.ru/impg/photo.jpg?size=1170x1560',
       });
   });
+
+  it('uses the official high-quality Mushoku Tensei III poster', async () => {
+    const preview = {
+      url: 'https://shikimori.io/animes/59193-mushoku-tensei-iii-isekai-ittara-honki-dasu',
+      title: 'Mushoku Tensei III',
+      description: null,
+      image: 'https://shikimori.io/uploads/poster/animes/59193/main_2x-cover.webp',
+      video: null,
+      siteName: 'Shikimori',
+      type: 'website',
+      providerData: null,
+    };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(preview)));
+
+    await expect(getOpenGraphPreview(preview.url)).resolves.toMatchObject({
+      image: 'https://mushokutensei.jp/wp-content/uploads/2026/05/260519_MT3_KV_web-724x1024.jpg',
+    });
+  });
 });

@@ -61,6 +61,31 @@ describe('getFeedItemPreview', () => {
     });
   });
 
+  it('uses the official high-quality poster for Mushoku Tensei III', () => {
+    expect(getFeedItemPreview(item({
+      text: '<img src="https://shikimori.io/uploads/poster/animes/59193/main_alt-72495c05b05037c5f2eb9a75fa70191e.jpeg">',
+    }))).toEqual({
+      src: 'https://mushokutensei.jp/wp-content/uploads/2026/05/260519_MT3_KV_web-724x1024.jpg',
+      alt: { kind: 'item', title: 'Story' },
+    });
+  });
+
+  it('upgrades a direct Mushoku Tensei III poster link too', () => {
+    expect(getFeedItemPreview(item({
+      link: 'https://shikimori.io/uploads/poster/animes/59193/main_alt-72495c05b05037c5f2eb9a75fa70191e.jpeg',
+    }))).toMatchObject({
+      src: 'https://mushokutensei.jp/wp-content/uploads/2026/05/260519_MT3_KV_web-724x1024.jpg',
+    });
+  });
+
+  it('leaves other Shikimori posters unchanged', () => {
+    const source = 'https://shikimori.io/uploads/poster/animes/45576/main.jpeg';
+    expect(getFeedItemPreview(item({ text: `<img src="${source}">` }))).toEqual({
+      src: source,
+      alt: { kind: 'item', title: 'Story' },
+    });
+  });
+
   it('uses direct and embedded video media', () => {
     expect(getFeedItemPreview(item({ link: 'https://cdn.example.com/story.mp4' }))).toMatchObject({
       src: 'https://cdn.example.com/story.mp4',
