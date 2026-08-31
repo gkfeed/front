@@ -78,7 +78,7 @@ test.describe('Reader fullscreen with theater mode', () => {
     await expect(playVideo).toBeVisible();
 
     await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
-    const exitFullscreen = page.getByRole('button', { name: 'Exit Reader fullscreen' });
+    const exitFullscreen = page.locator('.reader__fullscreen-toolbar').getByRole('button', { name: 'Exit Reader fullscreen' });
     await expect(exitFullscreen).toBeVisible();
 
     await playVideo.click();
