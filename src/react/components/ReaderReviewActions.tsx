@@ -1,4 +1,3 @@
-import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type ReviewActionProps = {
@@ -8,36 +7,19 @@ export type ReviewActionProps = {
 };
 
 export function ReaderReviewActions({
-  actionsRef,
   isDeleting,
   onKeep,
   onDelete,
-  hidden,
-}: ReviewActionProps & {
-  actionsRef: RefObject<HTMLDivElement | null>;
-  hidden: boolean;
-}) {
+}: ReviewActionProps) {
   const { t } = useTranslation();
 
   return (
     <div
-      ref={actionsRef}
       className="reader__actions"
       aria-label={t('reader.itemActions')}
-      hidden={hidden}
     >
       <ReviewDecisionButtons isDeleting={isDeleting} onKeep={onKeep} onDelete={onDelete} />
     </div>
-  );
-}
-
-export function CompactReviewActions({ isDeleting, onKeep, onDelete }: ReviewActionProps) {
-  const { t } = useTranslation();
-
-  return (
-    <aside className="reader__compact-actions" aria-label={t('reader.itemActions')}>
-      <ReviewDecisionButtons compact isDeleting={isDeleting} onKeep={onKeep} onDelete={onDelete} />
-    </aside>
   );
 }
 

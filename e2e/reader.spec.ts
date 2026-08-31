@@ -60,6 +60,10 @@ test.describe('Reader fullscreen with theater mode', () => {
       contentType: 'text/html',
       body: '<!doctype html><title>YouTube player</title>',
     }));
+    await page.route('https://i.ytimg.com/vi/**', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720"><rect width="1280" height="720" fill="#cba6f7"/></svg>',
+    }));
     await page.addInitScript(() => {
       window.localStorage.setItem(
         'gkfeed.credentials',
@@ -73,20 +77,115 @@ test.describe('Reader fullscreen with theater mode', () => {
     const playVideo = page.getByRole('button', { name: 'Play video Theater video' });
     await expect(playVideo).toBeVisible();
 
-    await page.evaluate(() => {
-      document.documentElement.dataset.readerFullscreen = 'true';
-      document.querySelector<HTMLElement>('main')!.dataset.readerFullscreen = 'true';
-      document.dispatchEvent(new Event('readerfullscreenchange'));
-    });
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
     const exitFullscreen = page.getByRole('button', { name: 'Exit Reader fullscreen' });
     await expect(exitFullscreen).toBeVisible();
 
     await playVideo.click();
     await expect(page.getByRole('button', { name: 'Exit theater mode' })).toBeVisible();
     await expect(exitFullscreen).toBeHidden();
+    await expectYoutubePlayerToBeSixteenByNine(page);
 
     await page.getByRole('button', { name: 'Exit theater mode' }).click();
     await expect(exitFullscreen).toBeVisible();
+    await expectYoutubePlayerToBeSixteenByNine(page);
+  });
+
+  test('shows a fullscreen YouTube thumbnail without letterbox bars', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+    const preview = page.locator('.reader-card--youtube .reader-card__preview');
+    const image = preview.locator('img');
+    await expect(image).toBeVisible();
+
+    await page.evaluate(() => {
+      document.documentElement.dataset.readerFullscreen = 'true';
+      document.querySelector<HTMLElement>('main')!.dataset.readerFullscreen = 'true';
+      document.dispatchEvent(new Event('readerfullscreenchange'));
+    });
+
+    const previewBox = await preview.boundingBox();
+    const imageBox = await image.boundingBox();
+    const actionsBox = await page.locator('.reader__actions').boundingBox();
+    expect(previewBox).not.toBeNull();
+    expect(imageBox).not.toBeNull();
+    expect(actionsBox).not.toBeNull();
+    expect(Math.abs(previewBox!.width / previewBox!.height - 16 / 9)).toBeLessThan(0.01);
+    expect(Math.abs(previewBox!.width - imageBox!.width)).toBeLessThan(2);
+    expect(Math.abs(previewBox!.height - imageBox!.height)).toBeLessThan(2);
+    expect(previewBox!.y + previewBox!.height).toBeLessThanOrEqual(actionsBox!.y);
+  });
+});
+
+async function expectYoutubePlayerToBeSixteenByNine(page: import('@playwright/test').Page) {
+  const preview = page.locator('.reader-card--youtube .reader-card__preview--player');
+  const iframe = preview.locator('iframe');
+  await expect(iframe).toBeVisible();
+  const previewBox = await preview.boundingBox();
+  const iframeBox = await iframe.boundingBox();
+  expect(previewBox).not.toBeNull();
+  expect(iframeBox).not.toBeNull();
+  expect(Math.abs(previewBox!.width / previewBox!.height - 16 / 9)).toBeLessThan(0.01);
+  expect(Math.abs(previewBox!.width - iframeBox!.width)).toBeLessThan(2);
+  expect(Math.abs(previewBox!.height - iframeBox!.height)).toBeLessThan(2);
+}
+
+test.describe('Fullscreen player card flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 21,
+          feed_id: 4,
+          link: 'https://matreshka.tv/video/LHAN5jgduhC',
+          title: 'Video title | Channel name',
+          text: '',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://matreshka.tv/video/LHAN5jgduhC',
+        title: 'Video title',
+        description: null,
+        image: 'https://example.com/player-poster.jpg',
+        video: null,
+        siteName: 'Matreshka',
+        type: 'video',
+        providerData: null,
+      },
+    }));
+    await page.route('https://example.com/player-poster.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#89b4fa"/></svg>',
+    }));
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        'gkfeed.credentials',
+        JSON.stringify({ username: 'automation', password: 'secret' }),
+      );
+    });
+  });
+
+  test('keeps a video preview next to its description', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto('/reader');
+    await expect(page.locator('.reader-card--matreshka img')).toBeVisible();
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+
+    const gap = await page.evaluate(() => {
+      const preview = document.querySelector('.reader-card--matreshka .reader-card__preview-trigger-wrap')
+        ?.getBoundingClientRect();
+      const copy = document.querySelector('.reader-card--matreshka .reader-card__copy')
+        ?.getBoundingClientRect();
+      return preview && copy ? copy.top - preview.bottom : null;
+    });
+
+    expect(gap).not.toBeNull();
+    expect(gap!).toBeGreaterThanOrEqual(0);
+    expect(gap!).toBeLessThanOrEqual(24);
   });
 });
 
@@ -312,7 +411,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
   });
 
-  test('does not shrink wide Instagram photos in fullscreen', async ({ page }) => {
+  test('fits wide Instagram photos above fullscreen controls', async ({ page }) => {
     await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
       json: {
         items: [{
@@ -346,16 +445,101 @@ test.describe('TikTok player on iPad-sized readers', () => {
 
     const image = page.locator('.reader-card--instagram-photo img');
     await expect(image).toBeVisible();
+    await expect(page.locator('.reader-card--instagram-photo .reader-card__preview'))
+      .toHaveAttribute('data-media-orientation', 'landscape');
     const regularBox = await image.boundingBox();
 
     await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
-    const fullscreenBox = await image.boundingBox();
+    await expect.poll(async () => {
+      return page.evaluate(() => {
+        const currentImageBox = document.querySelector('.reader-card--instagram-photo img')?.getBoundingClientRect();
+        const currentActionsBox = document.querySelector('.reader__actions')?.getBoundingClientRect();
+        if (!currentImageBox || !currentActionsBox) return false;
+        return currentImageBox.bottom <= currentActionsBox.top;
+      });
+    }).toBe(true);
+    const fullscreenLayout = await page.evaluate(() => {
+      const currentImageBox = document.querySelector('.reader-card--instagram-photo img')?.getBoundingClientRect();
+      const currentActionsBox = document.querySelector('.reader__actions')?.getBoundingClientRect();
+      return currentImageBox && currentActionsBox ? {
+        actionsBottom: currentActionsBox.bottom,
+        actionsTop: currentActionsBox.top,
+        imageBottom: currentImageBox.bottom,
+        imageHeight: currentImageBox.height,
+        imageWidth: currentImageBox.width,
+      } : null;
+    });
 
     expect(regularBox).not.toBeNull();
-    expect(fullscreenBox).not.toBeNull();
-    expect(fullscreenBox!.width).toBeGreaterThanOrEqual(regularBox!.width);
-    expect(fullscreenBox!.width).toBeGreaterThan(900);
-    expect(Math.abs(fullscreenBox!.width / fullscreenBox!.height - 16 / 9)).toBeLessThan(0.01);
+    expect(fullscreenLayout).not.toBeNull();
+    expect(fullscreenLayout!.imageWidth).toBeGreaterThan(900);
+    expect(Math.abs(fullscreenLayout!.imageWidth / fullscreenLayout!.imageHeight - 16 / 9)).toBeLessThan(0.01);
+    expect(fullscreenLayout!.imageBottom).toBeLessThanOrEqual(fullscreenLayout!.actionsTop);
+    expect(fullscreenLayout!.actionsBottom).toBeLessThanOrEqual(800);
+  });
+
+  test('keeps Instagram identity on a portrait photo', async ({ page }) => {
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 25,
+          feed_id: 4,
+          link: 'https://www.instagram.com/p/portrait-photo/',
+          title: 'inst: portrait_creator',
+          text: '',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://www.instagram.com/p/portrait-photo/',
+        title: 'Portrait photo',
+        description: null,
+        image: 'https://example.com/instagram-portrait.jpg',
+        video: null,
+        siteName: 'Instagram',
+        type: 'photo',
+        providerData: null,
+      },
+    }));
+    await page.route('https://example.com/instagram-portrait.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200"><rect width="900" height="1200" fill="#f9e2af"/></svg>',
+    }));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+
+    const preview = page.locator('.reader-card--instagram-photo .reader-card__preview');
+    await expect(preview).toHaveAttribute('data-media-orientation', 'portrait');
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+
+    await expect.poll(async () => {
+      return page.evaluate(() => {
+        const currentImageBox = document.querySelector('.reader-card--instagram-photo img')?.getBoundingClientRect();
+        const currentIdentityBox = document.querySelector('.reader-card__short-video-identity')?.getBoundingClientRect();
+        if (!currentImageBox || !currentIdentityBox) return false;
+        return currentIdentityBox.top >= currentImageBox.top;
+      });
+    }).toBe(true);
+    const overlayLayout = await page.evaluate(() => {
+      const currentImageBox = document.querySelector('.reader-card--instagram-photo img')?.getBoundingClientRect();
+      const currentIdentityBox = document.querySelector('.reader-card__short-video-identity')?.getBoundingClientRect();
+      return currentImageBox && currentIdentityBox ? {
+        identityLeft: currentIdentityBox.left,
+        identityRight: currentIdentityBox.right,
+        identityTop: currentIdentityBox.top,
+        imageHeight: currentImageBox.height,
+        imageLeft: currentImageBox.left,
+        imageRight: currentImageBox.right,
+        imageTop: currentImageBox.top,
+      } : null;
+    });
+    expect(overlayLayout).not.toBeNull();
+    expect(overlayLayout!.identityLeft).toBeGreaterThanOrEqual(overlayLayout!.imageLeft);
+    expect(overlayLayout!.identityRight).toBeLessThanOrEqual(overlayLayout!.imageRight);
+    expect(overlayLayout!.identityTop).toBeGreaterThanOrEqual(overlayLayout!.imageTop);
+    expect(overlayLayout!.identityTop).toBeLessThan(overlayLayout!.imageTop + overlayLayout!.imageHeight / 3);
   });
 
   test('keeps the full VK image visible in regular and fullscreen cards', async ({ page }) => {
@@ -425,6 +609,68 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(fullscreenCopyBox!.x).toBeGreaterThan(fullscreenImageBox!.x + fullscreenImageBox!.width);
   });
 
+  test('clips square VK post images to rounded corners', async ({ page }) => {
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 26,
+          feed_id: 567,
+          link: 'https://vk.com/wall-182864292_1335509',
+          title: 'STREAM INSIDE',
+          text: 'Post description',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://vk.ru/wall-182864292_1335509',
+        title: 'STREAM INSIDE. Пост со стены.',
+        description: 'Post description',
+        image: 'https://example.com/vk-square.jpg',
+        video: null,
+        siteName: 'ВКонтакте',
+        type: 'article',
+        providerData: null,
+      },
+    }));
+    await page.route('https://example.com/vk-square.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200"><rect width="1200" height="1200" fill="#f9e2af"/></svg>',
+    }));
+    await page.setViewportSize({ width: 2048, height: 1152 });
+    await page.goto('/reader');
+    await expect(page.locator('.reader-card__preview--image img')).toBeVisible();
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+
+    await expect(page.locator('.reader__item')).toHaveClass(/reader__item--fullscreen/);
+    await expect(page.locator('main')).toHaveAttribute('data-reader-fullscreen', 'true');
+    const preview = page.locator('.reader-card--vk .reader-card__preview');
+    const imageSurface = preview.locator('.reader-card__image-surface');
+    const image = imageSurface.locator('img');
+    await expect(preview).toBeVisible();
+    await expect(preview).toHaveCSS('overflow', 'hidden');
+    await expect(preview).toHaveCSS('border-radius', '22px');
+    await expect(preview).toHaveCSS('clip-path', 'inset(0px round 22px)');
+    await expect(imageSurface).toBeVisible();
+    await expect(imageSurface).toHaveCSS('overflow', 'hidden');
+    await expect(imageSurface).toHaveCSS('border-radius', '22px');
+    const surfaceBox = await imageSurface.boundingBox();
+    const imageBox = await image.boundingBox();
+    expect(surfaceBox).not.toBeNull();
+    expect(imageBox).not.toBeNull();
+    expect(Math.abs(surfaceBox!.width - imageBox!.width)).toBeLessThan(2);
+    expect(Math.abs(surfaceBox!.height - imageBox!.height)).toBeLessThan(2);
+    const clipsTopCorners = await imageSurface.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return [bounds.left + 1, bounds.right - 1].every((x) => {
+        const target = document.elementFromPoint(x, bounds.top + 1);
+        return !target || !element.contains(target);
+      });
+    });
+    expect(clipsTopCorners).toBe(true);
+  });
+
   test('expands a landscape VK image to the fullscreen card width', async ({ page }) => {
     await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
       json: {
@@ -479,6 +725,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(fullscreenCopyBox).not.toBeNull();
     expect(fullscreenPreviewBox!.height).toBeGreaterThanOrEqual(fullscreenBox!.height);
     await expect(image).toHaveCSS('border-radius', '22px');
+    await expect(image).toHaveCSS('clip-path', 'inset(0px round 22px)');
     expect(fullscreenCopyBox!.y).toBeGreaterThanOrEqual(
       fullscreenPreviewBox!.y + fullscreenPreviewBox!.height,
     );
@@ -510,6 +757,26 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(actionsBox).not.toBeNull();
     expect(cardBox!.width).toBeGreaterThan(600);
     expect(Math.abs(cardBox!.width - actionsBox!.width)).toBeLessThan(2);
+
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    const clipsTopCorner = await page.evaluate(() => {
+      const preview = document.querySelector<HTMLElement>('.reader-card--vk .reader-card__preview--video');
+      if (!preview) return false;
+      const bounds = preview.getBoundingClientRect();
+      const cornerTarget = document.elementFromPoint(bounds.left + 1, bounds.top + 1);
+      return !cornerTarget || !preview.contains(cornerTarget);
+    });
+    const fullscreenGap = await page.evaluate(() => {
+      const media = document.querySelector('.reader-card--vk .reader-card__preview--video :is(video, iframe)')
+        ?.getBoundingClientRect();
+      const copy = document.querySelector('.reader-card--vk .reader-card__copy')
+        ?.getBoundingClientRect();
+      return media && copy ? copy.top - media.bottom : null;
+    });
+    expect(clipsTopCorner).toBe(true);
+    expect(fullscreenGap).not.toBeNull();
+    expect(fullscreenGap!).toBeGreaterThanOrEqual(0);
+    expect(fullscreenGap!).toBeLessThanOrEqual(24);
   });
 
   test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {
@@ -535,6 +802,9 @@ test.describe('TikTok player on iPad-sized readers', () => {
     await expect(page.locator('.reader-card__preview img')).toBeVisible();
     await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
     await expect(page.locator('#main').getByRole('button', { name: 'Exit Reader fullscreen' })).toBeVisible();
+    await expect(page.locator('.reader-card__preview')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(page.locator('.reader-card__preview')).toHaveCSS('border-top-width', '0px');
+    await expect(page.locator('.reader-card__preview img')).toHaveCSS('border-radius', '22px');
 
     const bounds = await page.evaluate(() => {
       const item = document.querySelector<HTMLElement>('.reader__item');
@@ -570,10 +840,10 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(Math.abs(bounds.itemWidth - bounds.actionsWidth)).toBeLessThan(1);
     expect(Math.abs(bounds.itemLeft - bounds.actionsLeft)).toBeLessThan(1);
     expect(Math.abs(bounds.itemWidth - bounds.cardWidth)).toBeLessThan(1);
-    expect(Math.abs(bounds.previewWidth - bounds.imageWidth)).toBeLessThan(3);
-    expect(Math.abs(bounds.previewHeight - bounds.imageHeight)).toBeLessThan(3);
-    expect(Math.abs(bounds.imageLeft - (bounds.previewRight - bounds.previewWidth))).toBeLessThan(2);
-    expect(Math.abs(bounds.imageRight - bounds.previewRight)).toBeLessThan(2);
+    expect(bounds.imageWidth).toBeLessThanOrEqual(bounds.previewWidth);
+    expect(bounds.imageHeight).toBeLessThanOrEqual(bounds.previewHeight);
+    expect(bounds.imageLeft).toBeGreaterThanOrEqual(bounds.previewRight - bounds.previewWidth);
+    expect(bounds.imageRight).toBeLessThanOrEqual(bounds.previewRight);
     expect(Math.abs(bounds.imageWidth / bounds.imageHeight - 9 / 10)).toBeLessThan(0.01);
     expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
     expect(Math.abs(bounds.previewCenter - bounds.viewportWidth / 2)).toBeLessThan(1);

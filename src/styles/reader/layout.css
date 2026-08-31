@@ -73,6 +73,7 @@
 .reader__item {
   display: grid;
   gap: 14px;
+  min-width: 0;
   container-type: inline-size;
 }
 

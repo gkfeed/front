@@ -7,5 +7,27 @@
      is not necessarily 9:16. Let wide photos use the fullscreen item width. */
   main[data-reader-fullscreen="true"] .reader__item .reader-card--instagram-photo .reader-card__preview--short-video {
     width: fit-content;
+    max-width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 220px);
+    aspect-ratio: auto;
+  }
+
+  main[data-reader-fullscreen="true"] .reader__item .reader-card--instagram-photo {
+    display: grid;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    align-self: center;
+    place-items: center;
+  }
+
+  main[data-reader-fullscreen="true"] .reader__item .reader-card--instagram-photo
+  .reader-card__preview--short-video img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 220px);
+    object-fit: contain;
   }
 }

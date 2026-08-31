@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { getArticlePreview, getPreview, item } from './FeedItemCard.component.testUtils';
@@ -123,7 +123,9 @@ describe('FeedItemCard remote and feed previews', () => {
 
     expect(screen.getByAltText('Preview for Story').getAttribute('src'))
       .toBe('https://static.hdrezka.ac/covers/thumbnail.jpg');
-    expect((await screen.findByAltText('Preview for Story')).getAttribute('src'))
+    await waitFor(() => expect(document.querySelector('[data-preview-preloader]')).toBeTruthy());
+    fireEvent.load(document.querySelector('[data-preview-preloader]')!);
+    expect(screen.getByAltText('Preview for Story').getAttribute('src'))
       .toBe('https://static.hdrezka.ac/covers/original.jpg');
     expect(screen.getByAltText('Preview for Story').closest('.reader-card--rezka')).toBeTruthy();
     expect(getPreview).toHaveBeenCalledWith(
@@ -155,9 +157,15 @@ describe('FeedItemCard remote and feed previews', () => {
       text: '<p>Новый пост сообщества</p><img src="https://example.com/vk-cropped.jpg">',
     }} />);
 
-    expect(screen.getByAltText('Preview for Рифмы и Панчи').getAttribute('src'))
+    const visibleImage = screen.getByAltText('Preview for Рифмы и Панчи');
+    expect(visibleImage.getAttribute('src'))
       .toBe('https://example.com/vk-cropped.jpg');
-    expect((await screen.findByAltText('Preview for Рифмы и Панчи')).getAttribute('src'))
+    await waitFor(() => expect(document.querySelector('[data-preview-preloader]')).toBeTruthy());
+    expect(screen.getByAltText('Preview for Рифмы и Панчи')).toBe(visibleImage);
+    expect(visibleImage.getAttribute('src')).toBe('https://example.com/vk-cropped.jpg');
+    fireEvent.load(document.querySelector('[data-preview-preloader]')!);
+    expect(screen.getByAltText('Preview for Рифмы и Панчи')).toBe(visibleImage);
+    expect(visibleImage.getAttribute('src'))
       .toBe('https://example.com/vk-original.jpg');
     expect(screen.getByRole('heading', { name: 'Рифмы и Панчи' })).toBeTruthy();
     expect(screen.getByText('Новый пост сообщества')).toBeTruthy();

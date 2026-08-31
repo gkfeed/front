@@ -27,8 +27,6 @@ export function ReaderPage() {
     mode,
     itemOrder,
     reviewPanelRef,
-    reviewActionsRef,
-    useCompactActions,
     hasLoadedContent,
     loadErrorMessage,
   } = useReaderPageModel(t);
@@ -70,9 +68,7 @@ export function ReaderPage() {
             item={currentItem}
             remainingCount={remainingCount}
             isDeleting={isItemPending(currentItem.id)}
-            useCompactActions={useCompactActions}
             reviewPanelRef={reviewPanelRef}
-            reviewActionsRef={reviewActionsRef}
             onKeep={keepItem}
             onDelete={deleteItem}
             onReset={resetReview}

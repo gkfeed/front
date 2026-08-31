@@ -486,69 +486,32 @@ describe('ReaderPage', () => {
     expect(screen.getByRole('button', { name: 'Exit Reader fullscreen' })).toBeTruthy();
   });
 
-  it('moves review actions to compact side buttons when they do not fit in the viewport', async () => {
-    let viewportHeight = 600;
-    vi.spyOn(window, 'innerHeight', 'get').mockImplementation(() => viewportHeight);
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-      const bottom = this.classList.contains('reader-card') ? 900 : 0;
-      return {
-        x: 0,
-        y: 0,
-        top: 0,
-        right: 464,
-        bottom,
-        left: 0,
-        width: 464,
-        height: bottom,
-        toJSON: () => ({}),
-      };
-    });
+  it('keeps review actions in the stable controls row after viewport changes', async () => {
     vi.mocked(getFeedItems).mockResolvedValue([ITEMS[0]]);
     renderReader();
 
-    expect(await screen.findByRole('complementary', { name: 'Feed item actions' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Keep item' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Delete item' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /keep/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeTruthy();
+    expect(screen.queryByRole('complementary', { name: 'Feed item actions' })).toBeNull();
 
-    viewportHeight = 1200;
     fireEvent(window, new Event('resize'));
 
-    await waitFor(() => {
-      expect(screen.queryByRole('complementary', { name: 'Feed item actions' })).toBeNull();
-    });
     expect(screen.getByRole('button', { name: /keep/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /delete/i })).toBeTruthy();
   });
 
-  it('recomputes compact review actions when the fullscreen main scrolls', async () => {
+  it('keeps the controls row unchanged when the fullscreen main scrolls', async () => {
     const main = document.createElement('main');
     document.body.append(main);
-    let cardBottom = 900;
-    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(600);
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-      return {
-        x: 0,
-        y: 0,
-        top: 0,
-        right: 464,
-        bottom: this.classList.contains('reader-card') ? cardBottom : 0,
-        left: 0,
-        width: 464,
-        height: cardBottom,
-        toJSON: () => ({}),
-      };
-    });
     vi.mocked(getFeedItems).mockResolvedValue([ITEMS[0]]);
     renderReader('/reader', 'blur', main);
 
-    expect(await screen.findByRole('complementary', { name: 'Feed item actions' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /keep/i })).toBeTruthy();
 
-    cardBottom = 300;
     fireEvent.scroll(document.querySelector('main')!);
 
-    await waitFor(() => {
-      expect(screen.queryByRole('complementary', { name: 'Feed item actions' })).toBeNull();
-    });
+    expect(screen.getByRole('button', { name: /keep/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeTruthy();
   });
 
   it('advances immediately while deleting the item in the background', async () => {

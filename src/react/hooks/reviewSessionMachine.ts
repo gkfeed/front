@@ -167,5 +167,9 @@ function updateQueue(
     queue,
     queueToPersist: queue,
     pinnedCurrentId: clearPin ? undefined : state.pinnedCurrentId,
+    // A pin effect for the previous card may already be queued when a review
+    // action is clicked. Ignore that stale event so it cannot resurrect the
+    // card that has just been advanced.
+    skipNextPin: clearPin,
   };
 }

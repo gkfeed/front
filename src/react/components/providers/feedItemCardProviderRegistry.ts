@@ -7,7 +7,7 @@ import {
   type FeedItemCardProviderRenderer,
 } from './providerRenderers/common';
 import { HltvPreview, HltvSupplementary } from './providerRenderers/hltv';
-import { InstagramIdentity } from './providerRenderers/instagram';
+import { InstagramPreview } from './providerRenderers/instagram';
 import { LiquipediaPreview } from './providerRenderers/liquipedia';
 import { MatreshkaCopy, MatreshkaVideoPreview } from './providerRenderers/matreshka';
 import { SasflixCopy, SasflixVideoPreview } from './providerRenderers/sasflix';
@@ -27,8 +27,7 @@ export const feedItemCardProviderRendererMap = {
     Copy: StandardCopy,
   }),
   instagram: createProviderRenderer({
-    Identity: InstagramIdentity,
-    Preview: FeedItemMediaPreview,
+    Preview: InstagramPreview,
   }),
   liquipedia: createProviderRenderer({
     Preview: LiquipediaPreview,

@@ -40,6 +40,7 @@ export function FeedItemMediaPreview({
       isTikTok={model.descriptor.preview.isTikTok}
       hltvImageScore={model.hltvImageScore}
       onPreviewError={model.onPreviewError}
+      useRoundedImageSurface={model.provider === 'vk'}
     />
   );
 }

@@ -152,7 +152,7 @@ describe('FeedItemCard media providers', () => {
     expect(video.closest('.reader-card__preview--short-video')).toBeTruthy();
     const identity = screen.getByText('marcian0chka').closest('.reader-card__short-video-identity');
     expect(identity).toBeTruthy();
-    expect(identity?.parentElement).toBe(card);
+    expect(identity?.parentElement).toBe(video.closest('.reader-card__preview'));
     expect(screen.queryByText('files.catbox.moe')).toBeNull();
     expect(screen.queryByText('Feed #2')).toBeNull();
     expect(screen.queryByText(/read original/i)).toBeNull();
@@ -244,6 +244,9 @@ describe('FeedItemCard media providers', () => {
     }} />);
 
     const image = await screen.findByAltText('Preview for inst: photographer');
+    expect(image.closest('.reader-card__preview--image')).toBeTruthy();
+    expect(image.style.borderRadius).toBe('22px');
+    expect(image.style.clipPath).toBe('inset(0 round 22px)');
     expect(image.closest('.reader-card--instagram-photo')).toBeTruthy();
     expect(image.closest('.reader-card--portrait-image')).toBeTruthy();
     expect(screen.queryByTitle('Video preview for inst: photographer')).toBeNull();

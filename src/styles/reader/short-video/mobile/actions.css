@@ -3,10 +3,6 @@
     display: none;
   }
 
-  .reader__item--short-video .reader__compact-actions {
-    display: none;
-  }
-
   .reader__mobile-rail {
     position: absolute;
     z-index: 12;

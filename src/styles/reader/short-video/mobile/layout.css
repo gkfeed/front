@@ -14,6 +14,10 @@
     display: block;
   }
 
+  .reader__item--short-video .reader-card__media-stack {
+    width: 100%;
+  }
+
   .reader__item--short-video .reader-card__preview--short-video {
     width: 100%;
     height: calc(100dvh - 16px);

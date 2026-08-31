@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router';
 
 import { useFeedReader } from './useFeedReader';
-import { useReviewActionsLayout } from '../../hooks/useReviewActionsLayout';
 import { useReviewShortcuts } from '../../hooks/useReviewShortcuts';
 import { getRequestErrorMessage } from '../../services/authError';
 import {
@@ -17,6 +16,7 @@ export type { FeedItemDeletion } from '../../hooks/useFeedItemDeletion';
 type Translator = (key: string) => string;
 
 export function useReaderPageModel(t: Translator) {
+  const reviewPanelRef = useRef<HTMLDivElement>(null);
   const { search } = useLocation();
   const mode = getReaderMode(search);
   const { itemOrder } = useReaderItemOrderPreferences();
@@ -34,12 +34,6 @@ export function useReaderPageModel(t: Translator) {
     prefetchNextPreviews: mode === 'review',
     itemOrder,
   });
-  const {
-    panelRef: reviewPanelRef,
-    actionsRef: reviewActionsRef,
-    useCompactActions,
-  } = useReviewActionsLayout(mode, reader.currentItem);
-
   useReviewShortcuts({
     mode,
     currentItem: reader.currentItem,
@@ -53,8 +47,6 @@ export function useReaderPageModel(t: Translator) {
     mode,
     itemOrder,
     reviewPanelRef,
-    reviewActionsRef,
-    useCompactActions,
     hasLoadedContent: !reader.isLoading && (!reader.loadFailed || reader.items.length > 0),
     loadErrorMessage: reader.loadFailed
       ? getRequestErrorMessage(reader.loadError, t, 'reader.loadError')

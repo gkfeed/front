@@ -1,43 +1,51 @@
-/* Fullscreen has enough room to show media at a useful reading size. */
+/* Every fullscreen media element obeys the card viewport. Provider styles may
+   choose a smaller intrinsic size, but cannot make media escape this box. */
 @media (min-width: 641px) {
-  main[data-reader-fullscreen="true"] .reader-card__preview > img {
-    max-height: calc(100dvh - 180px);
+  main[data-reader-fullscreen="true"] .reader-card__preview {
+    min-width: 0;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  main[data-reader-fullscreen="true"] .reader-card__preview > :is(img, video, iframe) {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  main[data-reader-fullscreen="true"] .reader-card__preview > :is(img, video) {
     object-fit: contain;
   }
-}
 
-/* Keep ordinary image previews wide even when fullscreen reports a narrow CSS viewport. */
-main[data-reader-fullscreen="true"] .reader__item:has(
-  .reader-card--image-preview,
-  .reader-card--simple-image,
-  .reader-card--portrait-image
-) {
-  width: min(100%, 960px);
-}
-
-@media (min-width: 641px) {
-  /* Landscape thumbnails size from the available height without introducing
-     empty side strips from a separately capped image. */
-  main[data-reader-fullscreen="true"] .reader-card--landscape-media .reader-card__preview > img {
-    max-height: none;
+  /* Fullscreen provider layouts are allowed to resize previews, but the
+     image surface must always keep the shared Reader corner treatment. */
+  :is(
+    main[data-reader-fullscreen="true"],
+    main:fullscreen,
+    main:-webkit-full-screen
+  ) :is(.reader-card__preview--image, .reader-card__preview:has(img)),
+  .reader__item--fullscreen :is(
+    .reader-card__preview--image,
+    .reader-card__preview:has(img)
+  ) {
+    isolation: isolate;
+    overflow: hidden !important;
+    border-radius: 22px !important;
+    -webkit-clip-path: inset(0 round 22px);
+    clip-path: inset(0 round 22px);
+    transform: translateZ(0);
   }
 
-  main[data-reader-fullscreen="true"] :is(.reader-card--image-preview, .reader-card--simple-image) {
-    width: 100%;
-    max-width: 100%;
-    justify-self: center;
-  }
-
-  main[data-reader-fullscreen="true"] :is(.reader-card--image-preview, .reader-card--simple-image) .reader-card__preview {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  main[data-reader-fullscreen="true"] :is(.reader-card--image-preview, .reader-card--simple-image) .reader-card__preview > img {
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(100dvh - 300px);
-    margin-inline: auto;
-    object-fit: contain;
+  :is(
+    main[data-reader-fullscreen="true"],
+    main:fullscreen,
+    main:-webkit-full-screen
+  ) :is(.reader-card__preview--image, .reader-card__preview:has(img)) img,
+  .reader__item--fullscreen :is(
+    .reader-card__preview--image,
+    .reader-card__preview:has(img)
+  ) img {
+    border-radius: 22px !important;
+    -webkit-clip-path: inset(0 round 22px);
+    clip-path: inset(0 round 22px);
   }
 }

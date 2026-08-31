@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
@@ -19,7 +19,48 @@ type FeedItemMediaProps = {
   isTikTok: boolean;
   hltvImageScore: [string, string] | null;
   onPreviewError: () => void;
+  overlay?: ReactNode;
+  useRoundedImageSurface?: boolean;
 };
+
+const roundedImageMask = [
+  'linear-gradient(#000 0 0) center / 100% calc(100% - 44px) no-repeat',
+  'linear-gradient(#000 0 0) center / calc(100% - 44px) 100% no-repeat',
+  'radial-gradient(circle at 22px 22px, #000 21.5px, transparent 22px) top left / 50% 50% no-repeat',
+  'radial-gradient(circle at calc(100% - 22px) 22px, #000 21.5px, transparent 22px) top right / 50% 50% no-repeat',
+  'radial-gradient(circle at 22px calc(100% - 22px), #000 21.5px, transparent 22px) bottom left / 50% 50% no-repeat',
+  'radial-gradient(circle at calc(100% - 22px) calc(100% - 22px), #000 21.5px, transparent 22px) bottom right / 50% 50% no-repeat',
+].join(', ');
+
+const roundedImageStyle: CSSProperties = {
+  overflow: 'hidden',
+  borderRadius: 22,
+  clipPath: 'inset(0 round 22px)',
+  WebkitMask: roundedImageMask,
+  mask: roundedImageMask,
+  contain: 'paint',
+};
+
+type ImagePreview = Omit<LocalizedFeedItemPreview, 'type'> & { type?: undefined };
+
+type ImageMetrics = {
+  src: string;
+  aspectRatio: number;
+  orientation: 'portrait' | 'landscape' | 'square';
+};
+
+function readImageMetrics(image: HTMLImageElement, src: string): ImageMetrics | null {
+  const { naturalHeight, naturalWidth } = image;
+  if (naturalHeight <= 0 || naturalWidth <= 0) return null;
+
+  return {
+    src,
+    aspectRatio: naturalWidth / naturalHeight,
+    orientation: naturalWidth === naturalHeight
+      ? 'square'
+      : naturalWidth > naturalHeight ? 'landscape' : 'portrait',
+  };
+}
 
 export function FeedItemMedia({
   href,
@@ -29,17 +70,21 @@ export function FeedItemMedia({
   isTikTok,
   hltvImageScore,
   onPreviewError,
+  overlay,
+  useRoundedImageSurface = false,
 }: FeedItemMediaProps) {
   const { t } = useTranslation();
   const requiresSoundGesture = isAppleMobileDevice();
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
-  const [imageOrientation, setImageOrientation] = useState<'portrait' | 'landscape' | 'square' | null>(null);
+  const [imageMetrics, setImageMetrics] = useState<ImageMetrics | null>(null);
+  const [displayedImage, setDisplayedImage] = useState<ImagePreview | null>(
+    preview.type === undefined ? preview as ImagePreview : null,
+  );
   const videoRef = useRef<HTMLVideoElement>(null);
   const soundGesture = useSoundGesture(requiresSoundGesture, preview.src);
 
   useEffect(() => {
     setVideoAspectRatio(null);
-    setImageOrientation(null);
   }, [preview.src]);
 
   if (preview.type === 'video') {
@@ -90,12 +135,13 @@ export function FeedItemMedia({
             {t('preview.sound')}
           </button>
         ) : null}
+        {overlay}
       </div>
     );
   }
 
   if (preview.type === 'embed') {
-    return isTikTok ? (
+    const embed = isTikTok ? (
       <TikTokEmbed
         src={preview.src}
         title={preview.alt}
@@ -106,7 +152,24 @@ export function FeedItemMedia({
     ) : (
       <VideoEmbed src={preview.src} title={preview.alt} />
     );
+    return overlay ? (
+      <div className="reader-card__media-stack">
+        {embed}
+        {overlay}
+      </div>
+    ) : embed;
   }
+
+  const imagePreview = preview as ImagePreview;
+  const waitsForRemoteImage = Boolean(
+    imagePreview.fallbackSrc
+      && displayedImage?.src === imagePreview.fallbackSrc
+      && displayedImage.src !== imagePreview.src,
+  );
+  const visibleImage = waitsForRemoteImage && displayedImage
+    ? displayedImage
+    : imagePreview;
+  const visibleImageMetrics = imageMetrics?.src === visibleImage.src ? imageMetrics : null;
 
   const spotifyEmbed = getSpotifyEmbed(href);
   if (spotifyEmbed) {
@@ -123,10 +186,25 @@ export function FeedItemMedia({
     );
   }
 
+  const visibleImageElement = (
+    <img
+      src={visibleImage.src}
+      alt={visibleImage.alt}
+      style={roundedImageStyle}
+      referrerPolicy="no-referrer"
+      onLoad={(event) => {
+        const metrics = readImageMetrics(event.currentTarget, visibleImage.src);
+        if (metrics) setImageMetrics(metrics);
+      }}
+      onError={onPreviewError}
+    />
+  );
+
   return (
     <a
       className={[
         'reader-card__preview',
+        'reader-card__preview--image',
         isShortVideo ? 'reader-card__preview--short-video' : '',
         isTikTok ? 'reader-card__preview--tiktok' : '',
       ].filter(Boolean).join(' ')}
@@ -136,24 +214,38 @@ export function FeedItemMedia({
       aria-label={hltvImageScore
         ? t('preview.openScore', { hostname, first: hltvImageScore[0], second: hltvImageScore[1] })
         : t('preview.open', { hostname })}
-      data-media-orientation={imageOrientation ?? undefined}
+      data-media-orientation={visibleImageMetrics?.orientation}
+      style={{
+        ...roundedImageStyle,
+        ...(visibleImageMetrics ? {
+          '--reader-media-aspect-ratio': visibleImageMetrics.aspectRatio,
+        } as CSSProperties : {}),
+      }}
     >
-      <img
-        src={preview.src}
-        alt={preview.alt}
-        referrerPolicy="no-referrer"
-        onLoad={(event) => {
-          const { naturalHeight, naturalWidth } = event.currentTarget;
-          if (naturalHeight <= 0 || naturalWidth <= 0) return;
-          setImageOrientation(
-            naturalWidth === naturalHeight
-              ? 'square'
-              : naturalWidth > naturalHeight ? 'landscape' : 'portrait',
-          );
-        }}
-        onError={onPreviewError}
-      />
+      {useRoundedImageSurface ? (
+        <span className="reader-card__image-surface" style={roundedImageStyle}>
+          {visibleImageElement}
+        </span>
+      ) : visibleImageElement}
+      {waitsForRemoteImage ? (
+        <img
+          src={imagePreview.src}
+          alt=""
+          aria-hidden="true"
+          hidden
+          data-preview-preloader=""
+          style={{ display: 'none' }}
+          referrerPolicy="no-referrer"
+          onLoad={(event) => {
+            const metrics = readImageMetrics(event.currentTarget, imagePreview.src);
+            if (metrics) setImageMetrics(metrics);
+            setDisplayedImage(imagePreview);
+          }}
+          onError={onPreviewError}
+        />
+      ) : null}
       {hltvImageScore ? <HltvImageScore score={hltvImageScore} /> : null}
+      {overlay}
     </a>
   );
 }

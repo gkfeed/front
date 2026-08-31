@@ -102,10 +102,10 @@ describe('feed item card provider renderer map', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('keeps provider-specific identity rendering in the registry', () => {
-    const Identity = getFeedItemCardProviderRenderer('instagram').Identity;
+  it('renders Instagram identity inside the provider preview', () => {
+    const Preview = getFeedItemCardProviderRenderer('instagram').Preview;
     const { container } = render(
-      <Identity
+      <Preview
         model={createModel({
           provider: 'instagram',
           item: {
@@ -117,15 +117,17 @@ describe('feed item card provider renderer map', () => {
           },
           descriptor: {
             ...createModel().descriptor,
+            preview: { type: 'media', isShortVideo: true, isTikTok: false },
             showInstagramIdentity: true,
           },
         })}
-        localizedPreview={null}
+        localizedPreview={{ src: 'https://example.com/photo.jpg', alt: 'Photo' }}
         displayHostname=""
       />,
     );
 
-    expect(container.querySelector('.reader-card__short-video-identity')).toBeTruthy();
+    const preview = container.querySelector('.reader-card__preview');
+    expect(preview?.querySelector('.reader-card__short-video-identity')).toBeTruthy();
     expect(container.textContent).toContain('creator');
   });
 

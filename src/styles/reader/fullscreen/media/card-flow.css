@@ -1,203 +1,294 @@
-/* Size media-bearing review cards inside the height reserved by fullscreen/card.css. */
 @media (min-width: 641px) {
-  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card {
+  /* Image-only cards size from the image but are bounded by the shared stage. */
+  .reader__item--fullscreen.reader__item--card-flow
+  > :is(.reader-card--image-preview, .reader-card--simple-image) {
+    display: grid;
     width: 100%;
-    max-width: none;
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr) auto;
+    justify-items: center;
   }
 
-  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card .reader-card__preview {
-    width: 100%;
-    max-width: none;
+  .reader__item--fullscreen.reader__item--card-flow
+  > :is(.reader-card--image-preview, .reader-card--simple-image)
+  > .reader-card__preview {
+    display: grid;
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    aspect-ratio: var(--reader-media-aspect-ratio, auto);
+    align-self: center;
+    justify-self: center;
+    place-items: center;
+    overflow: visible;
+    border: 0;
+    background: transparent;
   }
 
-  main[data-reader-fullscreen="true"] .reader__item--card-flow > .reader-card .reader-card__preview > img {
-    width: 100%;
-    max-width: none;
+  .reader__item--fullscreen.reader__item--card-flow
+  > :is(.reader-card--image-preview, .reader-card--simple-image)
+  > .reader-card__preview > img {
+    width: auto;
+    max-width: 100%;
     height: auto;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview) {
-    min-width: 0;
-    min-height: 0;
-    height: auto;
-    max-height: var(--reader-fullscreen-content-height);
-    grid-template-rows: auto auto;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview)
-  .reader-card__preview {
-    min-height: 0;
-    height: auto;
-    max-height: var(--reader-fullscreen-content-height);
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow > .reader-card:has(.reader-card__preview)
-  .reader-card__preview > :is(img, video) {
-    width: 100%;
-    max-width: none;
-    height: auto;
-    max-height: max(0px, calc(var(--reader-fullscreen-content-height) - 180px));
+    max-height: 100%;
+    border-radius: 22px;
     object-fit: contain;
   }
 
-  /* Portrait image cards should size to the image instead of leaving wide
-     side gutters inside a fullscreen card. */
-  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card--simple-image) {
-    max-height: none;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card > .reader-card__preview > img) {
-    width: min(100%, 960px);
-    max-width: none;
-    justify-self: center;
-    margin-inline: auto;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img) {
+  /* Player shells fill the stage and let the actual player consume its
+     flexible row instead of deriving sizes from several viewport formulas. */
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--player {
+    display: grid;
     width: 100%;
-    max-width: none;
-    height: auto;
-    max-height: none;
-    grid-template-rows: auto auto;
-    justify-self: center;
-    margin-inline: auto;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
-  > .reader-card__preview {
-    width: fit-content;
-    max-width: 100%;
-    min-height: auto;
-    height: auto;
-    max-height: none;
-    justify-self: center;
-    background: transparent;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--simple-image:has(> .reader-card__preview > img)
-  > .reader-card__preview > img {
-    width: auto;
-    max-width: 100%;
-    height: auto;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk:has(> .reader-card__preview > img) {
-    width: 100%;
-    max-width: 100%;
-    justify-self: center;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk:has(> .reader-card__preview > img)
-  > .reader-card__preview {
-    width: 100%;
-    max-width: 100%;
-    justify-self: center;
-    background: transparent;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk:has(> .reader-card__preview > img)
-  > .reader-card__preview > img {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-  }
-
-  /* Reserve the copy's natural height first, then let the preview use only the
-     remaining card row. This keeps a ratio-sized image from covering the copy. */
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk:has(
-    > .reader-card__preview:is(
-      [data-media-orientation="landscape"],
-      [data-media-orientation="square"]
-    )
-  ) {
-    height: var(--reader-fullscreen-content-height);
-    max-height: var(--reader-fullscreen-content-height);
+    height: 100%;
     grid-template-rows: minmax(0, 1fr) auto;
   }
 
-  /* The preview owns the grid row; the image is then contained inside that row
-     at its natural ratio and carries its own rounding. */
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk
-  > .reader-card__preview:is(
-    [data-media-orientation="landscape"],
-    [data-media-orientation="square"]
-  ) {
-    display: flex;
-    width: 100%;
-    max-width: 100%;
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--player
+  > :is(.reader-card__player-shell, .reader-card__preview-trigger-wrap) {
+    min-height: 0;
     height: 100%;
-    max-height: 100%;
-    justify-content: center;
-    align-items: flex-start;
-    background: transparent;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__player-stage {
+    display: grid;
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__preview--player,
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__preview-trigger-wrap
+  > .reader-card__preview {
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__preview-trigger-wrap
+  > .reader-card__preview {
+    display: grid;
+    place-items: center;
+    background: #000;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__preview-trigger-wrap
+  > .reader-card__preview > img {
+    width: auto;
+    height: auto;
+  }
+
+  /* Closed player cards are thumbnails, not player stages. Keep media and
+     copy in one intrinsic block instead of stretching them to opposite ends
+     of the fullscreen card row. */
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player:has(> .reader-card__preview-trigger-wrap) {
+    height: auto;
+    align-self: center;
+    grid-template-rows: auto auto;
   }
 
   .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk
-  > .reader-card__preview:is(
-    [data-media-orientation="landscape"],
-    [data-media-orientation="square"]
-  ) > img {
+  > .reader-card--player > .reader-card__preview-trigger-wrap {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__preview-trigger-wrap
+  > .reader-card__preview {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__preview-trigger-wrap
+  > .reader-card__preview > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player:has(> .reader-card__player-shell) {
+    height: auto;
+    align-self: center;
+    grid-template-rows: auto auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__player-shell:not(.reader-card__player-shell--theater),
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__player-shell:not(.reader-card__player-shell--theater)
+  .reader-card__player-stage {
+    height: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__player-shell:not(.reader-card__player-shell--theater)
+  .reader-card__preview--player,
+  .reader__item--fullscreen.reader__item--card-flow
+  .reader-card__player-shell--theater .reader-card__preview--player {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  /* Theater is viewport-level and must size from width, not inherit the
+     reader stage's flexible height. */
+  .reader__item--fullscreen.reader__item--card-flow
+  .reader-card__player-shell--theater .reader-card__player-stage {
+    display: block;
+    height: auto;
+  }
+
+  /* VK is the only regular card that combines media and copy. Both image
+     orientations use the same bounded grid; portrait merely moves copy aside. */
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  /* VK videos use the same compact media/copy flow as dedicated players.
+     Image cards keep the flexible row because portrait media may place copy
+     alongside it below. */
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--vk:has(> .reader-card__preview--video) {
+    height: auto;
+    align-self: center;
+    grid-template-rows: auto auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview:has(> .reader-card__image-surface) {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Some fullscreen compositors promote a replaced image to its own square
+     layer and visually ignore clipping on both the image and its parent. The
+     two paint guards cover only the four corner cutouts, so the result stays
+     rounded even when that promoted layer bypasses overflow/clip-path. */
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview--image > .reader-card__image-surface::before,
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview--image > .reader-card__image-surface::after {
+    content: "";
+    position: absolute;
+    z-index: 20;
+    right: 0;
+    left: 0;
+    height: 22px;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        circle at bottom right,
+        transparent 21px,
+        var(--color-page) 22px
+      ) top left / 22px 22px no-repeat,
+      radial-gradient(
+        circle at bottom left,
+        transparent 21px,
+        var(--color-page) 22px
+      ) top right / 22px 22px no-repeat;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview--image > .reader-card__image-surface::before {
+    top: 0;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview--image > .reader-card__image-surface::after {
+    bottom: 0;
+    transform: scaleY(-1);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview > .reader-card__image-surface {
+    position: relative;
+    display: flex;
     width: auto;
     max-width: 100%;
-    height: 100%;
+    height: auto;
     max-height: 100%;
+    aspect-ratio: var(--reader-media-aspect-ratio);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview > .reader-card__image-surface > img {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
     border-radius: 22px;
   }
 
-  /* A portrait VK photo and its copy should read as one composition. Keeping
-     the copy beside the photo also gives the image the vertical room that was
-     previously spent on a full-width text panel below it. */
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview:is(
+    [data-media-orientation="landscape"],
+    [data-media-orientation="square"]
+  ) > .reader-card__image-surface {
+    width: auto;
+    height: 100%;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview:is(
+    [data-media-orientation="landscape"],
+    [data-media-orientation="square"]
+  ) > .reader-card__image-surface > img {
+    width: 100%;
+    height: 100%;
+  }
+
   .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk:has(> .reader-card__preview[data-media-orientation="portrait"] > img) {
+  > .reader-card--vk:has(
+    > .reader-card__preview[data-media-orientation="portrait"] > .reader-card__image-surface
+  ) {
     grid-template-columns: minmax(0, 1fr) minmax(260px, 32%);
-    grid-template-rows: minmax(0, auto);
+    grid-template-rows: minmax(0, 1fr);
     align-items: end;
   }
 
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
   > .reader-card__preview[data-media-orientation="portrait"] {
     grid-column: 1;
-    grid-row: 1;
     width: min(100%, 45dvh);
-    max-width: 100%;
-    min-width: 0;
-    max-height: none;
+    height: auto;
+    align-self: end;
     justify-self: end;
   }
 
-  .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk
-  > .reader-card__preview[data-media-orientation="portrait"] > img {
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview[data-media-orientation="portrait"] > .reader-card__image-surface {
     width: 100%;
-    max-width: 100%;
     height: auto;
-    max-height: none;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
+  > .reader-card__preview[data-media-orientation="portrait"] > .reader-card__image-surface > img {
+    width: 100%;
+    height: 100%;
   }
 
   .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card.reader-card--vk:has(> .reader-card__preview[data-media-orientation="portrait"] > img)
+  > .reader-card--vk:has(
+    > .reader-card__preview[data-media-orientation="portrait"] > .reader-card__image-surface
+  )
   > .reader-card__copy {
     grid-column: 2;
     grid-row: 1;
-    width: 100%;
-    min-width: 0;
     align-self: end;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card > .reader-card__preview > img)
-  .reader-card__copy {
-    width: 100%;
-    max-width: 100%;
-    justify-self: center;
   }
 }

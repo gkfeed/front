@@ -61,6 +61,26 @@
   grid-template-columns: minmax(0, auto);
 }
 
+.reader-card__media-stack {
+  position: relative;
+  display: grid;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  justify-self: center;
+}
+
+.reader-card__media-stack > .reader-card__preview {
+  grid-area: 1 / 1;
+}
+
+.reader-card__media-stack > .reader-card__short-video-identity,
+.reader-card__preview > .reader-card__short-video-identity {
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
 .reader-card--instagram-photo .reader-card__preview--short-video {
   width: fit-content;
   max-width: 100%;

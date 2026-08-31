@@ -13,16 +13,14 @@ import {
 } from '../services/readerFullscreen';
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
-import { CompactReviewActions, ReaderReviewActions } from './ReaderReviewActions';
+import { ReaderReviewActions } from './ReaderReviewActions';
 import { ReaderMobileRail } from './ReaderMobileRail';
 
 export function ReaderReview({
   item,
   remainingCount,
   isDeleting,
-  useCompactActions,
   reviewPanelRef,
-  reviewActionsRef,
   onKeep,
   onDelete,
   onReset,
@@ -30,9 +28,7 @@ export function ReaderReview({
   item: FeedItem;
   remainingCount: number;
   isDeleting: boolean;
-  useCompactActions: boolean;
   reviewPanelRef: RefObject<HTMLDivElement | null>;
-  reviewActionsRef: RefObject<HTMLDivElement | null>;
   onKeep: () => void;
   onDelete: () => void;
   onReset: () => void;
@@ -104,7 +100,6 @@ export function ReaderReview({
         'reader__item',
         !isShortVideo ? 'reader__item--card-flow' : '',
         isFullscreen ? 'reader__item--fullscreen' : '',
-        useCompactActions ? 'reader__item--compact-actions' : '',
         isShortVideo ? 'reader__item--short-video' : '',
         isTikTok ? 'reader__item--tiktok' : '',
       ].filter(Boolean).join(' ')}
@@ -118,12 +113,7 @@ export function ReaderReview({
           copyLink={isTikTok ? item.link : undefined}
         />
       ) : null}
-      {useCompactActions ? <CompactReviewActions {...reviewActions} /> : null}
-      <ReaderReviewActions
-        actionsRef={reviewActionsRef}
-        hidden={useCompactActions}
-        {...reviewActions}
-      />
+      <ReaderReviewActions {...reviewActions} />
       <div className="reader__count-row">
         <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={onReset}>
           {t('reader.reset')}
