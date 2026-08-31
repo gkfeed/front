@@ -14,7 +14,7 @@ import { serveFrontend } from './http/staticServer.js';
 describe('HTTP server composition root', () => {
   it('wires BFF routing and static serving behind the HTTP boundary', async () => {
     const handleBffRequest = vi.fn().mockResolvedValue(false);
-    const serveFrontend = vi.fn((_pathname, _headOnly, response) => {
+    const serveFrontend = vi.fn(async (_pathname, _headOnly, response) => {
       sendJson(response, 200, { source: 'frontend' });
     });
     const request = createRequest('/reader', 'GET');
@@ -111,12 +111,14 @@ function createResponse(): ServerResponse & {
     writeHead: ReturnType<typeof vi.fn>;
     end: ReturnType<typeof vi.fn>;
   };
-  response.destroyed = false;
-  response.writableEnded = false;
-  response.writeHead = vi.fn();
-  response.end = vi.fn(() => {
-    response.writableEnded = true;
-    return response;
+  Object.assign(response, {
+    destroyed: false,
+    end: vi.fn(() => {
+      Object.assign(response, { writableEnded: true });
+      return response;
+    }),
+    writableEnded: false,
+    writeHead: vi.fn(),
   });
   return response;
 }

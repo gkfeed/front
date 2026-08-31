@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createPreviewComposition } from './compositionRoot.js';
-import type { PreviewPorts } from './application/previewPorts.js';
+import type {
+  PreviewConcurrencyLimiter,
+  PreviewPorts,
+} from './application/previewPorts.js';
 import type { RequestExecutionContext } from './application/requestExecutionContext.js';
 
 const context = {} as RequestExecutionContext;
@@ -9,6 +12,13 @@ const context = {} as RequestExecutionContext;
 describe('server composition root', () => {
   it('wires provider ports and the concurrency policy into application use cases', async () => {
     const ports: PreviewPorts = {
+      fetchArticle: vi.fn().mockResolvedValue({
+        url: 'https://example.com/article',
+        title: 'Article',
+        byline: null,
+        excerpt: null,
+        blocks: [{ type: 'paragraph', text: 'Body' }],
+      }),
       fetchOpenGraph: vi.fn().mockResolvedValue({ title: 'Story' }),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({ status: 'scheduled' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ comments: [] }),
@@ -17,7 +27,7 @@ describe('server composition root', () => {
         contentType: 'image/png',
       }),
     };
-    const limit = vi.fn(<T>(load: () => Promise<T>) => load());
+    const limit = vi.fn((load: () => Promise<unknown>) => load()) as unknown as PreviewConcurrencyLimiter;
     const useCases = createPreviewComposition({ ports, limit });
 
     await expect(useCases.openGraph('https://example.com', context))

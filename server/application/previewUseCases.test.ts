@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createPreviewUseCases,
+  type PreviewConcurrencyLimiter,
   type PreviewPorts,
 } from './previewUseCases.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
@@ -11,6 +12,13 @@ const context = {} as RequestExecutionContext;
 describe('preview use cases', () => {
   it('composes provider ports behind the application boundary', async () => {
     const ports: PreviewPorts = {
+      fetchArticle: vi.fn().mockResolvedValue({
+        url: 'https://example.com/article',
+        title: 'Article',
+        byline: null,
+        excerpt: null,
+        blocks: [{ type: 'paragraph', text: 'Body' }],
+      }),
       fetchOpenGraph: vi.fn().mockResolvedValue({ type: 'open-graph' }),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({ type: 'liquipedia' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ type: 'tiktok' }),
@@ -21,6 +29,8 @@ describe('preview use cases', () => {
     };
     const useCases = createPreviewUseCases(ports);
 
+    await expect(useCases.article('https://example.com/article', context))
+      .resolves.toMatchObject({ title: 'Article' });
     await expect(useCases.openGraph('https://example.com', context))
       .resolves.toEqual({ type: 'open-graph' });
     await expect(useCases.liquipediaMatch('https://liquipedia.net', context))
@@ -30,6 +40,7 @@ describe('preview use cases', () => {
     await expect(useCases.redditPreviewImage('https://reddit.com/image', context))
       .resolves.toEqual({ body: new Uint8Array([1, 2, 3]), contentType: 'image/jpeg' });
 
+    expect(ports.fetchArticle).toHaveBeenCalledWith('https://example.com/article', context);
     expect(ports.fetchOpenGraph).toHaveBeenCalledWith('https://example.com', context);
     expect(ports.fetchLiquipediaMatch).toHaveBeenCalledWith('https://liquipedia.net', context);
     expect(ports.fetchTikTokComments).toHaveBeenCalledWith('https://tiktok.com/video', context);
@@ -38,19 +49,21 @@ describe('preview use cases', () => {
 
   it('applies the concurrency policy around every provider port', async () => {
     const ports: PreviewPorts = {
+      fetchArticle: vi.fn().mockResolvedValue({}),
       fetchOpenGraph: vi.fn().mockResolvedValue({}),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({}),
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
     };
-    const limit = vi.fn(<T>(load: () => Promise<T>) => load());
+    const limit = vi.fn((load: () => Promise<unknown>) => load()) as unknown as PreviewConcurrencyLimiter;
     const useCases = createPreviewUseCases(ports, limit);
 
+    await useCases.article('https://example.com/article', context);
     await useCases.openGraph('https://example.com', context);
     await useCases.liquipediaMatch('https://liquipedia.net', context);
     await useCases.tiktokComments('https://tiktok.com/video', context);
     await useCases.redditPreviewImage('https://reddit.com/image', context);
 
-    expect(limit).toHaveBeenCalledTimes(4);
+    expect(limit).toHaveBeenCalledTimes(5);
   });
 });

@@ -12,7 +12,7 @@
     "check": "npm test && npm run lint && npm run build && npm run test:e2e",
     "lint": "eslint .",
     "budget": "node scripts/check-bundle-budget.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.servercheck.json --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { handleBffRequest } from './http/apiRouter.js';
 import type { PreviewUseCases } from './application/previewUseCases.js';
-import { HttpRequestError } from './http/httpErrors.js';
 import { createBffResultCache } from './http/bffResultCache.js';
 import type { BffRequestGate } from './http/bffRequestGate.js';
 
@@ -20,6 +19,13 @@ function createResponse() {
 
 function createUseCases(): PreviewUseCases {
   return {
+    article: vi.fn().mockResolvedValue({
+      url: 'https://example.com/article',
+      title: 'Article',
+      byline: null,
+      excerpt: null,
+      blocks: [{ type: 'paragraph', text: 'Body' }],
+    }),
     openGraph: vi.fn().mockResolvedValue({ title: 'Story' }),
     liquipediaMatch: vi.fn().mockResolvedValue({ status: 'scheduled' }),
     tiktokComments: vi.fn().mockResolvedValue({
@@ -56,7 +62,7 @@ describe('BFF HTTP router', () => {
   });
 
   it.each([
-    ['/bff/liquipedia-match', 'liquipediaMatch', { status: 'live' }],
+    ['/bff/liquipedia-match', 'liquipediaMatch', { status: 'scheduled' }],
     ['/bff/tiktok-comments', 'tiktokComments', {
       comments: [],
       description: null,
@@ -66,7 +72,6 @@ describe('BFF HTTP router', () => {
   ] as const)('dispatches %s through its application use case', async (pathname, useCaseName, result) => {
     const response = createResponse();
     const useCases = createUseCases();
-    vi.mocked(useCases[useCaseName]).mockResolvedValue(result);
 
     await expect(handleBffRequest(
       new URL(`http://localhost${pathname}?url=https%3A%2F%2Fexample.com`),
@@ -88,7 +93,7 @@ describe('BFF HTTP router', () => {
     await expect(handleBffRequest(
       new URL('http://localhost/bff/open-graph'),
       response,
-    )).rejects.toMatchObject<HttpRequestError>({
+    )    ).rejects.toMatchObject({
       code: 'missing_url',
       kind: 'missing_url',
       status: 400,
