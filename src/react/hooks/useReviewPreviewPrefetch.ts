@@ -20,6 +20,7 @@ export function useReviewPreviewPrefetch({
 }): void {
   const { preview: previewUseCases } = useFeatureUseCases();
   const prefetchedImageUrlsRef = useRef<Set<string>>(new Set());
+  const prefetchControllersRef = useRef<Map<string, AbortController>>(new Map());
   const nextItems = useMemo(() => {
     const itemsById = new Map(items.map((item) => [item.id, item]));
     return activeReviewIds
@@ -31,35 +32,38 @@ export function useReviewPreviewPrefetch({
   }, [activeReviewIds, items]);
 
   useEffect(() => {
-    if (!enabled || nextItems.length === 0) return undefined;
+    if (!enabled) {
+      abortPrefetches(prefetchControllersRef.current);
+      return undefined;
+    }
+    if (nextItems.length === 0) return undefined;
 
     // Let the current card enqueue its request first. The shared preview queue
     // then keeps prefetches bounded without delaying the item on screen.
-    const prefetchControllers = new Set<AbortController>();
     const timeoutId = window.setTimeout(() => {
       nextItems.forEach((item) => {
         prefetchFeedItem(
           item,
           previewUseCases,
           prefetchedImageUrlsRef.current,
-          prefetchControllers,
+          prefetchControllersRef.current,
         );
       });
     }, 0);
 
-    return () => {
-      window.clearTimeout(timeoutId);
-      prefetchControllers.forEach((controller) => controller.abort());
-      prefetchControllers.clear();
-    };
+    return () => window.clearTimeout(timeoutId);
   }, [enabled, nextItems, previewUseCases]);
+
+  useEffect(() => () => {
+    abortPrefetches(prefetchControllersRef.current);
+  }, []);
 }
 
 function prefetchFeedItem(
   item: FeedItem,
   previewUseCases: ReturnType<typeof useFeatureUseCases>['preview'],
   prefetchedImageUrls: Set<string>,
-  prefetchControllers: Set<AbortController>,
+  prefetchControllers: Map<string, AbortController>,
 ): void {
   const analysis = analyzeFeedItem(item);
   const providerPolicy = getFeedItemProviderPolicy(analysis.provider);
@@ -70,8 +74,11 @@ function prefetchFeedItem(
     || providerPolicy.remotePreview === 'none'
   ) return;
 
+  const prefetchKey = `${providerPolicy.remotePreview}:${item.link}`;
+  if (prefetchControllers.has(prefetchKey)) return;
+
   const controller = new AbortController();
-  prefetchControllers.add(controller);
+  prefetchControllers.set(prefetchKey, controller);
   void previewUseCases.loadRemotePreview(
     item.link,
     providerPolicy.remotePreview,
@@ -81,7 +88,16 @@ function prefetchFeedItem(
       prefetchRemotePreviewImages(item, remotePreview, prefetchedImageUrls);
     })
     .catch(() => undefined)
-    .finally(() => prefetchControllers.delete(controller));
+    .finally(() => {
+      if (prefetchControllers.get(prefetchKey) === controller) {
+        prefetchControllers.delete(prefetchKey);
+      }
+    });
+}
+
+function abortPrefetches(prefetchControllers: Map<string, AbortController>): void {
+  prefetchControllers.forEach((controller) => controller.abort());
+  prefetchControllers.clear();
 }
 
 function prefetchRemotePreviewImages(

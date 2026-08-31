@@ -50,7 +50,7 @@ describe('useReviewPreviewPrefetch', () => {
     expect(loadRemotePreview).not.toHaveBeenCalled();
   });
 
-  it('aborts pending prefetches when navigation changes and on unmount', async () => {
+  it('keeps pending prefetches across navigation and aborts them on unmount', async () => {
     const signals: AbortSignal[] = [];
     const loadRemotePreview = vi.fn((
       _url: string,
@@ -78,10 +78,35 @@ describe('useReviewPreviewPrefetch', () => {
     rerender({ activeReviewIds: [3, 4] });
     await waitFor(() => expect(signals).toHaveLength(2));
 
-    expect(firstSignal.aborted).toBe(true);
+    expect(firstSignal.aborted).toBe(false);
     const secondSignal = signals[1]!;
     unmount();
+    expect(firstSignal.aborted).toBe(true);
     expect(secondSignal.aborted).toBe(true);
+  });
+
+  it('does not resubscribe to an overlapping pending prefetch after navigation', async () => {
+    const loadRemotePreview = vi.fn(() => (
+      new Promise<typeof EMPTY_REMOTE_PREVIEW>(() => undefined)
+    ));
+    const items = [1, 2, 3].map((id) => createItem(id));
+    const { rerender } = renderHook(
+      ({ activeReviewIds }: { activeReviewIds: number[] }) => useReviewPreviewPrefetch({
+        enabled: true,
+        items,
+        activeReviewIds,
+      }),
+      {
+        initialProps: { activeReviewIds: [1, 2, 3] },
+        wrapper: createWrapper(loadRemotePreview),
+      },
+    );
+
+    await waitFor(() => expect(loadRemotePreview).toHaveBeenCalledTimes(2));
+    rerender({ activeReviewIds: [3, 2] });
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+
+    expect(loadRemotePreview).toHaveBeenCalledTimes(2);
   });
 });
 
