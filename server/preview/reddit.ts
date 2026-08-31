@@ -1,6 +1,7 @@
 import { PreviewError } from './errors.js';
 import { parsePublicHttpUrl } from './publicUrlPolicy.js';
-import { fetchImageResponse, readImageBody } from './previewFetchers.js';
+import { fetchImageResponse } from './previewFetchers.js';
+import { readImageBody } from './previewBodyReaders.js';
 import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
 export interface PreviewImage {

@@ -1,17 +1,7 @@
-import type { HltvProviderData, OpenGraphPreview } from '../../shared/previewContracts.js';
+import type { OpenGraphPreview } from '../../shared/previewContracts.js';
 import { isHltvMatchUrl, isVkImageHost } from '../../shared/urlRules.js';
 import { decodeHtml, parseAttributes, resolveHttpUrl, stripTags } from './html.js';
-import {
-  parseHltvCompletedMaps,
-  parseHltvCurrentMap,
-  parseHltvMatchScore,
-  parseHltvMatchStartsAt,
-  parseHltvMatchStatus,
-  parseHltvMatchTeams,
-  parseHltvMatchTournament,
-  parseHltvPlayerStats,
-  parseHltvRoundHistory,
-} from './hltvHtmlParser.js';
+import { parseHltvProviderData } from './hltvProviderParser.js';
 import { parseInstagramEmbedMedia } from './providers/instagram.js';
 import { parseMatreshkaVideoUrl } from './providers/matreshka.js';
 import { parseRezkaOriginalCover } from './providers/rezka.js';
@@ -53,25 +43,6 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
 }
 
 export { isHltvMatchUrl } from '../../shared/urlRules.js';
-
-function parseHltvProviderData(html: string, pageUrl: URL): HltvProviderData {
-  const status = parseHltvMatchStatus(html);
-  return {
-    provider: 'hltv',
-    snapshot: {
-      startsAt: parseHltvMatchStartsAt(html),
-      tournament: parseHltvMatchTournament(html),
-      teams: parseHltvMatchTeams(html, pageUrl),
-      status,
-      score: status === 'live' || status === 'over' ? parseHltvMatchScore(html) : null,
-      currentMap: status === 'live' ? parseHltvCurrentMap(html) : null,
-      completedMaps: parseHltvCompletedMaps(html),
-      roundHistory: parseHltvRoundHistory(html),
-      playerStats: status === 'over' ? parseHltvPlayerStats(html) : null,
-      teamSides: null,
-    },
-  };
-}
 
 function parseMetadata(html: string): Map<string, string> {
   const metadata = new Map<string, string>();

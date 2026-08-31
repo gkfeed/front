@@ -7,10 +7,8 @@ import {
   isTikTokRequestTimeout,
   type TikTokJsonResult,
 } from './tiktokJson.js';
-import {
-  parseTikTokComments,
-  parseTikTokVideoUrl,
-} from './tiktokParser.js';
+import { parseTikTokComments } from './tiktokCommentParser.js';
+import { parseTikTokVideoUrl } from './tiktokUrlParser.js';
 import type { TikTokCommentsPreview } from '../shared/tiktokContracts.js';
 
 const COMMENT_LIMIT = 10;

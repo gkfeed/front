@@ -4,7 +4,7 @@ import {
   parseTikTokDetails,
   parseTikTokOEmbedDetails,
   type TikTokDetails,
-} from './tiktokParser.js';
+} from './tiktokDetailsParser.js';
 import {
   fetchTikTokJson,
 } from './tiktokJson.js';

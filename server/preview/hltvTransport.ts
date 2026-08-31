@@ -7,7 +7,8 @@ import { promisify } from 'node:util';
 import { REMOTE_REQUEST_TIMEOUT_MS } from '../timeouts.js';
 import { responseTooLarge } from './bodyAdapters.js';
 import { fetchPublicResponse } from './remoteHttp.js';
-import { readHtmlBody, TWITTERBOT_USER_AGENT } from './previewFetchers.js';
+import { readHtmlBody } from './previewBodyReaders.js';
+import { TWITTERBOT_USER_AGENT } from './previewFetchers.js';
 import { PreviewError } from './errors.js';
 import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 

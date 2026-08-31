@@ -1,94 +1,10 @@
-import { PreviewError } from './preview/errors.js';
-import { isRecord } from '../shared/valueGuards.js';
-import { normalizeExternalText } from '../shared/text.js';
-import type { TikTokComment, TikTokCommentsPreview } from '../shared/tiktokContracts.js';
-import { isTikTokVideoUrl } from '../shared/urlRules.js';
-
+export { parseTikTokComments } from './tiktokCommentParser.js';
 export type { TikTokComment } from '../shared/tiktokContracts.js';
-export type TikTokDetails = Pick<
-  TikTokCommentsPreview,
-  'description' | 'creatorName' | 'creatorAvatarUrl'
->;
-
-export function parseTikTokComments(value: unknown): TikTokComment[] {
-  if (!isRecord(value) || value.code !== 0 || !isRecord(value.data) || !Array.isArray(value.data.comments)) {
-    throw new PreviewError('The comments provider returned invalid data', 'invalid_comments');
-  }
-
-  return value.data.comments.slice(0, 10).flatMap((comment) => {
-    if (!isRecord(comment) || typeof comment.id !== 'string' || typeof comment.text !== 'string') return [];
-    const user = isRecord(comment.user) ? comment.user : {};
-    const author = typeof user.nickname === 'string' && user.nickname.trim()
-      ? user.nickname.trim()
-      : typeof user.unique_id === 'string' && user.unique_id.trim()
-        ? user.unique_id.trim()
-        : 'TikTok user';
-    const username = typeof user.unique_id === 'string' ? user.unique_id.trim() : '';
-    const avatarUrl = typeof user.avatar === 'string' ? safeHttpUrl(user.avatar) : null;
-
-    const text = normalizeExternalText(comment.text);
-    return text ? [{
-      id: comment.id,
-      text,
-      author,
-      username,
-      avatarUrl,
-    }] : [];
-  });
-}
-
-export function parseTikTokDescription(value: unknown): string | null {
-  if (!isRecord(value) || typeof value.title !== 'string') return null;
-  return normalizeExternalText(value.title) || null;
-}
-
-export function parseTikTokDetails(value: unknown): TikTokDetails | null {
-  if (!isRecord(value) || value.code !== 0 || !isRecord(value.data)) return null;
-  const author = isRecord(value.data.author) ? value.data.author : {};
-  return {
-    description: typeof value.data.title === 'string'
-      ? normalizeExternalText(value.data.title) || null
-      : null,
-    creatorName: typeof author.nickname === 'string'
-      ? normalizeExternalText(author.nickname) || null
-      : null,
-    creatorAvatarUrl: typeof author.avatar === 'string' ? safeHttpUrl(author.avatar) : null,
-  };
-}
-
-export function parseTikTokOEmbedDetails(value: unknown): TikTokDetails {
-  return {
-    description: parseTikTokDescription(value),
-    creatorName: isRecord(value) && typeof value.author_name === 'string'
-      ? normalizeExternalText(value.author_name) || null
-      : null,
-    creatorAvatarUrl: null,
-  };
-}
-
-export function parseTikTokVideoUrl(value: string): URL {
-  try {
-    const url = new URL(value);
-    if (isTikTokVideoUrl(url)) return url;
-  } catch {
-    return invalidTikTokUrl();
-  }
-  return invalidTikTokUrl();
-}
-
-export function emptyTikTokDetails(): TikTokDetails {
-  return { description: null, creatorName: null, creatorAvatarUrl: null };
-}
-
-function safeHttpUrl(value: string): string | null {
-  try {
-    const url = new URL(value);
-    return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
-  } catch {
-    return null;
-  }
-}
-
-function invalidTikTokUrl(): never {
-  throw new PreviewError('A valid TikTok video URL is required', 'invalid_tiktok_url');
-}
+export {
+  emptyTikTokDetails,
+  parseTikTokDescription,
+  parseTikTokDetails,
+  parseTikTokOEmbedDetails,
+  type TikTokDetails,
+} from './tiktokDetailsParser.js';
+export { parseTikTokHttpUrl, parseTikTokVideoUrl } from './tiktokUrlParser.js';

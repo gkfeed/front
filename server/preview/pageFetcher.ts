@@ -1,9 +1,5 @@
-import {
-  fetchHtmlResponse,
-  readHtmlBody,
-  readMetadataBody,
-  TWITTERBOT_USER_AGENT,
-} from './previewFetchers.js';
+import { fetchHtmlResponse, TWITTERBOT_USER_AGENT } from './previewFetchers.js';
+import { readHtmlBody, readMetadataBody } from './previewBodyReaders.js';
 import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 
 export async function fetchHtml(
