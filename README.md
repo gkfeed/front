@@ -24,6 +24,17 @@ Run `npm run build` to create a production build in `dist/`.
 Run `npm start` after building to serve both the frontend and BFF on port 3000.
 Set `PORT` to use a different port.
 
+## Desktop build
+
+Run `npm run desktop` to build and launch the Electron application locally. Desktop mode starts the
+bundled BFF on `127.0.0.1:32145`; the existing web and development servers continue to listen on their
+configured interfaces.
+
+Run `npm run dist:win` to create the Windows x64 NSIS installer in `release/`. On Linux without a
+system Wine installation, the command automatically uses the pinned `electronuserland/builder:wine`
+Docker image. The build downloads the pinned Windows aria2 1.37.0 archive and verifies its SHA-256
+checksum before packaging it.
+
 ## Open Graph preview
 
 The BFF exposes the Open Graph metadata route:

@@ -68,7 +68,7 @@ export async function fetchHltvPageViaAria2c(
     if (timeoutMs <= 0 || context?.signal.aborted) {
       throw new PreviewError('The HLTV page took too long to respond', 'fetch_failed');
     }
-    await execFileAsync('aria2c', [
+    await execFileAsync(process.env.GKFEED_ARIA2C_PATH || 'aria2c', [
       '--quiet=true',
       '--allow-overwrite=true',
       '--auto-file-renaming=false',

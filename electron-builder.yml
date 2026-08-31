@@ -1,0 +1,25 @@
+appId: com.gkfeed.desktop
+productName: GKFEED
+asar: true
+npmRebuild: false
+directories:
+  output: release
+files:
+  - dist/**
+  - dist-server/**
+  - package.json
+extraResources:
+  - from: build/vendor/aria2
+    to: aria2
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+nsis:
+  artifactName: GKFEED-Setup-${version}-${arch}.${ext}
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true

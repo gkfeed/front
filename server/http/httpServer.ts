@@ -8,11 +8,22 @@ import { serveFrontend } from './staticServer.js';
 
 export type HttpServerDependencies = {
   handleBffRequest: typeof handleBffRequest;
+  handleApiRequest?: ApiRequestHandler;
   serveFrontend: typeof serveFrontend;
 };
 
+type ApiRequestHandler = (
+  request: IncomingMessage,
+  requestUrl: URL,
+  response: ServerResponse,
+  context: ReturnType<typeof createHttpRequestContext>,
+) => Promise<boolean>;
+
+const noApiProxy: ApiRequestHandler = () => Promise.resolve(false);
+
 const defaultDependencies: HttpServerDependencies = {
   handleBffRequest,
+  handleApiRequest: noApiProxy,
   serveFrontend,
 };
 
@@ -32,6 +43,8 @@ export async function handleHttpRequest(
   const context = createHttpRequestContext(request, response);
   try {
     const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
+
+    if (await dependencies.handleApiRequest?.(request, requestUrl, response, context)) return;
 
     if (request.method === 'GET' && await dependencies.handleBffRequest(
       requestUrl,
