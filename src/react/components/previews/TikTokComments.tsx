@@ -1,14 +1,14 @@
-import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { FeedItem } from '../../types';
+import { getFeedItemDescription } from '../../domain/feedItemDescription';
+import { usePreviewVisibility } from '../../hooks/usePreviewVisibility';
 import { useTikTokComments } from '../../hooks/useTikTokComments';
 import { useTikTokCommentsPreference } from '../../hooks/useTikTokCommentsPreference';
-import { usePreviewVisibility } from '../../hooks/usePreviewVisibility';
-import { UserIcon } from '../Icons';
-import { CopyLinkButton } from '../CopyLinkButton';
-import { getFeedItemDescription } from '../../domain/feedItemDescription';
 import { trapFocus } from '../../platform/focusTrap';
+import { CopyLinkButton } from '../CopyLinkButton';
+import { TikTokCommentsContent } from './TikTokCommentsContent';
 
 export function TikTokComments({ item }: { item: FeedItem }) {
   const { t } = useTranslation();
@@ -82,77 +82,18 @@ export function TikTokComments({ item }: { item: FeedItem }) {
           </button>
         </div>
       </div>
-      {isExpanded && isLoading ? (
-        <div id={commentsId} className="tiktok-comments__empty" role="status">
-          <p>{t('comments.loading')}</p>
-        </div>
-      ) : isExpanded && comments && (comments.length > 0 || description) ? (
-        <ol id={commentsId} className="tiktok-comments__list">
-          {description ? (
-            <li className="tiktok-comments__comment tiktok-comments__description">
-              {creator ? (
-                <div className="tiktok-comments__creator">
-                  <span className="tiktok-comments__creator-avatar">
-                    {creator.avatarUrl ? (
-                      <img src={creator.avatarUrl} alt="" referrerPolicy="no-referrer" />
-                    ) : (
-                      <UserIcon />
-                    )}
-                  </span>
-                  <strong>{creator.name}</strong>
-                </div>
-              ) : null}
-              <p>{renderDescription(description)}</p>
-            </li>
-          ) : null}
-          {comments.map((comment, index) => (
-            <li className="tiktok-comments__comment" key={`${index}-${comment.text}`}>
-              <div className="tiktok-comments__identity">
-                <span className="tiktok-comments__avatar">
-                  {comment.avatarUrl ? (
-                    <img src={comment.avatarUrl} alt="" referrerPolicy="no-referrer" />
-                  ) : (
-                    <UserIcon />
-                  )}
-                </span>
-                <span className="tiktok-comments__author">
-                  <strong>{comment.author}</strong>
-                  {comment.username ? <small>@{comment.username}</small> : null}
-                </span>
-              </div>
-              <p>{comment.text}</p>
-            </li>
-          ))}
-          {comments.length === 0 ? (
-            <li className="tiktok-comments__empty">
-              <p>{t('comments.none')}</p>
-              <a href={item.link} target="_blank" rel="noreferrer">
-                {t('comments.viewOnTikTok')} <span aria-hidden="true">↗</span>
-              </a>
-            </li>
-          ) : null}
-        </ol>
-      ) : isExpanded && loadFailed ? (
-        <div id={commentsId} className="tiktok-comments__empty" role="alert">
-          <p>{t('comments.loadError')}</p>
-          <button type="button" className="ui-button--secondary" onClick={retry}>{t('live.tryAgain')}</button>
-        </div>
-      ) : isExpanded && comments ? (
-        <div id={commentsId} className="tiktok-comments__empty">
-          <p>{t('comments.none')}</p>
-          <a href={item.link} target="_blank" rel="noreferrer">
-            {t('comments.viewOnTikTok')} <span aria-hidden="true">↗</span>
-          </a>
-        </div>
+      {isExpanded ? (
+        <TikTokCommentsContent
+          comments={comments}
+          creator={creator}
+          description={description}
+          isLoading={isLoading}
+          loadFailed={loadFailed}
+          commentsId={commentsId}
+          itemLink={item.link}
+          onRetry={retry}
+        />
       ) : null}
     </aside>
   );
-}
-
-function renderDescription(description: string) {
-  return description.split(/(#[\p{L}\p{N}_]+)/gu).map((part, index) => (
-    part.startsWith('#')
-      ? <strong className="tiktok-comments__hashtag" key={`${index}-${part}`}>{part}</strong>
-      : part
-  ));
 }

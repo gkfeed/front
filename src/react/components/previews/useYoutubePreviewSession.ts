@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { readYoutubeProgress } from '../../services/youtubeProgress';
 import { useTheaterDialog } from './useTheaterDialog';
-import { sendPlayerCommand } from './useYoutubePlayerController';
+import { sendPlayerCommand } from './youtubePlayerProtocol';
 
 export function useYoutubePreviewSession(videoId: string) {
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);

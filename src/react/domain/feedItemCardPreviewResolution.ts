@@ -1,10 +1,10 @@
 import {
-  getRemoteFeedItemPreview,
-  getTikTokEmbedPreview,
   isRedditUrl,
   isRezkaUrl,
-  type FeedItemPreview,
-} from './feedItemPreview';
+} from './feedItemUrls';
+import { getRemoteFeedItemPreview } from './feedItemRemotePreview';
+import { getTikTokEmbedPreview } from './tiktokPreview';
+import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getFeedItemDescription } from './feedItemDescription';
 import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';

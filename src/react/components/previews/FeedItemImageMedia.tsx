@@ -2,9 +2,7 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
-import { getSpotifyEmbed } from '../../domain/spotifyPreview';
 import { HltvImageScore } from './HltvMatch';
-import { SpotifyPlaylistPreview } from './SpotifyPlaylistPreview';
 
 export type ImagePreview = Omit<LocalizedFeedItemPreview, 'type'> & { type?: undefined };
 
@@ -76,21 +74,6 @@ export function FeedItemImageMedia({
   );
   const visibleImage = waitsForRemoteImage ? displayedImage : preview;
   const visibleImageMetrics = imageMetrics?.src === visibleImage.src ? imageMetrics : null;
-  const spotifyEmbed = getSpotifyEmbed(href);
-
-  if (spotifyEmbed) {
-    return (
-      <SpotifyPlaylistPreview
-        embedUrl={spotifyEmbed.url}
-        embedHeight={spotifyEmbed.height}
-        spotifyUrl={href}
-        imageSrc={preview.src}
-        imageAlt={preview.alt}
-        title={hostname}
-        onPreviewError={onPreviewError}
-      />
-    );
-  }
 
   const visibleImageElement = (
     <img

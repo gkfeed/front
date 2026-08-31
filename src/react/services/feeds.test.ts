@@ -8,8 +8,8 @@ import {
   getAllFeeds,
   getFeedById,
   getFeedItems,
-  validateCredentials,
 } from './feeds';
+import { validateCredentials } from './auth';
 import type { Feed } from '../types';
 
 vi.hoisted(() => {

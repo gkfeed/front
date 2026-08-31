@@ -1,85 +1,21 @@
 import type { FeedItem } from '../types';
-import type { OpenGraphPreview } from '../../../shared/previewContracts';
-import type {
-  FeedItemAnalysis,
-  FeedItemPreview,
-} from './feedItemPreviewTypes';
+import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getEmbeddedPreview } from './embeddedPreview';
 import { getFeedItemProviderFromUrl } from './feedItemProviderDetection';
 import { getShikimoriHighQualityImageUrl } from './shikimoriPreview';
-import { getTwitchChannel, getTwitchPreview } from './twitchPreview';
+import { getTwitchPreview } from './twitchPreview';
 import { getVkVideoPreview } from './vkPreview';
 import {
-  getMatreshkaVideoId,
-  getSasflixPublicationId,
-  getYoutubeVideoId,
-  hostnameOf,
   isDirectImage,
   isDirectVideo,
-  isDirectVideoValue,
   isRedditVideoUrl,
   parseUrl,
 } from './feedItemUrls';
 import { getYoutubePreview } from './youtubePreview';
 import { isInstagramMediaUrl } from './instagramPreview';
 
-export { isGenericHltvPreview } from './hltvPreview';
-export { getTikTokEmbedPreview } from './tiktokPreview';
-export { getTwitchPreview } from './twitchPreview';
-export { getVkVideoPreview } from './vkPreview';
-
-export function analyzeFeedItem(item: FeedItem): FeedItemAnalysis {
-  const url = parseUrl(item.link);
-  return {
-    url,
-    hostname: url ? hostnameOf(url) : null,
-    provider: getFeedItemProviderFromUrl(item, url),
-    localPreview: getFeedItemPreviewFromUrl(item, url),
-    youtubeVideoId: url ? getYoutubeVideoId(url) : null,
-    twitchChannel: url ? getTwitchChannel(url) : null,
-    matreshkaVideoId: url ? getMatreshkaVideoId(url) : null,
-    sasflixPublicationId: url ? getSasflixPublicationId(url) : null,
-  };
-}
-
 export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
   return getFeedItemPreviewFromUrl(item, parseUrl(item.link));
-}
-
-export function getRemoteFeedItemPreview(
-  preview: OpenGraphPreview | null,
-  title: string,
-): FeedItemPreview | null {
-  if (!preview) return null;
-  const altTitle = preview.title || title;
-
-  if (preview.video) {
-    const videoUrl = parseUrl(preview.video);
-    const vkVideoPreview = videoUrl ? getVkVideoPreview(videoUrl, altTitle) : null;
-    if (vkVideoPreview) return vkVideoPreview;
-    if (videoUrl && isRedditVideoUrl(videoUrl)) {
-      return {
-        src: videoUrl.href,
-        alt: { kind: 'video', title: altTitle || null },
-        type: 'video',
-        ...(preview.image ? { poster: preview.image } : {}),
-      };
-    }
-  }
-
-  if (preview.video && isDirectVideoValue(preview.video)) {
-    return {
-      src: preview.video,
-      alt: { kind: 'video', title: altTitle || null },
-      type: 'video',
-      ...(preview.image ? { poster: preview.image } : {}),
-    };
-  }
-
-  return preview.image ? {
-    src: preview.image,
-    alt: { kind: 'item', title: altTitle || null },
-  } : null;
 }
 
 function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPreview | null {

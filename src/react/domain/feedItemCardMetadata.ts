@@ -1,6 +1,7 @@
-import { isRedditUrl, type FeedItemPreview } from './feedItemPreview';
+import { isRedditUrl } from './feedItemUrls';
+import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getFeedItemDescription } from './feedItemDescription';
-import { getFeedItemProviderAdapter } from './feedItemProviderPresentation';
+import { getFeedItemProviderAdapter } from './feedItemProviderAdapters';
 import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
 import { isNsfwLink } from './nsfw';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';

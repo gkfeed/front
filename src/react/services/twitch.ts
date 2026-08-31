@@ -1,4 +1,4 @@
-import { getFeedItemPreview } from '../domain/feedItemPreview';
+import { getFeedItemPreview } from '../domain/feedItemLocalPreview';
 import { getTwitchChannel } from '../domain/twitchPreview';
 import type { Credentials, FeedItem } from '../types';
 import { getFeedItems } from './feeds';

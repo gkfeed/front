@@ -2,27 +2,12 @@ import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import '../../styles/feed-creator.css';
-import {
-  type FeedCreatorFieldConfig,
-  type FeedCreatorMode,
-} from '../domain/feedCreator';
-import type { FeedInput } from '../types';
-import { FeedTypePicker } from './FeedTypePicker';
+import { FeedCreatorActions } from './FeedCreatorActions';
+import { FeedCreatorFields } from './FeedCreatorFields';
+import { FeedCreatorModeTabs } from './FeedCreatorModeTabs';
+import type { FeedCreatorModel } from './feedCreatorTypes';
 
-type FeedCreatorSaveStatus = 'idle' | 'saving' | 'success' | 'error';
-
-export type FeedCreatorModel = {
-  feed: FeedInput;
-  mode: FeedCreatorMode;
-  fields: readonly FeedCreatorFieldConfig[];
-  submitted: boolean;
-  saveStatus: FeedCreatorSaveStatus;
-  isSaving: boolean;
-  isFeedFieldValid: (field: keyof FeedInput) => boolean;
-  updateMode: (mode: FeedCreatorMode) => void;
-  updateFeed: (field: keyof FeedInput, value: string) => void;
-  submitFeed: () => Promise<void>;
-};
+export type { FeedCreatorModel } from './feedCreatorTypes';
 
 export function FeedCreator({ model }: { model: FeedCreatorModel }) {
   const { t } = useTranslation();
@@ -48,11 +33,17 @@ export function FeedCreator({ model }: { model: FeedCreatorModel }) {
     <section className="creator" aria-labelledby="feed-create-title">
       <form className="creator__form" onSubmit={onSubmit} noValidate>
         <h1 id="feed-create-title" className="page-title">{t('pages.createFeed')}</h1>
-        <div className="creator__tabs" role="tablist" aria-label={t('creator.mode')}>
-          <ModeTab mode="lazy" currentMode={mode} disabled={isSaving} onSelect={updateMode}>{t('creator.urlOnly')}</ModeTab>
-          <ModeTab mode="extended" currentMode={mode} disabled={isSaving} onSelect={updateMode}>{t('creator.manual')}</ModeTab>
-        </div>
-        <CreatorPanel
+        <FeedCreatorModeTabs
+          mode={mode}
+          disabled={isSaving}
+          onSelect={updateMode}
+          labels={{
+            ariaLabel: t('creator.mode'),
+            lazy: t('creator.urlOnly'),
+            extended: t('creator.manual'),
+          }}
+        />
+        <FeedCreatorFields
           id={`feed-create-${mode}-panel`}
           labelledBy={`feed-create-${mode}-tab`}
           fields={fields}
@@ -62,150 +53,8 @@ export function FeedCreator({ model }: { model: FeedCreatorModel }) {
           isFeedFieldValid={isFeedFieldValid}
           updateFeed={updateFeed}
         />
-        <div className="creator__actions">
-          <span
-            className={`creator__status creator__status--${saveStatus}`}
-            role={saveStatus === 'error' ? 'alert' : undefined}
-            aria-live="polite"
-          >
-            {getStatusMessage(saveStatus, t)}
-          </span>
-          <button className="ui-primary-button creator__submit" type="submit" disabled={isSaving}>
-            {isSaving ? t('creator.savingButton') : t('creator.addButton')}
-          </button>
-        </div>
+        <FeedCreatorActions saveStatus={saveStatus} isSaving={isSaving} />
       </form>
     </section>
-  );
-}
-
-function getStatusMessage(saveStatus: FeedCreatorSaveStatus, t: (key: string) => string): string {
-  if (saveStatus === 'saving') return t('creator.saving');
-  if (saveStatus === 'success') return t('creator.saved');
-  if (saveStatus === 'error') return t('creator.saveError');
-  return '';
-}
-
-type ModeTabProps = {
-  children: string;
-  mode: FeedCreatorMode;
-  currentMode: FeedCreatorMode;
-  disabled: boolean;
-  onSelect: (mode: FeedCreatorMode) => void;
-};
-
-function ModeTab({ children, mode, currentMode, disabled, onSelect }: ModeTabProps) {
-  const selected = mode === currentMode;
-
-  return (
-    <button
-      className="ui-primary-button"
-      id={`feed-create-${mode}-tab`}
-      type="button"
-      role="tab"
-      aria-selected={selected}
-      aria-controls={`feed-create-${mode}-panel`}
-      disabled={disabled}
-      onClick={() => onSelect(mode)}
-    >
-      {children}
-    </button>
-  );
-}
-
-type CreatorPanelProps = {
-  id: string;
-  labelledBy: string;
-  fields: readonly FeedCreatorFieldConfig[];
-  feed: FeedInput;
-  submitted: boolean;
-  isSaving: boolean;
-  isFeedFieldValid: (field: keyof FeedInput) => boolean;
-  updateFeed: (field: keyof FeedInput, value: string) => void;
-};
-
-function CreatorPanel({
-  id,
-  labelledBy,
-  fields,
-  feed,
-  submitted,
-  isSaving,
-  isFeedFieldValid,
-  updateFeed,
-}: CreatorPanelProps) {
-  return (
-    <div id={id} className="creator__fields" role="tabpanel" aria-labelledby={labelledBy}>
-      {fields.map((field) => (
-        <CreatorField
-          {...field}
-          key={field.id}
-          value={feed[field.id]}
-          invalid={submitted && !isFeedFieldValid(field.id)}
-          disabled={isSaving}
-          onChange={(value) => updateFeed(field.id, value)}
-        />
-      ))}
-    </div>
-  );
-}
-
-type CreatorFieldProps = FeedCreatorFieldConfig & {
-  value: string;
-  invalid: boolean;
-  disabled: boolean;
-  onChange: (value: string) => void;
-};
-
-function CreatorField({
-  id,
-  labelKey,
-  type,
-  value,
-  placeholderKey,
-  errorKey,
-  invalid,
-  disabled,
-  onChange,
-}: CreatorFieldProps) {
-  const { t } = useTranslation();
-  const errorId = `${id}-error`;
-  const label = t(labelKey);
-
-  return (
-    <div className={`field field--${id}${invalid ? ' field--invalid' : ''}`}>
-      {id === 'type' ? (
-        <>
-          <span id="type-label" className="field__label">{label}</span>
-          <FeedTypePicker
-            value={value}
-            disabled={disabled}
-            invalid={invalid}
-            errorId={errorId}
-            onChange={onChange}
-          />
-        </>
-      ) : (
-        <>
-          <label className="field__label" htmlFor={id}>{label}</label>
-          <div className="field__control">
-            <input
-              type={type}
-              id={id}
-              name={id}
-              value={value}
-              onChange={(event) => onChange(event.target.value)}
-              autoComplete={id === 'url' ? 'url' : 'off'}
-              placeholder={placeholderKey ? t(placeholderKey) : undefined}
-              aria-describedby={invalid ? errorId : undefined}
-              aria-invalid={invalid ? 'true' : undefined}
-              disabled={disabled}
-              required
-            />
-          </div>
-        </>
-      )}
-      {invalid ? <p id={errorId} className="field__error" role="alert">{t(errorKey)}</p> : null}
-    </div>
   );
 }

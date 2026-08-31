@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { isNsfwLink } from '../domain/nsfw';
-import { analyzeFeedItem } from '../domain/feedItemPreview';
+import { analyzeFeedItem } from '../domain/feedItemAnalysis';
 import { shouldLoadRemotePreview } from '../domain/feedItemCardPresentation';
 import { getFeedItemProviderPolicy } from '../domain/feedItemProviderPolicies';
 import { useFeedItemRemotePreview } from './useFeedItemRemotePreview';

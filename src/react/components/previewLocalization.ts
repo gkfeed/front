@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 
-import type { FeedItemPreview, FeedItemPreviewAlt } from '../domain/feedItemPreview';
+import type { FeedItemPreview, FeedItemPreviewAlt } from '../domain/feedItemPreviewTypes';
 
 export type LocalizedFeedItemPreview = Omit<FeedItemPreview, 'alt'> & { alt: string };
 

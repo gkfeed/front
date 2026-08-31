@@ -4,6 +4,8 @@ import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { FeedItemEmbedMedia } from './FeedItemEmbedMedia';
 import { FeedItemImageMedia, type ImagePreview } from './FeedItemImageMedia';
 import { FeedItemVideoMedia } from './FeedItemVideoMedia';
+import { getSpotifyEmbed } from '../../domain/spotifyPreview';
+import { SpotifyPlaylistPreview } from './SpotifyPlaylistPreview';
 
 type FeedItemMediaProps = {
   href: string;
@@ -47,6 +49,21 @@ export function FeedItemMedia({
         isShortVideo={isShortVideo}
         isTikTok={isTikTok}
         overlay={overlay}
+      />
+    );
+  }
+
+  const spotifyEmbed = getSpotifyEmbed(href);
+  if (spotifyEmbed) {
+    return (
+      <SpotifyPlaylistPreview
+        embedUrl={spotifyEmbed.url}
+        embedHeight={spotifyEmbed.height}
+        spotifyUrl={href}
+        imageSrc={preview.src}
+        imageAlt={preview.alt}
+        title={hostname}
+        onPreviewError={onPreviewError}
       />
     );
   }
