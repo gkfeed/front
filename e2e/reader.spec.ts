@@ -810,6 +810,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
       const item = document.querySelector<HTMLElement>('.reader__item');
       const actions = document.querySelector<HTMLElement>('.reader__actions');
       const preview = document.querySelector<HTMLElement>('.reader-card__preview');
+      const copy = document.querySelector<HTMLElement>('.reader-card__copy');
       const previewBox = preview?.getBoundingClientRect();
       return {
         documentWidth: document.documentElement.scrollWidth,
@@ -828,6 +829,8 @@ test.describe('TikTok player on iPad-sized readers', () => {
         imageLeft: document.querySelector<HTMLElement>('.reader-card__preview img')?.getBoundingClientRect().left ?? 0,
         imageRight: document.querySelector<HTMLElement>('.reader-card__preview img')?.getBoundingClientRect().right ?? 0,
         previewRight: previewBox?.right ?? 0,
+        previewBottom: previewBox?.bottom ?? 0,
+        copyTop: copy?.getBoundingClientRect().top ?? 0,
         actionsBottom: actions?.getBoundingClientRect().bottom ?? 0,
         viewportHeight: window.innerHeight,
         previewCenter: previewBox ? previewBox.left + previewBox.width / 2 : 0,
@@ -847,6 +850,8 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(Math.abs(bounds.imageWidth / bounds.imageHeight - 9 / 10)).toBeLessThan(0.01);
     expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
     expect(Math.abs(bounds.previewCenter - bounds.viewportWidth / 2)).toBeLessThan(1);
+    expect(bounds.copyTop - bounds.previewBottom).toBeGreaterThanOrEqual(0);
+    expect(bounds.copyTop - bounds.previewBottom).toBeLessThanOrEqual(24);
   });
 
   test('reflows controls after rotating from landscape to portrait', async ({ page }) => {
