@@ -278,9 +278,10 @@
   > .reader-card--vk:has(
     > .reader-card__preview[data-media-orientation="portrait"] > .reader-card__image-surface
   ) {
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 32%);
+    grid-template-columns: minmax(0, 1fr) minmax(248px, 30%);
     grid-template-rows: minmax(0, 1fr);
-    align-items: end;
+    align-items: center;
+    column-gap: clamp(16px, 2vw, 24px);
   }
 
   .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
@@ -288,7 +289,7 @@
     grid-column: 1;
     width: min(100%, 45dvh);
     height: auto;
-    align-self: end;
+    align-self: center;
     justify-self: end;
   }
 
@@ -311,6 +312,8 @@
   > .reader-card__copy {
     grid-column: 2;
     grid-row: 1;
-    align-self: end;
+    align-self: center;
+    padding: 20px;
+    border-radius: 20px;
   }
 }

@@ -607,6 +607,16 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(Math.abs(fullscreenPreviewBox!.height - fullscreenImageBox!.height)).toBeLessThan(2);
     expect(Math.abs(fullscreenImageBox!.width / fullscreenImageBox!.height - 3 / 4)).toBeLessThan(0.01);
     expect(fullscreenCopyBox!.x).toBeGreaterThan(fullscreenImageBox!.x + fullscreenImageBox!.width);
+    const imageCenter = fullscreenImageBox!.y + fullscreenImageBox!.height / 2;
+    const copyCenter = fullscreenCopyBox!.y + fullscreenCopyBox!.height / 2;
+    expect(Math.abs(imageCenter - copyCenter)).toBeLessThan(2);
+
+    const reset = await page.locator('.reader__reset').boundingBox();
+    const count = await page.locator('.reader__count').boundingBox();
+    expect(reset).not.toBeNull();
+    expect(count).not.toBeNull();
+    expect(count!.x - (reset!.x + reset!.width)).toBeGreaterThanOrEqual(8);
+    expect(count!.x - (reset!.x + reset!.width)).toBeLessThanOrEqual(16);
   });
 
   test('clips square VK post images to rounded corners', async ({ page }) => {
