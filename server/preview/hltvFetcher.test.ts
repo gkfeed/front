@@ -1,3 +1,4 @@
+import type { IncomingMessage } from 'node:http';
 import { Readable } from 'node:stream';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -122,7 +123,7 @@ function responseFromBody(
   headers: Record<string, string | string[]> = {},
 ): PublicHttpResponse {
   return {
-    body: Readable.from([body]),
+    body: Readable.from([body]) as IncomingMessage,
     headers,
     status: 200,
     url: new URL('https://www.hltv.org/'),

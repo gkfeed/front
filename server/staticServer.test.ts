@@ -6,7 +6,6 @@ import { PassThrough } from 'node:stream';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { HttpRequestError } from './http/httpErrors.js';
 import { serveFrontend } from './http/staticServer.js';
 
 describe('static server', () => {
@@ -35,7 +34,7 @@ describe('static server', () => {
 
     try {
       await expect(serveFrontend('/%E0%A4%A', false, response, root))
-        .rejects.toMatchObject<HttpRequestError>({
+        .rejects.toMatchObject({
           code: 'invalid_path',
           kind: 'invalid_path',
           status: 400,
@@ -88,6 +87,6 @@ function createStreamResponse(): PassThrough & ServerResponse & {
   const response = new PassThrough() as PassThrough & ServerResponse & {
     writeHead: ReturnType<typeof vi.fn>;
   };
-  response.writeHead = vi.fn();
+  Object.assign(response, { writeHead: vi.fn() });
   return response;
 }

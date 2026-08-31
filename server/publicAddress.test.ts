@@ -9,7 +9,6 @@ import {
   isPrivateAddress,
   resolvePublicAddress,
 } from './publicAddress.js';
-import { PublicHttpError } from './publicHttpError.js';
 
 beforeEach(() => {
   dnsLookup.mockReset();
@@ -84,7 +83,7 @@ describe('resolvePublicAddress request cancellation', () => {
 describe('resolvePublicAddress', () => {
   it('rejects a literal local address without a DNS request', async () => {
     await expect(resolvePublicAddress(new URL('http://127.0.0.1/')))
-      .rejects.toMatchObject<PublicHttpError>({ reason: 'private' });
+      .rejects.toMatchObject({ reason: 'private' });
     expect(dnsLookup).not.toHaveBeenCalled();
   });
 
@@ -92,7 +91,7 @@ describe('resolvePublicAddress', () => {
     dnsLookup.mockResolvedValue([{ address: '::1', family: 6 }]);
 
     await expect(resolvePublicAddress(new URL('http://localhost/')))
-      .rejects.toMatchObject<PublicHttpError>({ reason: 'private' });
+      .rejects.toMatchObject({ reason: 'private' });
   });
 
   it('rejects a hostname when any DNS answer is private', async () => {
@@ -102,7 +101,7 @@ describe('resolvePublicAddress', () => {
     ]);
 
     await expect(resolvePublicAddress(new URL('https://mixed.example/')))
-      .rejects.toMatchObject<PublicHttpError>({ reason: 'private' });
+      .rejects.toMatchObject({ reason: 'private' });
   });
 
   it('returns the first public DNS answer for pinning', async () => {
@@ -123,7 +122,7 @@ describe('resolvePublicAddress', () => {
     dnsLookup.mockRejectedValue(new Error('NXDOMAIN'));
 
     await expect(resolvePublicAddress(new URL('https://missing.example/')))
-      .rejects.toMatchObject<PublicHttpError>({ reason: 'unresolvable' });
+      .rejects.toMatchObject({ reason: 'unresolvable' });
   });
 });
 
