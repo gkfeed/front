@@ -1,12 +1,91 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { OpenGraphPreview } from '../../../../shared/previewContracts';
-import type { FeedApplicationPort, FeedMetadataPort } from '../featurePorts';
+import type { FeedItem } from '../../types';
+import type {
+  FeedApplicationPort,
+  FeedItemsCachePort,
+  FeedMetadataPort,
+} from '../featurePorts';
 import { createFeedUseCases } from './feedUseCases';
 
 const credentials = { username: 'reader', password: 'secret' };
+const cachedItem: FeedItem = {
+  id: 1,
+  feedId: 1,
+  link: 'https://example.com/cached',
+  title: 'Cached',
+  text: '',
+};
+const currentItem: FeedItem = {
+  ...cachedItem,
+  id: 2,
+  link: 'https://example.com/current',
+  title: 'Current',
+};
 
 describe('feed use cases', () => {
+  it('owns stale-while-revalidate cache policy for feed items', async () => {
+    const { port, metadataPort, cachePort } = createPorts();
+    vi.mocked(cachePort.read).mockResolvedValue([cachedItem]);
+    vi.mocked(port.getFeedItems).mockResolvedValue([currentItem]);
+    const onCached = vi.fn();
+    const onProgress = vi.fn();
+    const useCases = createFeedUseCases(port, metadataPort, cachePort);
+
+    await expect(useCases.loadFeedItems(credentials, { onCached, onProgress }))
+      .resolves.toEqual([currentItem]);
+
+    expect(cachePort.read).toHaveBeenCalledWith('reader', 15_000);
+    expect(onCached).toHaveBeenCalledWith([cachedItem]);
+    expect(port.getFeedItems).toHaveBeenCalledWith(
+      credentials,
+      undefined,
+      undefined,
+      onProgress,
+      10,
+    );
+    expect(cachePort.write).toHaveBeenCalledWith('reader', [currentItem]);
+  });
+
+  it('prevents an invalidated in-flight load from restoring stale cache data', async () => {
+    const { port, metadataPort, cachePort } = createPorts();
+    let finishLoad!: (items: FeedItem[]) => void;
+    vi.mocked(port.getFeedItems).mockImplementation(() => new Promise((resolve) => {
+      finishLoad = resolve;
+    }));
+    const useCases = createFeedUseCases(port, metadataPort, cachePort);
+
+    const load = useCases.loadFeedItems(credentials);
+    await vi.waitFor(() => expect(port.getFeedItems).toHaveBeenCalledOnce());
+    useCases.invalidateFeedItemsCache(credentials);
+    finishLoad([currentItem]);
+    await load;
+
+    expect(cachePort.delete).toHaveBeenCalledWith('reader');
+    expect(cachePort.write).not.toHaveBeenCalled();
+  });
+
+  it('does not publish a cache read that was invalidated before it completed', async () => {
+    const { port, metadataPort, cachePort } = createPorts();
+    let finishCacheRead!: (items: FeedItem[]) => void;
+    vi.mocked(cachePort.read).mockImplementation(() => new Promise((resolve) => {
+      finishCacheRead = resolve;
+    }));
+    vi.mocked(port.getFeedItems).mockResolvedValue([currentItem]);
+    const onCached = vi.fn();
+    const useCases = createFeedUseCases(port, metadataPort, cachePort);
+
+    const load = useCases.loadFeedItems(credentials, { onCached });
+    await vi.waitFor(() => expect(cachePort.read).toHaveBeenCalledOnce());
+    useCases.invalidateFeedItemsCache(credentials);
+    finishCacheRead([cachedItem]);
+    await load;
+
+    expect(onCached).not.toHaveBeenCalled();
+    expect(cachePort.write).not.toHaveBeenCalled();
+  });
+
   it('normalizes URL-only feed creation', async () => {
     const { port, metadataPort } = createPorts();
     const useCases = createFeedUseCases(port, metadataPort);
@@ -68,6 +147,7 @@ describe('feed use cases', () => {
 function createPorts(preview = createOpenGraphPreview('Feed')): {
   port: FeedApplicationPort;
   metadataPort: FeedMetadataPort;
+  cachePort: FeedItemsCachePort;
 } {
   return {
     port: {
@@ -81,6 +161,11 @@ function createPorts(preview = createOpenGraphPreview('Feed')): {
     },
     metadataPort: {
       getOpenGraphPreview: vi.fn().mockResolvedValue(preview),
+    },
+    cachePort: {
+      read: vi.fn().mockResolvedValue(undefined),
+      write: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
     },
   };
 }

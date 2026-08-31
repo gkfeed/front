@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import type { ArticleBlock, ArticlePreview } from '../services/article';
-import { getFullscreenElement } from '../services/readerFullscreen';
+import type { ArticleBlock, ArticlePreview } from '../../../shared/articleContracts';
+import { getFullscreenElement } from '../platform/readerFullscreen';
 import type { useArticleReader } from '../hooks/useArticleReader';
 
 type ArticleReaderState = ReturnType<typeof useArticleReader>;

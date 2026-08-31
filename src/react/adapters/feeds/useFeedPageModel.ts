@@ -3,7 +3,8 @@ import { useCallback, useState } from 'react';
 import { useAsyncLoad } from '../../hooks/useAsyncLoad';
 import { useAuth } from '../../state/useAuth';
 import { useFeatureUseCases } from '../../state/useFeatureUseCases';
-import { getRequestErrorMessage, isNotFoundError } from '../../services/authError';
+import { isNotFoundError } from '../../domain/requestError';
+import { getRequestErrorMessage } from '../../presentation/requestErrorMessage';
 
 type DeleteState = 'idle' | 'confirming' | 'deleting' | 'error';
 export type FeedLoadStatus = 'loading' | 'success' | 'error' | 'not-found';

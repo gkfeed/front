@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getRequestErrorMessage } from '../services/authError';
+import { getRequestErrorMessage } from '../presentation/requestErrorMessage';
 import type { Credentials } from '../types';
 
 export interface LoginFormState {

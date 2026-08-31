@@ -10,7 +10,7 @@ import {
   isAutomaticFallbackFullscreen,
   isReaderFullscreen,
   setAutomaticFallbackFullscreen,
-} from '../services/readerFullscreen';
+} from '../platform/readerFullscreen';
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
 import { ReaderReviewActions } from './ReaderReviewActions';

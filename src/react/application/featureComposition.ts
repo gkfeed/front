@@ -12,12 +12,17 @@ import {
   getFeedItems,
 } from '../services/feeds';
 import { validateCredentials } from '../services/auth';
-import { isAuthenticationError } from '../services/authError';
+import { isAuthenticationError } from '../domain/requestError';
 import { loadRemotePreview as loadRemotePreviewRequest } from '../services/remotePreview';
 import { getOpenGraphPreview } from '../services/openGraph';
 import { getArticle } from '../services/article';
 import { fetchTikTokComments } from '../services/tiktokComments';
 import { getLiveTwitchItems } from '../services/twitch';
+import {
+  deleteFeedItemsCache,
+  readFeedItemsCache,
+  writeFeedItemsCache,
+} from '../services/feedItemsCache';
 
 export function createFeatureComposition() {
   return {
@@ -38,6 +43,11 @@ export function createFeatureComposition() {
         getFeedItems,
       },
       { getOpenGraphPreview },
+      {
+        read: readFeedItemsCache,
+        write: writeFeedItemsCache,
+        delete: deleteFeedItemsCache,
+      },
     ),
     live: {
       loadLiveTwitchItems: getLiveTwitchItems,

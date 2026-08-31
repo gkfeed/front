@@ -1,4 +1,4 @@
-import { DEFAULT_REQUEST_TIMEOUT_MS } from './requestTimeout';
+import { DEFAULT_REQUEST_TIMEOUT_MS } from '../platform/requestTimeout';
 import { requestJson } from './httpRequest';
 
 export const BFF_REQUEST_TIMEOUT_MS = DEFAULT_REQUEST_TIMEOUT_MS;

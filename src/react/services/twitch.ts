@@ -6,7 +6,7 @@ import {
   combineAbortSignals,
   createTimeoutSignal,
   DEFAULT_REQUEST_TIMEOUT_MS,
-} from './requestTimeout';
+} from '../platform/requestTimeout';
 
 const OFFLINE_PREVIEW_PATH = /\/404_preview-\d+x\d+\.jpg$/i;
 const MAX_CONCURRENT_TWITCH_CHECKS = 4;

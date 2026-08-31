@@ -5,9 +5,34 @@ import {
   trimFeed,
   type FeedCreatorMode,
 } from '../../domain/feedCreator';
-import type { FeedApplicationPort, FeedMetadataPort } from '../featurePorts';
+import type {
+  FeedApplicationPort,
+  FeedItemsCachePort,
+  FeedMetadataPort,
+} from '../featurePorts';
 
-export function createFeedUseCases(port: FeedApplicationPort, metadataPort: FeedMetadataPort) {
+const CACHE_FRESHNESS_MS = 15_000;
+const INITIAL_PAGE_SIZE = 10;
+
+type LoadFeedItemsOptions = {
+  bypassCache?: boolean;
+  signal?: AbortSignal;
+  onCached?: (items: FeedItem[]) => void;
+  onProgress?: (items: FeedItem[]) => boolean | void;
+};
+
+const NO_FEED_ITEMS_CACHE: FeedItemsCachePort = {
+  read: async () => undefined,
+  write: async () => undefined,
+  delete: async () => undefined,
+};
+
+export function createFeedUseCases(
+  port: FeedApplicationPort,
+  metadataPort: FeedMetadataPort,
+  cachePort: FeedItemsCachePort = NO_FEED_ITEMS_CACHE,
+) {
+  const cacheRevisions = new Map<string, number>();
   async function loadFeeds(
     credentials: Credentials | null,
     signal?: AbortSignal,
@@ -27,14 +52,47 @@ export function createFeedUseCases(port: FeedApplicationPort, metadataPort: Feed
     return feed;
   }
 
-  function loadFeedItems(
+  async function loadFeedItems(
     credentials: Credentials | null,
-    limit?: number,
-    signal?: AbortSignal,
-    onProgress?: (items: FeedItem[]) => boolean | void,
-    initialPageSize?: number,
+    {
+      bypassCache = false,
+      signal,
+      onCached,
+      onProgress,
+    }: LoadFeedItemsOptions = {},
   ): Promise<FeedItem[]> {
-    return port.getFeedItems(credentials, limit, signal, onProgress, initialPageSize);
+    const username = credentials?.username;
+    const cacheRevision = username ? getCacheRevision(username) : 0;
+
+    if (!bypassCache && username) {
+      const cachedItems = await cachePort.read(username, CACHE_FRESHNESS_MS);
+      if (
+        !signal?.aborted
+        && getCacheRevision(username) === cacheRevision
+        && cachedItems
+      ) {
+        onCached?.(cachedItems);
+      }
+    }
+
+    const items = await port.getFeedItems(
+      credentials,
+      undefined,
+      signal,
+      onProgress,
+      INITIAL_PAGE_SIZE,
+    );
+    if (!signal?.aborted && username && getCacheRevision(username) === cacheRevision) {
+      void cachePort.write(username, items);
+    }
+    return items;
+  }
+
+  function invalidateFeedItemsCache(credentials: Credentials | null): void {
+    const username = credentials?.username;
+    if (!username) return;
+    cacheRevisions.set(username, getCacheRevision(username) + 1);
+    void cachePort.delete(username);
   }
 
   function deleteFeedItem(id: number, credentials: Credentials | null): Promise<void> {
@@ -82,12 +140,17 @@ export function createFeedUseCases(port: FeedApplicationPort, metadataPort: Feed
   return {
     deleteFeed,
     deleteFeedItem,
+    invalidateFeedItemsCache,
     isFeedNotFoundError,
     loadFeed,
     loadFeedItems,
     loadFeeds,
     saveFeed,
   };
+
+  function getCacheRevision(username: string): number {
+    return cacheRevisions.get(username) ?? 0;
+  }
 }
 
 export class FeedNotFoundError extends Error {

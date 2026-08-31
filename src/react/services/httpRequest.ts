@@ -3,7 +3,7 @@ import {
   createTimeoutSignal,
   DEFAULT_REQUEST_TIMEOUT_MS,
   isAbortError,
-} from './requestTimeout';
+} from '../platform/requestTimeout';
 
 export type HttpRequestOptions = {
   timeoutMs?: number | null;

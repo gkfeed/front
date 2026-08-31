@@ -48,11 +48,44 @@ describe('module architecture', () => {
           'components',
           'pages',
           'adapters',
+          'platform',
+          'presentation',
         ].some((layer) => target.startsWith(`src/react/${layer}/`))) {
         return [`${source} -> ${target}`];
       }
       if (source.startsWith('src/react/features/')
-        && (target.startsWith('src/react/application/') || target.startsWith('src/react/services/'))) {
+        && (target.startsWith('src/react/application/')
+          || target.startsWith('src/react/services/')
+          || target.startsWith('src/react/platform/')
+          || target.startsWith('src/react/presentation/'))) {
+        return [`${source} -> ${target}`];
+      }
+      if (source.startsWith('src/react/presentation/')
+        && [
+          'application',
+          'services',
+          'state',
+          'hooks',
+          'features',
+          'components',
+          'pages',
+          'adapters',
+          'platform',
+        ].some((layer) => target.startsWith(`src/react/${layer}/`))) {
+        return [`${source} -> ${target}`];
+      }
+      if (source.startsWith('src/react/platform/')
+        && [
+          'application',
+          'services',
+          'state',
+          'hooks',
+          'features',
+          'components',
+          'pages',
+          'adapters',
+          'presentation',
+        ].some((layer) => target.startsWith(`src/react/${layer}/`))) {
         return [`${source} -> ${target}`];
       }
       if (source.startsWith('src/react/pages/')
@@ -63,6 +96,8 @@ describe('module architecture', () => {
           'hooks',
           'services',
           'state',
+          'platform',
+          'presentation',
         ].some((layer) => target.startsWith(`src/react/${layer}/`))) {
         return [`${source} -> ${target}`];
       }

@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useAsyncLoad } from '../../hooks/useAsyncLoad';
 import { useAuth } from '../../state/useAuth';
 import { useFeatureUseCases } from '../../state/useFeatureUseCases';
-import { getRequestErrorMessage } from '../../services/authError';
+import { getRequestErrorMessage } from '../../presentation/requestErrorMessage';
 
 type Translator = (key: string) => string;
 

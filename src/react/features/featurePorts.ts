@@ -25,6 +25,12 @@ export type FeedMetadataPort = {
   getOpenGraphPreview: (url: string, signal?: AbortSignal) => Promise<OpenGraphPreview>;
 };
 
+export type FeedItemsCachePort = {
+  read: (username: string, maxAgeMs: number) => Promise<FeedItem[] | undefined>;
+  write: (username: string, items: FeedItem[]) => Promise<void>;
+  delete: (username: string) => Promise<void>;
+};
+
 export type LiveApplicationPort = {
   getLiveTwitchItems: (
     credentials: Credentials | null,

@@ -1,4 +1,4 @@
-import { DEFAULT_REQUEST_TIMEOUT_MS } from './requestTimeout';
+import { DEFAULT_REQUEST_TIMEOUT_MS } from '../platform/requestTimeout';
 import {
   requestJson as requestJsonTransport,
   requestResponse,

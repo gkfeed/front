@@ -3,6 +3,7 @@ import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import { useTheaterDialog } from './useTheaterDialog';
 
 type TwitchPreviewProps = {
   channel: string;
@@ -22,44 +23,13 @@ export function TwitchPreview({ channel, onPreviewError, preview }: TwitchPrevie
     setIsTheaterOpen(false);
   }, [channel]);
 
-  useEffect(() => {
-    if (!isTheaterOpen) return;
-    document.documentElement.classList.add('reader-theater-open');
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setIsTheaterOpen(false);
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const focusable = getFocusableElements(playerRef.current);
-      if (focusable.length === 0) return;
-      const first = focusable[0]!;
-      const last = focusable.at(-1)!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    const playerElement = playerRef.current;
-    const triggerElement = triggerRef.current;
-    window.addEventListener('keydown', handleKeyDown);
-    playerElement?.querySelector<HTMLElement>('button, iframe')?.focus();
-    return () => {
-      document.documentElement.classList.remove('reader-theater-open');
-      window.removeEventListener('keydown', handleKeyDown);
-      if (playerElement?.contains(document.activeElement)) {
-        playerElement.querySelector<HTMLButtonElement>('button')?.focus();
-      } else {
-        triggerElement?.focus();
-      }
-    };
-  }, [isTheaterOpen]);
+  useTheaterDialog({
+    initialFocusSelector: 'button, iframe',
+    isOpen: isTheaterOpen,
+    onOpenChange: setIsTheaterOpen,
+    playerRef,
+    triggerRef,
+  });
 
   if (isPlayerOpen) {
     return (
@@ -152,11 +122,4 @@ function TwitchPlayer({ channel, isTheaterOpen, onToggleTheater, shellRef }: Twi
       </div>
     </div>
   );
-}
-
-function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
-  if (!container) return [];
-  return Array.from(container.querySelectorAll<HTMLElement>(
-    'button, iframe, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-  )).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
 }

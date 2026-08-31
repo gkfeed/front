@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   classifyRequestError,
-  getRequestErrorMessage,
   isAuthenticationError,
   isNotFoundError,
-} from './authError';
+} from '../domain/requestError';
+import { getRequestErrorMessage } from './requestErrorMessage';
 
 function statusError(status: number): Error & { status: number } {
   const error = new Error(`HTTP ${status}`) as Error & { status: number };
@@ -13,7 +13,7 @@ function statusError(status: number): Error & { status: number } {
   return error;
 }
 
-describe('request error classification', () => {
+describe('request error presentation', () => {
   it.each([401, 403])('classifies HTTP %s as authentication', (status) => {
     const error = statusError(status);
 

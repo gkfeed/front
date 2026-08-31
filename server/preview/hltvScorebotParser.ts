@@ -9,5 +9,5 @@ export type {
 } from './hltvScoreboardParser.js';
 export {
   parseHltvRoundHistory,
-  parseHltvScorebotLog,
 } from './hltvScorebotRounds.js';
+export { parseHltvScorebotLog } from './hltvScorebotLogParser.js';

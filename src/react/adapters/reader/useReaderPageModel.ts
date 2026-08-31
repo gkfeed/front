@@ -3,11 +3,11 @@ import { useLocation } from 'react-router';
 
 import { useFeedReader } from './useFeedReader';
 import { useReviewShortcuts } from '../../hooks/useReviewShortcuts';
-import { getRequestErrorMessage } from '../../services/authError';
+import { getRequestErrorMessage } from '../../presentation/requestErrorMessage';
 import {
   exitReaderFullscreen,
   isAutomaticFallbackFullscreen,
-} from '../../services/readerFullscreen';
+} from '../../platform/readerFullscreen';
 import { getReaderMode } from '../../state/readerMode';
 import { useReaderItemOrderPreferences } from '../../state/useReaderItemOrderPreferences';
 
