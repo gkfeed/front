@@ -9,7 +9,7 @@ import {
   NSFW_MODE_STORAGE_KEY,
   NsfwPreferencesProvider,
 } from '../state/NsfwPreferencesProvider';
-import { ThemePicker } from './ThemePicker';
+import { SettingsMenu } from './SettingsMenu';
 
 afterEach(() => {
   cleanup();
@@ -20,13 +20,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('ThemePicker', () => {
+describe('SettingsMenu', () => {
   it('blurs NSFW by default and persists the hide mode', () => {
     const storage = stubLocalStorage();
     document.documentElement.dataset.theme = 'light';
     render(
       <NsfwPreferencesProvider>
-        <ThemePicker />
+        <SettingsMenu />
       </NsfwPreferencesProvider>,
     );
 
@@ -42,7 +42,7 @@ describe('ThemePicker', () => {
   it('moves the Reader view switch into Settings', () => {
     const onReaderModeChange = vi.fn();
     document.documentElement.dataset.theme = 'light';
-    render(<ThemePicker readerMode="review" onReaderModeChange={onReaderModeChange} />);
+    render(<SettingsMenu readerMode="review" onReaderModeChange={onReaderModeChange} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
@@ -58,7 +58,7 @@ describe('ThemePicker', () => {
   it('offers the Reader item order in Settings', () => {
     const onItemOrderChange = vi.fn();
     document.documentElement.dataset.theme = 'light';
-    render(<ThemePicker itemOrder="desc" onItemOrderChange={onItemOrderChange} />);
+    render(<SettingsMenu itemOrder="desc" onItemOrderChange={onItemOrderChange} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
@@ -73,7 +73,7 @@ describe('ThemePicker', () => {
 
   it('offers all four color themes in its appearance menu', () => {
     document.documentElement.dataset.theme = 'dark';
-    render(<ThemePicker />);
+    render(<SettingsMenu />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
@@ -95,7 +95,7 @@ describe('ThemePicker', () => {
   it('applies and persists the selected theme', () => {
     const storage = stubLocalStorage();
     document.documentElement.dataset.theme = 'dark';
-    render(<ThemePicker />);
+    render(<SettingsMenu />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Catppuccin Mocha theme' }));
@@ -108,7 +108,7 @@ describe('ThemePicker', () => {
 
   it('starts with a previously initialized theme', () => {
     document.documentElement.dataset.theme = 'latte';
-    render(<ThemePicker />);
+    render(<SettingsMenu />);
 
     expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
   });
@@ -123,7 +123,7 @@ describe('ThemePicker', () => {
     vi.stubGlobal('matchMedia', () => systemTheme);
     document.documentElement.dataset.themePreference = 'system';
     document.documentElement.dataset.theme = 'dark';
-    render(<ThemePicker />);
+    render(<SettingsMenu />);
 
     expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
     systemTheme.matches = true;
@@ -142,7 +142,7 @@ describe('ThemePicker', () => {
     vi.stubGlobal('matchMedia', () => systemTheme);
     document.documentElement.dataset.themePreference = 'system-catppuccin';
     document.documentElement.dataset.theme = 'mocha';
-    render(<ThemePicker />);
+    render(<SettingsMenu />);
 
     expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
     systemTheme.matches = true;
@@ -156,7 +156,7 @@ describe('ThemePicker', () => {
 
   it('closes the menu with Escape and returns focus to the trigger', () => {
     document.documentElement.dataset.theme = 'light';
-    render(<ThemePicker />);
+    render(<SettingsMenu />);
     const trigger = screen.getByRole('button', { name: 'Settings' });
 
     fireEvent.click(trigger);
@@ -168,7 +168,7 @@ describe('ThemePicker', () => {
 
   it('keeps the settings menu relationship and expanded state accessible', () => {
     document.documentElement.dataset.theme = 'light';
-    render(<ThemePicker />);
+    render(<SettingsMenu />);
     const trigger = screen.getByRole('button', { name: 'Settings' });
 
     expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
