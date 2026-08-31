@@ -32,23 +32,27 @@ export function createFeatureComposition() {
         ? validateCredentials(credentials)
         : validateCredentials(credentials, signal),
     }),
-    feeds: createFeedUseCases(
-      {
+    feeds: createFeedUseCases({
+      queryPort: {
+        getAllFeeds,
+        getFeedById,
+      },
+      itemsPort: {
+        getFeedItems,
+      },
+      commandPort: {
         createFeed: createFeedRequest,
         createFeedFromUrl: createFeedFromUrlRequest,
         deleteFeedById,
         deleteFeedItemById,
-        getAllFeeds,
-        getFeedById,
-        getFeedItems,
       },
-      { getOpenGraphPreview },
-      {
+      metadataPort: { getOpenGraphPreview },
+      cachePort: {
         read: readFeedItemsCache,
         write: writeFeedItemsCache,
         delete: deleteFeedItemsCache,
       },
-    ),
+    }),
     live: {
       loadLiveTwitchItems: getLiveTwitchItems,
     } satisfies LiveUseCases,

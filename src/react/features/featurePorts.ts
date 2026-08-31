@@ -1,13 +1,16 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
 import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../types';
 
-export type FeedApplicationPort = {
+export type FeedQueryPort = {
   getAllFeeds: (credentials: Credentials | null, signal?: AbortSignal) => Promise<Feed[]>;
   getFeedById: (
     id: number,
     credentials: Credentials | null,
     signal?: AbortSignal,
   ) => Promise<Feed | undefined>;
+};
+
+export type FeedItemsPort = {
   getFeedItems: (
     credentials: Credentials | null,
     limit?: number,
@@ -15,6 +18,9 @@ export type FeedApplicationPort = {
     onProgress?: (items: FeedItem[]) => boolean | void,
     initialPageSize?: number,
   ) => Promise<FeedItem[]>;
+};
+
+export type FeedCommandPort = {
   deleteFeedItemById: (id: number, credentials: Credentials | null) => Promise<void>;
   deleteFeedById: (id: number, credentials: Credentials | null) => Promise<void>;
   createFeed: (feed: FeedInput, credentials: Credentials | null) => Promise<void>;

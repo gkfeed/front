@@ -1,5 +1,5 @@
 import type { Credentials, FeedItem } from '../../types';
-import type { FeedApplicationPort, FeedItemsCachePort } from '../featurePorts';
+import type { FeedItemsPort, FeedItemsCachePort } from '../featurePorts';
 
 const CACHE_FRESHNESS_MS = 15_000;
 const INITIAL_PAGE_SIZE = 10;
@@ -18,7 +18,7 @@ const NO_FEED_ITEMS_CACHE: FeedItemsCachePort = {
 };
 
 export function createFeedItemsLoader(
-  feedPort: Pick<FeedApplicationPort, 'getFeedItems'>,
+  feedPort: FeedItemsPort,
   cachePort: FeedItemsCachePort = NO_FEED_ITEMS_CACHE,
 ) {
   const cacheRevisions = new Map<string, number>();
