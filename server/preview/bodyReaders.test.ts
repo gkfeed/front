@@ -1,9 +1,11 @@
 import { gzipSync } from 'node:zlib';
+import type { IncomingMessage } from 'node:http';
 import { Readable } from 'node:stream';
 
 import { describe, expect, it } from 'vitest';
 
 import type { PublicHttpResponse } from '../publicHttp.js';
+import { PreviewError } from './errors.js';
 import {
   readLimitedBody,
   readLimitedBytes,
@@ -70,7 +72,7 @@ describe('body readers', () => {
     await expect(readLimitedJson(response, {
       maximumBytes: body.byteLength,
       tooLarge: () => responseTooLarge(),
-      invalidJson: () => new Error('invalid json'),
+      invalidJson: () => new PreviewError('invalid json', 'invalid_json'),
     })).resolves.toEqual({ ok: true });
   });
 });
@@ -80,7 +82,7 @@ function responseFrom(
   headers: Record<string, string> = {},
 ): PublicHttpResponse {
   return {
-    body: Readable.from(chunks),
+    body: Readable.from(chunks) as IncomingMessage,
     headers,
     status: 200,
     url: new URL('https://example.com/'),
@@ -89,7 +91,7 @@ function responseFrom(
 
 function responseFromPendingBody(): PublicHttpResponse {
   return {
-    body: new Readable({ read() {} }),
+    body: new Readable({ read() {} }) as IncomingMessage,
     headers: {},
     status: 200,
     url: new URL('https://example.com/'),

@@ -21,7 +21,7 @@ export default defineConfig({
     },
     {
       command: 'npm run dev:bff',
-      url: 'http://127.0.0.1:4301',
+      url: 'http://127.0.0.1:4301/bff/open-graph',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: { PORT: '4301' },
