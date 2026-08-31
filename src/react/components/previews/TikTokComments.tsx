@@ -8,6 +8,7 @@ import { usePreviewVisibility } from '../../hooks/usePreviewVisibility';
 import { UserIcon } from '../Icons';
 import { CopyLinkButton } from '../CopyLinkButton';
 import { getFeedItemDescription } from '../../domain/feedItemDescription';
+import { trapFocus } from '../../platform/focusTrap';
 
 export function TikTokComments({ item }: { item: FeedItem }) {
   const { t } = useTranslation();
@@ -44,22 +45,7 @@ export function TikTokComments({ item }: { item: FeedItem }) {
         setIsExpanded(false);
         return;
       }
-      if (event.key !== 'Tab') return;
-      const focusable = getFocusableElements(commentsRef.current);
-      if (focusable.length === 0) {
-        event.preventDefault();
-        commentsRef.current?.focus();
-        return;
-      }
-      const first = focusable[0]!;
-      const last = focusable.at(-1)!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      trapFocus(event, commentsRef.current, { visibleOnly: true });
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -161,13 +147,6 @@ export function TikTokComments({ item }: { item: FeedItem }) {
       ) : null}
     </aside>
   );
-}
-
-function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
-  if (!container) return [];
-  return Array.from(container.querySelectorAll<HTMLElement>(
-    'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-  )).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
 }
 
 function renderDescription(description: string) {

@@ -3,19 +3,11 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import type { ArticleBlock, ArticlePreview } from '../../../shared/articleContracts';
+import { trapFocus } from '../platform/focusTrap';
 import { getFullscreenElement } from '../platform/readerFullscreen';
 import type { useArticleReader } from '../hooks/useArticleReader';
 
 type ArticleReaderState = ReturnType<typeof useArticleReader>;
-
-const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
 
 export function ArticleReaderLink({
   url,
@@ -102,29 +94,6 @@ function ArticleReaderDialog({
     };
   }, []);
 
-  const trapFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Tab') return;
-    const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [])]
-      .filter((element) => element.tabIndex >= 0);
-    if (focusable.length === 0) {
-      event.preventDefault();
-      return;
-    }
-
-    const first = focusable[0]!;
-    const last = focusable.at(-1)!;
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    } else if (!dialogRef.current?.contains(document.activeElement)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
-    }
-  };
-
   return (
     <div
       ref={dialogRef}
@@ -139,7 +108,7 @@ function ArticleReaderDialog({
           onClose();
           return;
         }
-        trapFocus(event);
+        trapFocus(event, dialogRef.current, { fallback: null });
       }}
     >
       <button

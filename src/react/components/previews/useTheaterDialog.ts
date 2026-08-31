@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 
+import { trapFocus } from '../../platform/focusTrap';
+
 export function useTheaterDialog({
   initialFocusSelector = 'iframe',
   isOpen,
@@ -32,18 +34,7 @@ export function useTheaterDialog({
         return;
       }
       if (onKeyDownRef.current?.(event)) return;
-      if (event.key !== 'Tab') return;
-      const focusable = getFocusableElements(playerRef.current);
-      if (focusable.length === 0) return;
-      const first = focusable[0]!;
-      const last = focusable.at(-1)!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      trapFocus(event, playerRef.current, { fallback: null, visibleOnly: true });
     };
 
     const playerElement = playerRef.current;
@@ -60,11 +51,4 @@ export function useTheaterDialog({
       }
     };
   }, [initialFocusSelector, isOpen, playerRef, triggerRef]);
-}
-
-function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
-  if (!container) return [];
-  return Array.from(container.querySelectorAll<HTMLElement>(
-    'button, iframe, video, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-  )).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
 }
