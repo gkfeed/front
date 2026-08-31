@@ -37,7 +37,7 @@ export function shouldLoadRemotePreview(
     : null;
 
   return !shouldHideNsfw
-    && policy.remotePreview
+    && policy.remotePreview !== 'none'
     && (isReddit
       || isVk
       || isRezka

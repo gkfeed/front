@@ -39,7 +39,7 @@ describe('loadRemotePreview', () => {
     vi.mocked(getLiquipediaMatchPreview).mockRejectedValue(error);
     vi.mocked(getOpenGraphPreview).mockResolvedValue(OPEN_GRAPH_PREVIEW);
 
-    await expect(loadRemotePreview(LIQUIPEDIA_URL, true, new AbortController().signal))
+    await expect(loadRemotePreview(LIQUIPEDIA_URL, 'liquipedia', new AbortController().signal))
       .resolves.toEqual({ liquipediaMatch: null, openGraphPreview: OPEN_GRAPH_PREVIEW });
     expect(getOpenGraphPreview).toHaveBeenCalledWith(LIQUIPEDIA_URL, expect.any(AbortSignal));
   });
@@ -56,7 +56,7 @@ describe('loadRemotePreview', () => {
   ])('propagates %s instead of falling back', async (_label, error) => {
     vi.mocked(getLiquipediaMatchPreview).mockRejectedValue(error);
 
-    await expect(loadRemotePreview(LIQUIPEDIA_URL, true, new AbortController().signal))
+    await expect(loadRemotePreview(LIQUIPEDIA_URL, 'liquipedia', new AbortController().signal))
       .rejects.toBe(error);
     expect(getOpenGraphPreview).not.toHaveBeenCalled();
   });

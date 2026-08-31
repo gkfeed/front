@@ -17,6 +17,8 @@ export type RemotePreview = {
   openGraphPreview: OpenGraphPreview | null;
 };
 
+export type RemotePreviewSource = 'none' | 'open-graph' | 'liquipedia';
+
 export type FeedItemCardVariant =
   | { type: 'standard' }
   | { type: 'matreshka'; videoId: string }

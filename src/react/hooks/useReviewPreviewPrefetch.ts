@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { analyzeFeedItem, getRemoteFeedItemPreview } from '../domain/feedItemPreview';
 import { shouldLoadRemotePreview } from '../domain/feedItemCardPresentation';
 import type { RemotePreview } from '../domain/feedItemCardContracts';
+import { getFeedItemProviderPolicy } from '../domain/feedItemProviderPolicies';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import type { FeedItem } from '../types';
 
@@ -61,15 +62,19 @@ function prefetchFeedItem(
   prefetchControllers: Set<AbortController>,
 ): void {
   const analysis = analyzeFeedItem(item);
+  const providerPolicy = getFeedItemProviderPolicy(analysis.provider);
   prefetchPreviewImages(analysis.localPreview, prefetchedImageUrls);
 
-  if (!shouldLoadRemotePreview(item, analysis, false)) return;
+  if (
+    !shouldLoadRemotePreview(item, analysis, false)
+    || providerPolicy.remotePreview === 'none'
+  ) return;
 
   const controller = new AbortController();
   prefetchControllers.add(controller);
   void previewUseCases.loadRemotePreview(
     item.link,
-    analysis.provider === 'liquipedia',
+    providerPolicy.remotePreview,
     controller.signal,
   )
     .then((remotePreview) => {

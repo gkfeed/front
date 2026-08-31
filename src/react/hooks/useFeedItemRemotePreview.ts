@@ -6,7 +6,7 @@ import {
   type SetStateAction,
 } from 'react';
 
-import type { RemotePreview } from '../domain/feedItemCardContracts';
+import type { RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
 import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useHltvLiveRefresh } from './useHltvLiveRefresh';
@@ -17,22 +17,27 @@ type RemotePreviewStatus = 'idle' | 'pending' | 'loaded' | 'failed';
 
 export function useFeedItemRemotePreview(
   url: string,
-  enabled: boolean,
-  isLiquipedia: boolean,
-  isHltv = false,
+  options: {
+    enabled: boolean;
+    source: RemotePreviewSource;
+    livePreview: 'none' | 'hltv';
+  },
 ) {
+  const { enabled, source, livePreview: livePreviewMode } = options;
   const { preview: previewUseCases } = useFeatureUseCases();
   const cardRef = useRef<HTMLElement>(null);
   const isVisible = usePreviewVisibility(cardRef);
   const load = useCallback(
-    (signal: AbortSignal) => previewUseCases.loadRemotePreview(url, isLiquipedia, signal),
-    [isLiquipedia, previewUseCases, url],
+    (signal: AbortSignal) => source === 'none'
+      ? Promise.resolve(EMPTY_REMOTE_PREVIEW)
+      : previewUseCases.loadRemotePreview(url, source, signal),
+    [previewUseCases, source, url],
   );
   const resource = useAsyncResource(load, {
     enabled: enabled && isVisible,
-    key: `${url}:${isLiquipedia ? 'liquipedia' : 'open-graph'}`,
+    key: `${url}:${source}`,
   });
-  const previewKey = `${url}:${isLiquipedia ? 'liquipedia' : 'open-graph'}`;
+  const previewKey = `${url}:${source}`;
   const [livePreview, setLivePreview] = useState<{
     key: string;
     value: RemotePreview;
@@ -63,7 +68,7 @@ export function useFeedItemRemotePreview(
     url,
     enabled,
     isVisible,
-    isHltv,
+    isHltv: livePreviewMode === 'hltv',
     currentPreview: preview.openGraphPreview,
     setPreview,
   });

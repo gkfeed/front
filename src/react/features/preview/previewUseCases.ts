@@ -2,7 +2,7 @@ import type { OpenGraphPreview } from '../../../../shared/previewContracts';
 import type { TikTokCommentsPreview } from '../../../../shared/tiktokContracts';
 import type { ArticlePreview } from '../../../../shared/articleContracts';
 
-import type { RemotePreview } from '../../domain/feedItemCardContracts';
+import type { RemotePreview, RemotePreviewSource } from '../../domain/feedItemCardContracts';
 
 export type PreviewGateway = {
   getArticle: (url: string, signal?: AbortSignal) => Promise<ArticlePreview>;
@@ -10,7 +10,7 @@ export type PreviewGateway = {
   fetchTikTokComments: (url: string, signal: AbortSignal) => Promise<TikTokCommentsPreview>;
   loadRemotePreview: (
     url: string,
-    isLiquipedia: boolean,
+    source: Exclude<RemotePreviewSource, 'none'>,
     signal: AbortSignal,
   ) => Promise<RemotePreview>;
 };

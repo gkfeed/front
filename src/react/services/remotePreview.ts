@@ -2,16 +2,16 @@ import { BffHttpError, BffResponseError } from './bffClient';
 import { getLiquipediaMatchPreview } from './liquipedia';
 import { getOpenGraphPreview } from './openGraph';
 import { loadQueuedPreview } from './previewQueue';
-import type { RemotePreview } from '../domain/feedItemCardContracts';
+import type { RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
 
 export type { RemotePreview } from '../domain/feedItemCardContracts';
 
 export async function loadRemotePreview(
   url: string,
-  isLiquipedia: boolean,
+  source: Exclude<RemotePreviewSource, 'none'>,
   signal: AbortSignal,
 ): Promise<RemotePreview> {
-  if (isLiquipedia) {
+  if (source === 'liquipedia') {
     try {
       const liquipediaMatch = await loadQueuedPreview(
         `liquipedia:${url}`,
