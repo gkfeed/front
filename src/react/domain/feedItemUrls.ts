@@ -1,4 +1,8 @@
-import { normalizeHostname } from '../../../shared/urlRules';
+import {
+  getMatreshkaVideoIdFromUrl,
+  getSasflixPublicationIdFromUrl,
+  normalizeHostname,
+} from '../../../shared/urlRules';
 
 export function parseUrl(value: string): URL | null {
   try {
@@ -53,31 +57,11 @@ export function getYoutubeVideoId(url: URL): string | null {
 }
 
 export function getMatreshkaVideoId(url: URL): string | null {
-  if (
-    url.protocol !== 'https:'
-    || hostnameOf(url) !== 'matreshka.tv'
-    || url.username
-    || url.password
-    || url.port
-  ) return null;
-
-  const videoId = url.pathname.match(/^\/(?:video|embed\/video)\/([A-Za-z0-9_-]{1,64})\/?$/i)?.[1] ?? null;
-  return videoId;
+  return getMatreshkaVideoIdFromUrl(url);
 }
 
 export function getSasflixPublicationId(url: URL): string | null {
-  if (
-    url.protocol !== 'https:'
-    || hostnameOf(url) !== 'sasflix.ru'
-    || url.username
-    || url.password
-    || url.port
-  ) return null;
-
-  const match = url.pathname.match(
-    /^\/[a-z0-9_-]+\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/?$/i,
-  );
-  return match?.[1] ?? null;
+  return getSasflixPublicationIdFromUrl(url);
 }
 
 // Re-export shared helper for server/client consistency checks.

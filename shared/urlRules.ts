@@ -7,6 +7,8 @@ const HLTV_MATCH_PATH = /^\/matches\/\d+(?:\/|$)/;
 const LIQUIPEDIA_MATCH_PATH = /\/Match(?::|%3A)/i;
 const TIKTOK_VIDEO_PATH = /\/(?:video|v)\/\d+(?:\/|$)/;
 const REDDIT_VIDEO_PATH = /^\/[\w-]+(?:\/DASH_[^/]+\.mp4)?\/?$/i;
+const INSTAGRAM_MEDIA_PATH = /^\/(?:p|reel|reels|tv)\/[A-Za-z0-9_-]{1,64}\/?$/i;
+const MATRESHKA_VIDEO_PATH = /^\/(?:video|embed\/video)\/([A-Za-z0-9_-]{1,64})\/?$/i;
 
 export function normalizeHostname(hostname: string): string {
   return hostname.replace(/^www\./, '').toLowerCase();
@@ -45,6 +47,30 @@ export function isVkHost(hostname: string): boolean {
 
 export function isVkImageHost(hostname: string): boolean {
   return isHostnameOrSubdomain(hostname, VK_IMAGE_HOSTS);
+}
+
+export function isInstagramMediaUrl(url: URL): boolean {
+  return HTTP_PROTOCOLS.has(url.protocol)
+    && normalizeHostname(url.hostname) === 'instagram.com'
+    && !url.username
+    && !url.password
+    && !url.port
+    && INSTAGRAM_MEDIA_PATH.test(url.pathname);
+}
+
+export function getMatreshkaVideoIdFromUrl(url: URL): string | null {
+  if (
+    url.protocol !== 'https:'
+    || normalizeHostname(url.hostname) !== 'matreshka.tv'
+    || url.username
+    || url.password
+    || url.port
+  ) return null;
+  return url.pathname.match(MATRESHKA_VIDEO_PATH)?.[1] ?? null;
+}
+
+export function isMatreshkaVideoUrl(url: URL): boolean {
+  return getMatreshkaVideoIdFromUrl(url) !== null;
 }
 
 const SASFLIX_PUBLICATION_PATH = /^\/[a-z0-9_-]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/?$/i;

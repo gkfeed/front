@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import { TheaterPlayerShell } from './TheaterPlayerShell';
 import {
   sendPlaybackRate,
   useYoutubePlayerController,
@@ -129,18 +130,13 @@ export function YoutubePlayerView({
   });
 
   return (
-    <div
-      ref={shellRef}
-      className={[
-        'reader-card__player-shell',
-        isTheaterOpen ? 'reader-card__player-shell--theater' : '',
-      ].filter(Boolean).join(' ')}
-      role={isTheaterOpen ? 'dialog' : undefined}
-      aria-modal={isTheaterOpen ? 'true' : undefined}
-      aria-label={isTheaterOpen ? (title || t('preview.youtubePlayer')) : undefined}
-    >
-      <div className="reader-card__player-stage">
-        <div className="reader-card__player-toolbar">
+    <TheaterPlayerShell
+      title={title || t('preview.youtubePlayer')}
+      isTheaterOpen={isTheaterOpen}
+      onToggleTheater={onToggleTheater}
+      shellRef={shellRef}
+      toolbar={(
+        <>
           {isResumeAvailable && resumePosition !== null ? (
             <button
               type="button"
@@ -160,29 +156,18 @@ export function YoutubePlayerView({
           >
             {isDoubleSpeed ? '2x' : '1x'}
           </button>
-          <button
-            type="button"
-            className="reader-card__theater-toggle"
-            aria-label={isTheaterOpen ? t('preview.exitTheater') : t('preview.enterTheater')}
-            aria-pressed={isTheaterOpen}
-            onClick={onToggleTheater}
-          >
-            <span aria-hidden="true">{isTheaterOpen ? '↙' : '↗'}</span>
-            {isTheaterOpen ? t('preview.exitTheaterShort') : t('preview.theater')}
-          </button>
-        </div>
-        <div className="reader-card__preview reader-card__preview--player">
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
-            title={title || t('preview.youtubePlayer')}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-            ref={iframeRef}
-          />
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    >
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
+        title={title || t('preview.youtubePlayer')}
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+        ref={iframeRef}
+      />
+    </TheaterPlayerShell>
   );
 }
 

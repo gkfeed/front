@@ -1,6 +1,8 @@
 import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { hostnameOf, parseUrl } from './feedItemUrls';
 
+export { isInstagramMediaUrl } from '../../../shared/urlRules';
+
 const INSTAGRAM_MEDIA_PATH = /^\/(p|reel|reels|tv)\/([A-Za-z0-9_-]{1,64})\/?$/i;
 
 export function getInstagramEmbedUrl(value: string | URL): string | null {
@@ -20,10 +22,6 @@ export function getInstagramEmbedUrl(value: string | URL): string | null {
   const mediaType = match[1].toLowerCase() === 'reels' ? 'reel' : match[1].toLowerCase();
   const shortcode = match[2];
   return `https://www.instagram.com/${mediaType}/${shortcode}/embed/`;
-}
-
-export function isInstagramMediaUrl(url: URL): boolean {
-  return getInstagramEmbedUrl(url) !== null;
 }
 
 export function getInstagramEmbedPreview(

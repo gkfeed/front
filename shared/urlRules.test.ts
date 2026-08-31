@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getMatreshkaVideoIdFromUrl,
+  getSasflixPublicationIdFromUrl,
   isHltvMatchUrl,
+  isInstagramMediaUrl,
   isLiquipediaMatchUrl,
   isRedditVideoUrl,
   isTikTokVideoUrl,
@@ -69,5 +72,34 @@ describe('shared URL rules', () => {
     ['vk.com.example.org', false],
   ])('keeps VK host boundaries for %s', (hostname, expected) => {
     expect(isVkHost(hostname)).toBe(expected);
+  });
+
+  it.each([
+    ['https://www.instagram.com/reel/Video_123/', true],
+    ['http://instagram.com/p/Post-123', true],
+    ['https://user@instagram.com/p/Post123', false],
+    ['https://instagram.com.example.org/p/Post123', false],
+    ['https://instagram.com/profile/Post123', false],
+  ])('keeps Instagram media URL boundaries for %s', (value, expected) => {
+    expect(isInstagramMediaUrl(url(value))).toBe(expected);
+  });
+
+  it.each([
+    ['https://matreshka.tv/video/episode_123', 'episode_123'],
+    ['https://www.matreshka.tv/embed/video/episode-123/', 'episode-123'],
+    ['http://matreshka.tv/video/episode', null],
+    ['https://matreshka.tv.example.org/video/episode', null],
+    ['https://user@matreshka.tv/video/episode', null],
+  ])('extracts a bounded Matreshka video id from %s', (value, expected) => {
+    expect(getMatreshkaVideoIdFromUrl(url(value))).toBe(expected);
+  });
+
+  it('extracts a Sasflix publication id through the shared rule', () => {
+    expect(getSasflixPublicationIdFromUrl(url(
+      'https://sasflix.ru/documentary/630ffde7-febb-4f95-a490-6208d8770dea',
+    ))).toBe('630ffde7-febb-4f95-a490-6208d8770dea');
+    expect(getSasflixPublicationIdFromUrl(url(
+      'http://sasflix.ru/documentary/630ffde7-febb-4f95-a490-6208d8770dea',
+    ))).toBeNull();
   });
 });

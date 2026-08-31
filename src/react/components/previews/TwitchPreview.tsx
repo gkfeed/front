@@ -3,6 +3,7 @@ import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import { TheaterPlayerShell } from './TheaterPlayerShell';
 import { useTheaterDialog } from './useTheaterDialog';
 
 type TwitchPreviewProps = {
@@ -87,39 +88,19 @@ function TwitchPlayer({ channel, isTheaterOpen, onToggleTheater, shellRef }: Twi
   const playerTitle = t('preview.twitchPlayer', { channel });
 
   return (
-    <div
-      ref={shellRef}
-      className={[
-        'reader-card__player-shell',
-        isTheaterOpen ? 'reader-card__player-shell--theater' : '',
-      ].filter(Boolean).join(' ')}
-      role={isTheaterOpen ? 'dialog' : undefined}
-      aria-modal={isTheaterOpen ? 'true' : undefined}
-      aria-label={isTheaterOpen ? playerTitle : undefined}
+    <TheaterPlayerShell
+      title={playerTitle}
+      isTheaterOpen={isTheaterOpen}
+      onToggleTheater={onToggleTheater}
+      shellRef={shellRef}
     >
-      <div className="reader-card__player-stage">
-        <div className="reader-card__player-toolbar">
-          <button
-            type="button"
-            className="reader-card__theater-toggle"
-            aria-label={isTheaterOpen ? t('preview.exitTheater') : t('preview.enterTheater')}
-            aria-pressed={isTheaterOpen}
-            onClick={onToggleTheater}
-          >
-            <span aria-hidden="true">{isTheaterOpen ? '↙' : '↗'}</span>
-            {isTheaterOpen ? t('preview.exitTheaterShort') : t('preview.theater')}
-          </button>
-        </div>
-        <div className="reader-card__preview reader-card__preview--player">
-          <iframe
-            src={`https://player.twitch.tv/?${parameters}`}
-            title={playerTitle}
-            allow="autoplay; fullscreen"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-        </div>
-      </div>
-    </div>
+      <iframe
+        src={`https://player.twitch.tv/?${parameters}`}
+        title={playerTitle}
+        allow="autoplay; fullscreen"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
+    </TheaterPlayerShell>
   );
 }

@@ -9,7 +9,12 @@ import { parseLiquipediaMatch } from './liquipediaParser.js';
 import type { HltvPage } from './hltvFetcher.js';
 import { isHltvMatchUrl, parseOpenGraph } from './openGraphParser.js';
 import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
-import { normalizeHostname } from '../../shared/urlRules.js';
+import {
+  isInstagramMediaUrl,
+  isMatreshkaVideoUrl,
+  isSasflixPublicationUrl,
+  normalizeHostname,
+} from '../../shared/urlRules.js';
 
 export { parseLiquipediaMatch };
 export { fetchLiquipediaMatch };
@@ -126,25 +131,4 @@ function getRezkaPreviewUrls(url: URL): URL[] {
 
 function isRezkaUrl(url: URL): boolean {
   return ['hdrezka.me', 'rezka.ag'].includes(normalizeHostname(url.hostname));
-}
-
-function isMatreshkaVideoUrl(url: URL): boolean {
-  return url.hostname.toLowerCase().replace(/^www\./, '') === 'matreshka.tv'
-    && /^\/video\/[^/]+(?:\/|$)/i.test(url.pathname);
-}
-
-function isSasflixPublicationUrl(url: URL): boolean {
-  // Sasflix publishes videos under category routes such as /documentary/:id.
-  // Keep in sync with src/react/domain/feedItemUrls.ts and shared/urlRules.ts.
-  return normalizeHostname(url.hostname) === 'sasflix.ru'
-    && url.protocol === 'https:'
-    && !url.username
-    && !url.password
-    && !url.port
-    && /^\/[a-z0-9_-]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/?$/i.test(url.pathname);
-}
-
-function isInstagramMediaUrl(url: URL): boolean {
-  return normalizeHostname(url.hostname) === 'instagram.com'
-    && /^\/(?:p|reel|reels|tv)\/[A-Za-z0-9_-]{1,64}\/?$/i.test(url.pathname);
 }
