@@ -3,6 +3,8 @@ import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import { useHlsVideo } from './useHlsVideo';
+import { useTheaterDialog } from './useTheaterDialog';
 
 type SasflixPreviewProps = {
   href: string;
@@ -47,52 +49,16 @@ export function SasflixPreview({
     }
   }, [videoSrc, isPlayerOpen]);
 
-  useEffect(() => {
-    if (!isTheaterOpen) return;
-    if (!videoSrc) return;
-    if (!isPlayerOpen) return;
-    document.documentElement.classList.add('reader-theater-open');
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        pendingTheaterRef.current = false;
-        setIsTheaterOpen(false);
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const focusable = getFocusableElements(playerRef.current);
-      if (focusable.length === 0) return;
-      const first = focusable[0]!;
-      const last = focusable.at(-1)!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    const playerElement = playerRef.current;
-    const triggerElement = triggerRef.current;
-    window.addEventListener('keydown', handleKeyDown);
-    // Player may not be mounted yet when theater is requested before videoSrc.
-    // Defer focus so the video element exists.
-    const focusTimer = window.setTimeout(() => {
-      playerRef.current?.querySelector<HTMLVideoElement>('video')?.focus();
-    }, 0);
-    return () => {
-      window.clearTimeout(focusTimer);
-      document.documentElement.classList.remove('reader-theater-open');
-      window.removeEventListener('keydown', handleKeyDown);
-      if (playerElement?.contains(document.activeElement)) {
-        playerElement.querySelector<HTMLButtonElement>('button')?.focus();
-      } else {
-        triggerElement?.focus();
-      }
-    };
-  }, [isTheaterOpen, videoSrc, isPlayerOpen]);
+  useTheaterDialog({
+    initialFocusSelector: 'video',
+    isOpen: isTheaterOpen && Boolean(videoSrc) && isPlayerOpen,
+    onOpenChange: (isOpen) => {
+      if (!isOpen) pendingTheaterRef.current = false;
+      setIsTheaterOpen(isOpen);
+    },
+    playerRef,
+    triggerRef,
+  });
 
   if (isPlayerOpen && videoSrc) {
     return (
@@ -167,31 +133,7 @@ function SasflixPlayer({
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerTitle = t('preview.sasflixPlayer', { title });
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    let active = true;
-    let destroyPlayer: (() => void) | undefined;
-
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = videoSrc;
-    } else {
-      void import('hls.js').then(({ default: Hls }) => {
-        if (!active || !Hls.isSupported()) return;
-        const hls = new Hls();
-        destroyPlayer = () => hls.destroy();
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-      });
-    }
-
-    return () => {
-      active = false;
-      destroyPlayer?.();
-      video.removeAttribute('src');
-    };
-  }, [videoSrc]);
+  useHlsVideo({ src: videoSrc, videoRef });
 
   return (
     <div
@@ -229,11 +171,4 @@ function SasflixPlayer({
       </div>
     </div>
   );
-}
-
-function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
-  if (!container) return [];
-  return Array.from(container.querySelectorAll<HTMLElement>(
-    'button, video, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-  )).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
 }

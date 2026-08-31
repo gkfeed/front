@@ -3,6 +3,13 @@ import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import { useHlsVideo } from './useHlsVideo';
+import { useTheaterDialog } from './useTheaterDialog';
+
+const MATRESHKA_HLS_CONFIG = {
+  startLevel: -1,
+  capLevelToPlayerSize: true,
+};
 
 type MatreshkaPreviewProps = {
   videoId: string;
@@ -30,44 +37,12 @@ export function MatreshkaPreview({
     setIsTheaterOpen(false);
   }, [videoId]);
 
-  useEffect(() => {
-    if (!isTheaterOpen) return;
-    document.documentElement.classList.add('reader-theater-open');
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setIsTheaterOpen(false);
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const focusable = getFocusableElements(playerRef.current);
-      if (focusable.length === 0) return;
-      const first = focusable[0]!;
-      const last = focusable.at(-1)!;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    const playerElement = playerRef.current;
-    const triggerElement = triggerRef.current;
-    window.addEventListener('keydown', handleKeyDown);
-    playerElement?.querySelector<HTMLIFrameElement>('iframe')?.focus();
-    return () => {
-      document.documentElement.classList.remove('reader-theater-open');
-      window.removeEventListener('keydown', handleKeyDown);
-      if (playerElement?.contains(document.activeElement)) {
-        playerElement.querySelector<HTMLButtonElement>('button')?.focus();
-      } else {
-        triggerElement?.focus();
-      }
-    };
-  }, [isTheaterOpen]);
+  useTheaterDialog({
+    isOpen: isTheaterOpen,
+    onOpenChange: setIsTheaterOpen,
+    playerRef,
+    triggerRef,
+  });
 
   if (isPlayerOpen) {
     return (
@@ -114,42 +89,15 @@ function MatreshkaStreamFrame({ src }: { src: string }) {
   const [hasFailed, setHasFailed] = useState(false);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    let active = true;
-    let destroyPlayer: (() => void) | undefined;
-
     setIsReady(false);
     setHasFailed(false);
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = src;
-    } else {
-      void import('hls.js').then(({ default: Hls }) => {
-        if (!active || !Hls.isSupported()) {
-          if (active) setHasFailed(true);
-          return;
-        }
-        const hls = new Hls({
-          startLevel: -1,
-          capLevelToPlayerSize: true,
-        });
-        destroyPlayer = () => hls.destroy();
-        hls.on(Hls.Events.ERROR, (_event, data) => {
-          if (data.fatal && active) setHasFailed(true);
-        });
-        hls.loadSource(src);
-        hls.attachMedia(video);
-      }).catch(() => {
-        if (active) setHasFailed(true);
-      });
-    }
-
-    return () => {
-      active = false;
-      destroyPlayer?.();
-      video.removeAttribute('src');
-    };
   }, [src]);
+  useHlsVideo({
+    config: MATRESHKA_HLS_CONFIG,
+    onFatalError: () => setHasFailed(true),
+    src,
+    videoRef,
+  });
 
   if (hasFailed) return null;
   return (
@@ -227,11 +175,4 @@ function MatreshkaPlayer({
       </div>
     </div>
   );
-}
-
-function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
-  if (!container) return [];
-  return Array.from(container.querySelectorAll<HTMLElement>(
-    'button, iframe, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-  )).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
 }

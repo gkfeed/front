@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { readYoutubeProgress } from '../../services/youtubeProgress';
 import { useTheaterDialog } from './useTheaterDialog';
+import { sendPlayerCommand } from './useYoutubePlayerController';
 
 export function useYoutubePreviewSession(videoId: string) {
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
@@ -32,12 +33,21 @@ export function useYoutubePreviewSession(videoId: string) {
     isPlayingRef.current = nextIsPlaying;
     setIsPlaying(nextIsPlaying);
   }, []);
+  const handleTheaterKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key !== ' ' && event.code !== 'Space') return false;
+    const iframe = playerRef.current?.querySelector<HTMLIFrameElement>('iframe') ?? null;
+    if (document.activeElement === iframe) return false;
+    event.preventDefault();
+    const nextIsPlaying = !isPlayingRef.current;
+    handlePlaybackChange(nextIsPlaying);
+    sendPlayerCommand(iframe, nextIsPlaying ? 'playVideo' : 'pauseVideo');
+    return true;
+  }, [handlePlaybackChange]);
 
   useTheaterDialog({
     isOpen: isTheaterOpen,
-    isPlayingRef,
+    onKeyDown: handleTheaterKeyDown,
     onOpenChange: handleTheaterChange,
-    onPlaybackChange: handlePlaybackChange,
     playerRef,
     triggerRef,
   });

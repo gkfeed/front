@@ -1,23 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 
-import { sendPlayerCommand } from './useYoutubePlayerController';
-
 export function useTheaterDialog({
+  initialFocusSelector = 'iframe',
   isOpen,
-  isPlayingRef,
+  onKeyDown,
   onOpenChange,
-  onPlaybackChange,
   playerRef,
   triggerRef,
 }: {
+  initialFocusSelector?: string;
   isOpen: boolean;
-  isPlayingRef: RefObject<boolean>;
+  onKeyDown?: (event: KeyboardEvent) => boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onPlaybackChange: (isPlaying: boolean) => void;
   playerRef: RefObject<HTMLDivElement | null>;
   triggerRef: RefObject<HTMLButtonElement | null>;
 }) {
+  const onKeyDownRef = useRef(onKeyDown);
+  const onOpenChangeRef = useRef(onOpenChange);
+  onKeyDownRef.current = onKeyDown;
+  onOpenChangeRef.current = onOpenChange;
+
   useEffect(() => {
     if (!isOpen) return;
     document.documentElement.classList.add('reader-theater-open');
@@ -25,18 +28,10 @@ export function useTheaterDialog({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onOpenChange(false);
+        onOpenChangeRef.current(false);
         return;
       }
-      if (event.key === ' ' || event.code === 'Space') {
-        const iframe = playerRef.current?.querySelector<HTMLIFrameElement>('iframe') ?? null;
-        if (document.activeElement === iframe) return;
-        event.preventDefault();
-        const nextIsPlaying = !isPlayingRef.current;
-        onPlaybackChange(nextIsPlaying);
-        sendPlayerCommand(iframe, nextIsPlaying ? 'playVideo' : 'pauseVideo');
-        return;
-      }
+      if (onKeyDownRef.current?.(event)) return;
       if (event.key !== 'Tab') return;
       const focusable = getFocusableElements(playerRef.current);
       if (focusable.length === 0) return;
@@ -54,7 +49,7 @@ export function useTheaterDialog({
     const playerElement = playerRef.current;
     const triggerElement = triggerRef.current;
     window.addEventListener('keydown', handleKeyDown);
-    playerElement?.querySelector<HTMLIFrameElement>('iframe')?.focus();
+    playerElement?.querySelector<HTMLElement>(initialFocusSelector)?.focus();
     return () => {
       document.documentElement.classList.remove('reader-theater-open');
       window.removeEventListener('keydown', handleKeyDown);
@@ -64,12 +59,12 @@ export function useTheaterDialog({
         triggerElement?.focus();
       }
     };
-  }, [isOpen, isPlayingRef, onOpenChange, onPlaybackChange, playerRef, triggerRef]);
+  }, [initialFocusSelector, isOpen, playerRef, triggerRef]);
 }
 
 function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
   if (!container) return [];
   return Array.from(container.querySelectorAll<HTMLElement>(
-    'button, iframe, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    'button, iframe, video, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
   )).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null);
 }
