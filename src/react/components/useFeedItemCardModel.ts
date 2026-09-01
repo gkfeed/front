@@ -2,28 +2,12 @@ import {
   buildFeedItemCardPresentation,
   type FeedItemCardPresentation,
 } from '../domain/feedItemCardPresentation';
+import type { FeedItemCardPresentationRenderFacts } from '../domain/feedItemCardContracts';
 import { useFeedItemCardResource } from '../hooks/useFeedItemCardResource';
 import type { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
 import type { FeedItem } from '../types';
 
-export type FeedItemCardRenderFacts = Pick<
-  FeedItemCardPresentation,
-  | 'item'
-  | 'hostname'
-  | 'provider'
-  | 'variant'
-  | 'imagePreview'
-  | 'liquipediaMatch'
-  | 'description'
-  | 'canReadArticle'
-  | 'descriptor'
-  | 'visiblePreview'
-  | 'hltvMatchTeams'
-  | 'hltvSnapshot'
-  | 'hltvImageScore'
-  | 'oneFootballSnapshot'
-> & {
-  videoSrc: string | null;
+export type FeedItemCardRenderFacts = FeedItemCardPresentationRenderFacts & {
   isPreviewPending: boolean;
   previewStatus: ReturnType<typeof useFeedItemRemotePreview>['previewStatus'];
   onPreviewError: () => void;
@@ -51,21 +35,7 @@ export function useFeedItemCardModel(item: FeedItem): FeedItemCardModel {
   });
 
   const renderFacts: FeedItemCardRenderFacts = {
-    item: presentation.item,
-    hostname: presentation.hostname,
-    provider: presentation.provider,
-    variant: presentation.variant,
-    imagePreview: presentation.imagePreview,
-    liquipediaMatch: presentation.liquipediaMatch,
-    description: presentation.description,
-    canReadArticle: presentation.canReadArticle,
-    descriptor: presentation.descriptor,
-    visiblePreview: presentation.visiblePreview,
-    hltvMatchTeams: presentation.hltvMatchTeams,
-    hltvSnapshot: presentation.hltvSnapshot,
-    hltvImageScore: presentation.hltvImageScore,
-    oneFootballSnapshot: presentation.oneFootballSnapshot,
-    videoSrc: presentation.openGraphPreview?.video ?? null,
+    ...presentation.renderFacts,
     isPreviewPending: resource.isPreviewPending,
     previewStatus: resource.previewStatus,
     onPreviewError: resource.onPreviewError,

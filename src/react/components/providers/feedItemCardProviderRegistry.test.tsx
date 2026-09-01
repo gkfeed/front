@@ -28,15 +28,16 @@ function createFacts(overrides: Partial<FeedItemCardRenderFacts> = {}): FeedItem
   return {
     item: { id: 1, feedId: 2, link: 'https://example.com/story', title: 'Story', text: '' },
     hostname: 'example.com',
-    provider: 'generic',
     variant: { type: 'standard' },
     imagePreview: { type: 'none' },
     liquipediaMatch: null,
     description: null,
     canReadArticle: false,
     descriptor: {
+      renderer: 'generic',
       preview: { type: 'media', isShortVideo: false, isTikTok: false },
       copy: 'standard',
+      imagePresentation: 'standard',
       showInstagramIdentity: false,
       showHltvCountdown: false,
       showTikTokComments: false,
@@ -68,7 +69,9 @@ function renderProvider(facts: FeedItemCardRenderFacts) {
 describe('feed item card provider rendering', () => {
   it('dispatches every provider through the public render path', () => {
     for (const provider of providers) {
-      const facts = createFacts({ provider });
+      const facts = createFacts({
+        descriptor: { ...createFacts().descriptor, renderer: provider },
+      });
       const view = renderProvider(facts);
 
       expect(getFeedItemCardClassNames(facts)).toBeInstanceOf(Array);
@@ -76,9 +79,16 @@ describe('feed item card provider rendering', () => {
     }
   });
 
+  it('dispatches only through the completed presentation descriptor', () => {
+    const facts = createFacts({
+      descriptor: { ...createFacts().descriptor, renderer: 'tiktok' },
+    });
+
+    expect(getFeedItemCardClassNames(facts)).toContain('reader-card--tiktok');
+  });
+
   it('keeps unsupported slots internal and renders them as no-ops', () => {
     const { container } = renderProvider(createFacts({
-      provider: 'tiktok',
       descriptor: { ...createFacts().descriptor, copy: 'none' },
     }));
 
@@ -106,7 +116,6 @@ describe('feed item card provider rendering', () => {
 
   it('renders Instagram identity inside the provider preview', () => {
     const facts = createFacts({
-      provider: 'instagram',
       item: {
         id: 1,
         feedId: 2,
@@ -116,6 +125,7 @@ describe('feed item card provider rendering', () => {
       },
       descriptor: {
         ...createFacts().descriptor,
+        renderer: 'instagram',
         preview: { type: 'media', isShortVideo: true, isTikTok: false },
         showInstagramIdentity: true,
       },
@@ -135,7 +145,9 @@ describe('feed item card provider rendering', () => {
   });
 
   it('falls back to standard copy when a variant-specific renderer receives another variant', () => {
-    const { container } = renderProvider(createFacts({ provider: 'youtube' }));
+    const { container } = renderProvider(createFacts({
+      descriptor: { ...createFacts().descriptor, renderer: 'youtube' },
+    }));
 
     expect(container.querySelector('.reader-card__youtube-copy')).toBeNull();
     expect(container.querySelector('.reader-card__copy')).toBeTruthy();

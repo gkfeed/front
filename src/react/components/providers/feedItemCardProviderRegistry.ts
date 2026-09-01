@@ -93,7 +93,7 @@ const feedItemCardProviderRendererMap = {
 } as const satisfies Readonly<Record<FeedItemProvider, FeedItemCardProviderRenderer>>;
 
 export function getFeedItemCardClassNames(facts: FeedItemCardRenderFacts): readonly string[] {
-  return feedItemCardProviderRendererMap[facts.provider].cardClassNames(facts);
+  return feedItemCardProviderRendererMap[facts.descriptor.renderer].cardClassNames(facts);
 }
 
 export function FeedItemCardProviderContent({
@@ -109,7 +109,7 @@ export function FeedItemCardProviderContent({
   previewPlaceholder: ReactNode;
   onOpenArticle?: () => void;
 }) {
-  const renderer = feedItemCardProviderRendererMap[facts.provider];
+  const renderer = feedItemCardProviderRendererMap[facts.descriptor.renderer];
   const sharedProps = { facts, localizedPreview: null, displayHostname: '' };
   const preview = facts.isPreviewPending
     ? previewPlaceholder

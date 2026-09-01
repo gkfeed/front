@@ -30,7 +30,9 @@ export const FeedItemCard = memo(function FeedItemCard({
         isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
-      data-comments-expanded={model.provider === 'tiktok' ? areTikTokCommentsExpanded : undefined}
+      data-comments-expanded={model.descriptor.showTikTokComments
+        ? areTikTokCommentsExpanded
+        : undefined}
       inert={shouldBlurNsfw}
       onClickCapture={(event) => {
         if (!model.canReadArticle || articleReader.isOpen) return;

@@ -41,7 +41,7 @@ export function FeedItemMediaPreview({
       isTikTok={facts.descriptor.preview.isTikTok}
       hltvImageScore={facts.hltvImageScore}
       onPreviewError={facts.onPreviewError}
-      imagePresentation={facts.provider === 'vk' ? 'vk' : 'standard'}
+      imagePresentation={facts.descriptor.imagePresentation}
     />
   );
 }

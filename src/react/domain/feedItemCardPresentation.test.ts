@@ -77,11 +77,19 @@ describe('feed item card presentation', () => {
     });
 
     expect(presentation.descriptor).toEqual({
+      renderer: 'youtube',
       preview: { type: 'youtube', videoId: 'abcdefghi' },
       copy: 'youtube',
+      imagePresentation: 'standard',
       showInstagramIdentity: false,
       showHltvCountdown: false,
       showTikTokComments: false,
+    });
+    expect(presentation.renderFacts).toMatchObject({
+      item: feedItem,
+      variant: { type: 'youtube', videoId: 'abcdefghi' },
+      descriptor: presentation.descriptor,
+      videoSrc: null,
     });
   });
 

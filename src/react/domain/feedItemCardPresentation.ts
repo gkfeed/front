@@ -18,6 +18,7 @@ import type {
   FeedItemCardImagePreview,
   FeedItemCardMetadata,
   FeedItemCardPresentation,
+  FeedItemCardPresentationRenderFacts,
   FeedItemCardPresentationDescriptor,
   FeedItemCardVariant,
   NsfwMode,
@@ -92,13 +93,39 @@ export function buildFeedItemCardPresentation({
     imagePreview: metadata.imagePreview,
   });
 
-  return {
+  const presentation = {
     item,
     ...metadata,
     canReadArticle: canReadFeedItemArticle(metadata),
     descriptor,
     preview: previews.preview,
     visiblePreview,
+  };
+
+  return {
+    ...presentation,
+    renderFacts: completeRenderFacts(presentation),
+  };
+}
+
+function completeRenderFacts(
+  presentation: Omit<FeedItemCardPresentation, 'renderFacts'>,
+): FeedItemCardPresentationRenderFacts {
+  return {
+    item: presentation.item,
+    hostname: presentation.hostname,
+    variant: presentation.variant,
+    imagePreview: presentation.imagePreview,
+    liquipediaMatch: presentation.liquipediaMatch,
+    description: presentation.description,
+    canReadArticle: presentation.canReadArticle,
+    descriptor: presentation.descriptor,
+    visiblePreview: presentation.visiblePreview,
+    hltvMatchTeams: presentation.hltvMatchTeams,
+    hltvSnapshot: presentation.hltvSnapshot,
+    hltvImageScore: presentation.hltvImageScore,
+    oneFootballSnapshot: presentation.oneFootballSnapshot,
+    videoSrc: presentation.openGraphPreview?.video ?? null,
   };
 }
 
@@ -288,8 +315,10 @@ function resolveDescriptor({
   const display = getFeedItemProviderDisplayFacts(provider);
 
   return {
+    renderer: provider,
     preview: resolvePreviewDescriptor(variant, display),
     copy: resolveCopyDescriptor(provider, variant, imagePreview, display.isShortVideo),
+    imagePresentation: provider === 'vk' ? 'vk' : 'standard',
     showInstagramIdentity: display.showInstagramIdentity,
     showHltvCountdown: display.supplementary === 'hltv',
     showTikTokComments: display.supplementary === 'tiktok',
