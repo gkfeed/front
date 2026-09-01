@@ -1,6 +1,37 @@
 import { normalizeHostname } from '../../../shared/urlRules.js';
+import { isVkHost, isVkImageHost } from '../../../shared/urlRules.js';
 import { getStringProperty, isRecord } from '../../../shared/valueGuards.js';
+import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
+import { fetchHtml } from '../pageFetcher.js';
+import { parseOpenGraph } from '../openGraphParser.js';
+import { TWITTERBOT_USER_AGENT } from '../previewFetchers.js';
 import { resolveHttpUrl } from '../html.js';
+
+export const vkOpenGraphAdapter: OpenGraphProviderAdapter = {
+  matches: (url) => isVkHost(url.hostname),
+  async fetch(requestedUrl, context) {
+    const page = await fetchHtml(requestedUrl, TWITTERBOT_USER_AGENT, {}, context);
+    return parseVkOpenGraph(page.html, page.url);
+  },
+  parse: parseVkOpenGraph,
+};
+
+function parseVkOpenGraph(html: string, pageUrl: URL) {
+  const preview = parseOpenGraph(html, pageUrl);
+  const structuredVideo = parseVkStructuredVideo(html, pageUrl);
+  return {
+    ...preview,
+    image: normalizeVkImage(preview.image ?? structuredVideo?.image ?? null),
+    video: preview.video ?? structuredVideo?.embedUrl ?? null,
+  };
+}
+
+function normalizeVkImage(value: string | null): string | null {
+  if (!value) return null;
+  const url = new URL(value);
+  if (url.protocol === 'http:' && isVkImageHost(url.hostname)) url.protocol = 'https:';
+  return url.href;
+}
 
 export function parseVkStructuredVideo(
   html: string,

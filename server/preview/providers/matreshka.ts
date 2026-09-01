@@ -1,5 +1,27 @@
 import { normalizeHostname } from '../../../shared/urlRules.js';
+import { isMatreshkaVideoUrl } from '../../../shared/urlRules.js';
+import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
+import { fetchHtml } from '../pageFetcher.js';
+import { parseOpenGraph } from '../openGraphParser.js';
+import { TWITTERBOT_USER_AGENT } from '../previewFetchers.js';
 import { decodeHtml } from '../html.js';
+
+export const matreshkaOpenGraphAdapter: OpenGraphProviderAdapter = {
+  matches: isMatreshkaVideoUrl,
+  async fetch(requestedUrl, context) {
+    const page = await fetchHtml(requestedUrl, TWITTERBOT_USER_AGENT, {
+      maxBytes: 2_000_000,
+      truncateAtLimit: true,
+    }, context);
+    return parseMatreshkaOpenGraph(page.html, page.url);
+  },
+  parse: parseMatreshkaOpenGraph,
+};
+
+function parseMatreshkaOpenGraph(html: string, pageUrl: URL) {
+  const preview = parseOpenGraph(html, pageUrl);
+  return { ...preview, video: parseMatreshkaVideoUrl(html, pageUrl) ?? preview.video };
+}
 
 export function parseMatreshkaVideoUrl(html: string, pageUrl: URL): string | null {
   if (

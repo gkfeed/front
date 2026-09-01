@@ -1,4 +1,38 @@
 import { decodeHtml } from '../html.js';
+import { isInstagramMediaUrl } from '../../../shared/urlRules.js';
+import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
+import { fetchHtml } from '../pageFetcher.js';
+import { parseOpenGraph } from '../openGraphParser.js';
+import { TWITTERBOT_USER_AGENT } from '../previewFetchers.js';
+
+export const instagramOpenGraphAdapter: OpenGraphProviderAdapter = {
+  matches: isInstagramMediaUrl,
+  async fetch(requestedUrl, context) {
+    const embedUrl = new URL(requestedUrl.href);
+    embedUrl.protocol = 'https:';
+    embedUrl.hostname = 'www.instagram.com';
+    embedUrl.search = '';
+    embedUrl.hash = '';
+    embedUrl.pathname = `${embedUrl.pathname
+      .replace(/^\/reels\//i, '/reel/')
+      .replace(/\/$/, '')}/embed/`;
+    const page = await fetchHtml(embedUrl, TWITTERBOT_USER_AGENT, {}, context);
+    return parseInstagramOpenGraph(page.html, requestedUrl);
+  },
+  parse: parseInstagramOpenGraph,
+};
+
+function parseInstagramOpenGraph(html: string, pageUrl: URL) {
+  const preview = parseOpenGraph(html, pageUrl);
+  const media = parseInstagramEmbedMedia(html);
+  if (!media) return preview;
+  return {
+    ...preview,
+    image: preview.image ?? media.imageUrl,
+    video: preview.video ?? media.videoUrl,
+    type: media.type,
+  };
+}
 
 export function parseInstagramEmbedMedia(
   html: string,

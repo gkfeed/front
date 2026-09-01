@@ -1,54 +1,35 @@
 import type { OpenGraphPreview } from '../../shared/previewContracts.js';
-import { isHltvMatchUrl, isOneFootballMatchUrl, isVkImageHost } from '../../shared/urlRules.js';
 import { decodeHtml, parseAttributes, resolveHttpUrl, stripTags } from './html.js';
-import { parseHltvProviderData } from './hltvProviderParser.js';
-import { parseOneFootballProviderData } from './oneFootballProviderParser.js';
-import { parseInstagramEmbedMedia } from './providers/instagram.js';
-import { parseMatreshkaVideoUrl } from './providers/matreshka.js';
-import { parseRezkaOriginalCover } from './providers/rezka.js';
-import { parseSasflixVideoUrl } from './providers/sasflix.js';
-import { parseVkStructuredVideo } from './providers/vk.js';
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
-  const isHltvMatch = isHltvMatchUrl(pageUrl);
-  const isOneFootballMatch = isOneFootballMatchUrl(pageUrl);
-  const structuredVideo = parseVkStructuredVideo(html, pageUrl);
-  const instagramMedia = parseInstagramEmbedMedia(html);
   const metadata = parseMetadata(html);
   const documentTitle = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
-  const image = parseRezkaOriginalCover(html, pageUrl) ?? firstMetadata(metadata, [
+  const image = firstMetadata(metadata, [
     'og:image',
     'og:image:secure_url',
     'og:image:url',
     'twitter:image',
     'twitter:image:src',
-  ]) ?? instagramMedia?.imageUrl ?? structuredVideo?.image ?? null;
-  const video = parseMatreshkaVideoUrl(html, pageUrl)
-    ?? parseSasflixVideoUrl(html, pageUrl) ?? firstMetadata(metadata, [
+  ]);
+  const video = firstMetadata(metadata, [
     'og:video:secure_url',
     'og:video',
     'og:video:url',
     'twitter:player:stream',
-  ]) ?? instagramMedia?.videoUrl ?? structuredVideo?.embedUrl ?? null;
+  ]);
 
   return {
     url: pageUrl.href,
     title: firstMetadata(metadata, ['og:title', 'twitter:title'])
       ?? (documentTitle ? decodeHtml(stripTags(documentTitle).trim()) : null),
     description: firstMetadata(metadata, ['og:description', 'twitter:description', 'description']),
-    image: resolvePreviewImageUrl(image, pageUrl),
+    image: resolveHttpUrl(image, pageUrl),
     video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
-    type: instagramMedia?.type ?? metadata.get('og:type') ?? null,
-    providerData: isHltvMatch
-      ? parseHltvProviderData(html, pageUrl)
-      : isOneFootballMatch
-        ? parseOneFootballProviderData(html, pageUrl)
-        : null,
+    type: metadata.get('og:type') ?? null,
+    providerData: null,
   };
 }
-
-export { isHltvMatchUrl } from '../../shared/urlRules.js';
 
 function parseMetadata(html: string): Map<string, string> {
   const metadata = new Map<string, string>();
@@ -59,14 +40,6 @@ function parseMetadata(html: string): Map<string, string> {
     if (key && value && !metadata.has(key)) metadata.set(key, decodeHtml(value));
   }
   return metadata;
-}
-
-function resolvePreviewImageUrl(value: string | null | undefined, base: URL): string | null {
-  const resolved = resolveHttpUrl(value, base);
-  if (!resolved) return null;
-  const url = new URL(resolved);
-  if (url.protocol === 'http:' && isVkImageHost(url.hostname)) url.protocol = 'https:';
-  return url.href;
 }
 
 function firstMetadata(metadata: Map<string, string>, keys: string[]): string | null {

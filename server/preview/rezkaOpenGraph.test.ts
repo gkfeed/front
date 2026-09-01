@@ -8,7 +8,7 @@ vi.mock('../publicHttp.js', async (importOriginal) => ({
 }));
 
 import { fetchOpenGraph } from './openGraph.js';
-import { parseOpenGraph } from './openGraphParser.js';
+import { parseOpenGraph } from './openGraph.js';
 import { gzipHtmlResponse } from './openGraphTestFixtures.js';
 
 beforeEach(() => {

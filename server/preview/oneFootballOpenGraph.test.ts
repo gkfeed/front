@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseOpenGraph } from './openGraphParser.js';
+import { parseOpenGraph } from './openGraph.js';
 
 describe('OneFootball Open Graph preview', () => {
   it('extracts the final score from the native match summary', () => {

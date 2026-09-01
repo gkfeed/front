@@ -146,6 +146,13 @@ describe('module architecture', () => {
     expect(lazyRouteImports.length).toBeGreaterThan(0);
     expect(lazyRouteImports.filter((specifier) => !specifier.startsWith('./react/pages/'))).toEqual([]);
   });
+
+  it('keeps generic Open Graph parsing free of provider knowledge', () => {
+    const parser = readFileSync(join(repositoryRoot, 'server/preview/openGraphParser.ts'), 'utf8');
+
+    expect(parser).not.toMatch(/providers\//);
+    expect(parser).not.toMatch(/Hltv|OneFootball|Instagram|Matreshka|Rezka|Sasflix|Vk/);
+  });
 });
 
 function collectSourceFiles(directory: string): string[] {

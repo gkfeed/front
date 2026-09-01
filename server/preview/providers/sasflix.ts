@@ -1,4 +1,25 @@
-import { normalizeHostname } from '../../../shared/urlRules.js';
+import { isSasflixPublicationUrl, normalizeHostname } from '../../../shared/urlRules.js';
+import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
+import { fetchHtml } from '../pageFetcher.js';
+import { parseOpenGraph } from '../openGraphParser.js';
+import { TWITTERBOT_USER_AGENT } from '../previewFetchers.js';
+
+export const sasflixOpenGraphAdapter: OpenGraphProviderAdapter = {
+  matches: isSasflixPublicationUrl,
+  async fetch(requestedUrl, context) {
+    const page = await fetchHtml(requestedUrl, TWITTERBOT_USER_AGENT, {
+      maxBytes: 256_000,
+      truncateAtLimit: true,
+    }, context);
+    return parseSasflixOpenGraph(page.html, page.url);
+  },
+  parse: parseSasflixOpenGraph,
+};
+
+function parseSasflixOpenGraph(html: string, pageUrl: URL) {
+  const preview = parseOpenGraph(html, pageUrl);
+  return { ...preview, video: parseSasflixVideoUrl(html, pageUrl) ?? preview.video };
+}
 
 export function parseSasflixVideoUrl(html: string, pageUrl: URL): string | null {
   if (

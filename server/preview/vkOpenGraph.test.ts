@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { jsonLdScript } from './openGraphTestFixtures.js';
-import { parseOpenGraph } from './openGraphParser.js';
+import { parseOpenGraph } from './openGraph.js';
 
 describe('parseOpenGraph: VK provider', () => {
   it('upgrades VK image CDN URLs to HTTPS', () => {

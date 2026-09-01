@@ -5,7 +5,7 @@ import {
   parseHltvScoreboardSnapshot,
   parseHltvScoreboardUpdate,
 } from './hltvScorebotParser.js';
-import { parseOpenGraph } from './openGraphParser.js';
+import { parseOpenGraph } from './openGraph.js';
 
 describe('parseOpenGraph: HLTV provider', () => {
   it('extracts the scheduled start from an HLTV match page', () => {
