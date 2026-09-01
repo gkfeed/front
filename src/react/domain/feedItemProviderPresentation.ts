@@ -8,8 +8,6 @@ import {
 
 import type { FeedItem } from '../types';
 import type {
-  FeedItemCardImagePreview,
-  FeedItemCardPresentationDescriptor,
   FeedItemCardVariant,
   FeedItemCardVariantContext,
   RemotePreviewSource,
@@ -200,71 +198,6 @@ export function resolveFeedItemProviderVariant(
   return feedItemProviderPresentations[provider].resolveVariant(context);
 }
 
-export function getFeedItemCardPresentationDescriptor({
-  provider,
-  variant,
-  imagePreview,
-}: {
-  provider: FeedItemProvider;
-  variant: FeedItemCardVariant;
-  imagePreview: FeedItemCardImagePreview;
-}): FeedItemCardPresentationDescriptor {
-  const display = getFeedItemProviderDisplayFacts(provider);
-
-  return {
-    preview: resolvePreviewDescriptor(variant, display),
-    copy: resolveCopyDescriptor(provider, variant, imagePreview, display.isShortVideo),
-    showInstagramIdentity: display.showInstagramIdentity,
-    showHltvCountdown: display.supplementary === 'hltv',
-    showTikTokComments: display.supplementary === 'tiktok',
-  };
-}
-
-function resolvePreviewDescriptor(
-  variant: FeedItemCardVariant,
-  display: FeedItemProviderDisplayFacts,
-): FeedItemCardPresentationDescriptor['preview'] {
-  switch (variant.type) {
-    case 'matreshka': return { type: 'matreshka', videoId: variant.videoId };
-    case 'sasflix': return { type: 'sasflix', publicationId: variant.publicationId };
-    case 'youtube': return { type: 'youtube', videoId: variant.videoId };
-    case 'twitch': return { type: 'twitch', channel: variant.channel };
-    case 'instagram':
-    case 'liquipedia':
-    case 'simple-image':
-    case 'standard':
-    case 'tiktok':
-      return {
-        type: 'media',
-        isShortVideo: display.isShortVideo,
-        isTikTok: display.isTikTok,
-      };
-    default: return assertNever(variant);
-  }
-}
-
-function resolveCopyDescriptor(
-  provider: FeedItemProvider,
-  variant: FeedItemCardVariant,
-  imagePreview: FeedItemCardImagePreview,
-  isShortVideo: boolean,
-): FeedItemCardPresentationDescriptor['copy'] {
-  if (provider === 'vk') return 'standard';
-  if (imagePreview.type !== 'none' || isShortVideo) return 'none';
-  switch (variant.type) {
-    case 'matreshka':
-    case 'sasflix':
-    case 'youtube':
-    case 'twitch':
-    case 'simple-image': return variant.type;
-    case 'instagram':
-    case 'liquipedia':
-    case 'standard':
-    case 'tiktok': return 'standard';
-    default: return assertNever(variant);
-  }
-}
-
 export function isYoutubeFeedItem(item: FeedItem): boolean {
   return getFeedItemProvider(item) === 'youtube';
 }
@@ -291,8 +224,4 @@ export function isHltvFeedItem(item: FeedItem): boolean {
 
 export function isLiquipediaFeedItem(item: FeedItem): boolean {
   return getFeedItemProvider(item) === 'liquipedia';
-}
-
-function assertNever(value: never): never {
-  throw new Error(`Unsupported feed item variant: ${JSON.stringify(value)}`);
 }

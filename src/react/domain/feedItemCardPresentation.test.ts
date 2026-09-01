@@ -66,6 +66,25 @@ describe('feed item card presentation', () => {
     expect(shouldLoadRemotePreview(feedItem, analyzeFeedItem(feedItem), false)).toBe(true);
   });
 
+  it('builds the provider descriptor as part of the card presentation', () => {
+    const feedItem = item({ link: 'https://youtu.be/abcdefghi' });
+    const presentation = buildFeedItemCardPresentation({
+      item: feedItem,
+      analysis: analyzeFeedItem(feedItem),
+      nsfwMode: 'show',
+      remotePreview: { liquipediaMatch: null, openGraphPreview: null },
+      previewFailures: 0,
+    });
+
+    expect(presentation.descriptor).toEqual({
+      preview: { type: 'youtube', videoId: 'abcdefghi' },
+      copy: 'youtube',
+      showInstagramIdentity: false,
+      showHltvCountdown: false,
+      showTikTokComments: false,
+    });
+  });
+
   it('keeps the local image as a fallback for a remote Rezka preview', () => {
     const feedItem = item({
       link: 'https://hdrezka.me/films/drama/123-story.html',

@@ -1,6 +1,6 @@
 import { analyzeFeedItem } from '../domain/feedItemAnalysis';
 import { getRemoteFeedItemPreview } from '../domain/feedItemRemotePreview';
-import { shouldLoadRemotePreview } from '../domain/feedItemCardPreviewResolution';
+import { shouldLoadRemotePreview } from '../domain/feedItemCardPresentation';
 import type { RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
 import { getFeedItemProviderLoadingRules } from '../domain/feedItemProviderPresentation';
 import type { FeedItem } from '../types';

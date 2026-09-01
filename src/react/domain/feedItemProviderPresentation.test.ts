@@ -4,7 +4,6 @@ import type { FeedItem } from '../types';
 import type { FeedItemProvider } from './feedItemPreviewTypes';
 import {
   feedItemProviderPresentations,
-  getFeedItemCardPresentationDescriptor,
   getFeedItemProvider,
   getFeedItemProviderDisplayFacts,
   getFeedItemProviderLoadingRules,
@@ -105,25 +104,13 @@ describe('feed item provider presentation', () => {
     },
   );
 
-  it('resolves provider variants and display descriptors without CSS knowledge', () => {
+  it('resolves provider variants without CSS knowledge', () => {
     const variant = resolveFeedItemProviderVariant('youtube', {
       ...emptyVariantContext,
       youtubeVideoId: 'abcdefghi',
     });
-    const descriptor = getFeedItemCardPresentationDescriptor({
-      provider: 'youtube',
-      variant,
-      imagePreview: { type: 'none' },
-    });
 
     expect(variant).toEqual({ type: 'youtube', videoId: 'abcdefghi' });
-    expect(descriptor).toEqual({
-      preview: { type: 'youtube', videoId: 'abcdefghi' },
-      copy: 'youtube',
-      showInstagramIdentity: false,
-      showHltvCountdown: false,
-      showTikTokComments: false,
-    });
     expect(JSON.stringify(feedItemProviderPresentations)).not.toContain('reader-card--');
   });
 });
