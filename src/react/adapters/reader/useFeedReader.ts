@@ -10,6 +10,7 @@ import { useFeedItems } from '../../hooks/useFeedItems';
 import { useReaderDeletionProjection } from '../../hooks/useReaderDeletionProjection';
 import { useReviewSession } from '../../hooks/useReviewSession';
 import { useReviewPreviewPrefetch } from '../../hooks/useReviewPreviewPrefetch';
+import { useFeedPriority } from '../../state/useFeedPriority';
 
 /** Coordinates the reader use case; lower-level hooks own the individual mechanisms. */
 export function useFeedReader({
@@ -22,6 +23,7 @@ export function useFeedReader({
   const { credentials } = useAuth();
   const { nsfwMode } = useNsfwPreferences();
   const { hideTikTokItems } = useTikTokPreferences();
+  const { priorities: feedPriorities } = useFeedPriority();
   const {
     loadedItems,
     status,
@@ -50,6 +52,7 @@ export function useFeedReader({
     hideTikTokItems,
     deletedItemIds,
     requeuedItemIds,
+    feedPriorities,
   }), [
     deletedItemIds,
     itemOrder,
@@ -57,6 +60,7 @@ export function useFeedReader({
     loadedItems,
     nsfwMode,
     requeuedItemIds,
+    feedPriorities,
   ]);
   const { activeReviewIds, keep, remove, reset } = useReviewSession({
     loadedItems,
@@ -64,7 +68,7 @@ export function useFeedReader({
     visibleItemIds,
     username: credentials?.username ?? null,
     isSyncComplete,
-    orderKey: itemOrder,
+    orderKey: `${itemOrder}:${JSON.stringify(feedPriorities)}`,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
 

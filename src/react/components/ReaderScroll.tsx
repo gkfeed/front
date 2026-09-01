@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
+import { FeedPriorityControls } from './FeedPriorityControls';
 
 const PAGE_SIZE = 20;
 
@@ -28,6 +29,7 @@ export function ReaderScroll({ items }: { items: FeedItem[] }) {
         {items.slice(safePageStart, pageEnd).map((item) => (
           <div className="reader__scroll-item" key={item.id}>
             <FeedItemCard item={item} />
+            <FeedPriorityControls feedId={item.feedId} />
           </div>
         ))}
       </div>

@@ -45,6 +45,10 @@ const ru = {
     sourceRecord: 'запись источника',
     typeIcon: 'Тип ленты: {{type}}',
     item: 'Элемент ленты',
+    priorityControls: 'Приоритет фида #{{feedId}}',
+    priorityLabel: 'Feed priority',
+    increasePriority: 'Повысить приоритет фида #{{feedId}}',
+    decreasePriority: 'Понизить приоритет фида #{{feedId}}',
   },
   creator: {
     mode: 'Режим создания ленты',

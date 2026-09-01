@@ -41,6 +41,10 @@ const en = {
     sourceRecord: 'source record',
     typeIcon: '{{type}} feed type',
     item: 'Feed item',
+    priorityControls: 'Priority for feed #{{feedId}}',
+    priorityLabel: 'Feed priority',
+    increasePriority: 'Increase priority for feed #{{feedId}}',
+    decreasePriority: 'Decrease priority for feed #{{feedId}}',
   },
   creator: {
     mode: 'Feed creation mode',

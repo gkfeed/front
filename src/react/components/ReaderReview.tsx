@@ -7,6 +7,7 @@ import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
 import { ReaderReviewActions } from './ReaderReviewActions';
 import { ReaderMobileRail } from './ReaderMobileRail';
+import { FeedPriorityControls } from './FeedPriorityControls';
 
 export function ReaderReview({
   item,
@@ -60,6 +61,7 @@ export function ReaderReview({
         <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={onReset}>
           {t('reader.reset')}
         </button>
+        <FeedPriorityControls feedId={item.feedId} />
         <span className="reader__count">{t('reader.remaining', { count: remainingCount })}</span>
       </div>
     </div>

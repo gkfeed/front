@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { FeatureUseCases } from '../application/featureComposition';
 import { AuthProvider } from './AuthProvider';
+import { FeedPriorityProvider } from './FeedPriorityProvider';
 import { FeatureUseCasesProvider } from './FeatureUseCasesProvider';
 
 export function AppProviders({
@@ -13,7 +14,9 @@ export function AppProviders({
 }) {
   return (
     <FeatureUseCasesProvider useCases={useCases}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <FeedPriorityProvider>{children}</FeedPriorityProvider>
+      </AuthProvider>
     </FeatureUseCasesProvider>
   );
 }

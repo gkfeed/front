@@ -2,7 +2,8 @@ import { isNsfwLink } from '../domain/nsfw';
 import { isTikTokFeedItem } from '../domain/feedItemProviderDetection';
 import type { NsfwMode } from '../domain/feedItemCardContracts';
 import type { FeedItem } from '../types';
-import { orderReaderItems, type ReaderItemOrder } from '../state/readerItemOrder';
+import { orderFeedItems, type FeedPriorities } from '../state/feedPriority';
+import type { ReaderItemOrder } from '../state/readerItemOrder';
 
 export type ReaderItemsProjection = {
   items: FeedItem[] | undefined;
@@ -17,6 +18,7 @@ export function projectReaderItems({
   hideTikTokItems,
   deletedItemIds,
   requeuedItemIds,
+  feedPriorities = {},
 }: {
   loadedItems: FeedItem[] | undefined;
   itemOrder: ReaderItemOrder;
@@ -24,8 +26,9 @@ export function projectReaderItems({
   hideTikTokItems: boolean;
   deletedItemIds: ReadonlySet<number>;
   requeuedItemIds: ReadonlySet<number>;
+  feedPriorities?: FeedPriorities;
 }): ReaderItemsProjection {
-  const orderedItems = loadedItems ? orderReaderItems(loadedItems, itemOrder) : undefined;
+  const orderedItems = loadedItems ? orderFeedItems(loadedItems, itemOrder, feedPriorities) : undefined;
   const availableItems = orderedItems?.filter((item) => !deletedItemIds.has(item.id));
   const items = availableItems?.filter((item) => (
     (nsfwMode !== 'hide' || !isNsfwLink(item.link))

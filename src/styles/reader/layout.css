@@ -86,6 +86,11 @@
   gap: 18px;
 }
 
+.reader__scroll-item {
+  display: grid;
+  gap: 8px;
+}
+
 .reader__scroll-panel {
   display: block;
 }

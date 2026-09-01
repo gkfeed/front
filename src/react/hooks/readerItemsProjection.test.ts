@@ -52,4 +52,22 @@ describe('reader items projection', () => {
     expect(result.items?.map(({ id }) => id)).toEqual([1, 2, 3]);
     expect([...result.visibleItemIds]).toEqual([1, 2, 3]);
   });
+
+  it('places items from higher-priority feeds before lower-priority feeds', () => {
+    const result = projectReaderItems({
+      loadedItems: [
+        { id: 30, feedId: 2, link: 'https://example.com/low', title: 'Low', text: '' },
+        { id: 10, feedId: 3, link: 'https://example.com/high', title: 'High', text: '' },
+      ],
+      itemOrder: 'desc',
+      nsfwMode: 'show',
+      hideTikTokItems: false,
+      deletedItemIds: new Set(),
+      requeuedItemIds: new Set(),
+      feedPriorities: { 2: -1, 3: 1 },
+    });
+
+    expect(result.items?.map(({ id }) => id)).toEqual([10, 30]);
+    expect(result.reviewableIds).toEqual([10, 30]);
+  });
 });
