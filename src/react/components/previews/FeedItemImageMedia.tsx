@@ -1,48 +1,17 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { HltvImageScore } from './HltvMatch';
-import { isLikelyVkFeedPlaceholder } from './vkFeedPlaceholder';
+import {
+  createImagePresentationFacts,
+  imageClippingStyle,
+  readImagePresentationMetrics,
+  type ImagePresentationMetrics,
+  type ImagePresentationProfile,
+} from './feedItemImagePresentation';
 
 export type ImagePreview = Omit<LocalizedFeedItemPreview, 'type'> & { type?: undefined };
-
-type ImageMetrics = {
-  src: string;
-  aspectRatio: number;
-  orientation: 'portrait' | 'landscape' | 'square';
-};
-
-const roundedImageMask = [
-  'linear-gradient(#000 0 0) center / 100% calc(100% - 44px) no-repeat',
-  'linear-gradient(#000 0 0) center / calc(100% - 44px) 100% no-repeat',
-  'radial-gradient(circle at 22px 22px, #000 21.5px, transparent 22px) top left / 50% 50% no-repeat',
-  'radial-gradient(circle at calc(100% - 22px) 22px, #000 21.5px, transparent 22px) top right / 50% 50% no-repeat',
-  'radial-gradient(circle at 22px calc(100% - 22px), #000 21.5px, transparent 22px) bottom left / 50% 50% no-repeat',
-  'radial-gradient(circle at calc(100% - 22px) calc(100% - 22px), #000 21.5px, transparent 22px) bottom right / 50% 50% no-repeat',
-].join(', ');
-
-const roundedImageStyle: CSSProperties = {
-  overflow: 'hidden',
-  borderRadius: 22,
-  clipPath: 'inset(0 round 22px)',
-  WebkitMask: roundedImageMask,
-  mask: roundedImageMask,
-  contain: 'paint',
-};
-
-function readImageMetrics(image: HTMLImageElement, src: string): ImageMetrics | null {
-  const { naturalHeight, naturalWidth } = image;
-  if (naturalHeight <= 0 || naturalWidth <= 0) return null;
-
-  return {
-    src,
-    aspectRatio: naturalWidth / naturalHeight,
-    orientation: naturalWidth === naturalHeight
-      ? 'square'
-      : naturalWidth > naturalHeight ? 'landscape' : 'portrait',
-  };
-}
 
 export function FeedItemImageMedia({
   href,
@@ -53,8 +22,7 @@ export function FeedItemImageMedia({
   hltvImageScore,
   onPreviewError,
   overlay,
-  useRoundedImageSurface,
-  isVk,
+  presentationProfile,
 }: {
   href: string;
   hostname: string;
@@ -64,11 +32,10 @@ export function FeedItemImageMedia({
   hltvImageScore: [string, string] | null;
   onPreviewError: () => void;
   overlay?: ReactNode;
-  useRoundedImageSurface: boolean;
-  isVk: boolean;
+  presentationProfile: ImagePresentationProfile;
 }) {
   const { t } = useTranslation();
-  const [imageMetrics, setImageMetrics] = useState<ImageMetrics | null>(null);
+  const [imageMetrics, setImageMetrics] = useState<ImagePresentationMetrics | null>(null);
   const [displayedImage, setDisplayedImage] = useState<ImagePreview>(preview);
   const waitsForRemoteImage = Boolean(
     preview.fallbackSrc
@@ -77,15 +44,16 @@ export function FeedItemImageMedia({
   );
   const visibleImage = waitsForRemoteImage ? displayedImage : preview;
   const visibleImageMetrics = imageMetrics?.src === visibleImage.src ? imageMetrics : null;
+  const presentation = createImagePresentationFacts(presentationProfile, visibleImageMetrics);
 
   const visibleImageElement = (
     <img
       src={visibleImage.src}
       alt={visibleImage.alt}
-      style={roundedImageStyle}
+      style={imageClippingStyle}
       referrerPolicy="no-referrer"
       onLoad={(event) => {
-        const metrics = readImageMetrics(event.currentTarget, visibleImage.src);
+        const metrics = readImagePresentationMetrics(event.currentTarget, visibleImage.src);
         if (metrics) setImageMetrics(metrics);
       }}
       onError={onPreviewError}
@@ -106,20 +74,13 @@ export function FeedItemImageMedia({
       aria-label={hltvImageScore
         ? t('preview.openScore', { hostname, first: hltvImageScore[0], second: hltvImageScore[1] })
         : t('preview.open', { hostname })}
-      data-media-orientation={visibleImageMetrics?.orientation}
-      data-vk-feed-placeholder={isVk && visibleImageMetrics
-        && isLikelyVkFeedPlaceholder(visibleImageMetrics.aspectRatio)
-        ? ''
-        : undefined}
-      style={{
-        ...roundedImageStyle,
-        ...(visibleImageMetrics ? {
-          '--reader-media-aspect-ratio': visibleImageMetrics.aspectRatio,
-        } as CSSProperties : {}),
-      }}
+      data-media-orientation={presentation.orientation}
+      data-vk-feed-placeholder={presentation.isPlaceholder ? '' : undefined}
+      data-image-presentation={presentationProfile}
+      style={presentation.style}
     >
-      {useRoundedImageSurface ? (
-        <span className="reader-card__image-surface" style={roundedImageStyle}>
+      {presentation.usesImageSurface ? (
+        <span className="reader-card__image-surface" style={imageClippingStyle}>
           {visibleImageElement}
         </span>
       ) : visibleImageElement}
@@ -133,7 +94,7 @@ export function FeedItemImageMedia({
           style={{ display: 'none' }}
           referrerPolicy="no-referrer"
           onLoad={(event) => {
-            const metrics = readImageMetrics(event.currentTarget, preview.src);
+            const metrics = readImagePresentationMetrics(event.currentTarget, preview.src);
             if (metrics) setImageMetrics(metrics);
             setDisplayedImage(preview);
           }}

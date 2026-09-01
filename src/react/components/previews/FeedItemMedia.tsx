@@ -6,6 +6,7 @@ import { FeedItemImageMedia, type ImagePreview } from './FeedItemImageMedia';
 import { FeedItemVideoMedia } from './FeedItemVideoMedia';
 import { getSpotifyEmbed } from '../../domain/spotifyPreview';
 import { SpotifyPlaylistPreview } from './SpotifyPlaylistPreview';
+import type { ImagePresentationProfile } from './feedItemImagePresentation';
 
 type FeedItemMediaProps = {
   href: string;
@@ -16,8 +17,7 @@ type FeedItemMediaProps = {
   hltvImageScore: [string, string] | null;
   onPreviewError: () => void;
   overlay?: ReactNode;
-  useRoundedImageSurface?: boolean;
-  isVk?: boolean;
+  imagePresentation?: ImagePresentationProfile;
 };
 
 export function FeedItemMedia({
@@ -29,8 +29,7 @@ export function FeedItemMedia({
   hltvImageScore,
   onPreviewError,
   overlay,
-  useRoundedImageSurface = false,
-  isVk = false,
+  imagePresentation = 'standard',
 }: FeedItemMediaProps) {
   if (preview.type === 'video') {
     return (
@@ -80,8 +79,7 @@ export function FeedItemMedia({
       hltvImageScore={hltvImageScore}
       onPreviewError={onPreviewError}
       overlay={overlay}
-      useRoundedImageSurface={useRoundedImageSurface}
-      isVk={isVk}
+      presentationProfile={imagePresentation}
     />
   );
 }

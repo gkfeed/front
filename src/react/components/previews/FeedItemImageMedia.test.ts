@@ -30,8 +30,7 @@ describe('FeedItemImageMedia VK service banner', () => {
       isTikTok: false,
       hltvImageScore: null,
       onPreviewError: vi.fn(),
-      useRoundedImageSurface: true,
-      isVk: true,
+      presentationProfile: 'vk',
     }));
 
     const image = screen.getByAltText('VK preview');
