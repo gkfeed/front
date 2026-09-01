@@ -19,6 +19,14 @@
     max-height: 100%;
   }
 
+  /* Text-only cards should keep their natural height. Centering within the
+     flexible row preserves the position of the controls below. */
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card:has(> .reader-card__copy):not(:has(> .reader-card__preview)) {
+    height: fit-content;
+    align-self: center;
+  }
+
   .reader__item--fullscreen.reader__item--card-flow > .reader-card--onefootball {
     height: auto;
     min-height: 0;
