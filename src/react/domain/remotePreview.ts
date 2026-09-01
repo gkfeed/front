@@ -1,4 +1,5 @@
 import type { HltvMatchSnapshot, OpenGraphPreview } from '../../../shared/previewContracts';
+import { getHltvSnapshot } from '../../../shared/providerData/hltv';
 
 import type { RemotePreview } from './feedItemCardContracts';
 
@@ -11,8 +12,8 @@ export function mergeHltvLiveData(
   next: OpenGraphPreview,
   previous: OpenGraphPreview | null,
 ): OpenGraphPreview {
-  const nextSnapshot = getHltvSnapshot(next);
-  const previousSnapshot = previous ? getHltvSnapshot(previous) : null;
+  const nextSnapshot = getHltvSnapshot(next.providerData);
+  const previousSnapshot = getHltvSnapshot(previous?.providerData);
   if (!nextSnapshot) return next;
 
   if (previous && previousSnapshot?.status === 'live' && nextSnapshot.status === 'scheduled') {
@@ -82,10 +83,4 @@ function sameMatchScore(
 
 function hasPlayerStats(snapshot: HltvMatchSnapshot['playerStats']): boolean {
   return Boolean(snapshot?.some((team) => team.length > 0));
-}
-
-function getHltvSnapshot(preview: OpenGraphPreview): HltvMatchSnapshot | null {
-  return preview.providerData?.provider === 'hltv'
-    ? preview.providerData.snapshot
-    : null;
 }

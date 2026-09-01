@@ -4,6 +4,7 @@ import { shouldLoadRemotePreview } from '../domain/feedItemCardPresentation';
 import type { RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
 import { getFeedItemProviderLoadingRules } from '../domain/feedItemProviderPresentation';
 import type { FeedItem } from '../types';
+import { getProviderDataImageUrls } from '../../../shared/providerData';
 
 type PreviewLoader = {
   loadRemotePreview: (
@@ -65,17 +66,8 @@ function prefetchRemotePreviewImages(
   const remoteItemPreview = getRemoteFeedItemPreview(openGraphPreview, item.title);
   prefetchPreviewImages(remoteItemPreview, prefetchedImageUrls);
 
-  if (openGraphPreview?.providerData?.provider === 'hltv') {
-    openGraphPreview.providerData.snapshot.teams?.forEach((team) => {
-      if (team.logo) prefetchImage(team.logo, prefetchedImageUrls);
-    });
-  }
-
-  if (openGraphPreview?.providerData?.provider === 'onefootball') {
-    openGraphPreview.providerData.snapshot.teams.forEach((team) => {
-      if (team.logo) prefetchImage(team.logo, prefetchedImageUrls);
-    });
-  }
+  getProviderDataImageUrls(openGraphPreview?.providerData ?? null)
+    .forEach((url) => prefetchImage(url, prefetchedImageUrls));
 
   remotePreview.liquipediaMatch?.teams.forEach((team) => {
     if (team.logo) prefetchImage(team.logo, prefetchedImageUrls);

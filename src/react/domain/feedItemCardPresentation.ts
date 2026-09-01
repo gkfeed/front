@@ -24,6 +24,8 @@ import type {
   RemotePreview,
 } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
+import { getHltvSnapshot } from '../../../shared/providerData/hltv';
+import { getOneFootballSnapshot } from '../../../shared/providerData/oneFootball';
 
 export type { FeedItemCardPresentation } from './feedItemCardContracts';
 
@@ -203,9 +205,7 @@ function resolveMetadata({
   const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
   const shouldHideNsfw = isNsfw && nsfwMode === 'hide';
   const isHltv = loading.metadata === 'hltv';
-  const hltvSnapshot = remotePreview.openGraphPreview?.providerData?.provider === 'hltv'
-    ? remotePreview.openGraphPreview.providerData.snapshot
-    : null;
+  const hltvSnapshot = getHltvSnapshot(remotePreview.openGraphPreview?.providerData);
   const isSimpleImage = display.supportsSimpleImage && isImagePreview(visiblePreview);
   const description = loading.description === 'vk'
     ? getFeedItemDescription(item.text, item.title)
@@ -219,9 +219,7 @@ function resolveMetadata({
     && hltvSnapshot?.status === 'over'
     ? hltvSnapshot.score
     : null;
-  const oneFootballSnapshot = remotePreview.openGraphPreview?.providerData?.provider === 'onefootball'
-    ? remotePreview.openGraphPreview.providerData.snapshot
-    : null;
+  const oneFootballSnapshot = getOneFootballSnapshot(remotePreview.openGraphPreview?.providerData);
 
   return {
     hostname,

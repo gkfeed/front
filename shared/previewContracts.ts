@@ -1,52 +1,25 @@
-export interface HltvMatchTeamPreview {
-  name: string;
-  logo: string | null;
-}
+import type { OpenGraphProviderData } from './providerData.js';
 
-export interface HltvCurrentMapPreview {
-  name: string;
-  score: [string, string];
-}
-
-export interface HltvMapResultPreview {
-  name: string;
-  score: [string, string];
-}
-
-export interface HltvPlayerStatsPreview {
-  nickname: string;
-  kills: number;
-  deaths: number;
-  assists?: number;
-  adr: number;
-  rating?: number;
-}
-
-export type HltvMatchPlayerStatsPreview = [
-  HltvPlayerStatsPreview[],
-  HltvPlayerStatsPreview[],
-];
-
-export type HltvMatchTeamSidesPreview = ['ct', 't'] | ['t', 'ct'];
-
-export type HltvRoundOutcome =
-  | 'ct_win'
-  | 't_win'
-  | 'bomb_defused'
-  | 'bomb_exploded'
-  | 'stopwatch'
-  | 'unknown';
-
-export type HltvRoundHalf = 1 | 2;
-
-export interface HltvRoundPreview {
-  round: number;
-  teamIndex: 0 | 1;
-  outcome: HltvRoundOutcome;
-  half?: HltvRoundHalf;
-}
-
-export type HltvMatchStatus = 'scheduled' | 'live' | 'over' | 'postponed' | 'deleted';
+export type {
+  HltvCurrentMapPreview,
+  HltvMapResultPreview,
+  HltvMatchPlayerStatsPreview,
+  HltvMatchSnapshot,
+  HltvMatchStatus,
+  HltvMatchTeamPreview,
+  HltvMatchTeamSidesPreview,
+  HltvPlayerStatsPreview,
+  HltvProviderData,
+  HltvRoundHalf,
+  HltvRoundOutcome,
+  HltvRoundPreview,
+} from './providerData/hltv.js';
+export type {
+  OneFootballMatchSnapshot,
+  OneFootballMatchTeamPreview,
+  OneFootballProviderData,
+} from './providerData/oneFootball.js';
+export type { OpenGraphProviderData } from './providerData.js';
 
 export interface OpenGraphMetadata {
   url: string;
@@ -57,44 +30,6 @@ export interface OpenGraphMetadata {
   siteName: string | null;
   type: string | null;
 }
-
-export interface HltvMatchSnapshot {
-  startsAt: string | null;
-  tournament?: string | null;
-  teams: [HltvMatchTeamPreview, HltvMatchTeamPreview] | null;
-  status: HltvMatchStatus | null;
-  score: [string, string] | null;
-  currentMap: HltvCurrentMapPreview | null;
-  completedMaps: HltvMapResultPreview[] | null;
-  roundHistory?: HltvRoundPreview[] | null;
-  playerStats: HltvMatchPlayerStatsPreview | null;
-  teamSides: HltvMatchTeamSidesPreview | null;
-}
-
-export interface HltvProviderData {
-  provider: 'hltv';
-  snapshot: HltvMatchSnapshot;
-}
-
-export interface OneFootballMatchTeamPreview {
-  name: string;
-  logo: string | null;
-}
-
-export interface OneFootballMatchSnapshot {
-  competition: string | null;
-  teams: [OneFootballMatchTeamPreview, OneFootballMatchTeamPreview];
-  score: [string, string] | null;
-  status: string | null;
-  startsAt: string | null;
-}
-
-export interface OneFootballProviderData {
-  provider: 'onefootball';
-  snapshot: OneFootballMatchSnapshot;
-}
-
-export type OpenGraphProviderData = HltvProviderData | OneFootballProviderData | null;
 
 export interface OpenGraphPreview extends OpenGraphMetadata {
   providerData: OpenGraphProviderData;
