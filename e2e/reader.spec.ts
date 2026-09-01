@@ -189,6 +189,75 @@ test.describe('Fullscreen player card flow', () => {
   });
 });
 
+test.describe('Fullscreen text card flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 15,
+          feed_id: 15,
+          link: 'https://calnewport.com/war-with-ai-agents/',
+          title: 'Are We at War with AI Agent “Civilizations”?',
+          text: '',
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://calnewport.com/war-with-ai-agents/',
+        title: 'Are We at War with AI Agent “Civilizations”?',
+        description: null,
+        image: null,
+        video: null,
+        siteName: 'calnewport.com',
+        type: 'article',
+        providerData: null,
+      },
+    }));
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        'gkfeed.credentials',
+        JSON.stringify({ username: 'automation', password: 'secret' }),
+      );
+    });
+  });
+
+  test('keeps a card without media compact in fullscreen', async ({ page }) => {
+    await page.setViewportSize({ width: 2048, height: 1152 });
+    await page.goto('/reader');
+    await expect(page.getByRole('heading', {
+      name: 'Are We at War with AI Agent “Civilizations”?',
+    })).toBeVisible();
+    await expect(page.locator('.reader-card__preview')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('.reader__fullscreen-toolbar').getByRole('button', {
+      name: 'Exit Reader fullscreen',
+    })).toBeVisible();
+
+    const bounds = await page.evaluate(() => {
+      const item = document.querySelector<HTMLElement>('.reader__item')!.getBoundingClientRect();
+      const card = document.querySelector<HTMLElement>('.reader-card')!.getBoundingClientRect();
+      const actions = document.querySelector<HTMLElement>('.reader__actions')!.getBoundingClientRect();
+      return {
+        itemHeight: item.height,
+        itemCenter: item.top + item.height / 2,
+        cardHeight: card.height,
+        cardActionsGap: actions.top - card.bottom,
+        viewportHeight: window.innerHeight,
+      };
+    });
+
+    expect(bounds.cardHeight).toBeLessThanOrEqual(360);
+    expect(bounds.itemHeight).toBeLessThan(bounds.viewportHeight * 0.6);
+    expect(Math.abs(bounds.itemCenter - bounds.viewportHeight / 2)).toBeLessThanOrEqual(2);
+    expect(bounds.cardActionsGap).toBeGreaterThanOrEqual(0);
+    expect(bounds.cardActionsGap).toBeLessThanOrEqual(24);
+  });
+});
+
 test.describe('TikTok player on iPad-sized readers', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));

@@ -1,6 +1,13 @@
 /* Review mode is a three-row frame: the card uses the flexible viewport row,
    while decisions and progress always keep their own rows below it. */
 @media (min-width: 641px) {
+  .reader__item--fullscreen.reader__item--card-flow:not(
+    :has(> .reader-card > .reader-card__preview)
+  ) {
+    height: auto;
+    grid-template-rows: auto auto auto;
+  }
+
   .reader__item--fullscreen.reader__item--card-flow {
     width: min(100%, 960px);
     height: calc(
