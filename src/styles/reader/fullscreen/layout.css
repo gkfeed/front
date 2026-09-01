@@ -21,7 +21,7 @@ main[data-reader-fullscreen="true"] :is(.reader__item, .reader__scroll-panel) {
   }
 
   main[data-reader-fullscreen="true"] .reader__item--card-flow {
-    width: min(100%, 960px);
+    width: min(100%, 1200px);
     max-width: none;
   }
 }

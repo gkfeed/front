@@ -2,7 +2,7 @@
    while decisions and progress always keep their own rows below it. */
 @media (min-width: 641px) {
   .reader__item--fullscreen.reader__item--card-flow {
-    width: min(100%, 960px);
+    width: min(100%, 1200px);
     height: calc(
       100dvh
       - 2 * max(28px, calc(env(safe-area-inset-top) + 20px))

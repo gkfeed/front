@@ -1,10 +1,10 @@
 @media (min-width: 641px) {
-  /* VK is the only regular card that combines media and copy. Keep landscape
-     posts at a readable size instead of stretching them across the flexible
-     fullscreen row; portrait media still moves its copy alongside below. */
+  /* VK is the only regular card that combines media and copy. Let landscape
+     posts use the shared fullscreen stage; portrait media still moves its
+     copy alongside below. */
   .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk {
     display: grid;
-    width: min(100%, 760px);
+    width: 100%;
     height: auto;
     max-height: 100%;
     grid-template-rows: minmax(0, 1fr) auto;
@@ -131,7 +131,7 @@
   > .reader-card--vk:has(
     > .reader-card__preview[data-media-orientation="portrait"] > .reader-card__image-surface
   ) {
-    width: 100%;
+    width: min(100%, 960px);
     height: 100%;
     grid-template-columns: minmax(0, 1fr) minmax(248px, 30%);
     grid-template-rows: minmax(0, 1fr);
