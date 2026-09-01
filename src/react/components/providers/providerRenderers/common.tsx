@@ -41,6 +41,7 @@ export function FeedItemMediaPreview({
       hltvImageScore={model.hltvImageScore}
       onPreviewError={model.onPreviewError}
       useRoundedImageSurface={model.provider === 'vk'}
+      isVk={model.provider === 'vk'}
     />
   );
 }

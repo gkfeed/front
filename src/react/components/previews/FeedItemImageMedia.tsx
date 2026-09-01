@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { HltvImageScore } from './HltvMatch';
+import { isLikelyVkFeedPlaceholder } from './vkFeedPlaceholder';
 
 export type ImagePreview = Omit<LocalizedFeedItemPreview, 'type'> & { type?: undefined };
 
@@ -53,6 +54,7 @@ export function FeedItemImageMedia({
   onPreviewError,
   overlay,
   useRoundedImageSurface,
+  isVk,
 }: {
   href: string;
   hostname: string;
@@ -63,6 +65,7 @@ export function FeedItemImageMedia({
   onPreviewError: () => void;
   overlay?: ReactNode;
   useRoundedImageSurface: boolean;
+  isVk: boolean;
 }) {
   const { t } = useTranslation();
   const [imageMetrics, setImageMetrics] = useState<ImageMetrics | null>(null);
@@ -104,6 +107,10 @@ export function FeedItemImageMedia({
         ? t('preview.openScore', { hostname, first: hltvImageScore[0], second: hltvImageScore[1] })
         : t('preview.open', { hostname })}
       data-media-orientation={visibleImageMetrics?.orientation}
+      data-vk-feed-placeholder={isVk && visibleImageMetrics
+        && isLikelyVkFeedPlaceholder(visibleImageMetrics.aspectRatio)
+        ? ''
+        : undefined}
       style={{
         ...roundedImageStyle,
         ...(visibleImageMetrics ? {

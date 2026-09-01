@@ -17,6 +17,7 @@ type FeedItemMediaProps = {
   onPreviewError: () => void;
   overlay?: ReactNode;
   useRoundedImageSurface?: boolean;
+  isVk?: boolean;
 };
 
 export function FeedItemMedia({
@@ -29,6 +30,7 @@ export function FeedItemMedia({
   onPreviewError,
   overlay,
   useRoundedImageSurface = false,
+  isVk = false,
 }: FeedItemMediaProps) {
   if (preview.type === 'video') {
     return (
@@ -79,6 +81,7 @@ export function FeedItemMedia({
       onPreviewError={onPreviewError}
       overlay={overlay}
       useRoundedImageSurface={useRoundedImageSurface}
+      isVk={isVk}
     />
   );
 }

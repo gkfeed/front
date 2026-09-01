@@ -92,3 +92,31 @@
   line-height: 1.45;
   -webkit-line-clamp: 3;
 }
+
+/* VK uses a small set of roughly 1.9:1 service banners when a post has no meaningful photo.
+   Keep that banner available as a link, but let the post copy carry the card. */
+.reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder]) {
+  width: min(100%, 760px);
+}
+
+.reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder])
+> .reader-card__preview {
+  order: 2;
+  width: min(100%, 440px);
+  justify-self: center;
+  opacity: 0.72;
+}
+
+.reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder])
+> .reader-card__copy {
+  order: 1;
+  width: 100%;
+  padding: clamp(20px, 2.5vw, 28px);
+}
+
+.reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder])
+.reader-card__description {
+  font-size: clamp(1rem, 1.5vw, 1.12rem);
+  line-height: 1.5;
+  -webkit-line-clamp: 8;
+}

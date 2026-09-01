@@ -598,14 +598,18 @@ test.describe('TikTok player on iPad-sized readers', () => {
     await expect(page.locator('.reader__item')).toHaveClass(/reader__item--fullscreen/);
     const fullscreenPreviewBox = await preview.boundingBox();
     const fullscreenImageBox = await image.boundingBox();
+    const fullscreenCardBox = await page.locator('.reader-card--vk').boundingBox();
     const fullscreenCopyBox = await page.locator('.reader-card--vk .reader-card__copy').boundingBox();
 
     expect(fullscreenPreviewBox).not.toBeNull();
     expect(fullscreenImageBox).not.toBeNull();
+    expect(fullscreenCardBox).not.toBeNull();
     expect(fullscreenCopyBox).not.toBeNull();
     expect(Math.abs(fullscreenPreviewBox!.width - fullscreenImageBox!.width)).toBeLessThan(2);
     expect(Math.abs(fullscreenPreviewBox!.height - fullscreenImageBox!.height)).toBeLessThan(2);
     expect(Math.abs(fullscreenImageBox!.width / fullscreenImageBox!.height - 3 / 4)).toBeLessThan(0.01);
+    expect(fullscreenImageBox!.width).toBeGreaterThan(0.5 * 800);
+    expect(fullscreenImageBox!.x - fullscreenCardBox!.x).toBeLessThan(0.26 * fullscreenCardBox!.width);
     expect(fullscreenCopyBox!.x).toBeGreaterThan(fullscreenImageBox!.x + fullscreenImageBox!.width);
     const imageCenter = fullscreenImageBox!.y + fullscreenImageBox!.height / 2;
     const copyCenter = fullscreenCopyBox!.y + fullscreenCopyBox!.height / 2;
@@ -617,6 +621,55 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(count).not.toBeNull();
     expect(count!.x - (reset!.x + reset!.width)).toBeGreaterThanOrEqual(8);
     expect(count!.x - (reset!.x + reset!.width)).toBeLessThanOrEqual(16);
+  });
+
+  test('puts copy before the VK service banner in fullscreen', async ({ page }) => {
+    const postText = 'Хочу искренне поблагодарить Николая Островского, владельца паблика. '
+      + 'Если бы он не нашёл информацию о судебном решении, я бы об этом даже не узнал, '
+      + 'и мне бы, по итогу, начислили огромный штраф.';
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 27,
+          feed_id: 567,
+          link: 'https://vk.com/wall-147782201_857022',
+          title: 'МЫСЛИ СТАСА',
+          text: postText,
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://vk.ru/wall-147782201_857022',
+        title: 'Мысли Стаса. Пост со стены.',
+        description: postText,
+        image: 'https://example.com/vk-feed-placeholder.png',
+        video: null,
+        siteName: 'ВКонтакте',
+        type: 'article',
+        providerData: null,
+      },
+    }));
+    await page.route('https://example.com/vk-feed-placeholder.png', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1010" viewBox="0 0 1920 1010"><rect width="1920" height="1010" fill="#07f"/></svg>',
+    }));
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto('/reader');
+
+    const preview = page.locator('.reader-card--vk .reader-card__preview');
+    await expect(preview).toHaveAttribute('data-vk-feed-placeholder', '');
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+
+    const previewBox = await preview.boundingBox();
+    const copyBox = await page.locator('.reader-card--vk .reader-card__copy').boundingBox();
+    expect(previewBox).not.toBeNull();
+    expect(copyBox).not.toBeNull();
+    expect(copyBox!.y + copyBox!.height).toBeLessThanOrEqual(previewBox!.y);
+    expect(copyBox!.width).toBeLessThanOrEqual(762);
+    expect(copyBox!.height).toBeLessThan(500);
+    expect(previewBox!.width).toBeLessThanOrEqual(442);
   });
 
   test('clips square VK post images to rounded corners', async ({ page }) => {
