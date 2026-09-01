@@ -1,0 +1,50 @@
+@media (min-width: 641px) {
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder]) {
+    width: min(100%, 760px);
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: center;
+    row-gap: clamp(14px, 2dvh, 20px);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder])
+  > .reader-card__copy {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    overflow: auto;
+    padding: clamp(24px, 3vw, 36px);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder])
+  > .reader-card__preview[data-vk-feed-placeholder] {
+    grid-column: 1;
+    grid-row: 2;
+    width: min(100%, 440px);
+    height: auto;
+    max-height: 24dvh;
+    justify-self: center;
+    aspect-ratio: var(--reader-media-aspect-ratio);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder])
+  > .reader-card__preview[data-vk-feed-placeholder]
+  > .reader-card__image-surface {
+    width: 100%;
+    height: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder])
+  .reader-card__description {
+    font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+    line-height: 1.5;
+    -webkit-line-clamp: unset;
+  }
+}

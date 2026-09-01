@@ -27,12 +27,6 @@
     align-self: center;
   }
 
-  .reader__item--fullscreen.reader__item--card-flow > .reader-card--onefootball {
-    height: auto;
-    min-height: 0;
-    align-self: center;
-  }
-
   .reader__item--fullscreen.reader__item--card-flow
   > :is(.reader__actions, .reader__count-row) {
     width: 100%;

@@ -79,3 +79,11 @@
   line-height: 1;
   color: #f4f8f5;
 }
+
+@media (min-width: 641px) {
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--onefootball {
+    height: auto;
+    min-height: 0;
+    align-self: center;
+  }
+}

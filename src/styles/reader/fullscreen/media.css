@@ -2,5 +2,8 @@
 @import "./media/image-card-flow.css";
 @import "../player/fullscreen.css";
 @import "../vk/fullscreen.css";
+@import "../vk/fullscreen/image.css";
+@import "../vk/fullscreen/portrait.css";
+@import "../vk/fullscreen/placeholder.css";
 @import "../short-video/fullscreen-preview.css";
 @import "../short-video/fullscreen.css";
