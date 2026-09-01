@@ -1,11 +1,14 @@
 @media (min-width: 641px) {
-  /* VK is the only regular card that combines media and copy. Both image
-     orientations use the same bounded grid; portrait merely moves copy aside. */
+  /* VK is the only regular card that combines media and copy. Keep landscape
+     posts at a readable size instead of stretching them across the flexible
+     fullscreen row; portrait media still moves its copy alongside below. */
   .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk {
     display: grid;
-    width: 100%;
-    height: 100%;
+    width: min(100%, 760px);
+    height: auto;
+    max-height: 100%;
     grid-template-rows: minmax(0, 1fr) auto;
+    align-self: center;
   }
 
   /* VK videos use the same compact media/copy flow as dedicated players.
@@ -128,6 +131,8 @@
   > .reader-card--vk:has(
     > .reader-card__preview[data-media-orientation="portrait"] > .reader-card__image-surface
   ) {
+    width: 100%;
+    height: 100%;
     grid-template-columns: minmax(0, 1fr) minmax(248px, 30%);
     grid-template-rows: minmax(0, 1fr);
     align-items: center;
@@ -137,7 +142,7 @@
   .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
   > .reader-card__preview[data-media-orientation="portrait"] {
     grid-column: 1;
-    width: min(100%, 45dvh);
+    width: min(100%, 52dvh);
     height: auto;
     align-self: center;
     justify-self: end;
