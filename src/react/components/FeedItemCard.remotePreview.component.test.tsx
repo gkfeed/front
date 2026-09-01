@@ -173,6 +173,8 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(copy?.querySelector('.reader-card__description')?.nextElementSibling)
       .toBe(screen.getByRole('heading', { name: 'Рифмы и Панчи' }));
     expect(copy?.querySelector('.reader-card__vk-icon svg')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Рифмы и Панчи' }).getAttribute('href'))
+      .toBe('https://vk.com/wall-123_456');
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
     expect(getPreview).toHaveBeenCalledWith(
       'https://vk.com/wall-123_456',
@@ -205,6 +207,8 @@ describe('FeedItemCard remote and feed previews', () => {
 
     expect(await screen.findByRole('heading', { name: 'Рифмы и Панчи' })).toBeTruthy();
     expect(screen.queryByText('Описание публикации')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Рифмы и Панчи' }).getAttribute('href'))
+      .toBe('https://vk.com/wall-123_456');
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
     expect(getPreview).toHaveBeenCalled();
   });
@@ -230,6 +234,8 @@ describe('FeedItemCard remote and feed previews', () => {
 
     expect(await screen.findByText('Новый пост сообщества')).toBeTruthy();
     expect(screen.queryByText('ВКонтакте — универсальное средство для общения')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Рифмы и Панчи' }).getAttribute('href'))
+      .toBe('https://vk.com/wall-123_456');
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
   });
 
@@ -258,6 +264,8 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(image.closest('.reader-card__preview')?.parentElement).toBe(card);
     expect(card?.querySelector('.reader-card__copy')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Рифмы и Панчи' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Рифмы и Панчи' }).getAttribute('href'))
+      .toBe('https://vk.com/wall-123_456');
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
   });
 
