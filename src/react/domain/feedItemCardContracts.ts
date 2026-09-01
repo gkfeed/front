@@ -1,6 +1,7 @@
 import type {
   HltvMatchSnapshot,
   LiquipediaMatchPreview,
+  OneFootballMatchSnapshot,
   OpenGraphPreview,
 } from '../../../shared/previewContracts';
 
@@ -93,6 +94,7 @@ export type FeedItemCardMetadata = {
   hltvMatchTeams: HltvMatchSnapshot['teams'];
   hltvSnapshot: HltvMatchSnapshot | null;
   hltvImageScore: [string, string] | null;
+  oneFootballSnapshot: OneFootballMatchSnapshot | null;
 };
 
 export type FeedItemCardPresentation = FeedItemCardMetadata & {

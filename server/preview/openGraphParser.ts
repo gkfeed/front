@@ -1,7 +1,8 @@
 import type { OpenGraphPreview } from '../../shared/previewContracts.js';
-import { isHltvMatchUrl, isVkImageHost } from '../../shared/urlRules.js';
+import { isHltvMatchUrl, isOneFootballMatchUrl, isVkImageHost } from '../../shared/urlRules.js';
 import { decodeHtml, parseAttributes, resolveHttpUrl, stripTags } from './html.js';
 import { parseHltvProviderData } from './hltvProviderParser.js';
+import { parseOneFootballProviderData } from './oneFootballProviderParser.js';
 import { parseInstagramEmbedMedia } from './providers/instagram.js';
 import { parseMatreshkaVideoUrl } from './providers/matreshka.js';
 import { parseRezkaOriginalCover } from './providers/rezka.js';
@@ -10,6 +11,7 @@ import { parseVkStructuredVideo } from './providers/vk.js';
 
 export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
   const isHltvMatch = isHltvMatchUrl(pageUrl);
+  const isOneFootballMatch = isOneFootballMatchUrl(pageUrl);
   const structuredVideo = parseVkStructuredVideo(html, pageUrl);
   const instagramMedia = parseInstagramEmbedMedia(html);
   const metadata = parseMetadata(html);
@@ -38,7 +40,11 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
     type: instagramMedia?.type ?? metadata.get('og:type') ?? null,
-    providerData: isHltvMatch ? parseHltvProviderData(html, pageUrl) : null,
+    providerData: isHltvMatch
+      ? parseHltvProviderData(html, pageUrl)
+      : isOneFootballMatch
+        ? parseOneFootballProviderData(html, pageUrl)
+        : null,
   };
 }
 

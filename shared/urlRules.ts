@@ -4,6 +4,7 @@ const VK_HOSTS = ['vk.com', 'vk.ru', 'vkvideo.ru'] as const;
 const VK_IMAGE_HOSTS = ['vkuserphoto.ru', 'userapi.com'] as const;
 const REDDIT_VIDEO_HOST = 'v.redd.it';
 const HLTV_MATCH_PATH = /^\/matches\/\d+(?:\/|$)/;
+const ONEFOOTBALL_MATCH_PATH = /^\/[^/]+\/(?:match|spiel|partido|partita)\/\d+(?:\/|$)/i;
 const LIQUIPEDIA_MATCH_PATH = /\/Match(?::|%3A)/i;
 const TIKTOK_VIDEO_PATH = /\/(?:video|v)\/\d+(?:\/|$)/;
 const REDDIT_VIDEO_PATH = /^\/[\w-]+(?:\/DASH_[^/]+\.mp4)?\/?$/i;
@@ -22,6 +23,12 @@ function isHostnameOrSubdomain(hostname: string, domains: readonly string[]): bo
 export function isHltvMatchUrl(url: URL): boolean {
   return normalizeHostname(url.hostname) === 'hltv.org'
     && HLTV_MATCH_PATH.test(url.pathname);
+}
+
+export function isOneFootballMatchUrl(url: URL): boolean {
+  return HTTP_PROTOCOLS.has(url.protocol)
+    && normalizeHostname(url.hostname) === 'onefootball.com'
+    && ONEFOOTBALL_MATCH_PATH.test(url.pathname);
 }
 
 export function isTikTokVideoUrl(url: URL): boolean {

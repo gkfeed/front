@@ -10,6 +10,7 @@ import { HltvPreview, HltvSupplementary } from './providerRenderers/hltv';
 import { InstagramPreview } from './providerRenderers/instagram';
 import { LiquipediaPreview } from './providerRenderers/liquipedia';
 import { MatreshkaCopy, MatreshkaVideoPreview } from './providerRenderers/matreshka';
+import { OneFootballCopy, OneFootballPreview } from './providerRenderers/onefootball';
 import { SasflixCopy, SasflixVideoPreview } from './providerRenderers/sasflix';
 import { TikTokSupplementary } from './providerRenderers/tiktok';
 import { TwitchCopy, TwitchVideoPreview } from './providerRenderers/twitch';
@@ -36,6 +37,10 @@ export const feedItemCardProviderRendererMap = {
   matreshka: createProviderRenderer({
     Preview: MatreshkaVideoPreview,
     Copy: MatreshkaCopy,
+  }),
+  onefootball: createProviderRenderer({
+    Preview: OneFootballPreview,
+    Copy: OneFootballCopy,
   }),
   sasflix: createProviderRenderer({
     Preview: SasflixVideoPreview,

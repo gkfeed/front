@@ -65,6 +65,9 @@ export function resolveFeedItemCardMetadata({
     && hltvSnapshot?.status === 'over'
     ? hltvSnapshot.score
     : null;
+  const oneFootballSnapshot = remotePreview.openGraphPreview?.providerData?.provider === 'onefootball'
+    ? remotePreview.openGraphPreview.providerData.snapshot
+    : null;
 
   return {
     hostname,
@@ -92,6 +95,7 @@ export function resolveFeedItemCardMetadata({
     hltvMatchTeams,
     hltvSnapshot,
     hltvImageScore,
+    oneFootballSnapshot,
   };
 }
 

@@ -52,6 +52,13 @@ const feedItemProviderRegistry = {
       ? ['reader-card--matreshka', 'reader-card--player', 'reader-card--landscape-media']
       : [],
   }),
+  onefootball: createFeedItemProviderAdapter({
+    supportsSimpleImage: true,
+    resolveVariant: ({ isSimpleImage }) => isSimpleImage
+      ? { type: 'simple-image' }
+      : { type: 'standard' },
+    classNames: () => ['reader-card--onefootball'],
+  }),
   sasflix: createFeedItemProviderAdapter({
     resolveVariant: ({ sasflixPublicationId }) => sasflixPublicationId
       ? { type: 'sasflix', publicationId: sasflixPublicationId }

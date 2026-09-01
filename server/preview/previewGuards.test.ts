@@ -51,6 +51,22 @@ describe('isOpenGraphPreview', () => {
       },
     })).toBe(true);
   });
+
+  it('accepts a validated OneFootball match snapshot', () => {
+    expect(isOpenGraphPreview({
+      ...validPreview,
+      providerData: {
+        provider: 'onefootball',
+        snapshot: {
+          competition: 'LaLiga',
+          teams: [{ name: 'Barcelona', logo: null }, { name: 'Rayo Vallecano', logo: null }],
+          score: ['5', '2'],
+          status: 'Full time',
+          startsAt: '2026-08-31T19:30:00Z',
+        },
+      },
+    })).toBe(true);
+  });
 });
 
 const validSnapshot = {

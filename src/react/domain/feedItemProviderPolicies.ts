@@ -16,6 +16,7 @@ const feedItemProviderPolicies: Record<FeedItemProvider, FeedItemProviderPolicy>
   instagram: createProviderPolicy(),
   liquipedia: createProviderPolicy({ remotePreview: 'liquipedia' }),
   matreshka: createProviderPolicy(),
+  onefootball: createProviderPolicy(),
   sasflix: createProviderPolicy({ loadingPlaceholder: 'none' }),
   tiktok: createProviderPolicy({ remotePreview: 'none', previewMode: 'tiktok-embed' }),
   twitch: createProviderPolicy({ remotePreview: 'none' }),

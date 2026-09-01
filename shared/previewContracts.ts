@@ -76,7 +76,25 @@ export interface HltvProviderData {
   snapshot: HltvMatchSnapshot;
 }
 
-export type OpenGraphProviderData = HltvProviderData | null;
+export interface OneFootballMatchTeamPreview {
+  name: string;
+  logo: string | null;
+}
+
+export interface OneFootballMatchSnapshot {
+  competition: string | null;
+  teams: [OneFootballMatchTeamPreview, OneFootballMatchTeamPreview];
+  score: [string, string] | null;
+  status: string | null;
+  startsAt: string | null;
+}
+
+export interface OneFootballProviderData {
+  provider: 'onefootball';
+  snapshot: OneFootballMatchSnapshot;
+}
+
+export type OpenGraphProviderData = HltvProviderData | OneFootballProviderData | null;
 
 export interface OpenGraphPreview extends OpenGraphMetadata {
   providerData: OpenGraphProviderData;

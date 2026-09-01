@@ -1,0 +1,56 @@
+.reader-card__onefootball-match {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  width: 100%;
+  min-height: clamp(210px, 42cqw, 320px);
+  align-items: center;
+  gap: clamp(16px, 4cqw, 34px);
+  padding: clamp(18px, 5cqw, 40px);
+  color: var(--color-ink-strong);
+  text-decoration: none;
+}
+
+.reader-card__onefootball-team {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 12px;
+  color: var(--color-ink-strong);
+  text-align: center;
+}
+
+.reader-card__onefootball-team img {
+  width: clamp(64px, 15cqw, 106px);
+  height: clamp(64px, 15cqw, 106px);
+  object-fit: contain;
+}
+
+.reader-card__onefootball-team strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(0.82rem, 3cqw, 1.15rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-card__onefootball-team--home strong {
+  color: var(--color-accent-focus);
+}
+
+.reader-card__onefootball-team--away strong {
+  color: var(--color-danger);
+}
+
+.reader-card__onefootball-result {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.reader-card__onefootball-result strong {
+  font-size: clamp(1.7rem, 7cqw, 3.2rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--color-ink-strong);
+}

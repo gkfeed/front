@@ -24,6 +24,7 @@ export type FeedItemProvider =
   | 'instagram'
   | 'liquipedia'
   | 'matreshka'
+  | 'onefootball'
   | 'sasflix'
   | 'tiktok'
   | 'twitch'

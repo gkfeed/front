@@ -71,6 +71,12 @@ function prefetchRemotePreviewImages(
     });
   }
 
+  if (openGraphPreview?.providerData?.provider === 'onefootball') {
+    openGraphPreview.providerData.snapshot.teams.forEach((team) => {
+      if (team.logo) prefetchImage(team.logo, prefetchedImageUrls);
+    });
+  }
+
   remotePreview.liquipediaMatch?.teams.forEach((team) => {
     if (team.logo) prefetchImage(team.logo, prefetchedImageUrls);
   });

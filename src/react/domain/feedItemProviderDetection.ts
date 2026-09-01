@@ -3,6 +3,7 @@ import type { FeedItemProvider } from './feedItemPreviewTypes';
 import {
   isHltvMatchUrl,
   isLiquipediaMatchUrl,
+  isOneFootballMatchUrl,
   isTikTokVideoUrl,
   isVkHost,
 } from '../../../shared/urlRules';
@@ -31,6 +32,7 @@ export function getFeedItemProviderFromUrl(item: FeedItem, url: URL | null): Fee
     if (isInstagramMediaUrl(url)) return 'instagram';
     if (isVkHost(url.hostname)) return 'vk';
     if (isHltvMatchUrl(url)) return 'hltv';
+    if (isOneFootballMatchUrl(url)) return 'onefootball';
     if (isLiquipediaMatchUrl(url)) return 'liquipedia';
   }
 

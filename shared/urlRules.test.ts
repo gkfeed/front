@@ -6,6 +6,7 @@ import {
   isHltvMatchUrl,
   isInstagramMediaUrl,
   isLiquipediaMatchUrl,
+  isOneFootballMatchUrl,
   isRedditVideoUrl,
   isTikTokVideoUrl,
   isVkHost,
@@ -54,6 +55,15 @@ describe('shared URL rules', () => {
     ['https://m.hltv.org/matches/2396006/match', false],
   ])('keeps HLTV match URL boundaries for %s', (value, expected) => {
     expect(isHltvMatchUrl(url(value))).toBe(expected);
+  });
+
+  it.each([
+    ['https://onefootball.com/en/match/2700208', true],
+    ['https://www.onefootball.com/de/spiel/2700208', true],
+    ['https://onefootball.com/en/team/barcelona-5', false],
+    ['https://onefootball.com.example.org/en/match/2700208', false],
+  ])('keeps OneFootball match URL boundaries for %s', (value, expected) => {
+    expect(isOneFootballMatchUrl(url(value))).toBe(expected);
   });
 
   it.each([

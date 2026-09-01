@@ -1,6 +1,8 @@
 import type {
   HltvMatchSnapshot,
   HltvProviderData,
+  OneFootballMatchSnapshot,
+  OneFootballProviderData,
   OpenGraphPreview,
 } from './previewContracts.js';
 import { isRecord } from './valueGuards.js';
@@ -28,7 +30,24 @@ export function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   return typeof object.url === 'string'
     && [object.title, object.description, object.image, object.video, object.siteName, object.type]
       .every(isNullableString)
-    && isNullable(object.providerData, isHltvProviderData);
+    && isNullable(object.providerData, (providerData) => (
+      isHltvProviderData(providerData) || isOneFootballProviderData(providerData)
+    ));
+}
+
+export function isOneFootballProviderData(value: unknown): value is OneFootballProviderData {
+  return isRecord(value)
+    && value.provider === 'onefootball'
+    && isOneFootballMatchSnapshot(value.snapshot);
+}
+
+function isOneFootballMatchSnapshot(value: unknown): value is OneFootballMatchSnapshot {
+  return isRecord(value)
+    && isNullableString(value.competition)
+    && isHltvMatchTeams(value.teams)
+    && isNullable(value.score, isStringPair)
+    && isNullableString(value.status)
+    && isNullableString(value.startsAt);
 }
 
 export function isHltvProviderData(value: unknown): value is HltvProviderData {

@@ -32,6 +32,7 @@ export function shouldLoadRemotePreview(
   const needsInstagramMetadata = analysis.provider === 'instagram'
     && Boolean(url && isInstagramMediaUrl(url));
   const needsSasflixMetadata = analysis.provider === 'sasflix';
+  const needsOneFootballMetadata = analysis.provider === 'onefootball';
   const feedDescription = usesVkDescription
     ? getFeedItemDescription(item.text, item.title)
     : null;
@@ -43,6 +44,7 @@ export function shouldLoadRemotePreview(
       || isRezka
       || needsInstagramMetadata
       || needsSasflixMetadata
+      || needsOneFootballMetadata
       || !(localPreview?.src && (!usesVkDescription || feedDescription)));
 }
 

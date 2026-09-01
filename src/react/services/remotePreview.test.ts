@@ -6,7 +6,11 @@ import {
   BffTimeoutError,
 } from './bffClient';
 import { getLiquipediaMatchPreview } from './liquipedia';
-import { getOpenGraphPreview, type OpenGraphPreview } from './openGraph';
+import {
+  getOpenGraphPreview,
+  type HltvMatchSnapshot,
+  type OpenGraphPreview,
+} from './openGraph';
 import { clearPreviewCache } from './previewQueue';
 import { mergeHltvLiveData } from '../domain/remotePreview';
 import { loadRemotePreview } from './remotePreview';
@@ -92,7 +96,10 @@ describe('mergeHltvLiveData', () => {
         },
       },
     };
-    const previousSnapshot = previous.providerData!.snapshot;
+    const previousSnapshot = previous.providerData?.provider === 'hltv'
+      ? previous.providerData.snapshot
+      : null;
+    if (!previousSnapshot) throw new Error('Expected an HLTV snapshot');
     const next: OpenGraphPreview = {
       ...previous,
       providerData: {
@@ -104,7 +111,7 @@ describe('mergeHltvLiveData', () => {
       },
     };
 
-    expect(mergeHltvLiveData(next, previous).providerData?.snapshot.playerStats)
+    expect(hltvSnapshotOf(mergeHltvLiveData(next, previous))?.playerStats)
       .toEqual(previousSnapshot.playerStats);
   });
 
@@ -118,7 +125,7 @@ describe('mergeHltvLiveData', () => {
       [],
     );
 
-    expect(mergeHltvLiveData(next, previous).providerData?.snapshot.roundHistory)
+    expect(hltvSnapshotOf(mergeHltvLiveData(next, previous))?.roundHistory)
       .toEqual([]);
   });
 
@@ -132,14 +139,14 @@ describe('mergeHltvLiveData', () => {
       [{ round: 1, teamIndex: 1, outcome: 't_win' }],
     );
 
-    expect(mergeHltvLiveData(next, previous).providerData?.snapshot.roundHistory)
+    expect(hltvSnapshotOf(mergeHltvLiveData(next, previous))?.roundHistory)
       .toEqual([]);
   });
 });
 
 function createHltvPreview(
   currentMap: { name: string; score: [string, string] },
-  roundHistory: NonNullable<OpenGraphPreview['providerData']>['snapshot']['roundHistory'],
+  roundHistory: HltvMatchSnapshot['roundHistory'],
 ): OpenGraphPreview {
   return {
     url: 'https://www.hltv.org/matches/1/example',
@@ -167,4 +174,8 @@ function createHltvPreview(
       },
     },
   };
+}
+
+function hltvSnapshotOf(preview: OpenGraphPreview): HltvMatchSnapshot | null {
+  return preview.providerData?.provider === 'hltv' ? preview.providerData.snapshot : null;
 }
