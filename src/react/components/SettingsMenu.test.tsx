@@ -10,6 +10,10 @@ import {
   NsfwPreferencesProvider,
 } from '../state/NsfwPreferencesProvider';
 import { SettingsMenu } from './SettingsMenu';
+import {
+  HIDE_TIKTOK_ITEMS_STORAGE_KEY,
+  TikTokPreferencesProvider,
+} from '../state/TikTokPreferencesProvider';
 
 afterEach(() => {
   cleanup();
@@ -37,6 +41,24 @@ describe('SettingsMenu', () => {
 
     expect(screen.getByRole('menuitemradio', { name: 'Hide' }).getAttribute('aria-checked')).toBe('true');
     expect(storage.get(NSFW_MODE_STORAGE_KEY)).toBe('hide');
+  });
+
+  it('shows TikTok items by default and persists hiding them', () => {
+    const storage = stubLocalStorage();
+    document.documentElement.dataset.theme = 'light';
+    render(
+      <TikTokPreferencesProvider>
+        <SettingsMenu />
+      </TikTokPreferencesProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Show TikTok items' }).getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Hide TikTok items' }));
+
+    expect(screen.getByRole('menuitemradio', { name: 'Hide TikTok items' }).getAttribute('aria-checked')).toBe('true');
+    expect(storage.get(HIDE_TIKTOK_ITEMS_STORAGE_KEY)).toBe('true');
   });
 
   it('moves the Reader view switch into Settings', () => {

@@ -8,6 +8,7 @@ import { NsfwPicker } from './NsfwPicker';
 import { ReaderItemOrderPicker } from './ReaderItemOrderPicker';
 import { ReaderModePicker } from './ReaderModePicker';
 import { ThemeOptions } from './ThemeOptions';
+import { TikTokPicker } from './TikTokPicker';
 import { useThemePreference } from './useThemePreference';
 import { useMenuController } from '../hooks/useMenuController';
 
@@ -87,6 +88,7 @@ export function SettingsMenu({
             />
           ) : null}
           <NsfwPicker />
+          <TikTokPicker />
           <ThemeOptions
             theme={theme}
             onThemeChange={selectTheme}

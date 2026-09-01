@@ -7,6 +7,7 @@ import { RequireAuth } from './react/components/RequireAuth';
 import { AppProviders } from './react/state/AppProviders';
 import { NsfwPreferencesProvider } from './react/state/NsfwPreferencesProvider';
 import { ReaderItemOrderPreferencesProvider } from './react/state/ReaderItemOrderPreferencesProvider';
+import { TikTokPreferencesProvider } from './react/state/TikTokPreferencesProvider';
 import { useAuth } from './react/state/useAuth';
 
 const FeedListPage = lazy(() => import('./react/pages/FeedListPage').then(({ FeedListPage: page }) => ({ default: page })));
@@ -48,24 +49,26 @@ export function App() {
     <BrowserRouter>
       <AppProviders>
         <NsfwPreferencesProvider>
-          <ReaderItemOrderPreferencesProvider>
-            <RouteEffects />
-            <a className="skip-link" href="#main">{t('app.skipToContent')}</a>
-            <Navbar />
-            <main id="main" tabIndex={-1}>
-              <Suspense fallback={<p className="ui-status" role="status">{t('app.loading')}</p>}>
-                <Routes>
-                  <Route path="/" element={<RequireAuth><FeedListPage /></RequireAuth>} />
-                  <Route path="/create" element={<RequireAuth><CreateFeedPage /></RequireAuth>} />
-                  <Route path="/reader" element={<RequireAuth><ReaderPage /></RequireAuth>} />
-                  <Route path="/live" element={<RequireAuth><LivePage /></RequireAuth>} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/feed/:id" element={<RequireAuth><FeedPage /></RequireAuth>} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </Suspense>
-            </main>
-          </ReaderItemOrderPreferencesProvider>
+          <TikTokPreferencesProvider>
+            <ReaderItemOrderPreferencesProvider>
+              <RouteEffects />
+              <a className="skip-link" href="#main">{t('app.skipToContent')}</a>
+              <Navbar />
+              <main id="main" tabIndex={-1}>
+                <Suspense fallback={<p className="ui-status" role="status">{t('app.loading')}</p>}>
+                  <Routes>
+                    <Route path="/" element={<RequireAuth><FeedListPage /></RequireAuth>} />
+                    <Route path="/create" element={<RequireAuth><CreateFeedPage /></RequireAuth>} />
+                    <Route path="/reader" element={<RequireAuth><ReaderPage /></RequireAuth>} />
+                    <Route path="/live" element={<RequireAuth><LivePage /></RequireAuth>} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/feed/:id" element={<RequireAuth><FeedPage /></RequireAuth>} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Suspense>
+              </main>
+            </ReaderItemOrderPreferencesProvider>
+          </TikTokPreferencesProvider>
         </NsfwPreferencesProvider>
       </AppProviders>
     </BrowserRouter>

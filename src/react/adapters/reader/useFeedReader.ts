@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { useNsfwPreferences } from '../../state/useNsfwPreferences';
+import { useTikTokPreferences } from '../../state/useTikTokPreferences';
 import { useAuth } from '../../state/useAuth';
 import type { ReaderItemOrder } from '../../state/readerItemOrder';
 import { projectReaderItems } from '../../hooks/readerItemsProjection';
@@ -20,6 +21,7 @@ export function useFeedReader({
 } = {}) {
   const { credentials } = useAuth();
   const { nsfwMode } = useNsfwPreferences();
+  const { hideTikTokItems } = useTikTokPreferences();
   const {
     loadedItems,
     status,
@@ -45,11 +47,13 @@ export function useFeedReader({
     loadedItems,
     itemOrder,
     nsfwMode,
+    hideTikTokItems,
     deletedItemIds,
     requeuedItemIds,
   }), [
     deletedItemIds,
     itemOrder,
+    hideTikTokItems,
     loadedItems,
     nsfwMode,
     requeuedItemIds,

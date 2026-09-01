@@ -322,6 +322,24 @@ describe('ReaderPage', () => {
     expect(screen.getByText('1 remaining')).toBeTruthy();
   });
 
+  it('removes TikTok items from Review and the remaining count when hidden', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue([
+      {
+        id: 20,
+        feedId: 4,
+        link: 'https://www.tiktok.com/@creator/video/123',
+        title: 'Hidden TikTok',
+        text: '',
+      },
+      ITEMS[1],
+    ]);
+    renderReader('/reader', 'blur', undefined, 'desc', true);
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(screen.queryByText('Hidden TikTok')).toBeNull();
+    expect(screen.getByText('1 remaining')).toBeTruthy();
+  });
+
   it('offers focused mobile controls for short videos', async () => {
     vi.mocked(getFeedItems).mockResolvedValue([{
       id: 20,

@@ -6,6 +6,7 @@ import { NsfwPreferencesContext, type NsfwMode } from '../state/nsfwPreferencesC
 import type { ReaderItemOrder } from '../state/readerItemOrder';
 import { ReaderItemOrderPreferencesContext } from '../state/readerItemOrderPreferencesContext';
 import { restoreLocalStorage } from '../testUtils';
+import { TikTokPreferencesContext } from '../state/tiktokPreferencesContext';
 import { ReaderPage } from './ReaderPage';
 
 export const READER_ITEMS = [
@@ -18,13 +19,16 @@ export function renderReader(
   nsfwMode: NsfwMode = 'blur',
   container?: HTMLElement,
   itemOrder: ReaderItemOrder = 'desc',
+  hideTikTokItems = false,
 ) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <NsfwPreferencesContext value={{ nsfwMode, setNsfwMode: vi.fn() }}>
-        <ReaderItemOrderPreferencesContext value={{ itemOrder, setItemOrder: vi.fn() }}>
-          <ReaderPage />
-        </ReaderItemOrderPreferencesContext>
+        <TikTokPreferencesContext value={{ hideTikTokItems, setHideTikTokItems: vi.fn() }}>
+          <ReaderItemOrderPreferencesContext value={{ itemOrder, setItemOrder: vi.fn() }}>
+            <ReaderPage />
+          </ReaderItemOrderPreferencesContext>
+        </TikTokPreferencesContext>
       </NsfwPreferencesContext>
     </MemoryRouter>,
     container ? { container } : undefined,
