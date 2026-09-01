@@ -1,7 +1,7 @@
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemProviderDetection';
+import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemProviderPresentation';
 import { useAutomaticReaderFullscreen } from '../hooks/useAutomaticReaderFullscreen';
 import type { FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';

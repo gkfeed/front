@@ -32,7 +32,6 @@ function createModel(overrides: Partial<FeedItemCardModel> = {}): FeedItemCardMo
     hltvSnapshot: null,
     hltvImageScore: null,
     descriptor: {
-      className: '',
       preview: { type: 'media', isShortVideo: false, isTikTok: false },
       copy: 'standard',
       showInstagramIdentity: false,
@@ -57,6 +56,7 @@ describe('feed item card provider renderer map', () => {
       const renderer = getFeedItemCardProviderRenderer(provider);
 
       expect(feedItemCardProviderRendererMap[provider]).toBe(renderer);
+      expect(renderer.cardClassNames).toBeTypeOf('function');
       expect(renderer.Preview).toBeTypeOf('function');
       expect(renderer.Supplementary).toBeTypeOf('function');
       expect(renderer.Copy).toBeTypeOf('function');

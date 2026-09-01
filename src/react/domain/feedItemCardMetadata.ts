@@ -1,8 +1,11 @@
 import { isRedditUrl } from './feedItemUrls';
 import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getFeedItemDescription } from './feedItemDescription';
-import { getFeedItemProviderAdapter } from './feedItemProviderAdapters';
-import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
+import {
+  getFeedItemProviderDisplayFacts,
+  getFeedItemProviderLoadingRules,
+  resolveFeedItemProviderVariant,
+} from './feedItemProviderPresentation';
 import { isNsfwLink } from './nsfw';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
 import type {
@@ -38,21 +41,21 @@ export function resolveFeedItemCardMetadata({
     twitchChannel,
     youtubeVideoId,
   } = analysis;
-  const adapter = getFeedItemProviderAdapter(provider);
-  const policy = getFeedItemProviderPolicy(provider);
+  const display = getFeedItemProviderDisplayFacts(provider);
+  const loading = getFeedItemProviderLoadingRules(provider);
   const isNsfw = isNsfwLink(item.link);
   const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
   const shouldHideNsfw = isNsfw && nsfwMode === 'hide';
   const isReddit = isRedditUrl(analysis.url);
-  const isHltv = policy.metadata === 'hltv';
+  const isHltv = loading.metadata === 'hltv';
   const hltvSnapshot = remotePreview.openGraphPreview?.providerData?.provider === 'hltv'
     ? remotePreview.openGraphPreview.providerData.snapshot
     : null;
-  const isSimpleImage = adapter.supportsSimpleImage && isImagePreview(visiblePreview);
-  const feedDescription = policy.description === 'vk'
+  const isSimpleImage = display.supportsSimpleImage && isImagePreview(visiblePreview);
+  const feedDescription = loading.description === 'vk'
     ? getFeedItemDescription(item.text, item.title)
     : null;
-  const description = policy.description === 'vk'
+  const description = loading.description === 'vk'
     ? feedDescription
     : null;
   // Prefer the parsed match data over HLTV's generated screenshot. The screenshot
@@ -72,13 +75,13 @@ export function resolveFeedItemCardMetadata({
   return {
     hostname,
     provider,
-    variant: adapter.resolveVariant({
+    variant: resolveFeedItemProviderVariant(provider, {
       youtubeVideoId,
       twitchChannel,
       matreshkaVideoId,
       sasflixPublicationId,
       isSimpleImage,
-      isInstagramPhoto: adapter.showInstagramIdentity && isImagePreview(visiblePreview),
+      isInstagramPhoto: display.showInstagramIdentity && isImagePreview(visiblePreview),
     }),
     imagePreview: getImagePreviewType({
       isHltv,

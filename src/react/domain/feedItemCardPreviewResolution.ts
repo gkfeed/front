@@ -6,7 +6,7 @@ import { getRemoteFeedItemPreview } from './feedItemRemotePreview';
 import { getTikTokEmbedPreview } from './tiktokPreview';
 import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getFeedItemDescription } from './feedItemDescription';
-import { getFeedItemProviderPolicy } from './feedItemProviderPolicies';
+import { getFeedItemProviderLoadingRules } from './feedItemProviderPresentation';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
 import type { RemotePreview } from './feedItemCardContracts';
 import type { FeedItem } from '../types';
@@ -24,9 +24,9 @@ export function shouldLoadRemotePreview(
   shouldHideNsfw: boolean,
 ): boolean {
   const { localPreview, url } = analysis;
-  const policy = getFeedItemProviderPolicy(analysis.provider);
+  const loading = getFeedItemProviderLoadingRules(analysis.provider);
   const isRezka = isRezkaUrl(url);
-  const usesVkDescription = policy.description === 'vk';
+  const usesVkDescription = loading.description === 'vk';
   const isVk = analysis.provider === 'vk';
   const isReddit = isRedditUrl(url);
   const needsInstagramMetadata = analysis.provider === 'instagram'
@@ -38,7 +38,7 @@ export function shouldLoadRemotePreview(
     : null;
 
   return !shouldHideNsfw
-    && policy.remotePreview !== 'none'
+    && loading.remotePreview !== 'none'
     && (isReddit
       || isVk
       || isRezka
@@ -58,12 +58,12 @@ export function resolveFeedItemCardPreviews({
   remotePreview: RemotePreview;
 }): FeedItemCardPreviewResolution {
   const { localPreview } = analysis;
-  const policy = getFeedItemProviderPolicy(analysis.provider);
+  const loading = getFeedItemProviderLoadingRules(analysis.provider);
   const localPreviewSource = localPreview?.src;
   const isRezka = isRezkaUrl(analysis.url);
   const isReddit = isRedditUrl(analysis.url);
   const isVk = analysis.provider === 'vk';
-  const usesTikTokEmbed = policy.previewMode === 'tiktok-embed';
+  const usesTikTokEmbed = loading.previewMode === 'tiktok-embed';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
   const instagramVideoPreview = analysis.provider === 'instagram'
     && remotePreview.openGraphPreview?.type === 'video'

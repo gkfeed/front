@@ -1,5 +1,5 @@
 import { isNsfwLink } from '../domain/nsfw';
-import { isTikTokFeedItem } from '../domain/feedItemProviderDetection';
+import { isTikTokFeedItem } from '../domain/feedItemProviderPresentation';
 import type { NsfwMode } from '../domain/feedItemCardContracts';
 import type { FeedItem } from '../types';
 import { orderFeedItems, type FeedPriorities } from '../state/feedPriority';

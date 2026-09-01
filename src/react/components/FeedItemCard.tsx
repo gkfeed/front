@@ -11,6 +11,7 @@ import { ArticleReaderOverlay } from './ArticleReader';
 import { useArticleReader } from '../hooks/useArticleReader';
 import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
 import { isRezkaUrl, parseUrl } from '../domain/feedItemUrls';
+import { getFeedItemCardProviderRenderer } from './providers/feedItemCardProviderRegistry';
 
 export const FeedItemCard = memo(function FeedItemCard({
   item,
@@ -21,7 +22,8 @@ export const FeedItemCard = memo(function FeedItemCard({
   const model = useFeedItemCardModel(item);
   const [areTikTokCommentsExpanded] = useTikTokCommentsPreference();
   const articleReader = useArticleReader(item.link);
-  const { cardRef, isPreviewPending, descriptor, shouldBlurNsfw, shouldHideNsfw } = model;
+  const { cardRef, isPreviewPending, shouldBlurNsfw, shouldHideNsfw } = model;
+  const { cardClassNames } = getFeedItemCardProviderRenderer(model.provider);
   if (shouldHideNsfw) return null;
 
   return (
@@ -30,7 +32,7 @@ export const FeedItemCard = memo(function FeedItemCard({
       className={[
         'reader-card',
         isPreviewPending ? 'reader-card--preview-pending' : '',
-        descriptor.className,
+        ...cardClassNames(model),
         isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}

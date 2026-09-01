@@ -1,7 +1,7 @@
 import type { FeedItem } from '../types';
 import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getEmbeddedPreview } from './embeddedPreview';
-import { getFeedItemProviderFromUrl } from './feedItemProviderDetection';
+import { getFeedItemProviderFromUrl } from './feedItemProviderPresentation';
 import { getShikimoriHighQualityImageUrl } from './shikimoriPreview';
 import { getTwitchPreview } from './twitchPreview';
 import { getVkVideoPreview } from './vkPreview';

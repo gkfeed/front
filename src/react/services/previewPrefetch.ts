@@ -2,7 +2,7 @@ import { analyzeFeedItem } from '../domain/feedItemAnalysis';
 import { getRemoteFeedItemPreview } from '../domain/feedItemRemotePreview';
 import { shouldLoadRemotePreview } from '../domain/feedItemCardPreviewResolution';
 import type { RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
-import { getFeedItemProviderPolicy } from '../domain/feedItemProviderPolicies';
+import { getFeedItemProviderLoadingRules } from '../domain/feedItemProviderPresentation';
 import type { FeedItem } from '../types';
 
 type PreviewLoader = {
@@ -20,22 +20,22 @@ export function prefetchFeedItem(
   prefetchControllers: Map<string, AbortController>,
 ): void {
   const analysis = analyzeFeedItem(item);
-  const providerPolicy = getFeedItemProviderPolicy(analysis.provider);
+  const loading = getFeedItemProviderLoadingRules(analysis.provider);
   prefetchPreviewImages(analysis.localPreview, prefetchedImageUrls);
 
   if (
     !shouldLoadRemotePreview(item, analysis, false)
-    || providerPolicy.remotePreview === 'none'
+    || loading.remotePreview === 'none'
   ) return;
 
-  const prefetchKey = `${providerPolicy.remotePreview}:${item.link}`;
+  const prefetchKey = `${loading.remotePreview}:${item.link}`;
   if (prefetchControllers.has(prefetchKey)) return;
 
   const controller = new AbortController();
   prefetchControllers.set(prefetchKey, controller);
   void previewUseCases.loadRemotePreview(
     item.link,
-    providerPolicy.remotePreview,
+    loading.remotePreview,
     controller.signal,
   )
     .then((remotePreview) => {

@@ -1,4 +1,3 @@
-export * from './feedItemProviderDetection';
 export * from './feedItemProviderPresentation';
 
 export type {
@@ -7,5 +6,4 @@ export type {
   FeedItemCardPresentationDescriptor,
   FeedItemCardPreviewDescriptor,
   FeedItemCardVariant,
-  FeedItemProviderAdapter,
 } from './feedItemCardContracts';

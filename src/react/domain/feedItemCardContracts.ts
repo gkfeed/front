@@ -53,7 +53,6 @@ export type FeedItemCardCopyDescriptor =
   | 'standard';
 
 export type FeedItemCardPresentationDescriptor = {
-  className: string;
   preview: FeedItemCardPreviewDescriptor;
   copy: FeedItemCardCopyDescriptor;
   showInstagramIdentity: boolean;
@@ -68,16 +67,6 @@ export type FeedItemCardVariantContext = {
   sasflixPublicationId: string | null;
   isSimpleImage: boolean;
   isInstagramPhoto: boolean;
-};
-
-export type FeedItemProviderAdapter = {
-  supplementary: 'none' | 'hltv' | 'tiktok';
-  isShortVideo: boolean;
-  isTikTok: boolean;
-  showInstagramIdentity: boolean;
-  supportsSimpleImage: boolean;
-  resolveVariant: (context: FeedItemCardVariantContext) => FeedItemCardVariant;
-  classNames: (variant: FeedItemCardVariant) => readonly string[];
 };
 
 export type FeedItemCardMetadata = {

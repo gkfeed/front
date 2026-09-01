@@ -1,7 +1,7 @@
 import type { FeedItem } from '../types';
 import type { FeedItemAnalysis } from './feedItemPreviewTypes';
 import { getFeedItemPreview } from './feedItemLocalPreview';
-import { getFeedItemProviderFromUrl } from './feedItemProviderDetection';
+import { getFeedItemProviderFromUrl } from './feedItemProviderPresentation';
 import {
   getMatreshkaVideoId,
   getSasflixPublicationId,

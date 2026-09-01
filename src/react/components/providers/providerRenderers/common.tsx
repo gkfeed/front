@@ -14,6 +14,7 @@ export type FeedItemCardProviderRendererProps = {
 };
 
 export type FeedItemCardProviderRenderer = {
+  cardClassNames: (model: FeedItemCardModel) => readonly string[];
   Preview: ComponentType<FeedItemCardProviderRendererProps>;
   Supplementary: ComponentType<FeedItemCardProviderRendererProps>;
   Copy: ComponentType<FeedItemCardProviderRendererProps>;

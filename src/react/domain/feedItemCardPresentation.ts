@@ -1,4 +1,4 @@
-import { getFeedItemCardPresentationDescriptor } from './feedItemCardDescriptor';
+import { getFeedItemCardPresentationDescriptor } from './feedItemProviderPresentation';
 import { resolveFeedItemCardMetadata } from './feedItemCardMetadata';
 import {
   resolveFeedItemCardPreviews,
