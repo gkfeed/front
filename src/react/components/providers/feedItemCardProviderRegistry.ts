@@ -1,5 +1,7 @@
-import { createElement } from 'react';
+import { createElement, Fragment, type ReactNode } from 'react';
 import type { FeedItemProvider } from '../../domain/feedItemPreviewTypes';
+import type { FeedItemCardRenderFacts } from '../useFeedItemCardModel';
+import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import {
   EmptyRenderer,
   FeedItemMediaPreview,
@@ -17,7 +19,7 @@ import { TwitchCopy, TwitchVideoPreview } from './providerRenderers/twitch';
 import { VkCopy } from './providerRenderers/vk';
 import { YoutubeCopy, YoutubeVideoPreview } from './providerRenderers/youtube';
 
-export const feedItemCardProviderRendererMap = {
+const feedItemCardProviderRendererMap = {
   generic: createProviderRenderer({
     cardClassNames: ({ variant }) => variant.type === 'simple-image'
       ? ['reader-card--simple-image']
@@ -90,10 +92,39 @@ export const feedItemCardProviderRendererMap = {
   }),
 } as const satisfies Readonly<Record<FeedItemProvider, FeedItemCardProviderRenderer>>;
 
-export function getFeedItemCardProviderRenderer(
-  provider: FeedItemProvider,
-): FeedItemCardProviderRenderer {
-  return feedItemCardProviderRendererMap[provider];
+export function getFeedItemCardClassNames(facts: FeedItemCardRenderFacts): readonly string[] {
+  return feedItemCardProviderRendererMap[facts.provider].cardClassNames(facts);
+}
+
+export function FeedItemCardProviderContent({
+  facts,
+  localizedPreview,
+  displayHostname,
+  previewPlaceholder,
+  onOpenArticle,
+}: {
+  facts: FeedItemCardRenderFacts;
+  localizedPreview: LocalizedFeedItemPreview | null;
+  displayHostname: string;
+  previewPlaceholder: ReactNode;
+  onOpenArticle?: () => void;
+}) {
+  const renderer = feedItemCardProviderRendererMap[facts.provider];
+  const sharedProps = { facts, localizedPreview: null, displayHostname: '' };
+  const preview = facts.isPreviewPending
+    ? previewPlaceholder
+    : createElement(renderer.Preview, { facts, localizedPreview, displayHostname });
+
+  return createElement(Fragment, null,
+    createElement(renderer.Identity, sharedProps),
+    preview,
+    facts.isPreviewPending ? null : createElement(renderer.Supplementary, sharedProps),
+    facts.isPreviewPending ? null : createElement(renderer.Copy, {
+      ...sharedProps,
+      displayHostname,
+      onOpenArticle,
+    }),
+  );
 }
 
 type FeedItemCardProviderRendererOverrides = Partial<FeedItemCardProviderRenderer>;
@@ -105,13 +136,13 @@ function createProviderRenderer(
 
   return {
     ...overrides,
-    cardClassNames: (model) => [
-      ...(overrides.cardClassNames?.(model) ?? []),
-      ...(model.imagePreview.type !== 'none' ? ['reader-card--image-preview'] : []),
-      ...(model.imagePreview.type === 'generated' && model.imagePreview.source === 'reddit'
+    cardClassNames: (facts) => [
+      ...(overrides.cardClassNames?.(facts) ?? []),
+      ...(facts.imagePreview.type !== 'none' ? ['reader-card--image-preview'] : []),
+      ...(facts.imagePreview.type === 'generated' && facts.imagePreview.source === 'reddit'
         ? ['reader-card--reddit-preview']
         : []),
-      ...(model.imagePreview.type === 'hltv' ? ['reader-card--hltv-preview'] : []),
+      ...(facts.imagePreview.type === 'hltv' ? ['reader-card--hltv-preview'] : []),
     ],
     Preview: overrides.Preview ?? EmptyRenderer,
     Supplementary: overrides.Supplementary ?? EmptyRenderer,
@@ -124,7 +155,7 @@ function withCopyVisibility(
   Renderer: FeedItemCardProviderRenderer['Copy'],
 ): FeedItemCardProviderRenderer['Copy'] {
   return (props) => {
-    if (props.model.descriptor.copy === 'none') return null;
+    if (props.facts.descriptor.copy === 'none') return null;
     return createElement(Renderer, props);
   };
 }

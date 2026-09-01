@@ -1,20 +1,20 @@
 import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { FeedItemCardModel } from '../../useFeedItemCardModel';
+import type { FeedItemCardRenderFacts } from '../../useFeedItemCardModel';
 import type { LocalizedFeedItemPreview } from '../../previewLocalization';
 import { ArticleReaderLink } from '../../ArticleReader';
 import { FeedItemMedia } from '../../previews/FeedItemMedia';
 
 export type FeedItemCardProviderRendererProps = {
-  model: FeedItemCardModel;
+  facts: FeedItemCardRenderFacts;
   localizedPreview: LocalizedFeedItemPreview | null;
   displayHostname: string;
   onOpenArticle?: () => void;
 };
 
 export type FeedItemCardProviderRenderer = {
-  cardClassNames: (model: FeedItemCardModel) => readonly string[];
+  cardClassNames: (facts: FeedItemCardRenderFacts) => readonly string[];
   Preview: ComponentType<FeedItemCardProviderRendererProps>;
   Supplementary: ComponentType<FeedItemCardProviderRendererProps>;
   Copy: ComponentType<FeedItemCardProviderRendererProps>;
@@ -26,32 +26,32 @@ export function EmptyRenderer(): null {
 }
 
 export function FeedItemMediaPreview({
-  model,
+  facts,
   localizedPreview,
   displayHostname,
 }: FeedItemCardProviderRendererProps) {
-  if (!localizedPreview || model.descriptor.preview.type !== 'media') return null;
+  if (!localizedPreview || facts.descriptor.preview.type !== 'media') return null;
 
   return (
     <FeedItemMedia
-      href={model.item.link}
-      hostname={model.item.title || displayHostname}
+      href={facts.item.link}
+      hostname={facts.item.title || displayHostname}
       preview={localizedPreview}
-      isShortVideo={model.descriptor.preview.isShortVideo}
-      isTikTok={model.descriptor.preview.isTikTok}
-      hltvImageScore={model.hltvImageScore}
-      onPreviewError={model.onPreviewError}
-      useRoundedImageSurface={model.provider === 'vk'}
-      isVk={model.provider === 'vk'}
+      isShortVideo={facts.descriptor.preview.isShortVideo}
+      isTikTok={facts.descriptor.preview.isTikTok}
+      hltvImageScore={facts.hltvImageScore}
+      onPreviewError={facts.onPreviewError}
+      useRoundedImageSurface={facts.provider === 'vk'}
+      isVk={facts.provider === 'vk'}
     />
   );
 }
 
-export function StandardCopy({ model, displayHostname, onOpenArticle }: FeedItemCardProviderRendererProps) {
+export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItemCardProviderRendererProps) {
   const { t } = useTranslation();
-  const { item, description } = model;
+  const { item, description } = facts;
 
-  if (model.descriptor.copy === 'simple-image') {
+  if (facts.descriptor.copy === 'simple-image') {
     return (
       <div className="reader-card__copy">
         <h2 className="reader-card__title">{item.title || displayHostname}</h2>
@@ -69,18 +69,18 @@ export function StandardCopy({ model, displayHostname, onOpenArticle }: FeedItem
       {description ? <p className="reader-card__description">{description}</p> : null}
       <ArticleReaderLink
         url={item.link}
-        enabled={model.canReadArticle}
+        enabled={facts.canReadArticle}
         onOpen={onOpenArticle ?? (() => {})}
       />
     </div>
   );
 }
 
-export type VariantRendererProps<T extends FeedItemCardModel['variant']['type']> = Omit<
+export type VariantRendererProps<T extends FeedItemCardRenderFacts['variant']['type']> = Omit<
   FeedItemCardProviderRendererProps,
-  'model'
+  'facts'
 > & {
-  model: Omit<FeedItemCardModel, 'variant'> & {
-    variant: Extract<FeedItemCardModel['variant'], { type: T }>;
+  facts: Omit<FeedItemCardRenderFacts, 'variant'> & {
+    variant: Extract<FeedItemCardRenderFacts['variant'], { type: T }>;
   };
 };

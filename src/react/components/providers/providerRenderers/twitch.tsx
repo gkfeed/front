@@ -10,16 +10,16 @@ import {
 } from './common';
 import { createVariantRenderer } from './createVariantRenderer';
 
-const renderTwitchVideoPreview = createVariantRenderer('twitch', ({ model, localizedPreview }: VariantRendererProps<'twitch'>) => (
-  <TwitchPreview channel={model.variant.channel} preview={localizedPreview} onPreviewError={model.onPreviewError} />
+const renderTwitchVideoPreview = createVariantRenderer('twitch', ({ facts, localizedPreview }: VariantRendererProps<'twitch'>) => (
+  <TwitchPreview channel={facts.variant.channel} preview={localizedPreview} onPreviewError={facts.onPreviewError} />
 ));
 
-const renderTwitchCopy = createVariantRenderer('twitch', ({ model }: VariantRendererProps<'twitch'>) => {
-  const title = getTwitchStreamTitle(model.item.title, model.variant.channel);
+const renderTwitchCopy = createVariantRenderer('twitch', ({ facts }: VariantRendererProps<'twitch'>) => {
+  const title = getTwitchStreamTitle(facts.item.title, facts.variant.channel);
   return (
     <div className="reader-card__copy reader-card__copy--player reader-card__twitch-copy">
       <h2 className="reader-card__title"><TwitchTitle text={title} /></h2>
-      <p className="reader-card__channel">{model.variant.channel}</p>
+      <p className="reader-card__channel">{facts.variant.channel}</p>
     </div>
   );
 }, StandardCopy);

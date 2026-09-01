@@ -1,17 +1,12 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  FeedItemCardCopy,
-  FeedItemCardIdentity,
-  FeedItemCardPreview,
-  FeedItemCardSupplementary,
-} from './FeedItemCardContent';
+import { FeedItemCardContent } from './FeedItemCardContent';
 import { useFeedItemCardModel } from './useFeedItemCardModel';
 import { ArticleReaderOverlay } from './ArticleReader';
 import { useArticleReader } from '../hooks/useArticleReader';
 import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
 import { isRezkaUrl, parseUrl } from '../domain/feedItemUrls';
-import { getFeedItemCardProviderRenderer } from './providers/feedItemCardProviderRegistry';
+import { getFeedItemCardClassNames } from './providers/feedItemCardProviderRegistry';
 
 export const FeedItemCard = memo(function FeedItemCard({
   item,
@@ -23,7 +18,6 @@ export const FeedItemCard = memo(function FeedItemCard({
   const [areTikTokCommentsExpanded] = useTikTokCommentsPreference();
   const articleReader = useArticleReader(item.link);
   const { cardRef, isPreviewPending, shouldBlurNsfw, shouldHideNsfw } = model;
-  const { cardClassNames } = getFeedItemCardProviderRenderer(model.provider);
   if (shouldHideNsfw) return null;
 
   return (
@@ -32,7 +26,7 @@ export const FeedItemCard = memo(function FeedItemCard({
       className={[
         'reader-card',
         isPreviewPending ? 'reader-card--preview-pending' : '',
-        ...cardClassNames(model),
+        ...getFeedItemCardClassNames(model.renderFacts),
         isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
@@ -53,10 +47,7 @@ export const FeedItemCard = memo(function FeedItemCard({
           <span>{t('preview.hidden')}</span>
         </div>
       ) : null}
-      <FeedItemCardIdentity model={model} />
-      <FeedItemCardPreview model={model} />
-      <FeedItemCardSupplementary model={model} />
-      <FeedItemCardCopy model={model} onOpenArticle={articleReader.open} />
+      <FeedItemCardContent facts={model.renderFacts} onOpenArticle={articleReader.open} />
       <ArticleReaderOverlay reader={articleReader} originalUrl={item.link} />
     </article>
   );

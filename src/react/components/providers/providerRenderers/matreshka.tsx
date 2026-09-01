@@ -9,13 +9,13 @@ import {
 } from './common';
 import { createVariantRenderer } from './createVariantRenderer';
 
-const renderMatreshkaVideoPreview = createVariantRenderer('matreshka', ({ model, localizedPreview }: VariantRendererProps<'matreshka'>) => {
-  const title = parseMatreshkaTitle(model.item.title, model.item.text);
-  return <MatreshkaPreview videoId={model.variant.videoId} title={title.title} videoSrc={model.openGraphPreview?.video ?? null} preview={localizedPreview} onPreviewError={model.onPreviewError} />;
+const renderMatreshkaVideoPreview = createVariantRenderer('matreshka', ({ facts, localizedPreview }: VariantRendererProps<'matreshka'>) => {
+  const title = parseMatreshkaTitle(facts.item.title, facts.item.text);
+  return <MatreshkaPreview videoId={facts.variant.videoId} title={title.title} videoSrc={facts.videoSrc} preview={localizedPreview} onPreviewError={facts.onPreviewError} />;
 });
 
-const renderMatreshkaCopy = createVariantRenderer('matreshka', ({ model }: VariantRendererProps<'matreshka'>) => {
-  const title = parseMatreshkaTitle(model.item.title, model.item.text);
+const renderMatreshkaCopy = createVariantRenderer('matreshka', ({ facts }: VariantRendererProps<'matreshka'>) => {
+  const title = parseMatreshkaTitle(facts.item.title, facts.item.text);
   return (
     <div className="reader-card__copy reader-card__copy--player reader-card__matreshka-copy">
       <h2 className="reader-card__title">{title.title}</h2>

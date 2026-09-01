@@ -3,34 +3,37 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { FeedItemCardModel } from '../useFeedItemCardModel';
+import type { FeedItemProvider } from '../../domain/feedItemPreviewTypes';
+import type { FeedItemCardRenderFacts } from '../useFeedItemCardModel';
 import {
-  feedItemCardProviderRendererMap,
-  getFeedItemCardProviderRenderer,
+  FeedItemCardProviderContent,
+  getFeedItemCardClassNames,
 } from './feedItemCardProviderRegistry';
 
-function createModel(overrides: Partial<FeedItemCardModel> = {}): FeedItemCardModel {
+const providers: FeedItemProvider[] = [
+  'generic',
+  'hltv',
+  'instagram',
+  'liquipedia',
+  'matreshka',
+  'onefootball',
+  'sasflix',
+  'tiktok',
+  'twitch',
+  'vk',
+  'youtube',
+];
+
+function createFacts(overrides: Partial<FeedItemCardRenderFacts> = {}): FeedItemCardRenderFacts {
   return {
-    item: {
-      id: 1,
-      feedId: 2,
-      link: 'https://example.com/story',
-      title: 'Story',
-      text: '',
-    },
-    hostname: null,
+    item: { id: 1, feedId: 2, link: 'https://example.com/story', title: 'Story', text: '' },
+    hostname: 'example.com',
     provider: 'generic',
     variant: { type: 'standard' },
     imagePreview: { type: 'none' },
-    openGraphPreview: null,
     liquipediaMatch: null,
     description: null,
-    isNsfw: false,
-    shouldBlurNsfw: false,
-    shouldHideNsfw: false,
-    hltvMatchTeams: null,
-    hltvSnapshot: null,
-    hltvImageScore: null,
+    canReadArticle: false,
     descriptor: {
       preview: { type: 'media', isShortVideo: false, isTikTok: false },
       copy: 'standard',
@@ -38,91 +41,91 @@ function createModel(overrides: Partial<FeedItemCardModel> = {}): FeedItemCardMo
       showHltvCountdown: false,
       showTikTokComments: false,
     },
-    preview: null,
     visiblePreview: null,
-    cardRef: { current: null },
+    hltvMatchTeams: null,
+    hltvSnapshot: null,
+    hltvImageScore: null,
+    oneFootballSnapshot: null,
+    videoSrc: null,
     isPreviewPending: false,
     previewStatus: 'idle',
     onPreviewError: vi.fn(),
     ...overrides,
-  } as FeedItemCardModel;
+  };
 }
 
-describe('feed item card provider renderer map', () => {
-  it('registers every provider with all rendering slots', () => {
-    for (const provider of Object.keys(feedItemCardProviderRendererMap) as Array<
-      keyof typeof feedItemCardProviderRendererMap
-    >) {
-      const renderer = getFeedItemCardProviderRenderer(provider);
+function renderProvider(facts: FeedItemCardRenderFacts) {
+  return render(
+    <FeedItemCardProviderContent
+      facts={facts}
+      localizedPreview={null}
+      displayHostname={facts.hostname ?? 'Feed item'}
+      previewPlaceholder={<div data-testid="preview-placeholder" />}
+    />,
+  );
+}
 
-      expect(feedItemCardProviderRendererMap[provider]).toBe(renderer);
-      expect(renderer.cardClassNames).toBeTypeOf('function');
-      expect(renderer.Preview).toBeTypeOf('function');
-      expect(renderer.Supplementary).toBeTypeOf('function');
-      expect(renderer.Copy).toBeTypeOf('function');
-      expect(renderer.Identity).toBeTypeOf('function');
+describe('feed item card provider rendering', () => {
+  it('dispatches every provider through the public render path', () => {
+    for (const provider of providers) {
+      const facts = createFacts({ provider });
+      const view = renderProvider(facts);
+
+      expect(getFeedItemCardClassNames(facts)).toBeInstanceOf(Array);
+      view.unmount();
     }
   });
 
-  it('uses no-op renderers for unsupported slots', () => {
-    const model = createModel();
-    const Supplementary = getFeedItemCardProviderRenderer('generic').Supplementary;
-    const Copy = getFeedItemCardProviderRenderer('tiktok').Copy;
-    const { container } = render(
-      <>
-        <Supplementary model={model} localizedPreview={null} displayHostname="" />
-        <Copy model={model} localizedPreview={null} displayHostname="" />
-      </>,
-    );
+  it('keeps unsupported slots internal and renders them as no-ops', () => {
+    const { container } = renderProvider(createFacts({
+      provider: 'tiktok',
+      descriptor: { ...createFacts().descriptor, copy: 'none' },
+    }));
 
-    expect(container.firstChild).toBeNull();
+    expect(container.querySelector('.reader-card__copy')).toBeNull();
   });
 
   it('centralizes copy visibility for all providers', () => {
-    const Renderer = getFeedItemCardProviderRenderer('generic').Copy;
-    const { container, rerender } = render(
-      <Renderer model={createModel()} localizedPreview={null} displayHostname="example.com" />,
-    );
-
+    const { container, rerender } = renderProvider(createFacts());
     expect(container.querySelector('.reader-card__copy')).toBeTruthy();
 
+    const hiddenCopyFacts = createFacts({
+      descriptor: { ...createFacts().descriptor, copy: 'none' },
+    });
     rerender(
-      <Renderer
-        model={createModel({
-          descriptor: {
-            ...createModel().descriptor,
-            copy: 'none',
-          },
-        })}
+      <FeedItemCardProviderContent
+        facts={hiddenCopyFacts}
         localizedPreview={null}
         displayHostname="example.com"
+        previewPlaceholder={null}
       />,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(container.querySelector('.reader-card__copy')).toBeNull();
   });
 
   it('renders Instagram identity inside the provider preview', () => {
-    const Preview = getFeedItemCardProviderRenderer('instagram').Preview;
+    const facts = createFacts({
+      provider: 'instagram',
+      item: {
+        id: 1,
+        feedId: 2,
+        link: 'https://www.instagram.com/p/example',
+        title: 'inst: creator',
+        text: '',
+      },
+      descriptor: {
+        ...createFacts().descriptor,
+        preview: { type: 'media', isShortVideo: true, isTikTok: false },
+        showInstagramIdentity: true,
+      },
+    });
     const { container } = render(
-      <Preview
-        model={createModel({
-          provider: 'instagram',
-          item: {
-            id: 1,
-            feedId: 2,
-            link: 'https://www.instagram.com/p/example',
-            title: 'inst: creator',
-            text: '',
-          },
-          descriptor: {
-            ...createModel().descriptor,
-            preview: { type: 'media', isShortVideo: true, isTikTok: false },
-            showInstagramIdentity: true,
-          },
-        })}
+      <FeedItemCardProviderContent
+        facts={facts}
         localizedPreview={{ src: 'https://example.com/photo.jpg', alt: 'Photo' }}
         displayHostname=""
+        previewPlaceholder={null}
       />,
     );
 
@@ -132,14 +135,18 @@ describe('feed item card provider renderer map', () => {
   });
 
   it('falls back to standard copy when a variant-specific renderer receives another variant', () => {
-    const Renderer = getFeedItemCardProviderRenderer('youtube').Copy;
-    const { container } = render(
-      <Renderer model={createModel()} localizedPreview={null} displayHostname="example.com" />,
-    );
+    const { container } = renderProvider(createFacts({ provider: 'youtube' }));
 
     expect(container.querySelector('.reader-card__youtube-copy')).toBeNull();
     expect(container.querySelector('.reader-card__copy')).toBeTruthy();
     expect(container.querySelector('.reader-card__link')?.getAttribute('href'))
       .toBe('https://example.com/story');
+  });
+
+  it('owns pending slot composition inside the provider render path', () => {
+    const { container, getByTestId } = renderProvider(createFacts({ isPreviewPending: true }));
+
+    expect(getByTestId('preview-placeholder')).toBeTruthy();
+    expect(container.querySelector('.reader-card__copy')).toBeNull();
   });
 });

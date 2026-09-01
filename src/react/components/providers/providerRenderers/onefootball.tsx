@@ -6,12 +6,12 @@ import {
 } from './common';
 
 export function OneFootballPreview(props: FeedItemCardProviderRendererProps) {
-  const { model } = props;
-  if (!model.oneFootballSnapshot?.score) return <FeedItemMediaPreview {...props} />;
-  return <OneFootballMatch href={model.item.link} snapshot={model.oneFootballSnapshot} />;
+  const { facts } = props;
+  if (!facts.oneFootballSnapshot?.score) return <FeedItemMediaPreview {...props} />;
+  return <OneFootballMatch href={facts.item.link} snapshot={facts.oneFootballSnapshot} />;
 }
 
 export function OneFootballCopy(props: FeedItemCardProviderRendererProps) {
-  if (props.model.oneFootballSnapshot?.score) return null;
+  if (props.facts.oneFootballSnapshot?.score) return null;
   return <StandardCopy {...props} />;
 }

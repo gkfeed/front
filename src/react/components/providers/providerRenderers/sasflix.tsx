@@ -8,13 +8,13 @@ import {
 } from './common';
 import { createVariantRenderer } from './createVariantRenderer';
 
-const renderSasflixVideoPreview = createVariantRenderer('sasflix', ({ model, localizedPreview }: VariantRendererProps<'sasflix'>) => (
-  <SasflixPreview href={model.item.link} title={model.item.title} videoSrc={model.openGraphPreview?.video ?? null} previewStatus={model.previewStatus} preview={localizedPreview} onPreviewError={model.onPreviewError} />
+const renderSasflixVideoPreview = createVariantRenderer('sasflix', ({ facts, localizedPreview }: VariantRendererProps<'sasflix'>) => (
+  <SasflixPreview href={facts.item.link} title={facts.item.title} videoSrc={facts.videoSrc} previewStatus={facts.previewStatus} preview={localizedPreview} onPreviewError={facts.onPreviewError} />
 ));
 
-const renderSasflixCopy = createVariantRenderer('sasflix', ({ model }: VariantRendererProps<'sasflix'>) => (
+const renderSasflixCopy = createVariantRenderer('sasflix', ({ facts }: VariantRendererProps<'sasflix'>) => (
   <div className="reader-card__copy reader-card__copy--player reader-card__sasflix-copy">
-    <h2 className="reader-card__title">{model.item.title}</h2>
+    <h2 className="reader-card__title">{facts.item.title}</h2>
   </div>
 ), StandardCopy);
 

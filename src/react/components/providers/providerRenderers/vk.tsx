@@ -1,8 +1,8 @@
 import type { FeedItemCardProviderRendererProps } from './common';
 import { VkIcon } from '../../Icons';
 
-export function VkCopy({ model, displayHostname }: FeedItemCardProviderRendererProps) {
-  const { item, description } = model;
+export function VkCopy({ facts, displayHostname }: FeedItemCardProviderRendererProps) {
+  const { item, description } = facts;
   return (
     <div className="reader-card__copy reader-card__vk-copy">
       {description ? <p className="reader-card__description">{description}</p> : null}
