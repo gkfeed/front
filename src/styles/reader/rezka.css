@@ -1,9 +1,9 @@
-/* Rezka artwork is poster-shaped, so the generic wide image canvas makes it
-   dominate the reader and can push review actions outside the viewport. */
+/* Rezka artwork is poster-shaped, so let it use the available height while
+   keeping enough room for the title and review controls. */
 @media (min-width: 641px) {
   .reader__item:has(> .reader-card--rezka) > .reader-card--rezka {
     width: fit-content;
-    max-width: min(100%, 560px);
+    max-width: min(100%, 720px);
     justify-self: center;
   }
 
@@ -21,7 +21,7 @@
   > img {
     width: auto;
     max-width: 100%;
-    max-height: min(70dvh, 720px);
+    max-height: min(84dvh, 900px);
     object-fit: contain;
   }
 }

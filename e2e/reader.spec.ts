@@ -986,6 +986,51 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(bounds.copyTop - bounds.previewBottom).toBeLessThanOrEqual(24);
   });
 
+  test('uses more of the fullscreen stage for Rezka posters', async ({ page }) => {
+    const coverUrl = 'https://static.hdrezka.ac/covers/sabrina.jpg';
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 28,
+          feed_id: 4,
+          link: 'https://hdrezka.me/series/thriller/28825-sabrina.html',
+          title: 'Леденящие душу приключения Сабрины',
+          text: `<img src="${coverUrl}">`,
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://hdrezka.me/series/thriller/28825-sabrina.html',
+        title: 'Леденящие душу приключения Сабрины',
+        description: null,
+        image: coverUrl,
+        video: null,
+        siteName: 'HDrezka',
+        type: null,
+      },
+    }));
+    await page.route(coverUrl, (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1200" viewBox="0 0 800 1200"><rect width="800" height="1200" fill="#181825"/></svg>',
+    }));
+    await page.setViewportSize({ width: 2048, height: 1152 });
+    await page.goto('/reader');
+
+    const poster = page.locator('.reader-card--rezka .reader-card__preview img');
+    await expect(poster).toBeVisible();
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+
+    const posterBox = await poster.boundingBox();
+    const actionsBox = await page.locator('.reader__actions').boundingBox();
+    expect(posterBox).not.toBeNull();
+    expect(actionsBox).not.toBeNull();
+    expect(posterBox!.width).toBeGreaterThanOrEqual(590);
+    expect(posterBox!.height).toBeGreaterThanOrEqual(880);
+    expect(actionsBox!.y + actionsBox!.height).toBeLessThanOrEqual(1152);
+  });
+
   test('reflows controls after rotating from landscape to portrait', async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 1024 });
     await page.goto('/reader');
