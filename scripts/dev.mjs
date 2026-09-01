@@ -2,12 +2,14 @@ import { spawn } from 'node:child_process';
 
 const bffPort = process.env.BFF_PORT ?? process.env.PORT ?? '3000';
 const bffTarget = process.env.BFF_TARGET ?? `http://127.0.0.1:${bffPort}`;
+const frontHost = process.env.FRONT_HOST ?? '0.0.0.0';
+const frontPort = process.env.FRONT_PORT ?? '4200';
 
 const services = [
   {
     name: 'front',
     command: 'node_modules/.bin/vite',
-    args: ['--host', '0.0.0.0', '--port', '4200'],
+    args: ['--host', frontHost, '--port', frontPort],
     env: { ...process.env, BFF_TARGET: bffTarget },
   },
   {

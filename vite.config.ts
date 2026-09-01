@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [react()],
   server: {
+    allowedHosts: ['gkfeed.local'],
     proxy: {
       '/bff': {
         target: process.env.BFF_TARGET ?? 'http://127.0.0.1:3000',
