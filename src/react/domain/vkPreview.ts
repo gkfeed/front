@@ -11,7 +11,6 @@ export function getVkVideoPreview(url: URL, title: string): FeedItemPreview | nu
 
     const embedUrl = new URL(url.href);
     embedUrl.protocol = 'https:';
-    embedUrl.hostname = 'vk.com';
     embedUrl.searchParams.set('autoplay', '0');
     embedUrl.searchParams.set('muted', '0');
     return createVkPreview(embedUrl, title);

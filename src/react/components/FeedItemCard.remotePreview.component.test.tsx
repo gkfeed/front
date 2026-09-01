@@ -298,7 +298,7 @@ describe('FeedItemCard remote and feed previews', () => {
     const player = await screen.findByTitle('Video preview for Рифмы и Панчи');
     expect(player.tagName).toBe('IFRAME');
     expect(player.getAttribute('src')).toBe(
-      'https://vk.com/video_ext.php?oid=-28905875&id=456404323&hash=secret&autoplay=0&muted=0',
+      'https://vk.ru/video_ext.php?oid=-28905875&id=456404323&hash=secret&autoplay=0&muted=0',
     );
   });
 });

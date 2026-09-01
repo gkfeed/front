@@ -129,14 +129,14 @@ describe('getFeedItemPreview', () => {
     expect(getFeedItemPreview(item({
       text: '<iframe src="https://vkvideo.ru/video_ext.php?oid=-123&amp;id=456&amp;hash=secret"></iframe>',
     }))).toMatchObject({
-      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hash=secret&autoplay=0&muted=0',
+      src: 'https://vkvideo.ru/video_ext.php?oid=-123&id=456&hash=secret&autoplay=0&muted=0',
       type: 'embed',
     });
 
     expect(getFeedItemPreview(item({
       link: 'https://vk.ru/video_ext.php?oid=-123&id=456&hash=secret',
     }))).toMatchObject({
-      src: 'https://vk.com/video_ext.php?oid=-123&id=456&hash=secret&autoplay=0&muted=0',
+      src: 'https://vk.ru/video_ext.php?oid=-123&id=456&hash=secret&autoplay=0&muted=0',
       type: 'embed',
     });
   });
