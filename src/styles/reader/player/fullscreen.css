@@ -1,0 +1,110 @@
+@media (min-width: 641px) {
+  /* Player shells fill the stage and let the actual player consume its
+     flexible row instead of deriving sizes from several viewport formulas. */
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--player {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--player
+  > :is(.reader-card__player-shell, .reader-card__preview-trigger-wrap) {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__player-stage {
+    display: grid;
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__preview--player,
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__preview-trigger-wrap
+  > .reader-card__preview {
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__preview-trigger-wrap
+  > .reader-card__preview {
+    display: grid;
+    place-items: center;
+    background: #000;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow .reader-card__preview-trigger-wrap
+  > .reader-card__preview > img {
+    width: auto;
+    height: auto;
+  }
+
+  /* Closed player cards are thumbnails, not player stages. Keep media and
+     copy in one intrinsic block instead of stretching them to opposite ends
+     of the fullscreen card row. */
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player:has(> .reader-card__preview-trigger-wrap) {
+    height: auto;
+    align-self: center;
+    grid-template-rows: auto auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__preview-trigger-wrap {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__preview-trigger-wrap
+  > .reader-card__preview {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__preview-trigger-wrap
+  > .reader-card__preview > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player:has(> .reader-card__player-shell) {
+    height: auto;
+    align-self: center;
+    grid-template-rows: auto auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__player-shell:not(.reader-card__player-shell--theater),
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__player-shell:not(.reader-card__player-shell--theater)
+  .reader-card__player-stage {
+    height: auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--player > .reader-card__player-shell:not(.reader-card__player-shell--theater)
+  .reader-card__preview--player,
+  .reader__item--fullscreen.reader__item--card-flow
+  .reader-card__player-shell--theater .reader-card__preview--player {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  /* Theater is viewport-level and must size from width, not inherit the
+     reader stage's flexible height. */
+  .reader__item--fullscreen.reader__item--card-flow
+  .reader-card__player-shell--theater .reader-card__player-stage {
+    display: block;
+    height: auto;
+  }
+}

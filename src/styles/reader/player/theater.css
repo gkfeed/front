@@ -1,0 +1,63 @@
+/* Theater is a viewport-level overlay layered on top of the shared player. */
+.reader-card__player-shell--theater {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 3vw, 32px);
+  background: rgb(5 5 8 / 94%);
+}
+
+.reader-card__player-shell--theater .reader-card__player-stage {
+  width: min(100%, 1600px);
+  max-width: 1600px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 12px;
+  background: #000;
+  box-shadow: 0 28px 80px rgb(0 0 0 / 55%);
+}
+
+.reader-card__player-shell--theater .reader-card__player-toolbar {
+  min-height: 44px;
+  border-bottom-color: rgb(255 255 255 / 14%);
+  background: #18181b;
+}
+
+.reader-card__player-shell--theater :is(
+  .reader-card__speed-toggle,
+  .reader-card__resume-toggle,
+  .reader-card__theater-toggle
+) {
+  border-color: rgb(255 255 255 / 22%);
+  background: rgb(255 255 255 / 9%);
+  color: #f7f7f8;
+}
+
+.reader-card__player-shell--theater :is(
+  .reader-card__resume-toggle,
+  .reader-card__speed-toggle,
+  .reader-card__theater-toggle
+):hover {
+  border-color: rgb(255 255 255 / 32%);
+  background: rgb(255 255 255 / 16%);
+}
+
+.reader-card__player-shell--theater .reader-card__speed-toggle[aria-pressed="true"] {
+  border-color: rgb(255 255 255 / 42%);
+  background: rgb(255 255 255 / 20%);
+}
+
+html.reader-theater-open {
+  overflow: hidden;
+}
+
+html.reader-theater-open main .reader__fullscreen-toolbar {
+  display: none;
+}
+
+@media (min-aspect-ratio: 8 / 5) {
+  .reader-card__player-shell--theater .reader-card__player-stage {
+    width: min(100%, 145dvh, 1600px);
+  }
+}

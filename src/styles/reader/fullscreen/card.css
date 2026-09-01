@@ -1,10 +1,7 @@
 /* Review mode is a three-row frame: the card uses the flexible viewport row,
    while decisions and progress always keep their own rows below it. */
 @media (min-width: 641px) {
-  .reader__item--fullscreen:is(
-    .reader__item--card-flow,
-    :has(> .reader-card--instagram-photo)
-  ) {
+  .reader__item--fullscreen.reader__item--card-flow {
     width: min(100%, 960px);
     height: calc(
       100dvh
@@ -16,19 +13,13 @@
     justify-self: center;
   }
 
-  .reader__item--fullscreen:is(
-    .reader__item--card-flow,
-    :has(> .reader-card--instagram-photo)
-  ) > .reader-card {
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card {
     min-width: 0;
     min-height: 0;
     max-height: 100%;
   }
 
-  .reader__item--fullscreen:is(
-    .reader__item--card-flow,
-    :has(> .reader-card--instagram-photo)
-  )
+  .reader__item--fullscreen.reader__item--card-flow
   > :is(.reader__actions, .reader__count-row) {
     width: 100%;
     min-width: 0;

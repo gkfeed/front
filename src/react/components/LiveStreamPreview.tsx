@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
+import '../../styles/live-stream-preview.css';
 import type { LiveStreamViewModel } from '../features/live/liveViewModel';
 
 export type LiveStreamPreviewProps = {
@@ -20,7 +21,7 @@ export function LiveStreamPreview({ stream, isPlaying, onPlay }: LiveStreamPrevi
     });
 
     return (
-      <div className="live__preview live__preview--player">
+      <div className="live-preview live-preview--player">
         <iframe
           src={`https://player.twitch.tv/?${parameters}`}
           title={t('live.playerTitle', { channel })}
@@ -34,12 +35,12 @@ export function LiveStreamPreview({ stream, isPlaying, onPlay }: LiveStreamPrevi
   return (
     <button
       type="button"
-      className="live__preview live__preview-trigger"
+      className="live-preview live-preview--trigger"
       aria-label={t('live.playOn', { channel })}
       onClick={onPlay}
     >
       {preview ? <img src={preview.src} alt={t('live.previewAlt', { channel })} /> : null}
-      <span className="live__play" aria-hidden="true">▶</span>
+      <span className="live-preview__play" aria-hidden="true">▶</span>
     </button>
   );
 }

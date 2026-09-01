@@ -1,4 +1,6 @@
-@import "../short-video/fullscreen-preview.css";
 @import "./media/base.css";
-@import "./media/card-flow.css";
+@import "./media/image-card-flow.css";
+@import "../player/fullscreen.css";
+@import "../vk/fullscreen.css";
+@import "../short-video/fullscreen-preview.css";
 @import "../short-video/fullscreen.css";

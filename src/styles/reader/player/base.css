@@ -1,0 +1,130 @@
+/* Shared player cards and controls for video-capable providers. */
+.reader-card--player {
+  position: relative;
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.reader-card__preview-trigger {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.reader-card__preview-trigger-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.reader-card__preview-trigger:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.reader-card--player .reader-card__preview {
+  border: 0;
+  border-radius: 0;
+}
+
+.reader-card__player-shell {
+  min-width: 0;
+}
+
+.reader-card__player-stage {
+  overflow: hidden;
+  background: var(--color-card);
+}
+
+.reader-card__player-toolbar {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 5px 8px;
+  border-bottom: 1px solid color-mix(in oklch, var(--color-card-border) 72%, transparent);
+  background: linear-gradient(160deg, var(--color-card-hover), var(--color-card));
+}
+
+:is(
+  .reader-card__resume-toggle,
+  .reader-card__speed-toggle,
+  .reader-card__theater-toggle
+) {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-control-border);
+  border-radius: 8px;
+  background: var(--color-control-well);
+  color: var(--color-ink-inverse);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background-color var(--ease), border-color var(--ease), color var(--ease);
+}
+
+.reader-card__resume-toggle {
+  max-width: min(42vw, 240px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-card__speed-toggle {
+  min-width: 42px;
+  justify-content: center;
+}
+
+:is(
+  .reader-card__resume-toggle,
+  .reader-card__speed-toggle,
+  .reader-card__theater-toggle
+):hover {
+  border-color: color-mix(in oklch, var(--color-field) 42%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 18%, var(--color-control-well));
+}
+
+.reader-card__speed-toggle[aria-pressed="true"] {
+  border-color: color-mix(in oklch, var(--color-field) 62%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 26%, var(--color-control-well));
+}
+
+:is(
+  .reader-card__resume-toggle,
+  .reader-card__speed-toggle,
+  .reader-card__theater-toggle
+):focus-visible {
+  outline: 2px solid var(--color-focus-light);
+  outline-offset: 2px;
+}
+
+.reader-card__preview--player {
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.reader-card__preview--player iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.reader-card__preview--player video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
