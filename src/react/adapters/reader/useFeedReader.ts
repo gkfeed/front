@@ -4,7 +4,6 @@ import { useNsfwPreferences } from '../../state/useNsfwPreferences';
 import { useTikTokPreferences } from '../../state/useTikTokPreferences';
 import { useAuth } from '../../state/useAuth';
 import type { ReaderItemOrder } from '../../state/readerItemOrder';
-import { projectReaderItems } from '../../hooks/readerItemsProjection';
 import { useFeedItemDeletion } from '../../hooks/useFeedItemDeletion';
 import { useFeedItems } from '../../hooks/useFeedItems';
 import { useReaderDeletionProjection } from '../../hooks/useReaderDeletionProjection';
@@ -45,8 +44,7 @@ export function useFeedReader({
     markDeleted,
     restoreFailed,
   } = useReaderDeletionProjection(loadedItems);
-  const { items, reviewableIds, visibleItemIds } = useMemo(() => projectReaderItems({
-    loadedItems,
+  const reviewPresentation = useMemo(() => ({
     itemOrder,
     nsfwMode,
     hideTikTokItems,
@@ -55,20 +53,17 @@ export function useFeedReader({
     feedPriorities,
   }), [
     deletedItemIds,
-    itemOrder,
+    feedPriorities,
     hideTikTokItems,
-    loadedItems,
+    itemOrder,
     nsfwMode,
     requeuedItemIds,
-    feedPriorities,
   ]);
-  const { activeReviewIds, keep, remove, reset } = useReviewSession({
+  const { items, reviewableIds, activeReviewIds, keep, remove, reset } = useReviewSession({
     loadedItems,
-    reviewableIds,
-    visibleItemIds,
     username: credentials?.username ?? null,
     isSyncComplete,
-    orderKey: `${itemOrder}:${JSON.stringify(feedPriorities)}`,
+    ...reviewPresentation,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
   const isLoading = isFeedLoading
@@ -105,8 +100,6 @@ export function useFeedReader({
     if (failedIds.length > 0) {
       restoreFailed(failedIds);
       reset([...reviewableIds, ...failedIds]);
-    } else {
-      reset();
     }
     retry();
   }, [failedDeletions, reset, restoreFailed, retry, reviewableIds]);

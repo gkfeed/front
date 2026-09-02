@@ -96,7 +96,7 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('Second story')).toBeTruthy();
   });
 
-  it('reconciles a saved review queue only after all cursor pages are loaded', async () => {
+  it('does not add partial snapshot cards to a restored queue', async () => {
     const storage = stubLocalStorage();
     const storageKey = getReviewStateStorageKey('reader');
     storage.set(storageKey, JSON.stringify({
@@ -127,11 +127,11 @@ describe('ReaderPage', () => {
 
     await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
     act(() => publishProgress?.(firstPage));
-    expect(await screen.findByText('Story 110')).toBeTruthy();
+    expect(screen.queryByText('Story 110')).toBeNull();
     expect(storage.get(storageKey)).toContain('"pendingIds":[98,96]');
 
     act(() => publishProgress?.(allItems));
-    expect(screen.getByText('Story 110')).toBeTruthy();
+    expect(screen.queryByText('Story 110')).toBeNull();
 
     await act(async () => finishLoad?.(allItems));
     expect(await screen.findByText('Story 110')).toBeTruthy();
@@ -161,6 +161,7 @@ describe('ReaderPage', () => {
       revisitIds: [],
       keptItemIds: [],
     });
+    expect(getFeedItems).toHaveBeenCalledOnce();
   });
 
   it('starts with the newest item when a refresh finds several new items', async () => {
@@ -207,7 +208,7 @@ describe('ReaderPage', () => {
     expect(deleteFeedItemById).not.toHaveBeenCalled();
   });
 
-  it('keeps the current card selected while cursor pages extend the counter', async () => {
+  it('keeps the current queue unchanged while cursor pages are partial', async () => {
     const firstPage = [
       { ...ITEMS[0], id: 20, title: 'Current page item' },
       { ...ITEMS[1], id: 19, title: 'Stable selected item' },
@@ -232,10 +233,11 @@ describe('ReaderPage', () => {
     act(() => publishProgress?.([...firstPage, nextPageItem]));
     expect(screen.getByText('Stable selected item')).toBeTruthy();
     expect(screen.queryByText('Current page item')).toBeNull();
-    await waitFor(() => expect(screen.getByText('2 remaining')).toBeTruthy());
+    expect(screen.getByText('1 remaining')).toBeTruthy();
 
     await act(async () => finishLoad?.([...firstPage, nextPageItem]));
     expect(screen.getByText('Stable selected item')).toBeTruthy();
+    expect(screen.getByText('2 remaining')).toBeTruthy();
   });
 
   it('keeps showing loading while an empty partial snapshot is still syncing', async () => {
@@ -389,6 +391,33 @@ describe('ReaderPage', () => {
 
     await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
     expect(await screen.findByText('First story')).toBeTruthy();
+  });
+
+  it('check again adds fresh cards without resetting completed progress', async () => {
+    const newItem = {
+      id: 12,
+      feedId: 4,
+      link: 'https://example.net/new',
+      title: 'New story',
+      text: 'New summary',
+    };
+    vi.mocked(getFeedItems)
+      .mockResolvedValueOnce(ITEMS)
+      .mockResolvedValueOnce([...ITEMS, newItem]);
+    renderReader();
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    for (let index = 0; index < 4; index += 1) {
+      fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    }
+    expect(await screen.findByText('You’ve reviewed everything')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
+
+    expect(await screen.findByText('New story')).toBeTruthy();
+    expect(screen.getByText('1 remaining')).toBeTruthy();
+    expect(screen.queryByText('First story')).toBeNull();
+    expect(screen.queryByText('Second story')).toBeNull();
   });
 
   it('shows only the video name and channel copy for YouTube items', async () => {

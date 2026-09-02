@@ -1,5 +1,5 @@
 import { getObjectProperty } from '../unknownObject';
-import type { ReviewQueueState } from './reviewQueue';
+import type { ReviewProgress } from './reviewSession';
 
 const REVIEW_STATE_STORAGE_PREFIX = 'gkfeed.reader-review.v1';
 
@@ -9,7 +9,7 @@ export function getReviewStateStorageKey(username: string): string {
 
 export function readReviewState(
   storageKey: string | null,
-): ReviewQueueState | null {
+): ReviewProgress | null {
   const storage = getReviewStorage();
   if (!storageKey || !storage) return null;
 
@@ -42,7 +42,7 @@ export function readReviewState(
   }
 }
 
-export function writeReviewState(storageKey: string | null, state: ReviewQueueState): void {
+export function writeReviewState(storageKey: string | null, state: ReviewProgress): void {
   const storage = getReviewStorage();
   if (!storageKey || !storage) return;
 

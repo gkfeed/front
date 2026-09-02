@@ -8,7 +8,11 @@ import { getReviewStateStorageKey, readReviewState, writeReviewState } from './r
 afterEach(restoreLocalStorage);
 
 describe('reviewStateStorage', () => {
-  it('persists and restores a review queue without an item snapshot', () => {
+  it('uses a separate storage key for each user', () => {
+    expect(getReviewStateStorageKey('reader')).not.toBe(getReviewStateStorageKey('other'));
+  });
+
+  it('persists and restores review progress without an item snapshot', () => {
     stubLocalStorage();
     const key = getReviewStateStorageKey('reader');
     const state = {

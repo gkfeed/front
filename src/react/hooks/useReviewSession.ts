@@ -1,86 +1,87 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import type { FeedItem } from '../types';
-import { createReviewQueueState, getActiveReviewIds } from './reviewQueue';
 import {
   createReviewSessionState,
+  getActiveReviewIds,
   reviewSessionReducer,
-} from './reviewSessionMachine';
+  type ReviewPresentation,
+} from './reviewSession';
 import { getReviewStateStorageKey, readReviewState, writeReviewState } from './reviewStateStorage';
 
 export function useReviewSession({
   loadedItems,
-  reviewableIds,
-  visibleItemIds,
   username,
   isSyncComplete,
-  orderKey,
-}: {
+  itemOrder,
+  nsfwMode,
+  hideTikTokItems,
+  deletedItemIds,
+  requeuedItemIds,
+  feedPriorities,
+}: ReviewPresentation & {
   loadedItems: FeedItem[] | undefined;
-  reviewableIds: number[];
-  visibleItemIds: ReadonlySet<number>;
   username: string | null;
   isSyncComplete: boolean;
-  orderKey: string;
 }) {
   const storageKey = username ? getReviewStateStorageKey(username) : null;
+  const presentation = useMemo(() => ({
+    itemOrder,
+    nsfwMode,
+    hideTikTokItems,
+    deletedItemIds,
+    requeuedItemIds,
+    feedPriorities,
+  }), [
+    deletedItemIds,
+    feedPriorities,
+    hideTikTokItems,
+    itemOrder,
+    nsfwMode,
+    requeuedItemIds,
+  ]);
   const [session, dispatch] = useReducer(
     reviewSessionReducer,
-    undefined,
+    presentation,
     createReviewSessionState,
   );
 
   useEffect(() => {
     dispatch({
-      type: 'inputsChanged',
-      loadedItems,
+      type: 'sessionChanged',
       storageKey,
-      isSyncComplete,
-      orderKey,
-      reviewableIds,
-      restoredState: readReviewState(storageKey),
+      restoredProgress: readReviewState(storageKey),
     });
-  }, [isSyncComplete, loadedItems, orderKey, reviewableIds, storageKey]);
-
-  // Keep the established queue visible while cursor pages are incorporated by
-  // the input event. A storage-key change still uses the new fallback queue.
-  const isReady = loadedItems !== undefined
-    && session.phase === 'ready'
-    && session.storageKey === storageKey;
-  const effectiveQueue = useMemo(
-    () => isReady ? session.queue : createReviewQueueState(reviewableIds),
-    [isReady, reviewableIds, session.queue],
-  );
-  const activeReviewIds = useMemo(() => {
-    const activeIds = getActiveReviewIds(effectiveQueue, visibleItemIds);
-    const pinnedId = session.pinnedCurrentId;
-    if (
-      pinnedId === undefined
-      || !visibleItemIds.has(pinnedId)
-      || (
-        !effectiveQueue.pendingIds.includes(pinnedId)
-        && !effectiveQueue.revisitIds.includes(pinnedId)
-      )
-    ) return activeIds;
-    return [pinnedId, ...activeIds.filter((id) => id !== pinnedId)];
-  }, [effectiveQueue, session.pinnedCurrentId, visibleItemIds]);
+  }, [storageKey]);
 
   useEffect(() => {
-    if (!isReady) return;
-    dispatch({ type: 'pinCurrent', id: activeReviewIds[0] });
-  }, [activeReviewIds, isReady]);
+    dispatch({ type: 'snapshotChanged', items: loadedItems, isComplete: isSyncComplete });
+  }, [isSyncComplete, loadedItems, storageKey]);
 
   useEffect(() => {
-    if (!isReady || !isSyncComplete || session.queueToPersist === null) return;
-    writeReviewState(storageKey, session.queueToPersist);
-    dispatch({ type: 'persistenceCompleted' });
-  }, [isReady, isSyncComplete, session.queueToPersist, storageKey]);
+    dispatch({ type: 'presentationChanged', presentation });
+  }, [presentation]);
+
+  useEffect(() => {
+    if (session.progressToPersist === null) return;
+    writeReviewState(storageKey, session.progressToPersist);
+    dispatch({ type: 'persistenceCompleted', progress: session.progressToPersist });
+  }, [session.progressToPersist, storageKey]);
+
+  const activeReviewIds = useMemo(() => getActiveReviewIds(session), [session]);
 
   const keep = useCallback((id: number) => dispatch({ type: 'keep', id }), []);
   const remove = useCallback((id: number) => dispatch({ type: 'remove', id }), []);
-  const reset = useCallback((ids: number[] = reviewableIds) => {
+  const reset = useCallback((ids?: number[]) => {
     dispatch({ type: 'reset', ids });
-  }, [reviewableIds]);
+  }, []);
 
-  return { activeReviewIds, keep, remove, reset };
+  return {
+    items: session.items,
+    reviewableIds: session.reviewableIds,
+    activeReviewIds,
+    keep,
+    remove,
+    reset,
+  };
 }
