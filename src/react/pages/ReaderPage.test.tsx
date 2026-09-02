@@ -238,6 +238,27 @@ describe('ReaderPage', () => {
     expect(screen.getByText('Stable selected item')).toBeTruthy();
   });
 
+  it('keeps showing loading while an empty partial snapshot is still syncing', async () => {
+    let publishProgress: ((items: typeof ITEMS) => boolean | void) | undefined;
+    let finishLoad: ((items: typeof ITEMS) => void) | undefined;
+    vi.mocked(getFeedItems).mockImplementation((_credentials, _limit, _signal, onProgress) => {
+      publishProgress = onProgress;
+      return new Promise((resolve) => {
+        finishLoad = resolve;
+      });
+    });
+    renderReader();
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
+    act(() => publishProgress?.([]));
+
+    expect(screen.getByLabelText('Loading feed items')).toBeTruthy();
+    expect(screen.queryByText('You’re all caught up')).toBeNull();
+
+    await act(async () => finishLoad?.(ITEMS));
+    expect(await screen.findByText('First story')).toBeTruthy();
+  });
+
   it('keeps partial items visible and offers retry when a later cursor page fails', async () => {
     let publishProgress: ((items: typeof ITEMS) => boolean | void) | undefined;
     let failLoad: ((error: Error) => void) | undefined;

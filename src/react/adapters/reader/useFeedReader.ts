@@ -28,7 +28,7 @@ export function useFeedReader({
     loadedItems,
     status,
     error: loadError,
-    isLoading,
+    isLoading: isFeedLoading,
     isSyncComplete,
     invalidateCache,
     retry,
@@ -71,6 +71,8 @@ export function useFeedReader({
     orderKey: `${itemOrder}:${JSON.stringify(feedPriorities)}`,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
+  const isLoading = isFeedLoading
+    || (status !== 'error' && !isSyncComplete && items?.length === 0);
 
   useReviewPreviewPrefetch({
     enabled: prefetchNextPreviews,
