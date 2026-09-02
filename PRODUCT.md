@@ -1,32 +1,22 @@
-# Product
+# GKFEED
 
-## Register
+GKFEED is a compact personal feed reader for collecting sources, reviewing new items, and deciding what to keep. It is designed as a quiet, practical alternative to engagement-driven social feeds.
 
-product
+## Current product
 
-## Users
+- **Authentication:** users sign in with a username and password. Protected pages return unauthenticated users to the sign-in screen; a saved session can be restored, inspected, and signed out.
+- **Source management:** users can search their source list, open source details, add a source from only its URL or enter its title and type manually, and delete a source after confirmation.
+- **Reader:** authenticated users can read the current set of feed items in two views. **Review** presents one item at a time with Keep and Delete decisions, a remaining count, reset, keyboard controls, feed priority, and fullscreen support. **Scroll** presents all items in pages and retains per-feed priority controls. Items can be ordered newest-first or oldest-first.
+- **Article reader:** supported article links open in a focused in-app reading dialog with parsed headings, text, lists, quotes, and images. Users can return to the feed or open the original page; unsupported links open the original directly.
+- **Live:** the Live page checks configured Twitch sources, lists channels that are currently online, and lets the user select and play a stream. Empty and failed checks can be retried.
+- **Settings:** users can choose the Reader view and item order, show, blur, or hide supported NSFW sources, include or exclude TikTok items, and select system, light, dark, or Catppuccin themes. Reader-specific choices appear while using Reader.
+- **Provider previews:** feed cards show available images, video, embeds, and rich provider data. There are tailored experiences for YouTube, TikTok, Twitch, Instagram, VK, Spotify, Matreshka, Sasflix, HLTV, OneFootball, Liquipedia, Reddit, and ordinary web links, with a usable text or original-link fallback when a preview is unavailable.
 
-GKFEED is for an individual who manages personal feed sources. They need a direct way to find, add, review, and remove feeds without social-network noise or administrative clutter.
+The user-facing routes are `/`, `/create`, `/feed/:id`, `/reader`, `/live`, and `/login`.
 
-## Product Purpose
+## Product principles
 
-The product helps a user maintain a clean set of feed records: list existing feeds, search them, create new feeds, inspect details, and delete outdated entries. Success means the app feels reliable, fast to scan, and clear enough to trust for day-to-day source management.
-
-## Brand Personality
-
-Clear, compact, trustworthy. The interface should feel like a practical personal tool, not a toy prototype, enterprise back office, or engagement-driven social feed.
-
-## Anti-references
-
-Avoid rough prototype styling, generic CRUD scaffolding, enterprise clutter, loud social-feed mechanics, gratuitous cards, and decorative UI that distracts from feed management.
-
-## Design Principles
-
-- Make feed records easy to scan before making them decorative.
-- Keep workflows direct: search, create, inspect, delete.
-- Earn trust through accessible controls, clear states, and predictable navigation.
-- Stay lightweight and personal, not corporate or gamified.
-
-## Accessibility & Inclusion
-
-Target WCAG AA as a baseline. Support keyboard navigation, visible focus states, semantic controls, readable contrast, responsive layouts, and reduced cognitive load through plain labels and predictable structure.
+- **Compact:** prioritize scanability and direct actions over decorative UI or administrative clutter.
+- **Trustworthy:** use clear states, predictable navigation, explicit confirmation for destructive source changes, and honest fallbacks when remote content fails.
+- **Personal:** keep the experience lightweight, calm, and free of gamification.
+- **Accessible:** target WCAG AA with semantic controls, keyboard navigation, visible focus, readable contrast, responsive layouts, plain labels, and reduced cognitive load.
