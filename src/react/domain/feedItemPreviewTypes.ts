@@ -18,28 +18,25 @@ export type FeedItemPreviewAlt =
   | { kind: 'sasflix'; title: string | null }
   | { kind: 'vk'; title: string | null };
 
-export type FeedItemProvider =
-  | 'generic'
-  | 'hltv'
-  | 'instagram'
-  | 'liquipedia'
-  | 'matreshka'
-  | 'onefootball'
-  | 'sasflix'
-  | 'tiktok'
-  | 'twitch'
-  | 'vk'
-  | 'youtube';
+type FeedItemProviderIdentity =
+  | { provider: 'generic'; simpleImage: boolean }
+  | { provider: 'hltv' }
+  | { provider: 'instagram'; media: 'photo' | 'video' }
+  | { provider: 'liquipedia' }
+  | { provider: 'matreshka'; videoId: string }
+  | { provider: 'onefootball'; simpleImage: boolean }
+  | { provider: 'sasflix'; publicationId: string }
+  | { provider: 'tiktok' }
+  | { provider: 'twitch'; channel: string }
+  | { provider: 'vk' }
+  | { provider: 'youtube'; videoId: string };
 
-export interface FeedItemAnalysis {
+export type FeedItemProvider = FeedItemProviderIdentity['provider'];
+
+export type FeedItemProviderViewModel = FeedItemProviderIdentity & {
   url: URL | null;
   hostname: string | null;
-  provider: FeedItemProvider;
   localPreview: FeedItemPreview | null;
-  youtubeVideoId: string | null;
-  twitchChannel: string | null;
-  matreshkaVideoId: string | null;
-  sasflixPublicationId: string | null;
-}
+};
 
-export type FeedItemAnalyzer = (item: FeedItem) => FeedItemAnalysis;
+export type FeedItemAnalyzer = (item: FeedItem) => FeedItemProviderViewModel;

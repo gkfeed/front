@@ -37,7 +37,7 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
   const { t } = useTranslation();
   const { item, description } = facts;
 
-  if (facts.variant.type === 'simple-image') {
+  if ((facts.provider === 'generic' || facts.provider === 'onefootball') && facts.simpleImage) {
     return (
       <div className="reader-card__copy">
         <h2 className="reader-card__title">{item.title || displayHostname}</h2>
@@ -62,11 +62,9 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
   );
 }
 
-export type VariantRendererProps<T extends FeedItemCardModel['variant']['type']> = Omit<
+export type ProviderRendererProps<T extends FeedItemCardModel['provider']> = Omit<
   FeedItemCardProviderRendererProps,
   'facts'
 > & {
-  facts: Omit<FeedItemCardModel, 'variant'> & {
-    variant: Extract<FeedItemCardModel['variant'], { type: T }>;
-  };
+  facts: Extract<FeedItemCardModel, { provider: T }>;
 };

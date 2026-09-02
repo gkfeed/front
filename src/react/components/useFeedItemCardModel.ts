@@ -6,18 +6,24 @@ import { useFeedItemCardResource } from '../hooks/useFeedItemCardResource';
 import type { useFeedItemRemotePreview } from '../hooks/useFeedItemRemotePreview';
 import type { FeedItem } from '../types';
 
-export type FeedItemCardModel = FeedItemCardPresentation & {
+type FeedItemCardAsyncState = {
   cardRef: ReturnType<typeof useFeedItemRemotePreview>['cardRef'];
   isPreviewPending: boolean;
   previewStatus: ReturnType<typeof useFeedItemRemotePreview>['previewStatus'];
   onPreviewError: () => void;
 };
 
+export type FeedItemCardModel = FeedItemCardPresentation extends infer Presentation
+  ? Presentation extends FeedItemCardPresentation
+    ? Presentation & FeedItemCardAsyncState
+    : never
+  : never;
+
 export function useFeedItemCardModel(item: FeedItem): FeedItemCardModel {
   const resource = useFeedItemCardResource(item);
   const presentation = buildFeedItemCardPresentation({
     item,
-    analysis: resource.analysis,
+    providerView: resource.providerView,
     nsfwMode: resource.nsfwMode,
     remotePreview: {
       openGraphPreview: resource.openGraphPreview,

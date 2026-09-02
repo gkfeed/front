@@ -166,7 +166,7 @@ describe('Matreshka feed items', () => {
       link: 'https://matreshka.tv/video/LHAN5jgduhC',
     }))).toMatchObject({
       provider: 'matreshka',
-      matreshkaVideoId: 'LHAN5jgduhC',
+      videoId: 'LHAN5jgduhC',
     });
     expect(analyzeFeedItem(item({
       link: 'https://www.matreshka.tv/embed/video/mQJAs3oSzfQ',
@@ -193,7 +193,10 @@ describe('Sasflix feed items', () => {
     })).provider).toBe('sasflix');
     expect(analyzeFeedItem(item({
       link: 'https://www.sasflix.ru/documentary/630ffde7-febb-4f95-a490-6208d8770dea',
-    })).sasflixPublicationId).toBe('630ffde7-febb-4f95-a490-6208d8770dea');
+    }))).toMatchObject({
+      provider: 'sasflix',
+      publicationId: '630ffde7-febb-4f95-a490-6208d8770dea',
+    });
     expect(analyzeFeedItem(item({
       link: 'https://sasflix.ru.example.org/topics/c3895a19-330e-4483-ac69-14fe9d0fd9c6',
     })).provider).toBe('generic');

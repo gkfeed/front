@@ -44,7 +44,8 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
   supplementary?: ReactNode;
   copy?: ReactNode;
 } {
-  switch (props.facts.provider) {
+  const { facts, ...sharedProps } = props;
+  switch (facts.provider) {
     case 'generic':
       return { preview: <FeedItemMediaPreview {...props} />, copy: <StandardCopy {...props} /> };
     case 'hltv':
@@ -54,21 +55,21 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
     case 'liquipedia':
       return { preview: <LiquipediaPreview {...props} />, copy: <StandardCopy {...props} /> };
     case 'matreshka':
-      return { preview: <MatreshkaVideoPreview {...props} />, copy: <MatreshkaCopy {...props} /> };
+      return { preview: <MatreshkaVideoPreview facts={facts} {...sharedProps} />, copy: <MatreshkaCopy facts={facts} {...sharedProps} /> };
     case 'onefootball':
       return { preview: <OneFootballPreview {...props} />, copy: <OneFootballCopy {...props} /> };
     case 'sasflix':
-      return { preview: <SasflixVideoPreview {...props} />, copy: <SasflixCopy {...props} /> };
+      return { preview: <SasflixVideoPreview facts={facts} {...sharedProps} />, copy: <SasflixCopy facts={facts} {...sharedProps} /> };
     case 'tiktok':
       return { preview: <FeedItemMediaPreview {...props} />, supplementary: <TikTokSupplementary {...props} /> };
     case 'twitch':
-      return { preview: <TwitchVideoPreview {...props} />, copy: <TwitchCopy {...props} /> };
+      return { preview: <TwitchVideoPreview facts={facts} {...sharedProps} />, copy: <TwitchCopy facts={facts} {...sharedProps} /> };
     case 'vk':
       return { preview: <FeedItemMediaPreview {...props} />, copy: <VkCopy {...props} /> };
     case 'youtube':
-      return { preview: <YoutubeVideoPreview {...props} />, copy: <YoutubeCopy {...props} /> };
+      return { preview: <YoutubeVideoPreview facts={facts} {...sharedProps} />, copy: <YoutubeCopy facts={facts} {...sharedProps} /> };
     default:
-      return assertNever(props.facts.provider);
+      return assertNever(facts);
   }
 }
 
@@ -80,5 +81,5 @@ function shouldHideCopy(facts: FeedItemCardModel): boolean {
 }
 
 function assertNever(value: never): never {
-  throw new Error(`Unsupported feed item provider: ${value}`);
+  throw new Error(`Unsupported feed item provider: ${JSON.stringify(value)}`);
 }

@@ -1,20 +1,15 @@
-import { createElement } from 'react';
-
 import { parseMatreshkaTitle } from '../../../domain/matreshkaTitle';
 import { MatreshkaPreview } from '../../previews/MatreshkaPreview';
 import {
-  StandardCopy,
-  type FeedItemCardProviderRendererProps,
-  type VariantRendererProps,
+  type ProviderRendererProps,
 } from './common';
-import { createVariantRenderer } from './createVariantRenderer';
 
-const renderMatreshkaVideoPreview = createVariantRenderer('matreshka', ({ facts, localizedPreview }: VariantRendererProps<'matreshka'>) => {
+export function MatreshkaVideoPreview({ facts, localizedPreview }: ProviderRendererProps<'matreshka'>) {
   const title = parseMatreshkaTitle(facts.item.title, facts.item.text);
-  return <MatreshkaPreview videoId={facts.variant.videoId} title={title.title} videoSrc={facts.openGraphPreview?.video ?? null} preview={localizedPreview} onPreviewError={facts.onPreviewError} />;
-});
+  return <MatreshkaPreview videoId={facts.videoId} title={title.title} videoSrc={facts.openGraphPreview?.video ?? null} preview={localizedPreview} onPreviewError={facts.onPreviewError} />;
+}
 
-const renderMatreshkaCopy = createVariantRenderer('matreshka', ({ facts }: VariantRendererProps<'matreshka'>) => {
+export function MatreshkaCopy({ facts }: ProviderRendererProps<'matreshka'>) {
   const title = parseMatreshkaTitle(facts.item.title, facts.item.text);
   return (
     <div className="reader-card__copy reader-card__copy--player reader-card__matreshka-copy">
@@ -22,12 +17,4 @@ const renderMatreshkaCopy = createVariantRenderer('matreshka', ({ facts }: Varia
       {title.channel ? <p className="reader-card__channel">{title.channel}</p> : null}
     </div>
   );
-}, StandardCopy);
-
-export function MatreshkaVideoPreview(props: FeedItemCardProviderRendererProps) {
-  return createElement(renderMatreshkaVideoPreview, props);
-}
-
-export function MatreshkaCopy(props: FeedItemCardProviderRendererProps) {
-  return createElement(renderMatreshkaCopy, props);
 }

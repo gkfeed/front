@@ -20,12 +20,12 @@ export function prefetchFeedItem(
   prefetchedImageUrls: Set<string>,
   prefetchControllers: Map<string, AbortController>,
 ): void {
-  const analysis = analyzeFeedItem(item);
-  const loading = getFeedItemProviderLoadingRules(analysis.provider);
-  prefetchPreviewImages(analysis.localPreview, prefetchedImageUrls);
+  const providerView = analyzeFeedItem(item);
+  const loading = getFeedItemProviderLoadingRules(providerView.provider);
+  prefetchPreviewImages(providerView.localPreview, prefetchedImageUrls);
 
   if (
-    !shouldLoadRemotePreview(item, analysis, false)
+    !shouldLoadRemotePreview(item, providerView, false)
     || loading.remotePreview === 'none'
   ) return;
 

@@ -73,7 +73,7 @@ describe('feed item card presentation', () => {
     });
     const presentation = buildFeedItemCardPresentation({
       item: feedItem,
-      analysis: analyzeFeedItem(feedItem),
+      providerView: analyzeFeedItem(feedItem),
       nsfwMode: 'show',
       remotePreview: {
         liquipediaMatch: null,
@@ -102,7 +102,7 @@ describe('feed item card presentation', () => {
     });
     const presentation = buildFeedItemCardPresentation({
       item: feedItem,
-      analysis: analyzeFeedItem(feedItem),
+      providerView: analyzeFeedItem(feedItem),
       nsfwMode: 'show',
       remotePreview: {
         liquipediaMatch: null,
@@ -128,7 +128,7 @@ describe('feed item card presentation', () => {
     const trashboxItem = item({ link: 'https://trashbox.ru/link/story' });
     const presentation = buildFeedItemCardPresentation({
       item: trashboxItem,
-      analysis: analyzeFeedItem(trashboxItem),
+      providerView: analyzeFeedItem(trashboxItem),
       nsfwMode: 'show',
       remotePreview: { liquipediaMatch: null, openGraphPreview: null },
       previewFailures: 0,
@@ -139,7 +139,7 @@ describe('feed item card presentation', () => {
     const vkItem = item({ link: 'https://vk.com/wall-1_2' });
     const vkPresentation = buildFeedItemCardPresentation({
       item: vkItem,
-      analysis: analyzeFeedItem(vkItem),
+      providerView: analyzeFeedItem(vkItem),
       nsfwMode: 'show',
       remotePreview: {
         liquipediaMatch: null,

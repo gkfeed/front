@@ -8,7 +8,7 @@ import type {
 import type { FeedItem } from '../types';
 import type {
   FeedItemPreview,
-  FeedItemAnalysis,
+  FeedItemProviderViewModel,
 } from './feedItemPreviewTypes';
 
 export type NsfwMode = 'show' | 'blur' | 'hide';
@@ -20,35 +20,12 @@ export type RemotePreview = {
 
 export type RemotePreviewSource = 'none' | 'open-graph' | 'liquipedia';
 
-export type FeedItemCardVariant =
-  | { type: 'standard' }
-  | { type: 'matreshka'; videoId: string }
-  | { type: 'sasflix'; publicationId: string }
-  | { type: 'twitch'; channel: string }
-  | { type: 'youtube'; videoId: string }
-  | { type: 'tiktok' }
-  | { type: 'instagram'; media: 'photo' | 'video' }
-  | { type: 'liquipedia' }
-  | { type: 'simple-image' };
-
 export type FeedItemCardImagePreview =
   | { type: 'none' }
   | { type: 'generated'; source: 'reddit' | 'other' }
   | { type: 'hltv' };
 
-export type FeedItemCardVariantContext = {
-  youtubeVideoId: string | null;
-  twitchChannel: string | null;
-  matreshkaVideoId: string | null;
-  sasflixPublicationId: string | null;
-  isSimpleImage: boolean;
-  isInstagramPhoto: boolean;
-};
-
-export type FeedItemCardMetadata = {
-  hostname: string | null;
-  provider: FeedItemAnalysis['provider'];
-  variant: FeedItemCardVariant;
+type FeedItemCardCommonMetadata = {
   imagePreview: FeedItemCardImagePreview;
   openGraphPreview: OpenGraphPreview | null;
   liquipediaMatch: RemotePreview['liquipediaMatch'];
@@ -61,6 +38,12 @@ export type FeedItemCardMetadata = {
   hltvImageScore: [string, string] | null;
   oneFootballSnapshot: OneFootballMatchSnapshot | null;
 };
+
+export type FeedItemCardMetadata = FeedItemProviderViewModel extends infer Provider
+  ? Provider extends FeedItemProviderViewModel
+    ? FeedItemCardCommonMetadata & Provider
+    : never
+  : never;
 
 export type FeedItemCardPresentation = FeedItemCardMetadata & {
   item: FeedItem;

@@ -2,16 +2,14 @@ import { isInstagramMediaUrl } from './instagramPreview';
 import { isNsfwLink } from './nsfw';
 import { getFeedItemDescription } from './feedItemDescription';
 import {
-  getFeedItemProviderDisplayFacts,
   getFeedItemProviderLoadingRules,
-  resolveFeedItemProviderVariant,
 } from './feedItemProviderPresentation';
 import { getRemoteFeedItemPreview } from './feedItemRemotePreview';
 import { isRedditUrl, isRezkaUrl } from './feedItemUrls';
 import { getTikTokEmbedPreview } from './tiktokPreview';
 import type {
-  FeedItemAnalysis,
   FeedItemPreview,
+  FeedItemProviderViewModel,
 } from './feedItemPreviewTypes';
 import type {
   FeedItemCardImagePreview,
@@ -28,16 +26,15 @@ export type { FeedItemCardPresentation } from './feedItemCardContracts';
 
 export type {
   FeedItemCardImagePreview,
-  FeedItemCardVariant,
 } from './feedItemCardContracts';
 
 export function shouldLoadRemotePreview(
   item: FeedItem,
-  analysis: FeedItemAnalysis,
+  providerView: FeedItemProviderViewModel,
   shouldHideNsfw: boolean,
 ): boolean {
-  const { localPreview, url } = analysis;
-  const loading = getFeedItemProviderLoadingRules(analysis.provider);
+  const { localPreview, url } = providerView;
+  const loading = getFeedItemProviderLoadingRules(providerView.provider);
   const usesVkDescription = loading.description === 'vk';
   const feedDescription = usesVkDescription
     ? getFeedItemDescription(item.text, item.title)
@@ -46,28 +43,28 @@ export function shouldLoadRemotePreview(
   return !shouldHideNsfw
     && loading.remotePreview !== 'none'
     && (isRedditUrl(url)
-      || analysis.provider === 'vk'
+      || providerView.provider === 'vk'
       || isRezkaUrl(url)
-      || (analysis.provider === 'instagram' && Boolean(url && isInstagramMediaUrl(url)))
-      || analysis.provider === 'sasflix'
-      || analysis.provider === 'onefootball'
+      || (providerView.provider === 'instagram' && Boolean(url && isInstagramMediaUrl(url)))
+      || providerView.provider === 'sasflix'
+      || providerView.provider === 'onefootball'
       || !(localPreview?.src && (!usesVkDescription || feedDescription)));
 }
 
 export function buildFeedItemCardPresentation({
   item,
-  analysis,
+  providerView,
   nsfwMode,
   remotePreview,
   previewFailures,
 }: {
   item: FeedItem;
-  analysis: FeedItemAnalysis;
+  providerView: FeedItemProviderViewModel;
   nsfwMode: NsfwMode;
   remotePreview: RemotePreview;
   previewFailures: number;
 }): FeedItemCardPresentation {
-  const previews = resolvePreviews({ item, analysis, remotePreview });
+  const previews = resolvePreviews({ item, providerView, remotePreview });
   const visiblePreview = resolveVisiblePreview({
     preview: previews.preview,
     tiktokEmbedPreview: previews.tiktokEmbedPreview,
@@ -76,7 +73,7 @@ export function buildFeedItemCardPresentation({
   });
   const metadata = resolveMetadata({
     item,
-    analysis,
+    providerView,
     nsfwMode,
     remotePreview,
     visiblePreview,
@@ -93,26 +90,26 @@ export function buildFeedItemCardPresentation({
 
 function resolvePreviews({
   item,
-  analysis,
+  providerView,
   remotePreview,
 }: {
   item: FeedItem;
-  analysis: FeedItemAnalysis;
+  providerView: FeedItemProviderViewModel;
   remotePreview: RemotePreview;
 }): {
   preview: FeedItemPreview | null;
   remoteItemPreview: FeedItemPreview | null;
   tiktokEmbedPreview: FeedItemPreview | null;
 } {
-  const { localPreview } = analysis;
-  const loading = getFeedItemProviderLoadingRules(analysis.provider);
+  const { localPreview } = providerView;
+  const loading = getFeedItemProviderLoadingRules(providerView.provider);
   const localPreviewSource = localPreview?.src;
-  const isRezka = isRezkaUrl(analysis.url);
-  const isReddit = isRedditUrl(analysis.url);
-  const isVk = analysis.provider === 'vk';
+  const isRezka = isRezkaUrl(providerView.url);
+  const isReddit = isRedditUrl(providerView.url);
+  const isVk = providerView.provider === 'vk';
   const usesTikTokEmbed = loading.previewMode === 'tiktok-embed';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
-  const instagramVideoPreview = analysis.provider === 'instagram'
+  const instagramVideoPreview = providerView.provider === 'instagram'
     && remotePreview.openGraphPreview?.type === 'video'
     ? loadedRemotePreview
     : null;
@@ -167,35 +164,26 @@ function getFallbackPreview(preview: FeedItemPreview | null): FeedItemPreview | 
 
 function resolveMetadata({
   item,
-  analysis,
+  providerView,
   nsfwMode,
   remotePreview,
   visiblePreview,
   remoteItemPreview,
 }: {
   item: FeedItem;
-  analysis: FeedItemAnalysis;
+  providerView: FeedItemProviderViewModel;
   nsfwMode: NsfwMode;
   remotePreview: RemotePreview;
   visiblePreview: FeedItemPreview | null;
   remoteItemPreview: FeedItemPreview | null;
 }): FeedItemCardMetadata {
-  const {
-    hostname,
-    provider,
-    matreshkaVideoId,
-    sasflixPublicationId,
-    twitchChannel,
-    youtubeVideoId,
-  } = analysis;
-  const display = getFeedItemProviderDisplayFacts(provider);
+  const { provider } = providerView;
   const loading = getFeedItemProviderLoadingRules(provider);
   const isNsfw = isNsfwLink(item.link);
   const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
   const shouldHideNsfw = isNsfw && nsfwMode === 'hide';
   const isHltv = loading.metadata === 'hltv';
   const hltvSnapshot = getHltvSnapshot(remotePreview.openGraphPreview?.providerData);
-  const isSimpleImage = display.supportsSimpleImage && isImagePreview(visiblePreview);
   const description = loading.description === 'vk'
     ? getFeedItemDescription(item.text, item.title)
     : null;
@@ -211,19 +199,10 @@ function resolveMetadata({
   const oneFootballSnapshot = getOneFootballSnapshot(remotePreview.openGraphPreview?.providerData);
 
   return {
-    hostname,
-    provider,
-    variant: resolveFeedItemProviderVariant(provider, {
-      youtubeVideoId,
-      twitchChannel,
-      matreshkaVideoId,
-      sasflixPublicationId,
-      isSimpleImage,
-      isInstagramPhoto: display.showInstagramIdentity && isImagePreview(visiblePreview),
-    }),
+    ...resolveProviderViewModel(providerView, visiblePreview),
     imagePreview: resolveImagePreview({
       isHltv,
-      isReddit: isRedditUrl(analysis.url),
+      isReddit: isRedditUrl(providerView.url),
       visiblePreview,
       remotePreviewSource: remoteItemPreview?.src,
     }),
@@ -238,6 +217,30 @@ function resolveMetadata({
     hltvImageScore,
     oneFootballSnapshot,
   };
+}
+
+function resolveProviderViewModel(
+  providerView: FeedItemProviderViewModel,
+  visiblePreview: FeedItemPreview | null,
+): FeedItemProviderViewModel {
+  switch (providerView.provider) {
+    case 'generic':
+    case 'onefootball':
+      return { ...providerView, simpleImage: isImagePreview(visiblePreview) };
+    case 'instagram':
+      return { ...providerView, media: isImagePreview(visiblePreview) ? 'photo' : 'video' };
+    case 'hltv':
+    case 'liquipedia':
+    case 'matreshka':
+    case 'sasflix':
+    case 'tiktok':
+    case 'twitch':
+    case 'vk':
+    case 'youtube':
+      return providerView;
+    default:
+      return assertNever(providerView);
+  }
 }
 
 function resolveImagePreview({
@@ -274,4 +277,8 @@ function canReadFeedItemArticle({
   return openGraphPreview?.type?.toLowerCase() === 'article'
     || hostname === 'trashbox.ru'
     || hostname?.endsWith('.trashbox.ru') === true;
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unsupported feed item provider: ${JSON.stringify(value)}`);
 }

@@ -10,10 +10,10 @@ import type { FeedItem } from '../types';
 
 export function useFeedItemCardResource(item: FeedItem) {
   const { nsfwMode } = useNsfwPreferences();
-  const analysis = analyzeFeedItem(item);
-  const loading = getFeedItemProviderLoadingRules(analysis.provider);
+  const providerView = analyzeFeedItem(item);
+  const loading = getFeedItemProviderLoadingRules(providerView.provider);
   const shouldHideNsfw = isNsfwLink(item.link) && nsfwMode === 'hide';
-  const shouldLoadRemote = shouldLoadRemotePreview(item, analysis, shouldHideNsfw);
+  const shouldLoadRemote = shouldLoadRemotePreview(item, providerView, shouldHideNsfw);
   const remotePreview = useFeedItemRemotePreview(item.link, {
     enabled: shouldLoadRemote,
     source: loading.remotePreview,
@@ -26,7 +26,7 @@ export function useFeedItemCardResource(item: FeedItem) {
   }, [item.link]);
 
   return {
-    analysis,
+    providerView,
     nsfwMode,
     shouldHideNsfw,
     cardRef: remotePreview.cardRef,
@@ -36,7 +36,7 @@ export function useFeedItemCardResource(item: FeedItem) {
     previewFailures,
     isPreviewPending: loading.loadingPlaceholder === 'when-missing'
       && shouldLoadRemote
-      && !analysis.localPreview
+      && !providerView.localPreview
       && remotePreview.previewStatus === 'pending',
     onPreviewError: () => setPreviewFailures((failures) => failures + 1),
   };
