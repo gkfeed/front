@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 
-import { isNsfwLink } from '../domain/nsfw';
 import { analyzeFeedItem } from '../domain/feedItemAnalysis';
-import { shouldLoadRemotePreview } from '../domain/feedItemCardPresentation';
-import { getFeedItemProviderLoadingRules } from '../domain/feedItemProviderPresentation';
+import { resolveFeedItemPreviewPolicy } from '../domain/feedItemPreviewPolicy';
+import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
 import { useFeedItemRemotePreview } from './useFeedItemRemotePreview';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
@@ -11,13 +10,17 @@ import type { FeedItem } from '../types';
 export function useFeedItemCardResource(item: FeedItem) {
   const { nsfwMode } = useNsfwPreferences();
   const providerView = analyzeFeedItem(item);
-  const loading = getFeedItemProviderLoadingRules(providerView.provider);
-  const shouldHideNsfw = isNsfwLink(item.link) && nsfwMode === 'hide';
-  const shouldLoadRemote = shouldLoadRemotePreview(item, providerView, shouldHideNsfw);
+  const previewPolicy = resolveFeedItemPreviewPolicy({
+    item,
+    providerView,
+    nsfwMode,
+    remotePreview: EMPTY_REMOTE_PREVIEW,
+    previewFailures: 0,
+  });
   const remotePreview = useFeedItemRemotePreview(item.link, {
-    enabled: shouldLoadRemote,
-    source: loading.remotePreview,
-    livePreview: loading.livePreview,
+    enabled: Boolean(previewPolicy.remoteRequest),
+    source: previewPolicy.remoteRequest?.source ?? 'none',
+    livePreview: previewPolicy.remoteRequest?.livePreview ?? 'none',
   });
   const [previewFailures, setPreviewFailures] = useState(0);
 
@@ -28,15 +31,13 @@ export function useFeedItemCardResource(item: FeedItem) {
   return {
     providerView,
     nsfwMode,
-    shouldHideNsfw,
+    shouldHideNsfw: previewPolicy.shouldHideNsfw,
     cardRef: remotePreview.cardRef,
     openGraphPreview: remotePreview.openGraphPreview,
     liquipediaMatch: remotePreview.liquipediaMatch,
     previewStatus: remotePreview.previewStatus,
     previewFailures,
-    isPreviewPending: loading.loadingPlaceholder === 'when-missing'
-      && shouldLoadRemote
-      && !providerView.localPreview
+    isPreviewPending: previewPolicy.showLoadingPlaceholder
       && remotePreview.previewStatus === 'pending',
     onPreviewError: () => setPreviewFailures((failures) => failures + 1),
   };

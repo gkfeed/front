@@ -1,8 +1,7 @@
 import { analyzeFeedItem } from '../domain/feedItemAnalysis';
-import { getRemoteFeedItemPreview } from '../domain/feedItemRemotePreview';
-import { shouldLoadRemotePreview } from '../domain/feedItemCardPresentation';
-import type { RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
-import { getFeedItemProviderLoadingRules } from '../domain/feedItemProviderPresentation';
+import { resolveFeedItemPreviewPolicy } from '../domain/feedItemPreviewPolicy';
+import type { NsfwMode, RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
+import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
 import type { FeedItem } from '../types';
 import { getProviderDataImageUrls } from '../../../shared/providerData';
 
@@ -19,28 +18,39 @@ export function prefetchFeedItem(
   previewUseCases: PreviewLoader,
   prefetchedImageUrls: Set<string>,
   prefetchControllers: Map<string, AbortController>,
+  nsfwMode: NsfwMode,
 ): void {
   const providerView = analyzeFeedItem(item);
-  const loading = getFeedItemProviderLoadingRules(providerView.provider);
-  prefetchPreviewImages(providerView.localPreview, prefetchedImageUrls);
+  const initialPolicy = resolveFeedItemPreviewPolicy({
+    item,
+    providerView,
+    nsfwMode,
+    remotePreview: EMPTY_REMOTE_PREVIEW,
+    previewFailures: 0,
+  });
+  prefetchPreviewImages(initialPolicy.visiblePreview, prefetchedImageUrls);
 
-  if (
-    !shouldLoadRemotePreview(item, providerView, false)
-    || loading.remotePreview === 'none'
-  ) return;
+  if (!initialPolicy.remoteRequest) return;
 
-  const prefetchKey = `${loading.remotePreview}:${item.link}`;
+  const prefetchKey = `${initialPolicy.remoteRequest.source}:${item.link}`;
   if (prefetchControllers.has(prefetchKey)) return;
 
   const controller = new AbortController();
   prefetchControllers.set(prefetchKey, controller);
   void previewUseCases.loadRemotePreview(
     item.link,
-    loading.remotePreview,
+    initialPolicy.remoteRequest.source,
     controller.signal,
   )
     .then((remotePreview) => {
-      prefetchRemotePreviewImages(item, remotePreview, prefetchedImageUrls);
+      const loadedPolicy = resolveFeedItemPreviewPolicy({
+        item,
+        providerView,
+        nsfwMode,
+        remotePreview,
+        previewFailures: 0,
+      });
+      prefetchRemotePreviewImages(remotePreview, loadedPolicy.visiblePreview, prefetchedImageUrls);
     })
     .catch(() => undefined)
     .finally(() => {
@@ -56,17 +66,13 @@ export function abortPrefetches(prefetchControllers: Map<string, AbortController
 }
 
 function prefetchRemotePreviewImages(
-  item: FeedItem,
   remotePreview: RemotePreview,
+  selectedPreview: ReturnType<typeof resolveFeedItemPreviewPolicy>['preview'],
   prefetchedImageUrls: Set<string>,
 ): void {
-  const openGraphPreview = remotePreview.openGraphPreview;
-  if (openGraphPreview?.image) prefetchImage(openGraphPreview.image, prefetchedImageUrls);
+  prefetchPreviewImages(selectedPreview, prefetchedImageUrls);
 
-  const remoteItemPreview = getRemoteFeedItemPreview(openGraphPreview, item.title);
-  prefetchPreviewImages(remoteItemPreview, prefetchedImageUrls);
-
-  getProviderDataImageUrls(openGraphPreview?.providerData ?? null)
+  getProviderDataImageUrls(remotePreview.openGraphPreview?.providerData ?? null)
     .forEach((url) => prefetchImage(url, prefetchedImageUrls));
 
   remotePreview.liquipediaMatch?.teams.forEach((team) => {
@@ -75,8 +81,7 @@ function prefetchRemotePreviewImages(
 }
 
 function prefetchPreviewImages(
-  preview: ReturnType<typeof analyzeFeedItem>['localPreview']
-    | ReturnType<typeof getRemoteFeedItemPreview>,
+  preview: ReturnType<typeof resolveFeedItemPreviewPolicy>['preview'],
   prefetchedImageUrls: Set<string>,
 ): void {
   if (!preview) return;

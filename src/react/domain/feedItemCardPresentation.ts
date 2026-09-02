@@ -1,12 +1,9 @@
-import { isInstagramMediaUrl } from './instagramPreview';
-import { isNsfwLink } from './nsfw';
 import { getFeedItemDescription } from './feedItemDescription';
 import {
   getFeedItemProviderLoadingRules,
 } from './feedItemProviderPresentation';
-import { getRemoteFeedItemPreview } from './feedItemRemotePreview';
-import { isRedditUrl, isRezkaUrl } from './feedItemUrls';
-import { getTikTokEmbedPreview } from './tiktokPreview';
+import { resolveFeedItemPreviewPolicy } from './feedItemPreviewPolicy';
+import { isRedditUrl } from './feedItemUrls';
 import type {
   FeedItemPreview,
   FeedItemProviderViewModel,
@@ -28,29 +25,6 @@ export type {
   FeedItemCardImagePreview,
 } from './feedItemCardContracts';
 
-export function shouldLoadRemotePreview(
-  item: FeedItem,
-  providerView: FeedItemProviderViewModel,
-  shouldHideNsfw: boolean,
-): boolean {
-  const { localPreview, url } = providerView;
-  const loading = getFeedItemProviderLoadingRules(providerView.provider);
-  const usesVkDescription = loading.description === 'vk';
-  const feedDescription = usesVkDescription
-    ? getFeedItemDescription(item.text, item.title)
-    : null;
-
-  return !shouldHideNsfw
-    && loading.remotePreview !== 'none'
-    && (isRedditUrl(url)
-      || providerView.provider === 'vk'
-      || isRezkaUrl(url)
-      || (providerView.provider === 'instagram' && Boolean(url && isInstagramMediaUrl(url)))
-      || providerView.provider === 'sasflix'
-      || providerView.provider === 'onefootball'
-      || !(localPreview?.src && (!usesVkDescription || feedDescription)));
-}
-
 export function buildFeedItemCardPresentation({
   item,
   providerView,
@@ -64,124 +38,53 @@ export function buildFeedItemCardPresentation({
   remotePreview: RemotePreview;
   previewFailures: number;
 }): FeedItemCardPresentation {
-  const previews = resolvePreviews({ item, providerView, remotePreview });
-  const visiblePreview = resolveVisiblePreview({
-    preview: previews.preview,
-    tiktokEmbedPreview: previews.tiktokEmbedPreview,
-    previewFailures,
-    hasLiquipediaMatch: Boolean(remotePreview.liquipediaMatch),
-  });
-  const metadata = resolveMetadata({
+  const previewPolicy = resolveFeedItemPreviewPolicy({
     item,
     providerView,
     nsfwMode,
     remotePreview,
-    visiblePreview,
-    remoteItemPreview: previews.remoteItemPreview,
+    previewFailures,
+  });
+  const metadata = resolveMetadata({
+    item,
+    providerView,
+    remotePreview,
+    visiblePreview: previewPolicy.visiblePreview,
+    remoteItemPreview: previewPolicy.remoteItemPreview,
+    isNsfw: previewPolicy.isNsfw,
+    shouldBlurNsfw: previewPolicy.shouldBlurNsfw,
+    shouldHideNsfw: previewPolicy.shouldHideNsfw,
   });
   return {
     item,
     ...metadata,
     canReadArticle: canReadFeedItemArticle(metadata),
-    preview: previews.preview,
-    visiblePreview,
+    preview: previewPolicy.preview,
+    visiblePreview: previewPolicy.visiblePreview,
   };
-}
-
-function resolvePreviews({
-  item,
-  providerView,
-  remotePreview,
-}: {
-  item: FeedItem;
-  providerView: FeedItemProviderViewModel;
-  remotePreview: RemotePreview;
-}): {
-  preview: FeedItemPreview | null;
-  remoteItemPreview: FeedItemPreview | null;
-  tiktokEmbedPreview: FeedItemPreview | null;
-} {
-  const { localPreview } = providerView;
-  const loading = getFeedItemProviderLoadingRules(providerView.provider);
-  const localPreviewSource = localPreview?.src;
-  const isRezka = isRezkaUrl(providerView.url);
-  const isReddit = isRedditUrl(providerView.url);
-  const isVk = providerView.provider === 'vk';
-  const usesTikTokEmbed = loading.previewMode === 'tiktok-embed';
-  const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
-  const instagramVideoPreview = providerView.provider === 'instagram'
-    && remotePreview.openGraphPreview?.type === 'video'
-    ? loadedRemotePreview
-    : null;
-  const prefersRemotePreview = isRezka || isVk;
-  const remoteItemPreview = prefersRemotePreview && loadedRemotePreview && localPreviewSource
-    ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
-    : loadedRemotePreview;
-  const tiktokEmbedPreview = usesTikTokEmbed ? getTikTokEmbedPreview(item) : null;
-  const preview = usesTikTokEmbed
-    ? tiktokEmbedPreview ?? localPreview
-    : instagramVideoPreview
-      ? instagramVideoPreview
-      : prefersRemotePreview
-        ? remoteItemPreview ?? localPreview
-        : isReddit && remoteItemPreview?.type === 'video'
-          ? remoteItemPreview
-          : localPreview ?? remoteItemPreview;
-
-  return { preview, remoteItemPreview, tiktokEmbedPreview };
-}
-
-function resolveVisiblePreview({
-  preview,
-  tiktokEmbedPreview,
-  previewFailures,
-  hasLiquipediaMatch,
-}: {
-  preview: FeedItemPreview | null;
-  tiktokEmbedPreview: FeedItemPreview | null;
-  previewFailures: number;
-  hasLiquipediaMatch: boolean;
-}): FeedItemPreview | null {
-  if (hasLiquipediaMatch) return null;
-  if (previewFailures === 1 && preview?.type === 'video') {
-    return tiktokEmbedPreview ?? (preview.poster
-      ? { src: preview.poster, alt: preview.alt }
-      : null);
-  }
-  const fallbackPreview = getFallbackPreview(preview);
-  if (previewFailures === 1 && fallbackPreview) return fallbackPreview;
-  return previewFailures > 0 ? null : preview;
-}
-
-function getFallbackPreview(preview: FeedItemPreview | null): FeedItemPreview | null {
-  const fallbackSource = preview && 'fallbackSrc' in preview && typeof preview.fallbackSrc === 'string'
-    ? preview.fallbackSrc
-    : null;
-  return preview && fallbackSource
-    ? { src: fallbackSource, alt: preview.alt }
-    : null;
 }
 
 function resolveMetadata({
   item,
   providerView,
-  nsfwMode,
   remotePreview,
   visiblePreview,
   remoteItemPreview,
+  isNsfw,
+  shouldBlurNsfw,
+  shouldHideNsfw,
 }: {
   item: FeedItem;
   providerView: FeedItemProviderViewModel;
-  nsfwMode: NsfwMode;
   remotePreview: RemotePreview;
   visiblePreview: FeedItemPreview | null;
   remoteItemPreview: FeedItemPreview | null;
+  isNsfw: boolean;
+  shouldBlurNsfw: boolean;
+  shouldHideNsfw: boolean;
 }): FeedItemCardMetadata {
   const { provider } = providerView;
   const loading = getFeedItemProviderLoadingRules(provider);
-  const isNsfw = isNsfwLink(item.link);
-  const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
-  const shouldHideNsfw = isNsfw && nsfwMode === 'hide';
   const isHltv = loading.metadata === 'hltv';
   const hltvSnapshot = getHltvSnapshot(remotePreview.openGraphPreview?.providerData);
   const description = loading.description === 'vk'

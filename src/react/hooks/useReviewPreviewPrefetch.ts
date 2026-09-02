@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { abortPrefetches, prefetchFeedItem } from '../services/previewPrefetch';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
+import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
 
 export const REVIEW_PREVIEW_PREFETCH_COUNT = 3;
@@ -16,6 +17,7 @@ export function useReviewPreviewPrefetch({
   activeReviewIds: number[];
 }): void {
   const { preview: previewUseCases } = useFeatureUseCases();
+  const { nsfwMode } = useNsfwPreferences();
   const prefetchedImageUrlsRef = useRef<Set<string>>(new Set());
   const prefetchControllersRef = useRef<Map<string, AbortController>>(new Map());
   const nextItems = useMemo(() => {
@@ -44,12 +46,13 @@ export function useReviewPreviewPrefetch({
           previewUseCases,
           prefetchedImageUrlsRef.current,
           prefetchControllersRef.current,
+          nsfwMode,
         );
       });
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [enabled, nextItems, previewUseCases]);
+  }, [enabled, nextItems, nsfwMode, previewUseCases]);
 
   useEffect(() => () => {
     abortPrefetches(prefetchControllersRef.current);
