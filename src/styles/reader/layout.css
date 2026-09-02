@@ -33,10 +33,10 @@
   border-radius: 14px;
   background: color-mix(in oklch, var(--color-danger) 16%, var(--color-card));
   color: var(--color-ink);
-}
-
-.reader__deletion-error p {
-  margin: 0;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .reader__deletion-error .ui-button--secondary {

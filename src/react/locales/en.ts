@@ -116,7 +116,7 @@ const en = {
     deleteItem: 'Delete item',
     deletingItem: 'Deleting item',
     deleteError: 'Could not delete “{{title}}”. It is still in your feed.',
-    retryDelete: 'Try again',
+    recoverDeletedItem: 'Return item',
     deletionErrors: 'Feed item deletion errors',
     reset: 'Reset',
     resetKeptItems: 'Reset kept items',

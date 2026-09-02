@@ -120,7 +120,7 @@ const ru = {
     deleteItem: 'Удалить элемент',
     deletingItem: 'Удаление элемента',
     deleteError: 'Не удалось удалить «{{title}}». Элемент всё ещё в ленте.',
-    retryDelete: 'Повторить',
+    recoverDeletedItem: 'Вернуть элемент',
     deletionErrors: 'Ошибки удаления элементов ленты',
     reset: 'Сбросить',
     resetKeptItems: 'Сбросить сохранённые элементы',

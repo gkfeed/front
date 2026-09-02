@@ -16,8 +16,6 @@ export function useReviewSession({
   itemOrder,
   nsfwMode,
   hideTikTokItems,
-  deletedItemIds,
-  requeuedItemIds,
   feedPriorities,
 }: ReviewPresentation & {
   loadedItems: FeedItem[] | undefined;
@@ -29,16 +27,12 @@ export function useReviewSession({
     itemOrder,
     nsfwMode,
     hideTikTokItems,
-    deletedItemIds,
-    requeuedItemIds,
     feedPriorities,
   }), [
-    deletedItemIds,
     feedPriorities,
     hideTikTokItems,
     itemOrder,
     nsfwMode,
-    requeuedItemIds,
   ]);
   const [session, dispatch] = useReducer(
     reviewSessionReducer,
@@ -71,7 +65,18 @@ export function useReviewSession({
   const activeReviewIds = useMemo(() => getActiveReviewIds(session), [session]);
 
   const keep = useCallback((id: number) => dispatch({ type: 'keep', id }), []);
-  const remove = useCallback((id: number) => dispatch({ type: 'remove', id }), []);
+  const deleteItem = useCallback((id: number, title: string) => {
+    dispatch({ type: 'delete', id, title });
+  }, []);
+  const deletionSucceeded = useCallback((id: number, operationId: number) => {
+    dispatch({ type: 'deletionSucceeded', id, operationId });
+  }, []);
+  const deletionFailed = useCallback((id: number, operationId: number) => {
+    dispatch({ type: 'deletionFailed', id, operationId });
+  }, []);
+  const recoverDeletion = useCallback((id: number) => {
+    dispatch({ type: 'recoverDeletion', id });
+  }, []);
   const reset = useCallback((ids?: number[]) => {
     dispatch({ type: 'reset', ids });
   }, []);
@@ -81,7 +86,11 @@ export function useReviewSession({
     reviewableIds: session.reviewableIds,
     activeReviewIds,
     keep,
-    remove,
+    deleteItem,
+    deletionSucceeded,
+    deletionFailed,
+    recoverDeletion,
+    deletions: session.deletions,
     reset,
   };
 }

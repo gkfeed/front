@@ -14,8 +14,6 @@ const presentation: ReviewPresentation = {
   itemOrder: 'desc',
   nsfwMode: 'show',
   hideTikTokItems: false,
-  deletedItemIds: new Set(),
-  requeuedItemIds: new Set(),
   feedPriorities: {},
 };
 
@@ -121,7 +119,6 @@ describe('review session', () => {
         ...presentation,
         nsfwMode: 'hide',
         hideTikTokItems: true,
-        deletedItemIds: new Set([3]),
       },
     });
     state = reviewSessionReducer(state, {
@@ -134,10 +131,72 @@ describe('review session', () => {
         item(1),
       ],
     });
+    state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
 
     expect(state.items?.map(({ id }) => id)).toEqual([1]);
     expect(state.reviewableIds).toEqual([4, 2, 1]);
     expect(getActiveReviewIds(state)).toEqual([1]);
+  });
+
+  it('owns optimistic deletion, one automatic retry, and recovery as one transaction', () => {
+    let state = snapshot(startSession(null), [3, 2, 1], true);
+
+    state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
+    const operationId = state.deletions[0].operationId;
+    expect(getActiveReviewIds(state)).toEqual([2, 1]);
+    expect(state.deletions[0]).toMatchObject({ attempt: 1, status: 'pending' });
+
+    state = reviewSessionReducer(state, { type: 'deletionFailed', id: 3, operationId });
+    expect(state.deletions[0]).toMatchObject({ attempt: 2, status: 'pending' });
+
+    state = reviewSessionReducer(state, { type: 'deletionFailed', id: 3, operationId });
+    expect(state.deletions[0]).toMatchObject({ attempt: 2, status: 'failed' });
+    expect(getActiveReviewIds(state)).toEqual([2, 1]);
+
+    state = reviewSessionReducer(state, { type: 'recoverDeletion', id: 3 });
+    expect(state.deletions).toEqual([]);
+    expect(getActiveReviewIds(state)).toEqual([3, 2, 1]);
+
+    state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
+    expect(state.deletions[0]).toMatchObject({ attempt: 1, status: 'pending' });
+    expect(state.deletions[0].operationId).not.toBe(operationId);
+  });
+
+  it('keeps separate final errors for concurrent deletions', () => {
+    let state = snapshot(startSession(null), [3, 2, 1], true);
+    state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
+    state = reviewSessionReducer(state, { type: 'delete', id: 2, title: 'Item 2' });
+
+    for (const deletion of state.deletions) {
+      state = reviewSessionReducer(state, {
+        type: 'deletionFailed',
+        id: deletion.itemId,
+        operationId: deletion.operationId,
+      });
+      state = reviewSessionReducer(state, {
+        type: 'deletionFailed',
+        id: deletion.itemId,
+        operationId: deletion.operationId,
+      });
+    }
+
+    expect(state.deletions.map(({ itemId, status }) => [itemId, status])).toEqual([
+      [3, 'failed'],
+      [2, 'failed'],
+    ]);
+  });
+
+  it('restores server-side cards after a completed reload clears final errors', () => {
+    let state = snapshot(startSession(null), [3, 2, 1], true);
+    state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
+    const { operationId } = state.deletions[0];
+    state = reviewSessionReducer(state, { type: 'deletionFailed', id: 3, operationId });
+    state = reviewSessionReducer(state, { type: 'deletionFailed', id: 3, operationId });
+
+    state = snapshot(state, [3, 2, 1], true);
+
+    expect(state.deletions).toEqual([]);
+    expect(getActiveReviewIds(state)).toEqual([3, 2, 1]);
   });
 });
 

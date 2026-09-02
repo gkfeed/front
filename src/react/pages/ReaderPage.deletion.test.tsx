@@ -23,7 +23,7 @@ describe('ReaderPage deletion', () => {
     renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(await screen.findByText('Second story')).toBeTruthy();
     expect(deleteFeedItemById).toHaveBeenCalledWith(11, { username: 'reader', password: 'secret' });
@@ -62,36 +62,40 @@ describe('ReaderPage deletion', () => {
     expect(await screen.findByTitle('Video preview for Remaining video')).toBeTruthy();
   });
 
-  it('advances immediately and shows a title-specific retry notification after failure', async () => {
+  it('advances immediately, retries once, and shows a title-specific final error', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    vi.mocked(deleteFeedItemById).mockRejectedValue(new Error('offline'));
+    renderReader();
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect((await screen.findByRole('alert')).textContent).toContain('Could not delete “First story”');
+    expect(deleteFeedItemById).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText('First story')).toBeNull();
+    expect(screen.getByRole('button', { name: /Could not delete “First story”/ })).toBeTruthy();
+  });
+
+  it('returns a final failed deletion as current without consuming the next card', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     vi.mocked(deleteFeedItemById).mockRejectedValue(new Error('offline'));
     renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-
-    expect(await screen.findByText('Second story')).toBeTruthy();
-    expect((await screen.findByRole('alert')).textContent).toContain('Could not delete “First story”');
-    expect(screen.queryByText('First story')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
-  });
-
-  it('retries a failed deletion without returning the item to the current card', async () => {
-    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
-    vi.mocked(deleteFeedItemById)
-      .mockRejectedValueOnce(new Error('offline'))
-      .mockResolvedValueOnce();
-    renderReader();
-
-    expect(await screen.findByText('First story')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     expect(await screen.findByText('Second story')).toBeTruthy();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    const notification = await screen.findByRole('button', { name: /Could not delete “First story”/ });
+    notification.focus();
+    fireEvent.keyDown(notification, { key: 'Enter', code: 'Enter' });
+    fireEvent.click(notification);
 
     await waitFor(() => expect(deleteFeedItemById).toHaveBeenCalledTimes(2));
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(screen.getByText('Second story')).toBeTruthy();
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Second story')).toBeTruthy();
   });
 
   it('keeps the next item interactive while an earlier deletion is pending', async () => {
@@ -110,14 +114,14 @@ describe('ReaderPage deletion', () => {
     expect(await screen.findByText('Second story')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
 
-    expect(deleteFeedItemById).toHaveBeenCalledTimes(1);
+    expect(deleteFeedItemById).toHaveBeenCalledTimes(2);
     resolveFirstDeletion();
 
     await waitFor(() => expect(deleteFeedItemById).toHaveBeenCalledTimes(2));
     expect(deleteFeedItemById).toHaveBeenLastCalledWith(10, { username: 'reader', password: 'secret' });
   });
 
-  it('returns failed deletions to the end after a feed resync', async () => {
+  it('returns a server-side card after a feed resync clears its final error', async () => {
     vi.mocked(getFeedItems)
       .mockResolvedValueOnce(ITEMS)
       .mockResolvedValueOnce(ITEMS);
@@ -135,9 +139,27 @@ describe('ReaderPage deletion', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
 
     await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('Second story')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
     expect(await screen.findByText('First story')).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('keeps separate clickable notifications for multiple final errors', async () => {
+    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
+    vi.mocked(deleteFeedItemById).mockRejectedValue(new Error('offline'));
+    renderReader();
+
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(screen.getAllByRole('alert')).toHaveLength(2));
+    const notifications = screen.getAllByRole('button', { name: /Could not delete/ });
+    expect(notifications).toHaveLength(2);
+    fireEvent.click(notifications[1]);
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
   });
 
 });

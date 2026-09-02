@@ -21,7 +21,7 @@ export function ReaderPage() {
     remainingCount,
     keepItem,
     deleteItem,
-    retryDelete,
+    recoverDeletion,
     resetReview,
     retryLoad,
     mode,
@@ -38,7 +38,7 @@ export function ReaderPage() {
       </div>
       <section className="reader" aria-labelledby="reader-page-title">
         <h1 id="reader-page-title" className="sr-only">{t('pages.reader')}</h1>
-        <ReaderDeletionErrors deletions={failedDeletions} onRetry={retryDelete} />
+        <ReaderDeletionErrors deletions={failedDeletions} onRecover={recoverDeletion} />
         <p className="sr-only" aria-live="polite" aria-atomic="true">
           {mode === 'review' && currentItem
             ? t('reader.currentItemAnnouncement', {
@@ -99,10 +99,10 @@ export function ReaderPage() {
 
 function ReaderDeletionErrors({
   deletions,
-  onRetry,
+  onRecover,
 }: {
   deletions: FeedItemDeletion[];
-  onRetry: (itemId: number) => void;
+  onRecover: (itemId: number) => void;
 }) {
   const { t } = useTranslation();
   if (deletions.length === 0) return null;
@@ -110,10 +110,14 @@ function ReaderDeletionErrors({
   return (
     <div className="reader__deletion-errors" aria-label={t('reader.deletionErrors')}>
       {deletions.map((deletion) => (
-        <div className="reader__deletion-error" role="alert" key={deletion.itemId}>
-          <p>{t('reader.deleteError', { title: deletion.title || t('feed.item') })}</p>
-          <button type="button" className="ui-button--secondary" onClick={() => onRetry(deletion.itemId)}>
-            {t('reader.retryDelete')}
+        <div role="alert" key={deletion.itemId}>
+          <button
+            type="button"
+            className="reader__deletion-error"
+            onClick={() => onRecover(deletion.itemId)}
+          >
+            <span>{t('reader.deleteError', { title: deletion.title || t('feed.item') })}</span>
+            <span className="ui-button--secondary">{t('reader.recoverDeletedItem')}</span>
           </button>
         </div>
       ))}

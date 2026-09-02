@@ -41,6 +41,47 @@ test.describe('Reader item order', () => {
   });
 });
 
+test.describe('Reader deletion recovery', () => {
+  test('retries once and restores the card from the keyboard-accessible final error', async ({ page }) => {
+    let deletionAttempts = 0;
+    await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [
+          { id: 20, feed_id: 4, link: 'https://example.com/first', title: 'First item', text: '' },
+          { id: 10, feed_id: 4, link: 'https://example.com/second', title: 'Second item', text: '' },
+        ],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/api/v1/add_deleted_items', (route) => {
+      deletionAttempts += 1;
+      return route.fulfill({ status: 503, json: { error: 'offline' } });
+    });
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        'gkfeed.credentials',
+        JSON.stringify({ username: 'automation', password: 'secret' }),
+      );
+    });
+
+    await page.goto('/reader');
+    await page.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByRole('heading', { name: 'Second item' })).toBeVisible();
+
+    const finalError = page.getByRole('button', { name: /Could not delete “First item”/ });
+    await expect(finalError).toBeVisible();
+    expect(deletionAttempts).toBe(2);
+    await finalError.focus();
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByRole('heading', { name: 'First item' })).toBeVisible();
+    await expect(finalError).toHaveCount(0);
+    await page.getByRole('button', { name: 'Keep' }).click();
+    await expect(page.getByRole('heading', { name: 'Second item' })).toBeVisible();
+  });
+});
+
 test.describe('Reader fullscreen with theater mode', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));

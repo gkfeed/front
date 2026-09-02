@@ -1,17 +1,16 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useNsfwPreferences } from '../../state/useNsfwPreferences';
 import { useTikTokPreferences } from '../../state/useTikTokPreferences';
 import { useAuth } from '../../state/useAuth';
 import type { ReaderItemOrder } from '../../state/readerItemOrder';
-import { useFeedItemDeletion } from '../../hooks/useFeedItemDeletion';
 import { useFeedItems } from '../../hooks/useFeedItems';
-import { useReaderDeletionProjection } from '../../hooks/useReaderDeletionProjection';
 import { useReviewSession } from '../../hooks/useReviewSession';
 import { useReviewPreviewPrefetch } from '../../hooks/useReviewPreviewPrefetch';
 import { useFeedPriority } from '../../state/useFeedPriority';
+import { useFeatureUseCases } from '../../state/useFeatureUseCases';
 
-/** Coordinates the reader use case; lower-level hooks own the individual mechanisms. */
+/** Connects the Reader transaction model to loading, deletion, and cache I/O. */
 export function useFeedReader({
   prefetchNextPreviews = false,
   itemOrder = 'desc',
@@ -20,6 +19,7 @@ export function useFeedReader({
   itemOrder?: ReaderItemOrder;
 } = {}) {
   const { credentials } = useAuth();
+  const { feeds } = useFeatureUseCases();
   const { nsfwMode } = useNsfwPreferences();
   const { hideTikTokItems } = useTikTokPreferences();
   const { priorities: feedPriorities } = useFeedPriority();
@@ -32,40 +32,39 @@ export function useFeedReader({
     invalidateCache,
     retry,
   } = useFeedItems(credentials);
-  const {
-    deleteItem: deleteRemoteItem,
-    failedDeletions,
-    isItemPending,
-    retryItem,
-  } = useFeedItemDeletion(credentials, invalidateCache);
-  const {
-    deletedItemIds,
-    requeuedItemIds,
-    markDeleted,
-    restoreFailed,
-  } = useReaderDeletionProjection(loadedItems);
   const reviewPresentation = useMemo(() => ({
     itemOrder,
     nsfwMode,
     hideTikTokItems,
-    deletedItemIds,
-    requeuedItemIds,
     feedPriorities,
   }), [
-    deletedItemIds,
     feedPriorities,
     hideTikTokItems,
     itemOrder,
     nsfwMode,
-    requeuedItemIds,
   ]);
-  const { items, reviewableIds, activeReviewIds, keep, remove, reset } = useReviewSession({
+  const {
+    items,
+    activeReviewIds,
+    keep,
+    deleteItem: startDeletion,
+    deletionSucceeded,
+    deletionFailed,
+    recoverDeletion,
+    deletions,
+    reset,
+  } = useReviewSession({
     loadedItems,
     username: credentials?.username ?? null,
     isSyncComplete,
     ...reviewPresentation,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
+  const attemptedDeletions = useRef(new Set<string>());
+  const deleteRemoteItem = useCallback(
+    (itemId: number) => feeds.deleteFeedItem(itemId, credentials),
+    [credentials, feeds],
+  );
   const isLoading = isFeedLoading
     || (status !== 'error' && !isSyncComplete && items?.length === 0);
 
@@ -74,6 +73,22 @@ export function useFeedReader({
     items: items ?? [],
     activeReviewIds,
   });
+
+  useEffect(() => {
+    deletions.forEach((deletion) => {
+      if (deletion.status !== 'pending') return;
+      const attemptKey = `${deletion.operationId}:${deletion.attempt}`;
+      if (attemptedDeletions.current.has(attemptKey)) return;
+      attemptedDeletions.current.add(attemptKey);
+
+      void deleteRemoteItem(deletion.itemId)
+        .then(() => {
+          deletionSucceeded(deletion.itemId, deletion.operationId);
+          invalidateCache();
+        })
+        .catch(() => deletionFailed(deletion.itemId, deletion.operationId));
+    });
+  }, [deleteRemoteItem, deletionFailed, deletionSucceeded, deletions, invalidateCache]);
 
   const keepItem = useCallback(() => {
     if (!currentItem) return;
@@ -84,25 +99,16 @@ export function useFeedReader({
   const deleteCurrentItem = useCallback(() => {
     if (!currentItem) return;
 
-    const deleted = deleteRemoteItem(currentItem.id, getItemTitle(currentItem));
-    if (!deleted) return;
+    startDeletion(currentItem.id, getItemTitle(currentItem));
+  }, [currentItem, startDeletion]);
 
-    markDeleted(currentItem.id);
-    remove(currentItem.id);
-  }, [currentItem, deleteRemoteItem, markDeleted, remove]);
-
-  const retryFailedDeletion = useCallback((itemId: number) => {
-    retryItem(itemId);
-  }, [retryItem]);
+  const recoverFailedDeletion = useCallback((itemId: number) => {
+    recoverDeletion(itemId);
+  }, [recoverDeletion]);
 
   const retryLoad = useCallback(() => {
-    const failedIds = failedDeletions.map((operation) => operation.itemId);
-    if (failedIds.length > 0) {
-      restoreFailed(failedIds);
-      reset([...reviewableIds, ...failedIds]);
-    }
     retry();
-  }, [failedDeletions, reset, restoreFailed, retry, reviewableIds]);
+  }, [retry]);
 
   const resetReview = useCallback(() => {
     reset();
@@ -112,14 +118,16 @@ export function useFeedReader({
     items: items ?? [],
     currentItem,
     isLoading,
-    isItemPending,
+    isItemPending: (itemId: number) => deletions.some((deletion) => (
+      deletion.itemId === itemId && deletion.status === 'pending'
+    )),
     loadFailed: status === 'error',
     loadError,
-    failedDeletions,
+    failedDeletions: deletions.filter((deletion) => deletion.status === 'failed'),
     remainingCount: activeReviewIds.length,
     keepItem,
     deleteItem: deleteCurrentItem,
-    retryDelete: retryFailedDeletion,
+    recoverDeletion: recoverFailedDeletion,
     resetReview,
     retryLoad,
   };

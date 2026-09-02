@@ -11,7 +11,7 @@ import {
 import { getReaderMode } from '../../state/readerMode';
 import { useReaderItemOrderPreferences } from '../../state/useReaderItemOrderPreferences';
 
-export type { FeedItemDeletion } from '../../hooks/useFeedItemDeletion';
+export type { FeedItemDeletion } from '../../hooks/reviewSession';
 
 type Translator = (key: string) => string;
 
