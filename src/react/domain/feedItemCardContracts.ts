@@ -94,25 +94,4 @@ export type FeedItemCardPresentation = FeedItemCardMetadata & {
   descriptor: FeedItemCardPresentationDescriptor;
   preview: FeedItemPreview | null;
   visiblePreview: FeedItemPreview | null;
-  renderFacts: FeedItemCardPresentationRenderFacts;
-};
-
-/** Framework-agnostic, completed input for the React renderer seam. */
-export type FeedItemCardPresentationRenderFacts = Pick<
-  FeedItemCardPresentation,
-  | 'item'
-  | 'hostname'
-  | 'variant'
-  | 'imagePreview'
-  | 'liquipediaMatch'
-  | 'description'
-  | 'canReadArticle'
-  | 'descriptor'
-  | 'visiblePreview'
-  | 'hltvMatchTeams'
-  | 'hltvSnapshot'
-  | 'hltvImageScore'
-  | 'oneFootballSnapshot'
-> & {
-  videoSrc: string | null;
 };

@@ -1,6 +1,6 @@
 import { createElement, Fragment, type ReactNode } from 'react';
 import type { FeedItemProvider } from '../../domain/feedItemPreviewTypes';
-import type { FeedItemCardRenderFacts } from '../useFeedItemCardModel';
+import type { FeedItemCardModel } from '../useFeedItemCardModel';
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import {
   EmptyRenderer,
@@ -92,7 +92,7 @@ const feedItemCardProviderRendererMap = {
   }),
 } as const satisfies Readonly<Record<FeedItemProvider, FeedItemCardProviderRenderer>>;
 
-export function getFeedItemCardClassNames(facts: FeedItemCardRenderFacts): readonly string[] {
+export function getFeedItemCardClassNames(facts: FeedItemCardModel): readonly string[] {
   return feedItemCardProviderRendererMap[facts.descriptor.renderer].cardClassNames(facts);
 }
 
@@ -103,7 +103,7 @@ export function FeedItemCardProviderContent({
   previewPlaceholder,
   onOpenArticle,
 }: {
-  facts: FeedItemCardRenderFacts;
+  facts: FeedItemCardModel;
   localizedPreview: LocalizedFeedItemPreview | null;
   displayHostname: string;
   previewPlaceholder: ReactNode;

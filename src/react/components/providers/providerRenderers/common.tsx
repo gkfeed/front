@@ -1,20 +1,20 @@
 import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { FeedItemCardRenderFacts } from '../../useFeedItemCardModel';
+import type { FeedItemCardModel } from '../../useFeedItemCardModel';
 import type { LocalizedFeedItemPreview } from '../../previewLocalization';
 import { ArticleReaderLink } from '../../ArticleReader';
 import { FeedItemMedia } from '../../previews/FeedItemMedia';
 
 export type FeedItemCardProviderRendererProps = {
-  facts: FeedItemCardRenderFacts;
+  facts: FeedItemCardModel;
   localizedPreview: LocalizedFeedItemPreview | null;
   displayHostname: string;
   onOpenArticle?: () => void;
 };
 
 export type FeedItemCardProviderRenderer = {
-  cardClassNames: (facts: FeedItemCardRenderFacts) => readonly string[];
+  cardClassNames: (facts: FeedItemCardModel) => readonly string[];
   Preview: ComponentType<FeedItemCardProviderRendererProps>;
   Supplementary: ComponentType<FeedItemCardProviderRendererProps>;
   Copy: ComponentType<FeedItemCardProviderRendererProps>;
@@ -75,11 +75,11 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
   );
 }
 
-export type VariantRendererProps<T extends FeedItemCardRenderFacts['variant']['type']> = Omit<
+export type VariantRendererProps<T extends FeedItemCardModel['variant']['type']> = Omit<
   FeedItemCardProviderRendererProps,
   'facts'
 > & {
-  facts: Omit<FeedItemCardRenderFacts, 'variant'> & {
-    variant: Extract<FeedItemCardRenderFacts['variant'], { type: T }>;
+  facts: Omit<FeedItemCardModel, 'variant'> & {
+    variant: Extract<FeedItemCardModel['variant'], { type: T }>;
   };
 };

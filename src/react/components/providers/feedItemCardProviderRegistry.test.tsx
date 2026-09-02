@@ -4,7 +4,7 @@ import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { FeedItemProvider } from '../../domain/feedItemPreviewTypes';
-import type { FeedItemCardRenderFacts } from '../useFeedItemCardModel';
+import type { FeedItemCardModel } from '../useFeedItemCardModel';
 import {
   FeedItemCardProviderContent,
   getFeedItemCardClassNames,
@@ -24,14 +24,19 @@ const providers: FeedItemProvider[] = [
   'youtube',
 ];
 
-function createFacts(overrides: Partial<FeedItemCardRenderFacts> = {}): FeedItemCardRenderFacts {
+function createFacts(overrides: Partial<FeedItemCardModel> = {}): FeedItemCardModel {
   return {
     item: { id: 1, feedId: 2, link: 'https://example.com/story', title: 'Story', text: '' },
     hostname: 'example.com',
+    provider: 'generic',
     variant: { type: 'standard' },
     imagePreview: { type: 'none' },
+    openGraphPreview: null,
     liquipediaMatch: null,
     description: null,
+    isNsfw: false,
+    shouldBlurNsfw: false,
+    shouldHideNsfw: false,
     canReadArticle: false,
     descriptor: {
       renderer: 'generic',
@@ -43,11 +48,12 @@ function createFacts(overrides: Partial<FeedItemCardRenderFacts> = {}): FeedItem
       showTikTokComments: false,
     },
     visiblePreview: null,
+    preview: null,
     hltvMatchTeams: null,
     hltvSnapshot: null,
     hltvImageScore: null,
     oneFootballSnapshot: null,
-    videoSrc: null,
+    cardRef: { current: null },
     isPreviewPending: false,
     previewStatus: 'idle',
     onPreviewError: vi.fn(),
@@ -55,7 +61,7 @@ function createFacts(overrides: Partial<FeedItemCardRenderFacts> = {}): FeedItem
   };
 }
 
-function renderProvider(facts: FeedItemCardRenderFacts) {
+function renderProvider(facts: FeedItemCardModel) {
   return render(
     <FeedItemCardProviderContent
       facts={facts}

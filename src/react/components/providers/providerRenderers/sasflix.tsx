@@ -9,7 +9,7 @@ import {
 import { createVariantRenderer } from './createVariantRenderer';
 
 const renderSasflixVideoPreview = createVariantRenderer('sasflix', ({ facts, localizedPreview }: VariantRendererProps<'sasflix'>) => (
-  <SasflixPreview href={facts.item.link} title={facts.item.title} videoSrc={facts.videoSrc} previewStatus={facts.previewStatus} preview={localizedPreview} onPreviewError={facts.onPreviewError} />
+  <SasflixPreview href={facts.item.link} title={facts.item.title} videoSrc={facts.openGraphPreview?.video ?? null} previewStatus={facts.previewStatus} preview={localizedPreview} onPreviewError={facts.onPreviewError} />
 ));
 
 const renderSasflixCopy = createVariantRenderer('sasflix', ({ facts }: VariantRendererProps<'sasflix'>) => (

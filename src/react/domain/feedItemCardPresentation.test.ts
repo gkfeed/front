@@ -85,12 +85,6 @@ describe('feed item card presentation', () => {
       showHltvCountdown: false,
       showTikTokComments: false,
     });
-    expect(presentation.renderFacts).toMatchObject({
-      item: feedItem,
-      variant: { type: 'youtube', videoId: 'abcdefghi' },
-      descriptor: presentation.descriptor,
-      videoSrc: null,
-    });
   });
 
   it('keeps the local image as a fallback for a remote Rezka preview', () => {

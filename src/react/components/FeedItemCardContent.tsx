@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import type { FeedItemCardRenderFacts } from './useFeedItemCardModel';
+import type { FeedItemCardModel } from './useFeedItemCardModel';
 import { localizeFeedItemPreview } from './previewLocalization';
 import { FeedItemCardProviderContent } from './providers/feedItemCardProviderRegistry';
 
@@ -8,7 +8,7 @@ export function FeedItemCardContent({
   facts,
   onOpenArticle,
 }: {
-  facts: FeedItemCardRenderFacts;
+  facts: FeedItemCardModel;
   onOpenArticle?: () => void;
 }) {
   const { t } = useTranslation();

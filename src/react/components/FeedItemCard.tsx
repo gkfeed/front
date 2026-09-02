@@ -26,7 +26,7 @@ export const FeedItemCard = memo(function FeedItemCard({
       className={[
         'reader-card',
         isPreviewPending ? 'reader-card--preview-pending' : '',
-        ...getFeedItemCardClassNames(model.renderFacts),
+        ...getFeedItemCardClassNames(model),
         isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
@@ -49,7 +49,7 @@ export const FeedItemCard = memo(function FeedItemCard({
           <span>{t('preview.hidden')}</span>
         </div>
       ) : null}
-      <FeedItemCardContent facts={model.renderFacts} onOpenArticle={articleReader.open} />
+      <FeedItemCardContent facts={model} onOpenArticle={articleReader.open} />
       <ArticleReaderOverlay reader={articleReader} originalUrl={item.link} />
     </article>
   );
