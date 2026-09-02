@@ -1,4 +1,3 @@
-import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FeedItemCardModel } from '../../useFeedItemCardModel';
@@ -13,35 +12,23 @@ export type FeedItemCardProviderRendererProps = {
   onOpenArticle?: () => void;
 };
 
-export type FeedItemCardProviderRenderer = {
-  cardClassNames: (facts: FeedItemCardModel) => readonly string[];
-  Preview: ComponentType<FeedItemCardProviderRendererProps>;
-  Supplementary: ComponentType<FeedItemCardProviderRendererProps>;
-  Copy: ComponentType<FeedItemCardProviderRendererProps>;
-  Identity: ComponentType<FeedItemCardProviderRendererProps>;
-};
-
-export function EmptyRenderer(): null {
-  return null;
-}
-
 export function FeedItemMediaPreview({
   facts,
   localizedPreview,
   displayHostname,
 }: FeedItemCardProviderRendererProps) {
-  if (!localizedPreview || facts.descriptor.preview.type !== 'media') return null;
+  if (!localizedPreview) return null;
 
   return (
     <FeedItemMedia
       href={facts.item.link}
       hostname={facts.item.title || displayHostname}
       preview={localizedPreview}
-      isShortVideo={facts.descriptor.preview.isShortVideo}
-      isTikTok={facts.descriptor.preview.isTikTok}
+      isShortVideo={facts.provider === 'instagram' || facts.provider === 'tiktok'}
+      isTikTok={facts.provider === 'tiktok'}
       hltvImageScore={facts.hltvImageScore}
       onPreviewError={facts.onPreviewError}
-      imagePresentation={facts.descriptor.imagePresentation}
+      imagePresentation={facts.provider === 'vk' ? 'vk' : 'standard'}
     />
   );
 }
@@ -50,7 +37,7 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
   const { t } = useTranslation();
   const { item, description } = facts;
 
-  if (facts.descriptor.copy === 'simple-image') {
+  if (facts.variant.type === 'simple-image') {
     return (
       <div className="reader-card__copy">
         <h2 className="reader-card__title">{item.title || displayHostname}</h2>

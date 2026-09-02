@@ -36,32 +36,6 @@ export type FeedItemCardImagePreview =
   | { type: 'generated'; source: 'reddit' | 'other' }
   | { type: 'hltv' };
 
-export type FeedItemCardPreviewDescriptor =
-  | { type: 'media'; isShortVideo: boolean; isTikTok: boolean }
-  | { type: 'matreshka'; videoId: string }
-  | { type: 'sasflix'; publicationId: string }
-  | { type: 'twitch'; channel: string }
-  | { type: 'youtube'; videoId: string };
-
-export type FeedItemCardCopyDescriptor =
-  | 'none'
-  | 'youtube'
-  | 'twitch'
-  | 'matreshka'
-  | 'sasflix'
-  | 'simple-image'
-  | 'standard';
-
-export type FeedItemCardPresentationDescriptor = {
-  renderer: FeedItemAnalysis['provider'];
-  preview: FeedItemCardPreviewDescriptor;
-  copy: FeedItemCardCopyDescriptor;
-  imagePresentation: 'standard' | 'vk';
-  showInstagramIdentity: boolean;
-  showHltvCountdown: boolean;
-  showTikTokComments: boolean;
-};
-
 export type FeedItemCardVariantContext = {
   youtubeVideoId: string | null;
   twitchChannel: string | null;
@@ -91,7 +65,6 @@ export type FeedItemCardMetadata = {
 export type FeedItemCardPresentation = FeedItemCardMetadata & {
   item: FeedItem;
   canReadArticle: boolean;
-  descriptor: FeedItemCardPresentationDescriptor;
   preview: FeedItemPreview | null;
   visiblePreview: FeedItemPreview | null;
 };

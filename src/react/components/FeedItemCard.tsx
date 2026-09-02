@@ -6,7 +6,7 @@ import { ArticleReaderOverlay } from './ArticleReader';
 import { useArticleReader } from '../hooks/useArticleReader';
 import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
 import { isRezkaUrl, parseUrl } from '../domain/feedItemUrls';
-import { getFeedItemCardClassNames } from './providers/feedItemCardProviderRegistry';
+import { getFeedItemCardClassNames } from './providers/feedItemCardClassNames';
 
 export const FeedItemCard = memo(function FeedItemCard({
   item,
@@ -30,7 +30,7 @@ export const FeedItemCard = memo(function FeedItemCard({
         isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
-      data-comments-expanded={model.descriptor.showTikTokComments
+      data-comments-expanded={model.provider === 'tiktok'
         ? areTikTokCommentsExpanded
         : undefined}
       inert={shouldBlurNsfw}

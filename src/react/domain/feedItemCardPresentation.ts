@@ -12,14 +12,11 @@ import { getTikTokEmbedPreview } from './tiktokPreview';
 import type {
   FeedItemAnalysis,
   FeedItemPreview,
-  FeedItemProvider,
 } from './feedItemPreviewTypes';
 import type {
   FeedItemCardImagePreview,
   FeedItemCardMetadata,
   FeedItemCardPresentation,
-  FeedItemCardPresentationDescriptor,
-  FeedItemCardVariant,
   NsfwMode,
   RemotePreview,
 } from './feedItemCardContracts';
@@ -31,7 +28,6 @@ export type { FeedItemCardPresentation } from './feedItemCardContracts';
 
 export type {
   FeedItemCardImagePreview,
-  FeedItemCardPresentationDescriptor,
   FeedItemCardVariant,
 } from './feedItemCardContracts';
 
@@ -86,17 +82,10 @@ export function buildFeedItemCardPresentation({
     visiblePreview,
     remoteItemPreview: previews.remoteItemPreview,
   });
-  const descriptor = resolveDescriptor({
-    provider: metadata.provider,
-    variant: metadata.variant,
-    imagePreview: metadata.imagePreview,
-  });
-
   return {
     item,
     ...metadata,
     canReadArticle: canReadFeedItemArticle(metadata),
-    descriptor,
     preview: previews.preview,
     visiblePreview,
   };
@@ -276,73 +265,6 @@ function isImagePreview(
   return Boolean(preview && preview.type === undefined);
 }
 
-function resolveDescriptor({
-  provider,
-  variant,
-  imagePreview,
-}: {
-  provider: FeedItemProvider;
-  variant: FeedItemCardVariant;
-  imagePreview: FeedItemCardImagePreview;
-}): FeedItemCardPresentationDescriptor {
-  const display = getFeedItemProviderDisplayFacts(provider);
-
-  return {
-    renderer: provider,
-    preview: resolvePreviewDescriptor(variant, display),
-    copy: resolveCopyDescriptor(provider, variant, imagePreview, display.isShortVideo),
-    imagePresentation: provider === 'vk' ? 'vk' : 'standard',
-    showInstagramIdentity: display.showInstagramIdentity,
-    showHltvCountdown: display.supplementary === 'hltv',
-    showTikTokComments: display.supplementary === 'tiktok',
-  };
-}
-
-function resolvePreviewDescriptor(
-  variant: FeedItemCardVariant,
-  display: ReturnType<typeof getFeedItemProviderDisplayFacts>,
-): FeedItemCardPresentationDescriptor['preview'] {
-  switch (variant.type) {
-    case 'matreshka': return { type: 'matreshka', videoId: variant.videoId };
-    case 'sasflix': return { type: 'sasflix', publicationId: variant.publicationId };
-    case 'youtube': return { type: 'youtube', videoId: variant.videoId };
-    case 'twitch': return { type: 'twitch', channel: variant.channel };
-    case 'instagram':
-    case 'liquipedia':
-    case 'simple-image':
-    case 'standard':
-    case 'tiktok':
-      return {
-        type: 'media',
-        isShortVideo: display.isShortVideo,
-        isTikTok: display.isTikTok,
-      };
-    default: return assertNever(variant);
-  }
-}
-
-function resolveCopyDescriptor(
-  provider: FeedItemProvider,
-  variant: FeedItemCardVariant,
-  imagePreview: FeedItemCardImagePreview,
-  isShortVideo: boolean,
-): FeedItemCardPresentationDescriptor['copy'] {
-  if (provider === 'vk') return 'standard';
-  if (imagePreview.type !== 'none' || isShortVideo) return 'none';
-  switch (variant.type) {
-    case 'matreshka':
-    case 'sasflix':
-    case 'youtube':
-    case 'twitch':
-    case 'simple-image': return variant.type;
-    case 'instagram':
-    case 'liquipedia':
-    case 'standard':
-    case 'tiktok': return 'standard';
-    default: return assertNever(variant);
-  }
-}
-
 function canReadFeedItemArticle({
   provider,
   hostname,
@@ -352,8 +274,4 @@ function canReadFeedItemArticle({
   return openGraphPreview?.type?.toLowerCase() === 'article'
     || hostname === 'trashbox.ru'
     || hostname?.endsWith('.trashbox.ru') === true;
-}
-
-function assertNever(value: never): never {
-  throw new Error(`Unsupported feed item variant: ${JSON.stringify(value)}`);
 }

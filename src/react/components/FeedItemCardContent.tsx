@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { FeedItemCardModel } from './useFeedItemCardModel';
 import { localizeFeedItemPreview } from './previewLocalization';
-import { FeedItemCardProviderContent } from './providers/feedItemCardProviderRegistry';
+import { FeedItemCardProviderContent } from './providers/FeedItemCardProviderContent';
 
 export function FeedItemCardContent({
   facts,
