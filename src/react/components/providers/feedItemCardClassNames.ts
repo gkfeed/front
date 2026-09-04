@@ -1,4 +1,5 @@
 import type { FeedItemCardModel } from '../useFeedItemCardModel';
+import { getSpotifyEmbed } from '../../domain/spotifyPreview';
 
 export function getFeedItemCardClassNames(facts: FeedItemCardModel): readonly string[] {
   return [
@@ -13,7 +14,11 @@ export function getFeedItemCardClassNames(facts: FeedItemCardModel): readonly st
 
 function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
   switch (facts.provider) {
-    case 'generic': return facts.simpleImage ? ['reader-card--simple-image'] : [];
+    case 'generic':
+      return [
+        ...(facts.simpleImage ? ['reader-card--simple-image'] : []),
+        ...(getSpotifyEmbed(facts.item.link) ? ['reader-card--spotify'] : []),
+      ];
     case 'hltv': return [];
     case 'instagram':
       return [

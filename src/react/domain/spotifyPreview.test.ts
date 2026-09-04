@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getSpotifyEmbed } from './spotifyPreview';
+import { getSpotifyDisplayTitle, getSpotifyEmbed } from './spotifyPreview';
 
 describe('getSpotifyEmbed', () => {
   it('creates an embed URL for a Spotify playlist', () => {
@@ -45,5 +45,34 @@ describe('getSpotifyEmbed', () => {
     'https://open.spotify.com/playlist/not-an-id',
   ])('rejects unsupported URLs: %s', (url) => {
     expect(getSpotifyEmbed(url)).toBeNull();
+  });
+});
+
+describe('getSpotifyDisplayTitle', () => {
+  it('combines the Spotify artist and track metadata', () => {
+    expect(getSpotifyDisplayTitle({
+      url: 'https://open.spotify.com/track/11dFghVXANMlKmJXsNCbNl',
+      fallbackTitle: 'Discography - CLICK',
+      previewTitle: 'CLICK - Song by JISOO | Spotify',
+      previewDescription: 'JISOO · AMORTAGE · Song · 2025',
+    })).toBe('JISOO - CLICK');
+  });
+
+  it('uses the release artist for a single published as an album', () => {
+    expect(getSpotifyDisplayTitle({
+      url: 'https://open.spotify.com/album/5n9oHQlYB2XRQZqFrJILxx',
+      fallbackTitle: 'Discography - CLICK',
+      previewTitle: 'CLICK - Single by JISOO | Spotify',
+      previewDescription: 'JISOO · Single · 2025 · 1 songs',
+    })).toBe('JISOO - CLICK');
+  });
+
+  it('keeps the item title when complete track metadata is unavailable', () => {
+    expect(getSpotifyDisplayTitle({
+      url: 'https://open.spotify.com/track/11dFghVXANMlKmJXsNCbNl',
+      fallbackTitle: 'CLICK',
+      previewTitle: 'CLICK',
+      previewDescription: null,
+    })).toBe('CLICK');
   });
 });

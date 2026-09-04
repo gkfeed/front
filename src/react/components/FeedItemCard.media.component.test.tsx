@@ -7,6 +7,29 @@ import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 
 describe('FeedItemCard media providers', () => {
+  it('shows Spotify track metadata instead of the feed item label', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://open.spotify.com/album/5n9oHQlYB2XRQZqFrJILxx',
+      title: 'CLICK - Single by JISOO | Spotify',
+      description: 'JISOO · AMORTAGE · Song · 2025',
+      image: 'https://example.com/click.jpg',
+      video: null,
+      siteName: 'Spotify',
+      type: 'music.song',
+      providerData: null,
+    });
+
+    const { container } = render(<FeedItemCard item={{
+      ...item,
+      link: 'https://open.spotify.com/album/5n9oHQlYB2XRQZqFrJILxx',
+      title: 'Discography - CLICK',
+    }} />);
+
+    expect(await screen.findByRole('heading', { name: 'JISOO - CLICK' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Play JISOO - CLICK on Spotify' })).toBeTruthy();
+    expect(container.querySelector('.reader-card')?.classList.contains('reader-card--spotify')).toBe(true);
+  });
+
   it('replaces a Spotify playlist cover with the embed player when clicked', async () => {
     getPreview.mockResolvedValue({
       url: 'https://open.spotify.com/playlist/37i9dQZEVXbeUwP0nygk6B',

@@ -33,6 +33,27 @@ export function getSpotifyEmbed(value: string): SpotifyEmbed | null {
   };
 }
 
+export function getSpotifyDisplayTitle({
+  url,
+  fallbackTitle,
+  previewTitle,
+  previewDescription,
+}: {
+  url: string;
+  fallbackTitle: string;
+  previewTitle?: string | null;
+  previewDescription?: string | null;
+}): string {
+  const embed = getSpotifyEmbed(url);
+  if (embed?.type !== 'track' && embed?.type !== 'album') return fallbackTitle;
+
+  const track = previewTitle
+    ?.replace(/\s+-\s+(?:single|album|song)\s+by\s+.+?\s+\|\s+spotify$/i, '')
+    .trim();
+  const artists = previewDescription?.split('·', 1)[0]?.trim();
+  return track && artists ? `${artists} - ${track}` : fallbackTitle;
+}
+
 function isSpotifyEmbedType(value: string | undefined): value is SpotifyEmbed['type'] {
   return value === 'album' || value === 'playlist' || value === 'track';
 }
