@@ -4,6 +4,7 @@ import '../../styles/settings-menu.css';
 
 import type { ReaderMode } from '../state/readerMode';
 import type { ReaderItemOrder } from '../state/readerItemOrder';
+import { FeedPriorityPicker } from './FeedPriorityPicker';
 import { NsfwPicker } from './NsfwPicker';
 import { ReaderItemOrderPicker } from './ReaderItemOrderPicker';
 import { ReaderModePicker } from './ReaderModePicker';
@@ -87,6 +88,7 @@ export function SettingsMenu({
               }}
             />
           ) : null}
+          <FeedPriorityPicker />
           <NsfwPicker />
           <TikTokPicker />
           <ThemeOptions

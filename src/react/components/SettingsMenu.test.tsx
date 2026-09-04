@@ -6,6 +6,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { THEME_STORAGE_KEY } from '../theme';
 import {
+  FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
+  FeedPriorityProvider,
+} from '../state/FeedPriorityProvider';
+import {
   NSFW_MODE_STORAGE_KEY,
   NsfwPreferencesProvider,
 } from '../state/NsfwPreferencesProvider';
@@ -25,6 +29,24 @@ afterEach(() => {
 });
 
 describe('SettingsMenu', () => {
+  it('enables feed prioritization by default and persists disabling it', () => {
+    const storage = stubLocalStorage();
+    document.documentElement.dataset.theme = 'light';
+    render(
+      <FeedPriorityProvider>
+        <SettingsMenu />
+      </FeedPriorityProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Enabled' }).getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Disabled' }));
+
+    expect(screen.getByRole('menuitemradio', { name: 'Disabled' }).getAttribute('aria-checked')).toBe('true');
+    expect(storage.get(FEED_PRIORITIZATION_ENABLED_STORAGE_KEY)).toBe('false');
+  });
+
   it('blurs NSFW by default and persists the hide mode', () => {
     const storage = stubLocalStorage();
     document.documentElement.dataset.theme = 'light';

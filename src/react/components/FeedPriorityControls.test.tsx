@@ -10,7 +10,12 @@ describe('FeedPriorityControls', () => {
   it('changes the priority assigned to the current item feed id', () => {
     const changePriority = vi.fn();
     render(
-      <FeedPriorityContext value={{ priorities: { 7: -1 }, changePriority }}>
+      <FeedPriorityContext value={{
+        isEnabled: true,
+        priorities: { 7: -1 },
+        changePriority,
+        setEnabled: vi.fn(),
+      }}>
         <FeedPriorityControls feedId={7} />
       </FeedPriorityContext>,
     );
@@ -22,5 +27,20 @@ describe('FeedPriorityControls', () => {
     expect(screen.queryByLabelText(/Priority:/)).toBeNull();
     expect(changePriority).toHaveBeenNthCalledWith(1, 7, -1);
     expect(changePriority).toHaveBeenNthCalledWith(2, 7, 1);
+  });
+
+  it('is hidden when feed prioritization is disabled', () => {
+    const { container } = render(
+      <FeedPriorityContext value={{
+        isEnabled: false,
+        priorities: { 7: -1 },
+        changePriority: vi.fn(),
+        setEnabled: vi.fn(),
+      }}>
+        <FeedPriorityControls feedId={7} />
+      </FeedPriorityContext>,
+    );
+
+    expect(container.textContent).toBe('');
   });
 });

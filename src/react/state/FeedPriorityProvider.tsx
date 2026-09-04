@@ -8,8 +8,23 @@ import {
 } from './feedPriority';
 import { FeedPriorityContext } from './feedPriorityContext';
 
+export const FEED_PRIORITIZATION_ENABLED_STORAGE_KEY = 'gkfeed.feedPrioritizationEnabled.v1';
+
 export function FeedPriorityProvider({ children }: { children: ReactNode }) {
+  const [isEnabled, setEnabledState] = useState(readFeedPrioritizationEnabled);
   const [priorities, setPriorities] = useState(readFeedPriorities);
+
+  const setEnabled = useCallback((nextIsEnabled: boolean) => {
+    setEnabledState(nextIsEnabled);
+    try {
+      window.localStorage.setItem(
+        FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
+        String(nextIsEnabled),
+      );
+    } catch {
+      // Keep the in-memory preference usable when storage is unavailable.
+    }
+  }, []);
 
   const changePriority = useCallback((feedId: number, delta: -1 | 1) => {
     setPriorities((current) => {
@@ -19,8 +34,22 @@ export function FeedPriorityProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const value = useMemo(() => ({ priorities, changePriority }), [changePriority, priorities]);
+  const value = useMemo(() => ({
+    isEnabled,
+    priorities,
+    changePriority,
+    setEnabled,
+  }), [changePriority, isEnabled, priorities, setEnabled]);
   return <FeedPriorityContext value={value}>{children}</FeedPriorityContext>;
+}
+
+function readFeedPrioritizationEnabled(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    return window.localStorage.getItem(FEED_PRIORITIZATION_ENABLED_STORAGE_KEY) !== 'false';
+  } catch {
+    return true;
+  }
 }
 
 function readFeedPriorities(): FeedPriorities {

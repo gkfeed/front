@@ -22,7 +22,11 @@ export function useFeedReader({
   const { feeds } = useFeatureUseCases();
   const { nsfwMode } = useNsfwPreferences();
   const { hideTikTokItems } = useTikTokPreferences();
-  const { priorities: feedPriorities } = useFeedPriority();
+  const { isEnabled: isFeedPrioritizationEnabled, priorities } = useFeedPriority();
+  const feedPriorities = useMemo(
+    () => (isFeedPrioritizationEnabled ? priorities : {}),
+    [isFeedPrioritizationEnabled, priorities],
+  );
   const {
     loadedItems,
     status,
