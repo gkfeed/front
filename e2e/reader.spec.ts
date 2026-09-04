@@ -967,9 +967,9 @@ test.describe('TikTok player on iPad-sized readers', () => {
     }));
     await page.route('https://example.com/poster.jpg', (route) => route.fulfill({
       contentType: 'image/svg+xml',
-      body: '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1000" viewBox="0 0 900 1000"><rect width="900" height="1000" fill="#a6e3a1"/></svg>',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#a6e3a1"/></svg>',
     }));
-    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.setViewportSize({ width: 2048, height: 1152 });
     await page.goto('/reader');
 
     await expect(page.locator('.reader-card__preview img')).toBeVisible();
@@ -1020,7 +1020,8 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(bounds.imageHeight).toBeLessThanOrEqual(bounds.previewHeight);
     expect(bounds.imageLeft).toBeGreaterThanOrEqual(bounds.previewRight - bounds.previewWidth);
     expect(bounds.imageRight).toBeLessThanOrEqual(bounds.previewRight);
-    expect(Math.abs(bounds.imageWidth / bounds.imageHeight - 9 / 10)).toBeLessThan(0.01);
+    expect(Math.abs(bounds.imageWidth / bounds.imageHeight - 1)).toBeLessThan(0.01);
+    expect(bounds.imageWidth).toBeGreaterThan(512);
     expect(bounds.actionsBottom).toBeLessThanOrEqual(bounds.viewportHeight);
     expect(Math.abs(bounds.previewCenter - bounds.viewportWidth / 2)).toBeLessThan(1);
     expect(bounds.copyTop - bounds.previewBottom).toBeGreaterThanOrEqual(0);
