@@ -22,6 +22,10 @@
     padding: 0;
   }
 
+  .reader-card--vk {
+    padding: 0;
+  }
+
   .reader__actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
