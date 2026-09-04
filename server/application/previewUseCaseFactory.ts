@@ -14,6 +14,7 @@ export function createPreviewUseCases(
     openGraph: withLimit(ports.fetchOpenGraph, limit),
     liquipediaMatch: withLimit(ports.fetchLiquipediaMatch, limit),
     tiktokComments: withLimit(ports.fetchTikTokComments, limit),
+    youtubeComments: withLimit(ports.fetchYoutubeComments, limit),
     redditPreviewImage: withLimit(ports.fetchRedditPreviewImage, limit),
   };
 }

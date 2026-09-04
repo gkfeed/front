@@ -1,6 +1,7 @@
 import type { ServerResponse } from 'node:http';
 
 import { isTikTokCommentsPreview } from '../../shared/tiktokContracts.js';
+import { isYoutubeCommentsPreview } from '../../shared/youtubeContracts.js';
 import { isArticlePreview } from '../../shared/articleContracts.js';
 import { sendJson } from './httpResponse.js';
 import type { PreviewUseCases } from '../application/previewUseCases.js';
@@ -13,13 +14,14 @@ import { sendPreviewImage } from './previewResponse.js';
 import { bffRequestGate, type BffRequestGate } from './bffRequestGate.js';
 import { bffResultCache, type BffResultCache } from './bffResultCache.js';
 
-type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokComments'>;
+type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokComments' | 'youtubeComments'>;
 
 const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
   '/bff/article': 'article',
   '/bff/open-graph': 'openGraph',
   '/bff/liquipedia-match': 'liquipediaMatch',
   '/bff/tiktok-comments': 'tiktokComments',
+  '/bff/youtube-comments': 'youtubeComments',
 };
 
 export async function routeBffRequest(
@@ -44,6 +46,8 @@ export async function routeBffRequest(
       resultCache,
       useCaseName === 'tiktokComments'
         ? isTikTokCommentsPreview
+        : useCaseName === 'youtubeComments'
+          ? isYoutubeCommentsPreview
         : useCaseName === 'article'
           ? isArticlePreview
           : undefined,

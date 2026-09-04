@@ -215,6 +215,16 @@ const ru = {
     viewOnTikTok: 'Посмотреть комментарии в TikTok',
     loadError: 'Не удалось загрузить комментарии TikTok.',
   },
+  youtubeComments: {
+    comments: 'Комментарии',
+    title: 'Комментарии YouTube',
+    show: 'Показать комментарии YouTube',
+    hide: 'Скрыть комментарии YouTube',
+    loading: 'Загрузка комментариев…',
+    none: 'Для этого видео нет доступных комментариев.',
+    loadError: 'Не удалось загрузить комментарии YouTube.',
+    viewOnYoutube: 'Посмотреть комментарии на YouTube',
+  },
   preview: {
     loading: 'Загрузка предпросмотра',
     sound: 'Нажмите, чтобы включить звук',

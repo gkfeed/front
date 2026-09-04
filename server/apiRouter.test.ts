@@ -34,6 +34,7 @@ function createUseCases(): PreviewUseCases {
       creatorName: null,
       creatorAvatarUrl: null,
     }),
+    youtubeComments: vi.fn().mockResolvedValue({ comments: [] }),
     redditPreviewImage: vi.fn().mockResolvedValue({
       body: new Uint8Array([1, 2]),
       contentType: 'image/jpeg',
@@ -69,6 +70,7 @@ describe('BFF HTTP router', () => {
       creatorName: null,
       creatorAvatarUrl: null,
     }],
+    ['/bff/youtube-comments', 'youtubeComments', { comments: [] }],
   ] as const)('dispatches %s through its application use case', async (pathname, useCaseName, result) => {
     const response = createResponse();
     const useCases = createUseCases();

@@ -5,13 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NsfwPreferencesContext } from '../state/nsfwPreferencesContext';
 import type { YoutubePlayer, YoutubePlayerStateChangeEvent } from '../services/youtubeIframeApi';
+import { fetchYoutubeComments } from '../services/youtubeComments';
 import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
+
+vi.mock('../services/youtubeComments');
 
 describe('FeedItemCard YouTube and general states', () => {
   const youtubeStorage = new Map<string, string>();
 
   beforeEach(() => {
+    vi.mocked(fetchYoutubeComments).mockResolvedValue({ comments: [] });
     youtubeStorage.clear();
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
@@ -124,6 +128,25 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(screen.getByRole('button', { name: 'Playback speed: 2x' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Exit theater mode' }).getAttribute('aria-pressed')).toBe('true');
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
+  });
+
+  it('loads YouTube comments on demand from the player toolbar', async () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    expect(fetchYoutubeComments).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show YouTube comments' }));
+
+    expect(await screen.findByRole('complementary', { name: 'YouTube comments' })).toBeTruthy();
+    expect(fetchYoutubeComments).toHaveBeenCalledWith(
+      'https://www.youtube.com/watch?v=abc123xyz',
+      expect.any(AbortSignal),
+    );
+    expect(screen.getByRole('button', { name: 'Hide YouTube comments' }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('offers to continue a YouTube video from its saved position', () => {

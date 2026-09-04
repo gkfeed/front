@@ -1,0 +1,125 @@
+.reader-card__player-content {
+  min-width: 0;
+}
+
+.reader-card__comments-toggle {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-control-border);
+  border-radius: 8px;
+  background: var(--color-control-well);
+  color: var(--color-ink-inverse);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.reader-card__comments-toggle[aria-pressed="true"] {
+  border-color: color-mix(in oklch, var(--color-field) 62%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 26%, var(--color-control-well));
+}
+
+.reader-card__comments-toggle:focus-visible {
+  outline: 2px solid var(--color-focus-light);
+  outline-offset: 2px;
+}
+
+.reader-card__player-content--with-aside {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  align-items: start;
+}
+
+.youtube-comments {
+  display: grid;
+  box-sizing: border-box;
+  height: 0;
+  min-width: 0;
+  min-height: 100%;
+  grid-template-rows: minmax(0, 1fr);
+  padding: 18px 10px 14px 18px;
+  overflow: hidden;
+  border-left: 1px solid rgb(255 255 255 / 14%);
+  background: #18181b;
+  color: #f7f7f8;
+}
+
+.youtube-comments__list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 0;
+  padding: 0 8px 0 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.youtube-comments__comment {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
+.youtube-comments__comment > div {
+  display: grid;
+  gap: 4px;
+}
+
+.youtube-comments__comment p,
+.youtube-comments__state p {
+  margin: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.youtube-comments__comment small {
+  color: #aaa;
+  font-size: 0.72rem;
+}
+
+.youtube-comments__avatar {
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #303034;
+}
+
+.youtube-comments__avatar img,
+.youtube-comments__avatar svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.youtube-comments__state {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 12px;
+  color: #ccc;
+}
+
+.youtube-comments__state :is(a, button) {
+  color: #fff;
+}
+
+@media (max-width: 760px) {
+  .reader-card__player-content--with-aside {
+    grid-template-columns: 1fr;
+  }
+
+  .youtube-comments {
+    height: auto;
+    min-height: 0;
+    max-height: 38dvh;
+    border-top: 1px solid rgb(255 255 255 / 14%);
+    border-left: 0;
+  }
+}

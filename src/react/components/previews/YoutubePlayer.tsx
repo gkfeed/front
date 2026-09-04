@@ -1,7 +1,8 @@
-import type { RefObject } from 'react';
+import { useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TheaterPlayerShell } from './TheaterPlayerShell';
+import { YoutubeComments } from './YoutubeComments';
 import { useYoutubePlayerController } from './useYoutubePlayerController';
 import { sendPlaybackRate } from './youtubePlayerProtocol';
 
@@ -61,6 +62,7 @@ export function YoutubePlayerView({
   onResume,
 }: YoutubePlayerViewProps) {
   const { t } = useTranslation();
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const parameters = new URLSearchParams({
     autoplay: resumePosition === null ? '1' : '0',
     rel: '0',
@@ -73,6 +75,7 @@ export function YoutubePlayerView({
       isTheaterOpen={isTheaterOpen}
       onToggleTheater={onToggleTheater}
       shellRef={shellRef}
+      aside={isCommentsOpen ? <YoutubeComments videoId={videoId} isOpen /> : undefined}
       toolbar={(
         <>
           {isResumeAvailable && resumePosition !== null ? (
@@ -93,6 +96,17 @@ export function YoutubePlayerView({
             onClick={onTogglePlaybackSpeed}
           >
             {isDoubleSpeed ? '2x' : '1x'}
+          </button>
+          <button
+            type="button"
+            className="reader-card__comments-toggle"
+            aria-label={isCommentsOpen ? t('youtubeComments.hide') : t('youtubeComments.show')}
+            aria-pressed={isCommentsOpen}
+            aria-controls={`youtube-comments-${videoId}`}
+            onClick={() => setIsCommentsOpen((value) => !value)}
+          >
+            <span aria-hidden="true">☰</span>
+            {t('youtubeComments.comments')}
           </button>
         </>
       )}

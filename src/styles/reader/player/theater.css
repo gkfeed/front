@@ -27,6 +27,7 @@
 .reader-card__player-shell--theater :is(
   .reader-card__speed-toggle,
   .reader-card__resume-toggle,
+  .reader-card__comments-toggle,
   .reader-card__theater-toggle
 ) {
   border-color: rgb(255 255 255 / 22%);
@@ -36,6 +37,7 @@
 
 .reader-card__player-shell--theater :is(
   .reader-card__resume-toggle,
+  .reader-card__comments-toggle,
   .reader-card__speed-toggle,
   .reader-card__theater-toggle
 ):hover {

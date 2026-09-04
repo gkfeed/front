@@ -22,6 +22,7 @@ describe('preview use cases', () => {
       fetchOpenGraph: vi.fn().mockResolvedValue({ type: 'open-graph' }),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({ type: 'liquipedia' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ type: 'tiktok' }),
+      fetchYoutubeComments: vi.fn().mockResolvedValue({ type: 'youtube' }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({
         body: new Uint8Array([1, 2, 3]),
         contentType: 'image/jpeg',
@@ -37,6 +38,8 @@ describe('preview use cases', () => {
       .resolves.toEqual({ type: 'liquipedia' });
     await expect(useCases.tiktokComments('https://tiktok.com/video', context))
       .resolves.toEqual({ type: 'tiktok' });
+    await expect(useCases.youtubeComments('https://youtube.com/watch?v=video', context))
+      .resolves.toEqual({ type: 'youtube' });
     await expect(useCases.redditPreviewImage('https://reddit.com/image', context))
       .resolves.toEqual({ body: new Uint8Array([1, 2, 3]), contentType: 'image/jpeg' });
 
@@ -44,6 +47,7 @@ describe('preview use cases', () => {
     expect(ports.fetchOpenGraph).toHaveBeenCalledWith('https://example.com', context);
     expect(ports.fetchLiquipediaMatch).toHaveBeenCalledWith('https://liquipedia.net', context);
     expect(ports.fetchTikTokComments).toHaveBeenCalledWith('https://tiktok.com/video', context);
+    expect(ports.fetchYoutubeComments).toHaveBeenCalledWith('https://youtube.com/watch?v=video', context);
     expect(ports.fetchRedditPreviewImage).toHaveBeenCalledWith('https://reddit.com/image', context);
   });
 
@@ -53,6 +57,7 @@ describe('preview use cases', () => {
       fetchOpenGraph: vi.fn().mockResolvedValue({}),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({}),
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
+      fetchYoutubeComments: vi.fn().mockResolvedValue({}),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
     };
     const limit = vi.fn((load: () => Promise<unknown>) => load()) as unknown as PreviewConcurrencyLimiter;
@@ -62,8 +67,9 @@ describe('preview use cases', () => {
     await useCases.openGraph('https://example.com', context);
     await useCases.liquipediaMatch('https://liquipedia.net', context);
     await useCases.tiktokComments('https://tiktok.com/video', context);
+    await useCases.youtubeComments('https://youtube.com/watch?v=video', context);
     await useCases.redditPreviewImage('https://reddit.com/image', context);
 
-    expect(limit).toHaveBeenCalledTimes(5);
+    expect(limit).toHaveBeenCalledTimes(6);
   });
 });

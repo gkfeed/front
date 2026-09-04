@@ -7,6 +7,7 @@ import type {
   PreviewImage,
   TikTokCommentsPreview,
 } from './previewContracts.js';
+import type { YoutubeCommentsPreview } from '../../shared/youtubeContracts.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
 
 export type PreviewPort<TResult> = (
@@ -19,6 +20,7 @@ export interface PreviewPorts {
   fetchOpenGraph: PreviewPort<OpenGraphPreview>;
   fetchLiquipediaMatch: PreviewPort<LiquipediaMatchPreview>;
   fetchTikTokComments: PreviewPort<TikTokCommentsPreview>;
+  fetchYoutubeComments: PreviewPort<YoutubeCommentsPreview>;
   fetchRedditPreviewImage: PreviewPort<PreviewImage>;
 }
 

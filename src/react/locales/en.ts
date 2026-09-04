@@ -207,6 +207,16 @@ const en = {
     viewOnTikTok: 'View comments on TikTok',
     loadError: 'Could not load TikTok comments.',
   },
+  youtubeComments: {
+    comments: 'Comments',
+    title: 'YouTube comments',
+    show: 'Show YouTube comments',
+    hide: 'Hide YouTube comments',
+    loading: 'Loading comments…',
+    none: 'No comments are available for this video.',
+    loadError: 'Could not load YouTube comments.',
+    viewOnYoutube: 'View comments on YouTube',
+  },
   preview: {
     loading: 'Loading preview',
     sound: 'Tap for sound',

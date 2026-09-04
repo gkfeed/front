@@ -17,6 +17,7 @@ import { loadRemotePreview as loadRemotePreviewRequest } from '../services/remot
 import { getOpenGraphPreview } from '../services/openGraph';
 import { getArticle } from '../services/article';
 import { fetchTikTokComments } from '../services/tiktokComments';
+import { fetchYoutubeComments } from '../services/youtubeComments';
 import { getLiveTwitchItems } from '../services/twitch';
 import {
   deleteFeedItemsCache,
@@ -59,6 +60,7 @@ export function createFeatureComposition() {
     preview: createPreviewUseCases({
       getArticle,
       fetchTikTokComments,
+      fetchYoutubeComments,
       getOpenGraphPreview,
       loadRemotePreview: loadRemotePreviewRequest,
     }),

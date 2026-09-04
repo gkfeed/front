@@ -8,6 +8,7 @@ type TheaterPlayerShellProps = {
   shellRef: RefObject<HTMLDivElement | null>;
   title: string;
   toolbar?: ReactNode;
+  aside?: ReactNode;
 };
 
 export function TheaterPlayerShell({
@@ -17,6 +18,7 @@ export function TheaterPlayerShell({
   shellRef,
   title,
   toolbar,
+  aside,
 }: TheaterPlayerShellProps) {
   const { t } = useTranslation();
 
@@ -45,8 +47,11 @@ export function TheaterPlayerShell({
             {isTheaterOpen ? t('preview.exitTheaterShort') : t('preview.theater')}
           </button>
         </div>
-        <div className="reader-card__preview reader-card__preview--player">
-          {children}
+        <div className={aside ? 'reader-card__player-content reader-card__player-content--with-aside' : 'reader-card__player-content'}>
+          <div className="reader-card__preview reader-card__preview--player">
+            {children}
+          </div>
+          {aside}
         </div>
       </div>
     </div>
