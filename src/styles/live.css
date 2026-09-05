@@ -64,9 +64,16 @@
   overflow-wrap: anywhere;
 }
 
-.live-event--onefootball,
-.live-event--hltv {
+.live-event--onefootball {
   padding: clamp(14px, 3vw, 24px);
+}
+
+.live-event--hltv {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .live-event--hltv .reader-card__hltv-live-card {
