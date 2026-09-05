@@ -143,6 +143,8 @@ const ru = {
   },
   live: {
     streams: 'Трансляции',
+    opensInNewTab: 'откроется в новой вкладке',
+    football: 'Футбол',
     esports: 'Киберспорт',
     searching: 'Ищем прямые эфиры в истории ваших лент…',
     resultsUpdated: 'Список прямых эфиров обновлён.',

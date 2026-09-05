@@ -2,6 +2,7 @@ import type {
   OneFootballMatchTeamPreview,
   OneFootballProviderData,
 } from '../../shared/previewContracts.js';
+import { isRecord } from '../../shared/valueGuards.js';
 import { decodeHtml, htmlText, parseAttributes, resolveHttpUrl } from './html.js';
 
 type SportsTeam = { name?: unknown; logo?: unknown };
@@ -21,6 +22,7 @@ export function parseOneFootballProviderData(
   const awayTeam = parseTeam(event?.awayTeam, pageUrl);
   if (!homeTeam || !awayTeam) return null;
 
+  const summary = findMatchScore(html, homeTeam.name, awayTeam.name);
   const scoreMarkup = html.match(
     /<p\b[^>]*class=(?:"[^"]*MatchScore_scores__[^"]*"|'[^']*MatchScore_scores__[^']*')[^>]*>([\s\S]*?)<\/p>/i,
   )?.[1];
@@ -47,8 +49,9 @@ export function parseOneFootballProviderData(
     snapshot: {
       competition,
       teams: [homeTeam, awayTeam],
-      score,
-      status,
+      score: summary ? parseScore(summary.homeTeam, summary.awayTeam) : score,
+      status: summary && typeof summary.timePeriod === 'string' ? summary.timePeriod || null : status,
+      normalizedStatus: normalizePeriod(summary?.period),
       startsAt: typeof event?.startDate === 'string' ? event.startDate : null,
     },
   };
@@ -81,4 +84,52 @@ function parseTeam(value: unknown, pageUrl: URL): OneFootballMatchTeamPreview | 
     name: team.name.trim(),
     logo: typeof team.logo === 'string' ? resolveHttpUrl(team.logo, pageUrl) : null,
   };
+}
+
+// Numeric enum observed in OneFootball's browser bundle. See fixtures/onefootball/README.md.
+function normalizePeriod(period: unknown): 'scheduled' | 'live' | 'over' | 'postponed' | null {
+  switch (period) {
+    case 1: return 'scheduled';
+    case 3: return 'postponed';
+    case 4: case 5: case 7: case 8: case 9: case 10: return 'live';
+    case 11: case 12: case 13: return 'over';
+    default: return null;
+  }
+}
+
+function parseScore(home: unknown, away: unknown): [string, string] | null {
+  if (!isRecord(home) || !isRecord(away)) return null;
+  return typeof home.score === 'string' && /^\d+$/.test(home.score)
+    && typeof away.score === 'string' && /^\d+$/.test(away.score)
+    ? [home.score, away.score] : null;
+}
+
+function findMatchScore(html: string, homeName: string, awayName: string): Record<string, unknown> | null {
+  for (const script of html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) ?? []) {
+    const opening = script.match(/^<script\b[^>]*>/i)?.[0];
+    if (!opening || parseAttributes(opening).id !== '__NEXT_DATA__') continue;
+    try {
+      const data: unknown = JSON.parse(script.slice(opening.length, -'</script>'.length));
+      if (!isRecord(data) || !isRecord(data.props) || !isRecord(data.props.pageProps)) return null;
+      const containers = data.props.pageProps.containers;
+      if (!Array.isArray(containers)) return null;
+      const summaries: Record<string, unknown>[] = [];
+      for (const container of containers) {
+        if (!isRecord(container) || !isRecord(container.type) || !isRecord(container.type.fullWidth)) continue;
+        const component = container.type.fullWidth.component;
+        if (!isRecord(component) || !isRecord(component.contentType)) continue;
+        const content = component.contentType;
+        if (content.$case !== 'matchScore' || !isRecord(content.matchScore)) continue;
+        summaries.push(content.matchScore);
+      }
+      // Never pick a live recommendation or resolve ambiguous match summaries.
+      if (summaries.length !== 1) return null;
+      const summary = summaries[0]!;
+      return isRecord(summary.homeTeam) && summary.homeTeam.name === homeName
+        && isRecord(summary.awayTeam) && summary.awayTeam.name === awayName ? summary : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }

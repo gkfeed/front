@@ -272,6 +272,17 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     });
   }, []);
 
+  // Expire snapshots at their deadline even between refresh ticks or during a slow request.
+  useEffect(() => {
+    const deadlines = Object.values(events)
+      .filter((event) => !event.ended)
+      .map((event) => event.checkedAt + SNAPSHOT_MAX_AGE_MS)
+      .filter((deadline) => deadline > clock);
+    if (deadlines.length === 0) return;
+    const timer = window.setTimeout(() => setClock(Date.now()), Math.max(0, Math.min(...deadlines) - Date.now()));
+    return () => window.clearTimeout(timer);
+  }, [clock, events]);
+
   const sections = useMemo(() => {
     const categories = new Map<string, {
       category: LiveProviderRuntime['category'];
@@ -283,7 +294,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
       section.providerIds.push(provider.id);
       section.events.push(...Object.values(events).filter((event) => (
         event.candidate.providerId === provider.id
-        && (event.ended || clock - event.checkedAt <= SNAPSHOT_MAX_AGE_MS)
+        && (event.ended || clock - event.checkedAt < SNAPSHOT_MAX_AGE_MS)
       )));
       categories.set(provider.category.id, section);
     }
@@ -291,7 +302,8 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
       .map((section) => ({
         ...section,
         events: section.events.sort((a, b) => a.candidate.feedOrder - b.candidate.feedOrder),
-        state: getSectionState(section.providerIds, providerStates),
+        state: section.events.length > 0 && getSectionState(section.providerIds, providerStates) === 'error'
+          ? 'warning' as const : getSectionState(section.providerIds, providerStates),
       }))
       .sort((a, b) => a.category.order - b.category.order);
   }, [clock, events, providerStates, providers]);

@@ -6,13 +6,17 @@ import type {
 export function OneFootballMatch({
   href,
   snapshot,
+  externalLinkHint,
 }: {
   href: string;
   snapshot: OneFootballMatchSnapshot;
+  externalLinkHint?: string;
 }) {
   const [homeTeam, awayTeam] = snapshot.teams;
   const score = snapshot.score;
-  if (!score) return null;
+  const label = score
+    ? `${homeTeam.name} ${score[0]}–${score[1]} ${awayTeam.name}`
+    : `${homeTeam.name} / ${awayTeam.name}`;
 
   return (
     <a
@@ -20,11 +24,11 @@ export function OneFootballMatch({
       href={href}
       target="_blank"
       rel="noreferrer"
-      aria-label={`${homeTeam.name} ${score[0]}–${score[1]} ${awayTeam.name}`}
+      aria-label={externalLinkHint ? `${label}, ${externalLinkHint}` : label}
     >
       <OneFootballTeam team={homeTeam} side="home" />
       <span className="reader-card__onefootball-result">
-        <strong>{score[0]} : {score[1]}</strong>
+        <strong>{score ? `${score[0]} : ${score[1]}` : '–'}</strong>
       </span>
       <OneFootballTeam team={awayTeam} side="away" />
     </a>

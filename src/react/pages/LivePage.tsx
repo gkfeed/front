@@ -17,7 +17,8 @@ export function LivePage() {
     [model.adapters],
   );
   const visibleSections = model.sections.filter((section) => (
-    section.events.length > 0 || section.state !== 'healthy'
+    section.events.length > 0 || (section.state !== 'healthy'
+      && !(section.state === 'loading' && section.category.hideWhileLoading))
   ));
   const showSearch = !model.scanComplete && !model.hasFreshEvents;
   const showEmpty = model.scanComplete

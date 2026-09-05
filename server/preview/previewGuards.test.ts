@@ -62,6 +62,7 @@ describe('isOpenGraphPreview', () => {
           teams: [{ name: 'Barcelona', logo: null }, { name: 'Rayo Vallecano', logo: null }],
           score: ['5', '2'],
           status: 'Full time',
+          normalizedStatus: null,
           startsAt: '2026-08-31T19:30:00Z',
         },
       },

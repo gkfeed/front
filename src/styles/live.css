@@ -64,6 +64,7 @@
   overflow-wrap: anywhere;
 }
 
+.live-event--onefootball,
 .live-event--hltv {
   padding: clamp(14px, 3vw, 24px);
 }

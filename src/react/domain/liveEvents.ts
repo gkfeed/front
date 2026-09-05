@@ -1,4 +1,4 @@
-import type { HltvMatchSnapshot } from '../../../shared/previewContracts';
+import type { HltvMatchSnapshot, OneFootballMatchSnapshot } from '../../../shared/previewContracts';
 import type { FeedItem } from '../types';
 
 export type LiveCandidate = {
@@ -13,7 +13,8 @@ export type LiveCandidate = {
 
 export type LiveEventData =
   | { kind: 'twitch'; channel: string; title: string }
-  | { kind: 'hltv'; snapshot: HltvMatchSnapshot };
+  | { kind: 'hltv'; snapshot: HltvMatchSnapshot }
+  | { kind: 'onefootball'; snapshot: OneFootballMatchSnapshot };
 
 export type LiveEvent = {
   candidate: LiveCandidate;
@@ -27,6 +28,7 @@ export type LiveCategory = {
   titleKey: string;
   order: number;
   layout: 'grid' | 'list';
+  hideWhileLoading?: boolean;
 };
 
 export type LiveCheckUpdate = {

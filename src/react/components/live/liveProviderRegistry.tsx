@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import type { TFunction } from 'i18next';
 
-import { isHltvMatchUrl } from '../../../../shared/urlRules';
+import { isHltvMatchUrl, isOneFootballMatchUrl } from '../../../../shared/urlRules';
+import { getOneFootballSnapshot } from '../../../../shared/providerData/oneFootball';
+import { OneFootballMatch } from '../previews/OneFootballMatch';
 import { HltvMatchup } from '../previews/HltvMatch';
 import { TwitchPreview } from '../previews/TwitchPreview';
 import { TwitchTitle } from '../TwitchTitle';
@@ -143,7 +145,48 @@ const hltvAdapter: LiveProviderAdapter = {
   },
 };
 
-export const liveProviderRegistry: readonly LiveProviderAdapter[] = [twitchAdapter, hltvAdapter];
+const oneFootballAdapter: LiveProviderAdapter = {
+  id: 'onefootball',
+  category: { id: 'football', titleKey: 'live.football', order: 30, layout: 'list', hideWhileLoading: true },
+  strategy: 'round-robin',
+  // Matches the BFF result-cache TTL. Dormant candidates are swept within five cycles.
+  refreshIntervalMs: 60_000,
+  dormantSweepCycles: 5,
+  preserveEndedPlayback: false,
+  recognize(item, feedOrder) {
+    const url = parseUrl(item.link);
+    if (!url || !isOneFootballMatchUrl(url)) return null;
+    const eventId = url.pathname.split('/')[3]!;
+    return candidateFor('onefootball', eventId, `onefootball:${eventId}`, item, feedOrder);
+  },
+  async check(candidates, signal) {
+    const settled = await settleInBatches(candidates, 4, async (candidate): Promise<LiveCheckUpdate> => {
+      const preview = await getOpenGraphPreview(candidate.item.link, signal);
+      const snapshot = getOneFootballSnapshot(preview.providerData);
+      return snapshot?.normalizedStatus === 'live'
+        ? { key: candidate.key, status: 'live', data: { kind: 'onefootball', snapshot } }
+        : { key: candidate.key, status: 'offline' };
+    });
+    return {
+      updates: settled.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []),
+      failures: settled.filter((result) => result.status === 'rejected').length,
+    };
+  },
+  render({ event, t }) {
+    if (event.data.kind !== 'onefootball') return null;
+    return (
+      <article className="live-event live-event--onefootball">
+        <OneFootballMatch
+          href={event.candidate.item.link}
+          snapshot={event.data.snapshot}
+          externalLinkHint={t('live.opensInNewTab')}
+        />
+      </article>
+    );
+  },
+};
+
+export const liveProviderRegistry: readonly LiveProviderAdapter[] = [twitchAdapter, hltvAdapter, oneFootballAdapter];
 
 function candidateFor(
   providerId: string,

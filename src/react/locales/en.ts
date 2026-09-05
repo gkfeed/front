@@ -137,6 +137,8 @@ const en = {
   },
   live: {
     streams: 'Streams',
+    opensInNewTab: 'opens in a new tab',
+    football: 'Football',
     esports: 'Esports',
     searching: 'Searching your feed history for live events…',
     resultsUpdated: 'Live events updated.',

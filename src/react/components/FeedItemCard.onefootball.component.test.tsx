@@ -26,6 +26,7 @@ describe('FeedItemCard OneFootball previews', () => {
           ],
           score: ['5', '2'],
           status: 'Full time',
+          normalizedStatus: null,
           startsAt: '2026-08-31T19:30:00Z',
         },
       },

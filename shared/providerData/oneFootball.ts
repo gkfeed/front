@@ -11,6 +11,7 @@ export interface OneFootballMatchSnapshot {
   teams: [OneFootballMatchTeamPreview, OneFootballMatchTeamPreview];
   score: [string, string] | null;
   status: string | null;
+  normalizedStatus: 'scheduled' | 'live' | 'over' | 'postponed' | null;
   startsAt: string | null;
 }
 
@@ -41,6 +42,8 @@ function isOneFootballMatchSnapshot(value: unknown): value is OneFootballMatchSn
     && isMatchTeams(value.teams)
     && isNullable(value.score, isStringPair)
     && isNullableString(value.status)
+    && (value.normalizedStatus === null
+      || ['scheduled', 'live', 'over', 'postponed'].includes(value.normalizedStatus as string))
     && isNullableString(value.startsAt);
 }
 

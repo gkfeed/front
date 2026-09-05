@@ -39,11 +39,15 @@ describe('provider-data modules', () => {
         ],
         score: ['5', '2'],
         status: 'Full time',
+        normalizedStatus: 'over',
         startsAt: '2026-08-31T19:30:00Z',
       },
     };
 
     expect(oneFootballProviderDataModule.is(value)).toBe(true);
+    for (const normalizedStatus of [undefined, 'Full time', 'LIVE', 4]) {
+      expect(oneFootballProviderDataModule.is({ ...value, snapshot: { ...value.snapshot, normalizedStatus } })).toBe(false);
+    }
     expect(isOpenGraphProviderData(value)).toBe(true);
     expect(getProviderDataImageUrls(value)).toEqual(['https://cdn.example/rayo.png']);
   });
