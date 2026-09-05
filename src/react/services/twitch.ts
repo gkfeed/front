@@ -3,6 +3,7 @@ import { getFeedItems } from './feeds';
 import { findLiveTwitchItems } from './twitchLiveProbe';
 
 export { isTwitchStreamLive } from './twitchLiveProbe';
+export { probeTwitchStreamLive } from './twitchLiveProbe';
 
 export async function getLiveTwitchItems(
   credentials: Credentials | null,

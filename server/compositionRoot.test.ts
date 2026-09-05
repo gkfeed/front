@@ -27,6 +27,7 @@ describe('server composition root', () => {
         body: new Uint8Array([1]),
         contentType: 'image/png',
       }),
+      fetchHltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: ['1'] }),
     };
     const limit = vi.fn((load: () => Promise<unknown>) => load()) as unknown as PreviewConcurrencyLimiter;
     const useCases = createPreviewComposition({ ports, limit });

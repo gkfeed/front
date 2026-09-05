@@ -10,9 +10,17 @@ type TwitchPreviewProps = {
   channel: string;
   onPreviewError: () => void;
   preview: LocalizedFeedItemPreview | null;
+  isLive?: boolean;
+  onPlayerOpenChange?: (isOpen: boolean) => void;
 };
 
-export function TwitchPreview({ channel, onPreviewError, preview }: TwitchPreviewProps) {
+export function TwitchPreview({
+  channel,
+  onPreviewError,
+  preview,
+  isLive = true,
+  onPlayerOpenChange,
+}: TwitchPreviewProps) {
   const { t } = useTranslation();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
@@ -23,6 +31,10 @@ export function TwitchPreview({ channel, onPreviewError, preview }: TwitchPrevie
     setIsPlayerOpen(false);
     setIsTheaterOpen(false);
   }, [channel]);
+
+  useEffect(() => {
+    onPlayerOpenChange?.(isPlayerOpen && isTheaterOpen);
+  }, [isPlayerOpen, isTheaterOpen, onPlayerOpenChange]);
 
   useTheaterDialog({
     initialFocusSelector: 'button, iframe',
@@ -36,6 +48,7 @@ export function TwitchPreview({ channel, onPreviewError, preview }: TwitchPrevie
     return (
       <TwitchPlayer
         channel={channel}
+        isLive={isLive}
         isTheaterOpen={isTheaterOpen}
         shellRef={playerRef}
         onToggleTheater={() => setIsTheaterOpen((isOpen) => !isOpen)}
@@ -73,12 +86,13 @@ export function TwitchPreview({ channel, onPreviewError, preview }: TwitchPrevie
 
 type TwitchPlayerProps = {
   channel: string;
+  isLive: boolean;
   isTheaterOpen: boolean;
   onToggleTheater: () => void;
   shellRef: RefObject<HTMLDivElement | null>;
 };
 
-function TwitchPlayer({ channel, isTheaterOpen, onToggleTheater, shellRef }: TwitchPlayerProps) {
+function TwitchPlayer({ channel, isLive, isTheaterOpen, onToggleTheater, shellRef }: TwitchPlayerProps) {
   const { t } = useTranslation();
   const parameters = new URLSearchParams({
     channel,
@@ -94,13 +108,17 @@ function TwitchPlayer({ channel, isTheaterOpen, onToggleTheater, shellRef }: Twi
       onToggleTheater={onToggleTheater}
       shellRef={shellRef}
     >
-      <iframe
-        src={`https://player.twitch.tv/?${parameters}`}
-        title={playerTitle}
-        allow="autoplay; fullscreen"
-        allowFullScreen
-        referrerPolicy="strict-origin-when-cross-origin"
-      />
+      {isLive ? (
+        <iframe
+          src={`https://player.twitch.tv/?${parameters}`}
+          title={playerTitle}
+          allow="autoplay; fullscreen"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      ) : (
+        <div className="reader-card__player-ended" role="status">{t('live.streamEnded')}</div>
+      )}
     </TheaterPlayerShell>
   );
 }

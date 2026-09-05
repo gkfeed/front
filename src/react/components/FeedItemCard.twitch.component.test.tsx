@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
+import { TwitchPreview } from './previews/TwitchPreview';
 
 describe('FeedItemCard Twitch player', () => {
   it('shows the channel separately from the stream title and highlights mentions and commands', () => {
@@ -70,5 +71,20 @@ describe('FeedItemCard Twitch player', () => {
     expect(screen.getByTitle('some_channel Twitch player')).toBe(player);
     expect(screen.getByRole('button', { name: 'Enter theater mode' })).toBeTruthy();
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(false);
+  });
+
+  it('keeps an open theater visible when the stream ends', () => {
+    const view = render(
+      <TwitchPreview channel="some_channel" preview={null} onPreviewError={() => {}} isLive />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Play some_channel on Twitch' }));
+
+    view.rerender(
+      <TwitchPreview channel="some_channel" preview={null} onPreviewError={() => {}} isLive={false} />,
+    );
+
+    expect(screen.getByRole('dialog', { name: 'some_channel Twitch player' })).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe('Stream ended');
+    expect(screen.queryByTitle('some_channel Twitch player')).toBeNull();
   });
 });

@@ -35,6 +35,10 @@ export interface OpenGraphPreview extends OpenGraphMetadata {
   providerData: OpenGraphProviderData;
 }
 
+export interface HltvLiveIndex {
+  eventIds: string[];
+}
+
 export type LiquipediaMatchResult = 'win' | 'loss' | 'default';
 
 export interface LiquipediaMatchTeam {

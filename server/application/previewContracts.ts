@@ -1,4 +1,5 @@
 import type {
+  HltvLiveIndex,
   LiquipediaMatchPreview,
   OpenGraphPreview,
 } from '../../shared/previewContracts.js';
@@ -30,4 +31,7 @@ export interface PreviewUseCases {
   tiktokComments: PreviewUseCase<TikTokCommentsPreview>;
   youtubeComments: PreviewUseCase<YoutubeCommentsPreview>;
   redditPreviewImage: PreviewUseCase<PreviewImage>;
+  hltvLiveIndex: (
+    context: RequestExecutionContext,
+  ) => Promise<HltvLiveIndex>;
 }

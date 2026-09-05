@@ -34,6 +34,13 @@ export async function routeBffRequest(
   resultCache: BffResultCache = bffResultCache,
 ): Promise<boolean> {
   const requestContext = context ?? createDetachedRequestExecutionContext();
+  if (requestUrl.pathname === '/bff/hltv-live') {
+    const result = await requestGate.run(clientId, requestContext, () => (
+      resultCache.load(requestUrl.pathname, () => useCases.hltvLiveIndex(requestContext))
+    ));
+    sendJson(response, 200, result);
+    return true;
+  }
   const useCaseName = JSON_PREVIEW_ROUTES[requestUrl.pathname];
   if (useCaseName) {
     await handleJsonPreview(

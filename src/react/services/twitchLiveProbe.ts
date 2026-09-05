@@ -26,6 +26,14 @@ export async function findLiveTwitchItems(
 }
 
 export async function isTwitchStreamLive(item: FeedItem, signal?: AbortSignal): Promise<boolean> {
+  try {
+    return await probeTwitchStreamLive(item, signal);
+  } catch {
+    return false;
+  }
+}
+
+export async function probeTwitchStreamLive(item: FeedItem, signal?: AbortSignal): Promise<boolean> {
   const preview = getFeedItemPreview(item);
   if (!preview) return false;
 
@@ -37,12 +45,10 @@ export async function isTwitchStreamLive(item: FeedItem, signal?: AbortSignal): 
       redirect: 'follow',
       signal: requestSignal,
     });
-    if (!response.ok) return false;
+    if (!response.ok) throw new Error(`Twitch preview returned ${response.status}`);
 
     const finalUrl = new URL(response.url);
     return !OFFLINE_PREVIEW_PATH.test(finalUrl.pathname);
-  } catch {
-    return false;
   } finally {
     timeout.dispose();
   }

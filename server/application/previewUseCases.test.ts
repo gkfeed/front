@@ -27,6 +27,7 @@ describe('preview use cases', () => {
         body: new Uint8Array([1, 2, 3]),
         contentType: 'image/jpeg',
       }),
+      fetchHltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: ['1'] }),
     };
     const useCases = createPreviewUseCases(ports);
 
@@ -42,6 +43,7 @@ describe('preview use cases', () => {
       .resolves.toEqual({ type: 'youtube' });
     await expect(useCases.redditPreviewImage('https://reddit.com/image', context))
       .resolves.toEqual({ body: new Uint8Array([1, 2, 3]), contentType: 'image/jpeg' });
+    await expect(useCases.hltvLiveIndex(context)).resolves.toEqual({ eventIds: ['1'] });
 
     expect(ports.fetchArticle).toHaveBeenCalledWith('https://example.com/article', context);
     expect(ports.fetchOpenGraph).toHaveBeenCalledWith('https://example.com', context);
@@ -49,6 +51,7 @@ describe('preview use cases', () => {
     expect(ports.fetchTikTokComments).toHaveBeenCalledWith('https://tiktok.com/video', context);
     expect(ports.fetchYoutubeComments).toHaveBeenCalledWith('https://youtube.com/watch?v=video', context);
     expect(ports.fetchRedditPreviewImage).toHaveBeenCalledWith('https://reddit.com/image', context);
+    expect(ports.fetchHltvLiveIndex).toHaveBeenCalledWith(context);
   });
 
   it('applies the concurrency policy around every provider port', async () => {
@@ -59,6 +62,7 @@ describe('preview use cases', () => {
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
       fetchYoutubeComments: vi.fn().mockResolvedValue({}),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
+      fetchHltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: [] }),
     };
     const limit = vi.fn((load: () => Promise<unknown>) => load()) as unknown as PreviewConcurrencyLimiter;
     const useCases = createPreviewUseCases(ports, limit);
@@ -69,7 +73,8 @@ describe('preview use cases', () => {
     await useCases.tiktokComments('https://tiktok.com/video', context);
     await useCases.youtubeComments('https://youtube.com/watch?v=video', context);
     await useCases.redditPreviewImage('https://reddit.com/image', context);
+    await useCases.hltvLiveIndex(context);
 
-    expect(limit).toHaveBeenCalledTimes(6);
+    expect(limit).toHaveBeenCalledTimes(7);
   });
 });

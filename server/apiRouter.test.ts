@@ -39,6 +39,7 @@ function createUseCases(): PreviewUseCases {
       body: new Uint8Array([1, 2]),
       contentType: 'image/jpeg',
     }),
+    hltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: ['2396948'] }),
   };
 }
 
@@ -100,6 +101,23 @@ describe('BFF HTTP router', () => {
       kind: 'missing_url',
       status: 400,
     });
+  });
+
+  it('serves the shared HLTV live index without a URL query', async () => {
+    const response = createResponse();
+    const useCases = createUseCases();
+
+    await expect(handleBffRequest(
+      new URL('http://localhost/bff/hltv-live'),
+      response,
+      undefined,
+      useCases,
+    )).resolves.toBe(true);
+
+    expect(useCases.hltvLiveIndex).toHaveBeenCalledWith(
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(response.end).toHaveBeenCalledWith(JSON.stringify({ eventIds: ['2396948'] }));
   });
 
   it('serves Reddit preview images through the HTTP adapter', async () => {

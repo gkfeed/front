@@ -5,6 +5,7 @@ import { fetchOpenGraph } from '../preview/openGraph.js';
 import { fetchRedditPreviewImage } from '../preview/reddit.js';
 import { fetchArticle } from '../preview/article.js';
 import type { PreviewPorts } from '../application/previewPorts.js';
+import { fetchHltvLiveIndex } from '../preview/hltvLiveIndex.js';
 
 export const previewProviderPorts: PreviewPorts = {
   fetchArticle,
@@ -13,4 +14,5 @@ export const previewProviderPorts: PreviewPorts = {
   fetchTikTokComments,
   fetchYoutubeComments,
   fetchRedditPreviewImage,
+  fetchHltvLiveIndex,
 };

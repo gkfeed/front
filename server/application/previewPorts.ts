@@ -1,4 +1,5 @@
 import type {
+  HltvLiveIndex,
   LiquipediaMatchPreview,
   OpenGraphPreview,
 } from '../../shared/previewContracts.js';
@@ -22,6 +23,9 @@ export interface PreviewPorts {
   fetchTikTokComments: PreviewPort<TikTokCommentsPreview>;
   fetchYoutubeComments: PreviewPort<YoutubeCommentsPreview>;
   fetchRedditPreviewImage: PreviewPort<PreviewImage>;
+  fetchHltvLiveIndex: (
+    context: RequestExecutionContext,
+  ) => Promise<HltvLiveIndex>;
 }
 
 export type PreviewConcurrencyLimiter = <T>(load: () => Promise<T>) => Promise<T>;
