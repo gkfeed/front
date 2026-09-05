@@ -36,3 +36,46 @@ export function isTikTokComment(value: unknown): value is TikTokComment {
 function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
 }
+
+export interface TikTokPlaybackAuthor {
+  name: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+}
+
+export interface TikTokPlaybackPreview {
+  videoUrl: string;
+  author?: TikTokPlaybackAuthor;
+}
+
+export function isTikTokAvatarUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password && !url.port;
+  } catch {
+    return false;
+  }
+}
+
+export function isTikTokMediaUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password && !url.port
+      && ['tiktokcdn.com', 'tiktokcdn-us.com', 'tiktokcdn-eu.com', 'tikwm.com']
+        .some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+}
+
+export function isTikTokPlaybackPreview(value: unknown): value is TikTokPlaybackPreview {
+  return isRecord(value) && isTikTokMediaUrl(value.videoUrl)
+    && (value.author === undefined || (
+      isRecord(value.author)
+      && isNullableString(value.author.name)
+      && isNullableString(value.author.username)
+      && (value.author.avatarUrl === null || isTikTokAvatarUrl(value.author.avatarUrl))
+    ));
+}

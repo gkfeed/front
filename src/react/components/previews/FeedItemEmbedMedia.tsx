@@ -1,3 +1,5 @@
+import { useTikTokPreferences } from '../../state/useTikTokPreferences';
+import { TikTokPreview } from './TikTokPreview';
 import type { ReactNode } from 'react';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
@@ -10,19 +12,24 @@ import { VideoEmbed } from './VideoEmbed';
 type EmbedPreview = LocalizedFeedItemPreview & { type: 'embed' };
 
 export function FeedItemEmbedMedia({
+  href,
   preview,
   isShortVideo,
   isTikTok,
   overlay,
 }: {
+  href: string;
   preview: EmbedPreview;
   isShortVideo: boolean;
   isTikTok: boolean;
   overlay?: ReactNode;
 }) {
+  const { playbackMode } = useTikTokPreferences();
   const soundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
   const embed = isTikTok ? (
-    <TikTokEmbed src={preview.src} title={preview.alt} soundGesture={soundGesture} />
+    playbackMode === 'preview'
+      ? <TikTokPreview href={href} src={preview.src} title={preview.alt} soundGesture={soundGesture} />
+      : <TikTokEmbed src={preview.src} title={preview.alt} soundGesture={soundGesture} />
   ) : isShortVideo ? (
     <InstagramEmbed src={preview.src} title={preview.alt} />
   ) : (

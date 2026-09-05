@@ -46,6 +46,7 @@ export function FeedItemMedia({
   if (preview.type === 'embed') {
     return (
       <FeedItemEmbedMedia
+        href={href}
         preview={preview as LocalizedFeedItemPreview & { type: 'embed' }}
         isShortVideo={isShortVideo}
         isTikTok={isTikTok}

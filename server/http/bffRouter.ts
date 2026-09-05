@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
-import { isTikTokCommentsPreview } from '../../shared/tiktokContracts.js';
+import { isTikTokPlaybackPreview, isTikTokCommentsPreview } from '../../shared/tiktokContracts.js';
 import { isYoutubeCommentsPreview } from '../../shared/youtubeContracts.js';
 import { isArticlePreview } from '../../shared/articleContracts.js';
 import { sendJson } from './httpResponse.js';
@@ -14,12 +14,13 @@ import { sendPreviewImage } from './previewResponse.js';
 import { bffRequestGate, type BffRequestGate } from './bffRequestGate.js';
 import { bffResultCache, type BffResultCache } from './bffResultCache.js';
 
-type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokComments' | 'youtubeComments'>;
+type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments'>;
 
 const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
   '/bff/article': 'article',
   '/bff/open-graph': 'openGraph',
   '/bff/liquipedia-match': 'liquipediaMatch',
+  '/bff/tiktok-playback': 'tiktokPlayback',
   '/bff/tiktok-comments': 'tiktokComments',
   '/bff/youtube-comments': 'youtubeComments',
 };
@@ -51,7 +52,9 @@ export async function routeBffRequest(
       clientId,
       requestGate,
       resultCache,
-      useCaseName === 'tiktokComments'
+      useCaseName === 'tiktokPlayback'
+        ? isTikTokPlaybackPreview
+        : useCaseName === 'tiktokComments'
         ? isTikTokCommentsPreview
         : useCaseName === 'youtubeComments'
           ? isYoutubeCommentsPreview
@@ -88,7 +91,9 @@ async function handleJsonPreview(
 ): Promise<void> {
   const input = getRequiredPreviewUrl(requestUrl);
   const result = await requestGate.run(clientId, context, () => (
-    resultCache.load(`${requestUrl.pathname}:${input}`, () => load(input, context))
+    requestUrl.pathname === '/bff/tiktok-playback'
+      ? load(input, context)
+      : resultCache.load(`${requestUrl.pathname}:${input}`, () => load(input, context))
   ));
   if (validate && !validate(result)) throw new Error('Invalid preview contract');
   sendJson(response, 200, result);

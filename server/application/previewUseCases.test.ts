@@ -21,6 +21,7 @@ describe('preview use cases', () => {
       }),
       fetchOpenGraph: vi.fn().mockResolvedValue({ type: 'open-graph' }),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({ type: 'liquipedia' }),
+      fetchTikTokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ type: 'tiktok' }),
       fetchYoutubeComments: vi.fn().mockResolvedValue({ type: 'youtube' }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({
@@ -59,6 +60,7 @@ describe('preview use cases', () => {
       fetchArticle: vi.fn().mockResolvedValue({}),
       fetchOpenGraph: vi.fn().mockResolvedValue({}),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({}),
+      fetchTikTokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
       fetchYoutubeComments: vi.fn().mockResolvedValue({}),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),

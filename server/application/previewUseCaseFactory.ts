@@ -13,6 +13,7 @@ export function createPreviewUseCases(
     article: withLimit(ports.fetchArticle, limit),
     openGraph: withLimit(ports.fetchOpenGraph, limit),
     liquipediaMatch: withLimit(ports.fetchLiquipediaMatch, limit),
+    tiktokPlayback: withLimit(ports.fetchTikTokPlayback, limit),
     tiktokComments: withLimit(ports.fetchTikTokComments, limit),
     youtubeComments: withLimit(ports.fetchYoutubeComments, limit),
     redditPreviewImage: withLimit(ports.fetchRedditPreviewImage, limit),

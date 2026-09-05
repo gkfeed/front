@@ -1,3 +1,4 @@
+import type { TikTokPlaybackPreview } from '../../shared/tiktokContracts.js';
 import type {
   HltvLiveIndex,
   LiquipediaMatchPreview,
@@ -28,6 +29,7 @@ export interface PreviewUseCases {
   article: PreviewUseCase<ArticlePreview>;
   openGraph: PreviewUseCase<OpenGraphPreview>;
   liquipediaMatch: PreviewUseCase<LiquipediaMatchPreview>;
+  tiktokPlayback: PreviewUseCase<TikTokPlaybackPreview>;
   tiktokComments: PreviewUseCase<TikTokCommentsPreview>;
   youtubeComments: PreviewUseCase<YoutubeCommentsPreview>;
   redditPreviewImage: PreviewUseCase<PreviewImage>;

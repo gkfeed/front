@@ -16,6 +16,7 @@ import {
 import { SettingsMenu } from './SettingsMenu';
 import {
   HIDE_TIKTOK_ITEMS_STORAGE_KEY,
+  TIKTOK_PLAYBACK_MODE_STORAGE_KEY,
   TikTokPreferencesProvider,
 } from '../state/TikTokPreferencesProvider';
 
@@ -29,6 +30,22 @@ afterEach(() => {
 });
 
 describe('SettingsMenu', () => {
+  it('persists TikTok player mode separately from item visibility', () => {
+    const storage = stubLocalStorage();
+    const view = render(<TikTokPreferencesProvider><SettingsMenu /></TikTokPreferencesProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Embed' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Preview' }));
+    expect(storage.get(TIKTOK_PLAYBACK_MODE_STORAGE_KEY)).toBe('preview');
+    expect(screen.getByRole('menuitemradio', { name: 'Show TikTok items' }).getAttribute('aria-checked')).toBe('true');
+    view.unmount();
+    render(<TikTokPreferencesProvider><SettingsMenu /></TikTokPreferencesProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Preview' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Embed' }));
+    expect(storage.get(TIKTOK_PLAYBACK_MODE_STORAGE_KEY)).toBe('embed');
+  });
+
   it('enables feed prioritization by default and persists disabling it', () => {
     const storage = stubLocalStorage();
     document.documentElement.dataset.theme = 'light';

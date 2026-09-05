@@ -28,6 +28,7 @@ function createUseCases(): PreviewUseCases {
     }),
     openGraph: vi.fn().mockResolvedValue({ title: 'Story' }),
     liquipediaMatch: vi.fn().mockResolvedValue({ status: 'scheduled' }),
+    tiktokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
     tiktokComments: vi.fn().mockResolvedValue({
       comments: [],
       description: null,

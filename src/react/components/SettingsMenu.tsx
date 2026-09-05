@@ -1,3 +1,4 @@
+import { TikTokPlaybackPicker } from './TikTokPlaybackPicker';
 import { useTranslation } from 'react-i18next';
 
 import '../../styles/settings-menu.css';
@@ -91,6 +92,7 @@ export function SettingsMenu({
           <FeedPriorityPicker />
           <NsfwPicker />
           <TikTokPicker />
+          <TikTokPlaybackPicker />
           <ThemeOptions
             theme={theme}
             onThemeChange={selectTheme}

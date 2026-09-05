@@ -24,7 +24,7 @@ export function renderReader(
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <NsfwPreferencesContext value={{ nsfwMode, setNsfwMode: vi.fn() }}>
-        <TikTokPreferencesContext value={{ hideTikTokItems, setHideTikTokItems: vi.fn() }}>
+        <TikTokPreferencesContext value={{ playbackMode: 'embed', setPlaybackMode: vi.fn(), hideTikTokItems, setHideTikTokItems: vi.fn() }}>
           <ReaderItemOrderPreferencesContext value={{ itemOrder, setItemOrder: vi.fn() }}>
             <ReaderPage />
           </ReaderItemOrderPreferencesContext>

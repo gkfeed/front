@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { isAppleMobileDevice } from '../../domain/device';
-import { useSoundGesture } from '../../hooks/useSoundGesture';
+import { type SoundGestureLifecycle, useSoundGesture } from '../../hooks/useSoundGesture';
 
 type VideoPreview = LocalizedFeedItemPreview & { type: 'video' };
 
@@ -13,21 +13,41 @@ export function FeedItemVideoMedia({
   isTikTok,
   onPreviewError,
   overlay,
+  soundGesture: sharedSoundGesture,
 }: {
   preview: VideoPreview;
   isShortVideo: boolean;
   isTikTok: boolean;
   onPreviewError: () => void;
   overlay?: ReactNode;
+  soundGesture?: SoundGestureLifecycle;
 }) {
   const { t } = useTranslation();
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+  const [duration, setDuration] = useState<number | null>(null);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const soundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
+  const localSoundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
+  const soundGesture = sharedSoundGesture ?? localSoundGesture;
 
   useEffect(() => {
     setAspectRatio(null);
+    setDuration(null);
+    setPlaybackRate(1);
+    if (videoRef.current) videoRef.current.playbackRate = 1;
   }, [preview.src]);
+
+  useEffect(() => {
+    if (!isTikTok || duration !== null) return;
+    const timeout = window.setTimeout(onPreviewError, 15_000);
+    return () => window.clearTimeout(timeout);
+  }, [isTikTok, duration, onPreviewError]);
+
+  const updateDuration = (video: HTMLVideoElement) => {
+    const nextDuration = video.duration;
+    setDuration(Number.isFinite(nextDuration) && nextDuration > 0 ? nextDuration : null);
+    if (isTikTok && !(Number.isFinite(nextDuration) && nextDuration > 60)) video.playbackRate = 1;
+  };
 
   return (
     <div
@@ -44,6 +64,7 @@ export function FeedItemVideoMedia({
       } as CSSProperties : undefined}
     >
       <video
+        key={preview.src}
         ref={videoRef}
         src={preview.src}
         poster={preview.poster}
@@ -55,11 +76,28 @@ export function FeedItemVideoMedia({
         playsInline
         preload="auto"
         onLoadedMetadata={(event) => {
+          updateDuration(event.currentTarget);
           const { videoHeight, videoWidth } = event.currentTarget;
           if (videoHeight > 0 && videoWidth > 0) setAspectRatio(videoWidth / videoHeight);
         }}
+        onDurationChange={(event) => updateDuration(event.currentTarget)}
+        onRateChange={(event) => setPlaybackRate(event.currentTarget.playbackRate)}
         onError={onPreviewError}
       />
+      {isTikTok && duration !== null && duration > 60 ? (
+        <button
+          type="button"
+          className="reader-card__speed-toggle"
+          aria-label={t('preview.doubleSpeed')}
+          aria-pressed={playbackRate === 2}
+          onClick={() => {
+            const video = videoRef.current;
+            if (video) video.playbackRate = video.playbackRate === 2 ? 1 : 2;
+          }}
+        >
+          2×
+        </button>
+      ) : null}
       {soundGesture.showPrompt ? (
         <button
           type="button"
@@ -68,7 +106,7 @@ export function FeedItemVideoMedia({
             soundGesture.enableSound();
             if (videoRef.current) {
               videoRef.current.muted = false;
-              void videoRef.current.play();
+              void videoRef.current.play().catch(() => undefined);
             }
           }}
         >

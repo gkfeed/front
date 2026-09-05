@@ -21,6 +21,7 @@ describe('server composition root', () => {
       }),
       fetchOpenGraph: vi.fn().mockResolvedValue({ title: 'Story' }),
       fetchLiquipediaMatch: vi.fn().mockResolvedValue({ status: 'scheduled' }),
+      fetchTikTokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ comments: [] }),
       fetchYoutubeComments: vi.fn().mockResolvedValue({ comments: [] }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({
