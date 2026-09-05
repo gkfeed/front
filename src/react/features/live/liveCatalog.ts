@@ -1,5 +1,5 @@
 import type { FeedItem } from '../../types';
-import type { LiveCandidate, LiveProviderRuntime } from '../../domain/liveEvents';
+import type { LiveCandidate, LiveEvent, LiveProviderRuntime } from '../../domain/liveEvents';
 
 export function catalogCandidates(
   items: readonly FeedItem[],
@@ -29,4 +29,26 @@ export function mergeCandidates(
     if (!byKey.has(candidate.deduplicationKey)) byKey.set(candidate.deduplicationKey, candidate);
   }
   return [...byKey.values()].sort((a, b) => a.feedOrder - b.feedOrder);
+}
+
+export function deduplicateLiveEvents(events: readonly LiveEvent[]): LiveEvent[] {
+  const seenBroadcasts = new Set<string>();
+
+  return events.filter((event) => {
+    if (event.data.kind !== 'twitch') return true;
+    const broadcast = normalizeTwitchBroadcastTitle(event.data.title);
+    if (!broadcast) return true;
+    if (seenBroadcasts.has(broadcast)) return false;
+    seenBroadcasts.add(broadcast);
+    return true;
+  });
+}
+
+function normalizeTwitchBroadcastTitle(title: string): string {
+  return title
+    .replace(/\s+[@!][\p{L}\p{N}_-]+(?:[\s|,;:\p{Extended_Pictographic}\uFE0F]*[@!][\p{L}\p{N}_-]+)*\s*$/gu, '')
+    .normalize('NFKC')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLocaleLowerCase();
 }

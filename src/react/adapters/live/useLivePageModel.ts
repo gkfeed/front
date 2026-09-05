@@ -6,7 +6,7 @@ import { getRequestErrorMessage } from '../../presentation/requestErrorMessage';
 import { getFeedItems } from '../../services/feeds';
 import { readLiveCandidateCatalog, writeLiveCandidateCatalog } from '../../services/liveCandidateCatalog';
 import { useAuth } from '../../state/useAuth';
-import { catalogCandidates, mergeCandidates } from '../../features/live/liveCatalog';
+import { catalogCandidates, deduplicateLiveEvents, mergeCandidates } from '../../features/live/liveCatalog';
 import type { LiveCandidate, LiveEvent, LiveProviderRuntime } from '../../domain/liveEvents';
 
 const REFRESH_INTERVAL_MS = 60_000;
@@ -301,7 +301,9 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     return [...categories.values()]
       .map((section) => ({
         ...section,
-        events: section.events.sort((a, b) => a.candidate.feedOrder - b.candidate.feedOrder),
+        events: deduplicateLiveEvents(
+          section.events.sort((a, b) => a.candidate.feedOrder - b.candidate.feedOrder),
+        ),
         state: section.events.length > 0 && getSectionState(section.providerIds, providerStates) === 'error'
           ? 'warning' as const : getSectionState(section.providerIds, providerStates),
       }))
