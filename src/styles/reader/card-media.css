@@ -99,7 +99,7 @@
   line-height: 1.15;
 }
 
-.reader-card__speed-toggle {
+.reader-card__preview--tiktok > .reader-card__speed-toggle {
   position: absolute;
   z-index: 6;
   top: 12px;
@@ -114,12 +114,12 @@
   cursor: pointer;
 }
 
-.reader-card__speed-toggle[aria-pressed="true"] {
+.reader-card__preview--tiktok > .reader-card__speed-toggle[aria-pressed="true"] {
   background: #fff;
   color: #111;
 }
 
-.reader-card__speed-toggle:focus-visible {
+.reader-card__preview--tiktok > .reader-card__speed-toggle:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
@@ -183,7 +183,7 @@
 }
 
 @media (max-width: 640px) {
-  .reader-card__speed-toggle {
+  .reader-card__preview--tiktok > .reader-card__speed-toggle {
     top: 76px;
   }
 }

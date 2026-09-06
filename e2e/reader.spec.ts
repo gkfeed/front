@@ -127,6 +127,18 @@ test.describe('Reader fullscreen with theater mode', () => {
     await expect(exitFullscreen).toBeHidden();
     await expectYoutubePlayerToBeSixteenByNine(page);
 
+    const speedToggle = page.getByRole('button', { name: 'Playback speed: 2x' });
+    const commentsToggle = page.getByRole('button', { name: 'Show YouTube comments' });
+    const [speedBox, commentsBox] = await Promise.all([
+      speedToggle.boundingBox(),
+      commentsToggle.boundingBox(),
+    ]);
+    expect(speedBox).not.toBeNull();
+    expect(commentsBox).not.toBeNull();
+    expect(await speedToggle.evaluate((element) => getComputedStyle(element).position)).toBe('static');
+    expect(commentsBox!.x - (speedBox!.x + speedBox!.width)).toBeGreaterThanOrEqual(0);
+    expect(commentsBox!.x - (speedBox!.x + speedBox!.width)).toBeLessThanOrEqual(8);
+
     await page.getByRole('button', { name: 'Exit theater mode' }).click();
     await expect(exitFullscreen).toBeVisible();
     await expectYoutubePlayerToBeSixteenByNine(page);
