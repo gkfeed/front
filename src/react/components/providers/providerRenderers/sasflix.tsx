@@ -4,7 +4,7 @@ import {
 } from './common';
 
 export function SasflixVideoPreview({ facts, localizedPreview }: ProviderRendererProps<'sasflix'>) {
-  return <SasflixPreview href={facts.item.link} title={facts.item.title} videoSrc={facts.openGraphPreview?.video ?? null} previewStatus={facts.previewStatus} preview={localizedPreview} onPreviewError={facts.onPreviewError} />;
+  return <SasflixPreview href={facts.item.link} publicationId={facts.publicationId} title={facts.item.title} videoSrc={facts.openGraphPreview?.video ?? null} previewStatus={facts.previewStatus} preview={localizedPreview} onPreviewError={facts.onPreviewError} />;
 }
 
 export function SasflixCopy({ facts }: ProviderRendererProps<'sasflix'>) {
