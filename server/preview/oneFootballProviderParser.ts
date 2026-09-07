@@ -48,7 +48,10 @@ export function parseOneFootballProviderData(
     provider: 'onefootball',
     snapshot: {
       competition,
-      teams: [homeTeam, awayTeam],
+      teams: [
+        { ...homeTeam, goals: parseGoals(summary?.matchEvents, 0) },
+        { ...awayTeam, goals: parseGoals(summary?.matchEvents, 1) },
+      ],
       score: summary ? parseScore(summary.homeTeam, summary.awayTeam) : score,
       status: summary && typeof summary.timePeriod === 'string' ? summary.timePeriod || null : status,
       normalizedStatus: normalizePeriod(summary?.period),
@@ -125,11 +128,38 @@ function findMatchScore(html: string, homeName: string, awayName: string): Recor
       // Never pick a live recommendation or resolve ambiguous match summaries.
       if (summaries.length !== 1) return null;
       const summary = summaries[0]!;
-      return isRecord(summary.homeTeam) && summary.homeTeam.name === homeName
-        && isRecord(summary.awayTeam) && summary.awayTeam.name === awayName ? summary : null;
+      if (!isRecord(summary.homeTeam) || summary.homeTeam.name !== homeName
+        || !isRecord(summary.awayTeam) || summary.awayTeam.name !== awayName) return null;
+      const eventBlocks = containers.flatMap((container) => {
+        if (!isRecord(container) || !isRecord(container.type) || !isRecord(container.type.fullWidth)) return [];
+        const component = container.type.fullWidth.component;
+        if (!isRecord(component) || !isRecord(component.contentType)) return [];
+        const content = component.contentType;
+        return content.$case === 'matchEvents' && isRecord(content.matchEvents)
+          ? [content.matchEvents] : [];
+      });
+      return { ...summary, matchEvents: eventBlocks.length === 1 ? eventBlocks[0]?.events : undefined };
     } catch {
       return null;
     }
   }
   return null;
+}
+
+function parseGoals(events: unknown, side: 0 | 1): NonNullable<OneFootballMatchTeamPreview['goals']> {
+  if (!Array.isArray(events)) return [];
+  return events.flatMap((event) => {
+    if (!isRecord(event) || event.teamSide !== side || !isRecord(event.type)
+      || event.type.$case !== 'goal' || !isRecord(event.type.goal)) return [];
+    const goal = event.type.goal;
+    // Only counted goals: normal, own goal and penalty. Disallowed goals are type 3.
+    if (![0, 1, 2].includes(goal.type as number) || !isRecord(goal.scorer)
+      || typeof goal.scorer.name !== 'string' || !goal.scorer.name.trim()
+      || typeof event.timeline !== 'string' || !event.timeline.trim()) return [];
+    return [{
+      scorer: goal.scorer.name.trim(),
+      minute: event.timeline.trim(),
+      label: goal.type !== 0 && typeof event.name === 'string' ? event.name : null,
+    }];
+  });
 }

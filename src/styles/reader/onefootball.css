@@ -87,3 +87,26 @@
     align-self: center;
   }
 }
+
+.reader-card__onefootball-goals {
+  display: grid;
+  gap: 6px;
+  max-width: 100%;
+  font-size: clamp(0.75rem, 2.3cqw, 0.95rem);
+  line-height: 1.4;
+}
+
+.reader-card__onefootball-goal {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.reader-card__onefootball-minute {
+  flex-shrink: 0;
+  color: #c4d8cb;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

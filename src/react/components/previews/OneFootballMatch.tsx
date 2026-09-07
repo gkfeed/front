@@ -46,6 +46,16 @@ function OneFootballTeam({
     <span className={`reader-card__onefootball-team reader-card__onefootball-team--${side}`}>
       {team.logo ? <img src={team.logo} alt="" /> : null}
       <strong>{team.name}</strong>
+      {team.goals?.length ? (
+        <span className="reader-card__onefootball-goals">
+          {team.goals.map((goal, index) => (
+            <span className="reader-card__onefootball-goal" key={`${goal.scorer}-${goal.minute}-${index}`}>
+              <span>{goal.scorer}{goal.label ? ` (${goal.label})` : ''}</span>
+              <span className="reader-card__onefootball-minute">{goal.minute}</span>
+            </span>
+          ))}
+        </span>
+      ) : null}
     </span>
   );
 }

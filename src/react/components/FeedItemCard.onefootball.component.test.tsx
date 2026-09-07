@@ -21,7 +21,10 @@ describe('FeedItemCard OneFootball previews', () => {
         snapshot: {
           competition: 'LaLiga',
           teams: [
-            { name: 'Barcelona', logo: 'https://images.onefootball.com/barcelona.png' },
+            { name: 'Barcelona', logo: 'https://images.onefootball.com/barcelona.png', goals: [
+              { scorer: 'Raphinha', minute: "45+2'", label: null },
+              { scorer: 'Florian Lejeune', minute: "51'", label: 'Own goal' },
+            ] },
             { name: 'Rayo Vallecano', logo: 'https://images.onefootball.com/rayo.png' },
           ],
           score: ['5', '2'],
@@ -41,6 +44,9 @@ describe('FeedItemCard OneFootball previews', () => {
 
     expect(await screen.findByLabelText('Barcelona 5–2 Rayo Vallecano')).toBeTruthy();
     expect(screen.getByText('5 : 2')).toBeTruthy();
+    expect(screen.getByText('Raphinha')).toBeTruthy();
+    expect(screen.getByText("45+2'")).toBeTruthy();
+    expect(screen.getByText('Florian Lejeune (Own goal)')).toBeTruthy();
     expect(screen.queryByText('Full time')).toBeNull();
     expect(screen.queryByText('LaLiga')).toBeNull();
     expect(screen.queryByText('ONEFOOTBALL')).toBeNull();

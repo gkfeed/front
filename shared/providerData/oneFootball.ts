@@ -1,9 +1,16 @@
 import type { ProviderDataModule } from './contracts.js';
 import { isRecord } from '../valueGuards.js';
 
+export interface OneFootballGoalPreview {
+  scorer: string;
+  minute: string;
+  label: string | null;
+}
+
 export interface OneFootballMatchTeamPreview {
   name: string;
   logo: string | null;
+  goals?: OneFootballGoalPreview[];
 }
 
 export interface OneFootballMatchSnapshot {
@@ -48,7 +55,11 @@ function isOneFootballMatchSnapshot(value: unknown): value is OneFootballMatchSn
 }
 
 function isMatchTeam(value: unknown): boolean {
-  return isRecord(value) && typeof value.name === 'string' && isNullableString(value.logo);
+  return isRecord(value) && typeof value.name === 'string' && isNullableString(value.logo)
+    && (value.goals === undefined || (Array.isArray(value.goals) && value.goals.every((goal) => (
+      isRecord(goal) && typeof goal.scorer === 'string' && typeof goal.minute === 'string'
+      && isNullableString(goal.label)
+    ))));
 }
 
 function isMatchTeams(value: unknown): value is OneFootballMatchSnapshot['teams'] {

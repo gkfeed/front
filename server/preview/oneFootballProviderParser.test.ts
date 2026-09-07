@@ -29,6 +29,34 @@ describe('OneFootball structured match state', () => {
     });
   });
 
+  it('extracts counted goals by scoring team, excluding disallowed goals', () => {
+    const teams = parseOneFootballProviderData(fixture('full-time'), url)!.snapshot.teams;
+    expect(teams[0].goals).toEqual([
+      { scorer: 'Raphinha', minute: "19'", label: null },
+      { scorer: 'Lamine Yamal', minute: "21'", label: null },
+      { scorer: 'Florian Lejeune', minute: "51'", label: 'Own goal' },
+      { scorer: 'Raphinha', minute: "71'", label: null },
+      { scorer: 'Lamine Yamal', minute: "90'", label: null },
+    ]);
+    expect(teams[1].goals).toEqual([
+      { scorer: 'Sérgio Camello', minute: "12'", label: null },
+      { scorer: 'Sérgio Camello', minute: "59'", label: null },
+    ]);
+  });
+
+  it('preserves added time and penalty labels, skips missed penalties and malformed goals', () => {
+    const html = fixture('full-time')
+      .replace('"timeline": "19\'"', '"timeline": "45+2\'"')
+      .replace('"type": 1, "scorer"', '"type": 2, "scorer"')
+      .replace('"name": "Own goal"', '"name": "Penalty"')
+      .replace('"type": 3, "scorer"', '"type": 4, "scorer"')
+      .replace('"name": "Lamine Yamal"', '"name": null');
+    const goals = parseOneFootballProviderData(html, url)!.snapshot.teams[0].goals!;
+    expect(goals).toContainEqual({ scorer: 'Raphinha', minute: "45+2'", label: null });
+    expect(goals).toContainEqual({ scorer: 'Florian Lejeune', minute: "51'", label: 'Penalty' });
+    expect(goals).toHaveLength(4);
+  });
+
   it('does not use localized display text as a live marker', () => {
     for (const text of ['Live', 'Half time', 'Перерыв', "90+5'", 'Full time']) {
       const html = withPeriod(99).replace(/"timePeriod": "[^"]*"/, `"timePeriod": "${text}"`);
