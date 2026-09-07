@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isTikTokCommentsPreview } from './tiktokContracts';
+import { isTikTokCommentsPreview, isTikTokPlaybackPreview } from './tiktokContracts';
 
 describe('TikTok comments contract', () => {
   it('accepts the canonical BFF response shape', () => {
@@ -25,5 +25,17 @@ describe('TikTok comments contract', () => {
       authorName: null,
       authorAvatar: null,
     })).toBe(false);
+  });
+});
+
+describe('TikTok slideshow contract', () => {
+  it('accepts photos with an optional soundtrack', () => {
+    const imageUrls = ['https://p.tiktokcdn.com/1.jpeg'];
+    expect(isTikTokPlaybackPreview({ imageUrls })).toBe(true);
+    expect(isTikTokPlaybackPreview({ imageUrls, videoUrl: 'https://v.tikwm.com/music.mp3' })).toBe(true);
+  });
+
+  it.each([{ imageUrls: [] }, { imageUrls: ['javascript:alert(1)'] }, { imageUrls: [null] }])('rejects invalid image lists: %j', ({ imageUrls }) => {
+    expect(isTikTokPlaybackPreview({ imageUrls })).toBe(false);
   });
 });

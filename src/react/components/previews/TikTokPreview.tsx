@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { SoundGestureLifecycle } from '../../hooks/useSoundGesture';
 import { fetchTikTokPlayback } from '../../services/tiktokPlayback';
 import { FeedItemVideoMedia } from './FeedItemVideoMedia';
+import { TikTokSlideshow } from './TikTokSlideshow';
 import { TikTokEmbed } from './TikTokEmbed';
 
 export function TikTokPreview(props: {
@@ -42,6 +43,16 @@ function TikTokPreviewPlayer({ href, src, title, soundGesture }: {
     <div className="reader-card__preview reader-card__preview--short-video reader-card__preview--tiktok" role="status">
       {t('preview.loadingVideo')}
     </div>
+  );
+  if (playback.imageUrls) return (
+    <TikTokSlideshow
+      imageUrls={playback.imageUrls}
+      audioUrl={playback.videoUrl}
+      title={title}
+      soundGesture={soundGesture}
+      author={playback.author}
+      onError={() => setFailed(true)}
+    />
   );
   return (
     <FeedItemVideoMedia

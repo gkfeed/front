@@ -15,13 +15,21 @@ export async function fetchTikTokPlayback(
   upstream.searchParams.set('url', post.href);
   const response = await fetchTikTokJson(upstream, 'details', context);
   const value = response?.value;
-  if (!isRecord(value) || value.code !== 0 || !isRecord(value.data)
-    || !isTikTokMediaUrl(value.data.play)) {
+  if (!isRecord(value) || value.code !== 0 || !isRecord(value.data)) {
     throw new PreviewError('TikTok video is unavailable', 'invalid_details');
   }
+  const imageUrls = Array.isArray(value.data.images)
+    ? value.data.images.filter(isTikTokAvatarUrl) : [];
+  const videoUrl = isTikTokMediaUrl(value.data.play) ? value.data.play : undefined;
+  if (!imageUrls.length && !videoUrl) {
+    throw new PreviewError('TikTok video is unavailable', 'invalid_details');
+  }
+  const media = imageUrls.length
+    ? { imageUrls, ...(videoUrl ? { videoUrl } : {}) }
+    : { videoUrl: videoUrl! };
   const author = isRecord(value.data.author) ? value.data.author : null;
   return {
-    videoUrl: value.data.play,
+    ...media,
     ...(author ? { author: {
       name: typeof author.nickname === 'string' ? normalizeExternalText(author.nickname) || null : null,
       username: typeof author.unique_id === 'string' ? normalizeExternalText(author.unique_id) || null : null,

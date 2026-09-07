@@ -231,6 +231,10 @@ const en = {
   },
   preview: {
     doubleSpeed: 'Double playback speed',
+    previousSlide: 'Previous slide',
+    nextSlide: 'Next slide',
+    pauseSlideshow: 'Pause slideshow',
+    playSlideshow: 'Play slideshow',
     loadingVideo: 'Loading video…',
     loading: 'Loading preview',
     sound: 'Tap for sound',

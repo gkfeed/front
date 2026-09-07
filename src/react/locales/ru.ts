@@ -237,6 +237,10 @@ const ru = {
   },
   preview: {
     doubleSpeed: 'Удвоенная скорость воспроизведения',
+    previousSlide: 'Предыдущий слайд',
+    nextSlide: 'Следующий слайд',
+    pauseSlideshow: 'Приостановить слайд-шоу',
+    playSlideshow: 'Продолжить слайд-шоу',
     loadingVideo: 'Загрузка видео…',
     loading: 'Загрузка предпросмотра',
     sound: 'Нажмите, чтобы включить звук',

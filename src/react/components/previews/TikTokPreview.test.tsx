@@ -23,6 +23,37 @@ function metadata(video: HTMLVideoElement, duration: number) {
 }
 
 describe('TikTok preview', () => {
+  it('renders photos instead of a black video and supports automatic and manual navigation', async () => {
+    vi.useFakeTimers();
+    vi.mocked(fetchTikTokPlayback).mockResolvedValue({
+      videoUrl, imageUrls: ['https://p.tiktokcdn.com/1.jpeg', 'https://p.tiktokcdn.com/2.jpeg'],
+    });
+    await act(async () => { render(<TikTokPreview {...props} />); });
+    const currentImage = () => document.querySelector('.reader-card__slide')?.getAttribute('src');
+    expect(document.querySelector('video')).toBeNull();
+    expect(document.querySelector('iframe')).toBeNull();
+    expect(document.querySelector('audio')?.src).toBe(videoUrl);
+    expect(currentImage()).toContain('/1.jpeg');
+    await act(async () => { vi.advanceTimersByTime(3000); });
+    expect(currentImage()).toContain('/2.jpeg');
+    fireEvent.click(screen.getByRole('button', { name: 'Next slide' }));
+    expect(currentImage()).toContain('/1.jpeg');
+    fireEvent.click(screen.getByRole('button', { name: 'Previous slide' }));
+    expect(currentImage()).toContain('/2.jpeg');
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    fireEvent.click(screen.getByRole('button', { name: 'Pause slideshow' }));
+    await act(async () => { vi.advanceTimersByTime(6000); });
+    expect(currentImage()).toContain('/2.jpeg');
+  });
+
+  it('falls back when a slideshow image fails to load', async () => {
+    vi.mocked(fetchTikTokPlayback).mockResolvedValue({ imageUrls: ['https://p.tiktokcdn.com/1.jpeg'] });
+    render(<TikTokPreview {...props} />);
+    await waitFor(() => expect(document.querySelector('.reader-card__slide')).not.toBeNull());
+    fireEvent.error(document.querySelector('.reader-card__slide')!);
+    expect(document.querySelector('iframe')).not.toBeNull();
+  });
+
   it('shows author details over the native player and tolerates a broken avatar', async () => {
     vi.mocked(fetchTikTokPlayback).mockResolvedValue({ videoUrl, author: {
       name: 'АНАСТЕЙДЖИ💋', username: 'anastejj', avatarUrl: 'https://example.com/avatar.jpg',

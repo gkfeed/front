@@ -43,10 +43,9 @@ export interface TikTokPlaybackAuthor {
   avatarUrl: string | null;
 }
 
-export interface TikTokPlaybackPreview {
-  videoUrl: string;
+export type TikTokPlaybackPreview = {
   author?: TikTokPlaybackAuthor;
-}
+} & ({ videoUrl: string; imageUrls?: never } | { imageUrls: string[]; videoUrl?: string });
 
 export function isTikTokAvatarUrl(value: unknown): value is string {
   if (typeof value !== 'string') return false;
@@ -71,7 +70,12 @@ export function isTikTokMediaUrl(value: unknown): value is string {
 }
 
 export function isTikTokPlaybackPreview(value: unknown): value is TikTokPlaybackPreview {
-  return isRecord(value) && isTikTokMediaUrl(value.videoUrl)
+  return isRecord(value)
+    && (value.imageUrls === undefined
+      ? isTikTokMediaUrl(value.videoUrl)
+      : Array.isArray(value.imageUrls) && value.imageUrls.length > 0
+        && value.imageUrls.every(isTikTokAvatarUrl)
+        && (value.videoUrl === undefined || isTikTokMediaUrl(value.videoUrl)))
     && (value.author === undefined || (
       isRecord(value.author)
       && isNullableString(value.author.name)

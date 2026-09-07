@@ -24,6 +24,23 @@ describe('TikTok playback resolver', () => {
     } });
   });
 
+  it('preserves slideshow images even when play contains only the soundtrack', async () => {
+    const imageUrls = ['https://p16.tiktokcdn.com/one.jpeg', 'https://p16.tiktokcdn.com/two.jpeg'];
+    vi.mocked(fetchTikTokJson).mockResolvedValue({ value: { code: 0, data: {
+      play: videoUrl, images: imageUrls,
+    } } });
+    await expect(fetchTikTokPlayback(post)).resolves.toEqual({ videoUrl, imageUrls });
+  });
+
+  it('supports photo posts without a playable soundtrack and filters unsafe images', async () => {
+    vi.mocked(fetchTikTokJson).mockResolvedValue({ value: { code: 0, data: {
+      images: ['https://p16.tiktokcdn.com/one.jpeg', 'javascript:alert(1)'],
+    } } });
+    await expect(fetchTikTokPlayback(post)).resolves.toEqual({
+      imageUrls: ['https://p16.tiktokcdn.com/one.jpeg'],
+    });
+  });
+
   it('returns a validated direct video without requesting comments', async () => {
     vi.mocked(fetchTikTokJson).mockResolvedValue({ value: { code: 0, data: { play: videoUrl } } });
     await expect(fetchTikTokPlayback(post)).resolves.toEqual({ videoUrl });
