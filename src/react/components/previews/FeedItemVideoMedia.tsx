@@ -27,6 +27,7 @@ export function FeedItemVideoMedia({
   const [duration, setDuration] = useState<number | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasAutoAppliedDoubleSpeed = useRef(false);
   const localSoundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
   const soundGesture = sharedSoundGesture ?? localSoundGesture;
 
@@ -34,6 +35,7 @@ export function FeedItemVideoMedia({
     setAspectRatio(null);
     setDuration(null);
     setPlaybackRate(1);
+    hasAutoAppliedDoubleSpeed.current = false;
     if (videoRef.current) videoRef.current.playbackRate = 1;
   }, [preview.src]);
 
@@ -45,8 +47,22 @@ export function FeedItemVideoMedia({
 
   const updateDuration = (video: HTMLVideoElement) => {
     const nextDuration = video.duration;
+    const isLongTikTok = isTikTok && Number.isFinite(nextDuration) && nextDuration > 60;
     setDuration(Number.isFinite(nextDuration) && nextDuration > 0 ? nextDuration : null);
-    if (isTikTok && !(Number.isFinite(nextDuration) && nextDuration > 60)) video.playbackRate = 1;
+    if (!isTikTok) return;
+
+    if (!isLongTikTok) {
+      hasAutoAppliedDoubleSpeed.current = false;
+      setPlaybackRate(1);
+      if (video.playbackRate !== 1) video.playbackRate = 1;
+      return;
+    }
+
+    if (!hasAutoAppliedDoubleSpeed.current) {
+      hasAutoAppliedDoubleSpeed.current = true;
+      setPlaybackRate(2);
+      if (video.playbackRate !== 2) video.playbackRate = 2;
+    }
   };
 
   return (

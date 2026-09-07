@@ -39,7 +39,7 @@ describe('TikTok preview', () => {
     expect(document.querySelector('iframe')).toBeNull();
   });
 
-  it('changes the real rate only for long videos and reflects the observed rate', async () => {
+  it('automatically doubles the rate when the speed control appears', async () => {
     vi.mocked(fetchTikTokPlayback).mockResolvedValue({ videoUrl });
     render(<TikTokPreview {...props} />);
     const video = await getVideo();
@@ -51,15 +51,16 @@ describe('TikTok preview', () => {
     }
     metadata(video, 167.135);
     const button = screen.getByRole('button', { name: 'Double playback speed' });
-    expect(button.getAttribute('aria-pressed')).toBe('false');
-    fireEvent.click(button);
     expect(video.playbackRate).toBe(2);
-    fireEvent.rateChange(video);
     expect(button.getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(button);
     expect(video.playbackRate).toBe(1);
     fireEvent.rateChange(video);
     expect(button.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(button);
+    expect(video.playbackRate).toBe(2);
+    fireEvent.rateChange(video);
+    expect(button.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('falls back to a single embed on media failure', async () => {
@@ -110,7 +111,7 @@ describe('TikTok preview', () => {
     const first = await getVideo();
     metadata(first, 167);
     fireEvent.click(screen.getByRole('button', { name: 'Double playback speed' }));
-    expect(first.playbackRate).toBe(2);
+    expect(first.playbackRate).toBe(1);
     view.rerender(<TikTokPreview {...props} href="https://www.tiktok.com/@creator/video/456" />);
     const second = await getVideo();
     expect(second).not.toBe(first);
