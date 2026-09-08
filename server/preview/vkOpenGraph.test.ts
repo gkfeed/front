@@ -1,9 +1,26 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { jsonLdScript } from './openGraphTestFixtures.js';
-import { parseOpenGraph } from './openGraph.js';
+import { fetchOpenGraph, parseOpenGraph } from './openGraph.js';
+import { fetchVkHtml } from './vkFetcher.js';
+
+vi.mock('./vkFetcher.js', () => ({ fetchVkHtml: vi.fn() }));
 
 describe('parseOpenGraph: VK provider', () => {
+  it('preserves the video embed from the reported STREAM INSIDE post', async () => {
+    vi.mocked(fetchVkHtml).mockResolvedValue({
+      url: new URL('https://vk.ru/wall-182864292_1336279'),
+      html: `<meta property="og:video" content="https://vk.ru/video_ext.php?oid=-182864292&amp;id=456257584&amp;hash=2ad8edc0b31dd0da"/>
+        <meta property="og:video:type" content="text/html"/>
+        <meta property="og:type" content="video.other"/>`,
+    });
+
+    await expect(fetchOpenGraph('https://vk.com/wall-182864292_1336279')).resolves.toMatchObject({
+      video: 'https://vk.ru/video_ext.php?oid=-182864292&id=456257584&hash=2ad8edc0b31dd0da',
+      type: 'video.other',
+    });
+  });
+
   it('upgrades VK image CDN URLs to HTTPS', () => {
     const html = `
       <meta property="og:image"

@@ -2,15 +2,14 @@ import { normalizeHostname } from '../../../shared/urlRules.js';
 import { isVkHost, isVkImageHost } from '../../../shared/urlRules.js';
 import { getStringProperty, isRecord } from '../../../shared/valueGuards.js';
 import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
-import { fetchHtml } from '../pageFetcher.js';
+import { fetchVkHtml } from '../vkFetcher.js';
 import { parseOpenGraph } from '../openGraphParser.js';
-import { TWITTERBOT_USER_AGENT } from '../previewFetchers.js';
 import { resolveHttpUrl } from '../html.js';
 
 export const vkOpenGraphAdapter: OpenGraphProviderAdapter = {
   matches: (url) => isVkHost(url.hostname),
   async fetch(requestedUrl, context) {
-    const page = await fetchHtml(requestedUrl, TWITTERBOT_USER_AGENT, {}, context);
+    const page = await fetchVkHtml(requestedUrl, context);
     return parseVkOpenGraph(page.html, page.url);
   },
   parse: parseVkOpenGraph,
