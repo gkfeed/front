@@ -35,6 +35,20 @@ describe('HTTP server composition root', () => {
     expect(serveFrontend).toHaveBeenCalledWith('/reader', false, response);
   });
 
+  it('routes desktop API proxy requests before the BFF and static server', async () => {
+    const handleApiRequest = vi.fn().mockResolvedValue(true);
+    const handleBffRequest = vi.fn();
+    const serveFrontend = vi.fn();
+    const request = createRequest('/api/v1/list', 'GET');
+    const response = createResponse();
+
+    await handleHttpRequest(request, response, { handleApiRequest, handleBffRequest, serveFrontend });
+
+    expect(handleApiRequest).toHaveBeenCalledWith(request, expect.any(URL), response, expect.any(Object));
+    expect(handleBffRequest).not.toHaveBeenCalled();
+    expect(serveFrontend).not.toHaveBeenCalled();
+  });
+
   it('rejects unsupported methods before serving frontend content', async () => {
     const serveFrontend = vi.fn();
     const request = createRequest('/', 'POST');
