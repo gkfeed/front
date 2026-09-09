@@ -299,6 +299,12 @@ const ru = {
     statusFinal: 'итоговый',
     to: 'до',
   },
+  onefootball: {
+    kickoffAt: 'Начало в {{time}}',
+    live: 'В эфире',
+    fullTime: 'Матч завершён',
+    postponed: 'Перенесён',
+  },
   liquipedia: {
     match: '{{firstTeam}} {{firstScore}}:{{secondScore}} {{secondTeam}}',
     gameResults: 'Результаты матчей команды {{team}}',

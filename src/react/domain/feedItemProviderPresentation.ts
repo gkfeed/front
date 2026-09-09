@@ -21,7 +21,7 @@ import { getTwitchChannel } from './twitchPreview';
 export type FeedItemProviderLoadingRules = {
   remotePreview: RemotePreviewSource;
   livePreview: 'none' | 'hltv';
-  loadingPlaceholder: 'when-missing' | 'none';
+  loadingPlaceholder: 'always' | 'when-missing' | 'none';
   previewMode: 'local-first' | 'tiktok-embed';
   description: 'none' | 'vk';
   metadata: 'none' | 'hltv';
@@ -72,6 +72,7 @@ export const feedItemProviderResources = {
   }),
   onefootball: defineProvider({
     matches: (_item, url) => Boolean(url && isOneFootballMatchUrl(url)),
+    loading: { loadingPlaceholder: 'always' },
   }),
   sasflix: defineProvider({
     matches: (_item, url) => Boolean(url && getSasflixPublicationId(url)),

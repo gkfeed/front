@@ -293,6 +293,12 @@ const en = {
     statusFinal: 'final',
     to: 'to',
   },
+  onefootball: {
+    kickoffAt: 'Kick-off at {{time}}',
+    live: 'Live',
+    fullTime: 'Full time',
+    postponed: 'Postponed',
+  },
   liquipedia: {
     match: '{{firstTeam}} {{firstScore}} to {{secondScore}} {{secondTeam}}',
     gameResults: '{{team}} game results',

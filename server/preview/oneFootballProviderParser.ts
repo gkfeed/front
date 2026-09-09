@@ -43,11 +43,13 @@ export function parseOneFootballProviderData(
   const competition = htmlText(html.match(
     /<span\b[^>]*class=(?:"[^"]*MatchScoreCompetition_competitionName__[^"]*"|'[^']*MatchScoreCompetition_competitionName__[^']*')[^>]*>([\s\S]*?)<\/span>/i,
   )?.[1] ?? '') || null;
+  const parsedCompetition = parseCompetition(summary?.competition, pageUrl);
 
   return {
     provider: 'onefootball',
     snapshot: {
-      competition,
+      competition: parsedCompetition?.name ?? competition,
+      competitionLogo: parsedCompetition?.logo ?? null,
       teams: [
         { ...homeTeam, goals: parseGoals(summary?.matchEvents, 0) },
         { ...awayTeam, goals: parseGoals(summary?.matchEvents, 1) },
@@ -57,6 +59,18 @@ export function parseOneFootballProviderData(
       normalizedStatus: normalizePeriod(summary?.period),
       startsAt: typeof event?.startDate === 'string' ? event.startDate : null,
     },
+  };
+}
+
+function parseCompetition(
+  value: unknown,
+  pageUrl: URL,
+): { name: string; logo: string | null } | null {
+  if (!isRecord(value) || typeof value.name !== 'string' || !value.name.trim()) return null;
+  const icon = isRecord(value.icon) ? value.icon : null;
+  return {
+    name: value.name.trim(),
+    logo: icon && typeof icon.path === 'string' ? resolveHttpUrl(icon.path, pageUrl) : null,
   };
 }
 

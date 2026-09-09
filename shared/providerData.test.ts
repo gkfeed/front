@@ -33,6 +33,7 @@ describe('provider-data modules', () => {
       provider: 'onefootball',
       snapshot: {
         competition: 'LaLiga',
+        competitionLogo: 'https://cdn.example/laliga.png',
         teams: [
           { name: 'Barcelona', logo: null },
           { name: 'Rayo Vallecano', logo: 'https://cdn.example/rayo.png' },
@@ -49,7 +50,10 @@ describe('provider-data modules', () => {
       expect(oneFootballProviderDataModule.is({ ...value, snapshot: { ...value.snapshot, normalizedStatus } })).toBe(false);
     }
     expect(isOpenGraphProviderData(value)).toBe(true);
-    expect(getProviderDataImageUrls(value)).toEqual(['https://cdn.example/rayo.png']);
+    expect(getProviderDataImageUrls(value)).toEqual([
+      'https://cdn.example/laliga.png',
+      'https://cdn.example/rayo.png',
+    ]);
   });
 
   it('rejects unsupported provider shapes at the serialized boundary', () => {

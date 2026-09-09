@@ -24,7 +24,8 @@ function preview(normalizedStatus: OneFootballMatchSnapshot['normalizedStatus'])
       provider: 'onefootball' as const,
       snapshot: {
         teams: [{ name: 'Home', logo: null }, { name: 'Away', logo: null }] as OneFootballMatchSnapshot['teams'],
-        score: ['1', '0'] as [string, string], competition: null, status: "30'", startsAt: null, normalizedStatus,
+        score: ['1', '0'] as [string, string], competition: null, competitionLogo: null,
+        status: "30'", startsAt: null, normalizedStatus,
       },
     },
   };

@@ -1,4 +1,5 @@
-.reader-card.reader-card--onefootball {
+.reader-card.reader-card--onefootball:not(.reader-card--preview-pending),
+.live-event.live-event--onefootball {
   border-color: rgb(143 190 163 / 34%);
   background:
     radial-gradient(
@@ -23,61 +24,200 @@
   box-shadow: 0 16px 38px rgb(8 25 17 / 28%);
 }
 
+.reader-card--onefootball.reader-card--preview-pending .reader-card__preview-placeholder {
+  background:
+    linear-gradient(100deg, rgb(41 71 59) 22%, rgb(57 91 76) 44%, rgb(41 71 59) 66%);
+  background-size: 220% 100%;
+}
+
 .reader-card__onefootball-match {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   width: 100%;
-  min-height: clamp(210px, 42cqw, 320px);
-  align-items: center;
-  gap: clamp(16px, 4cqw, 34px);
-  padding: clamp(18px, 5cqw, 40px);
+  min-height: clamp(260px, 48cqw, 390px);
+  align-content: center;
+  gap: clamp(22px, 4cqw, 34px);
+  padding:
+    clamp(76px, 9cqw, 104px)
+    clamp(20px, 5cqw, 42px)
+    clamp(20px, 5cqw, 42px);
   color: #eef7f1;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.reader-card__onefootball-team {
-  display: grid;
+.reader-card__onefootball-match:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+  border-radius: 16px;
+}
+
+.reader-card__onefootball-competition {
+  position: absolute;
+  inset: clamp(18px, 3cqw, 28px) auto auto clamp(18px, 3cqw, 28px);
+  display: flex;
+  max-width: calc(100% - clamp(36px, 6cqw, 56px));
   min-width: 0;
-  justify-items: center;
-  gap: 12px;
-  color: #eef7f1;
-  text-align: center;
+  align-items: center;
+  gap: 10px;
+  justify-self: start;
 }
 
-.reader-card__onefootball-team img {
-  width: clamp(64px, 15cqw, 106px);
-  height: clamp(64px, 15cqw, 106px);
-  object-fit: contain;
-}
-
-.reader-card__onefootball-team strong {
-  max-width: 100%;
+.reader-card__onefootball-competition strong {
   overflow: hidden;
-  font-size: clamp(0.82rem, 3cqw, 1.15rem);
+  color: #eef7f1;
+  font-size: clamp(.9rem, 2.8cqw, 1.2rem);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.reader-card__onefootball-team--home strong {
-  color: #8ebcff;
+.reader-card__onefootball-matchup {
+  display: grid;
+  grid-template:
+    "home-logo result away-logo" auto
+    "home-name result away-name" auto
+    / minmax(0, 1fr) clamp(118px, 31cqw, 300px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(14px, 3cqw, 24px) clamp(8px, 2.8cqw, 28px);
 }
 
-.reader-card__onefootball-team--away strong {
-  color: #ff9bad;
+.reader-card__onefootball-logo {
+  display: grid;
+  place-items: center;
+  color: rgb(238 247 241 / 52%);
+}
+
+.reader-card__onefootball-logo img,
+.reader-card__onefootball-logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.reader-card__onefootball-logo svg {
+  width: 72%;
+  height: 72%;
+  fill: rgb(238 247 241 / 8%);
+  stroke: currentcolor;
+  stroke-width: 1.5;
+}
+
+.reader-card__onefootball-logo--competition {
+  width: clamp(24px, 5cqw, 34px);
+  height: clamp(24px, 5cqw, 34px);
+  flex: 0 0 auto;
+}
+
+.reader-card__onefootball-logo--team {
+  width: clamp(58px, 14cqw, 106px);
+  height: clamp(58px, 14cqw, 106px);
+  justify-self: center;
+}
+
+.reader-card__onefootball-logo--home {
+  grid-area: home-logo;
+}
+
+.reader-card__onefootball-logo--away {
+  grid-area: away-logo;
 }
 
 .reader-card__onefootball-result {
   display: grid;
+  grid-area: result;
+  min-width: 0;
   justify-items: center;
-  gap: 7px;
+  gap: 9px;
+  color: #d7e7dc;
+  text-align: center;
+}
+
+.reader-card__onefootball-result > span {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(.78rem, 2.6cqw, 1.08rem);
+  line-height: 1.25;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .reader-card__onefootball-result strong {
-  font-size: clamp(1.7rem, 7cqw, 3.2rem);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
   color: #f4f8f5;
+  font-size: clamp(1.25rem, 5.4cqw, 2.7rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-card__onefootball-result--scheduled strong,
+.reader-card__onefootball-result--unknown strong,
+.reader-card__onefootball-result--postponed strong {
+  font-size: clamp(1.05rem, 4cqw, 2.3rem);
+}
+
+.reader-card__onefootball-team-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: clamp(.78rem, 2.8cqw, 1.12rem);
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-card__onefootball-team-name--home {
+  grid-area: home-name;
+  color: #8ebcff;
+}
+
+.reader-card__onefootball-team-name--away {
+  grid-area: away-name;
+  color: #ff9bad;
+}
+
+.reader-card__onefootball-goals-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(118px, 31cqw, 300px) minmax(0, 1fr);
+  gap: clamp(8px, 2.8cqw, 28px);
+  align-items: start;
+}
+
+.reader-card__onefootball-goals-grid > :first-child {
+  grid-column: 1;
+}
+
+.reader-card__onefootball-goals-grid > :last-child {
+  grid-column: 3;
+}
+
+.reader-card__onefootball-goals {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: #dce9e0;
+  font-size: clamp(.7rem, 2.1cqw, .92rem);
+  line-height: 1.35;
+}
+
+.reader-card__onefootball-goal {
+  display: flex;
+  min-width: 0;
+  justify-content: center;
+  align-items: baseline;
+  gap: 7px;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.reader-card__onefootball-minute {
+  flex-shrink: 0;
+  color: #adc6b6;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 @media (min-width: 641px) {
@@ -88,25 +228,8 @@
   }
 }
 
-.reader-card__onefootball-goals {
-  display: grid;
-  gap: 6px;
-  max-width: 100%;
-  font-size: clamp(0.75rem, 2.3cqw, 0.95rem);
-  line-height: 1.4;
-}
-
-.reader-card__onefootball-goal {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 8px;
-  overflow-wrap: anywhere;
-}
-
-.reader-card__onefootball-minute {
-  flex-shrink: 0;
-  color: #c4d8cb;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+@media (prefers-reduced-motion: reduce) {
+  .reader-card--onefootball.reader-card--preview-pending .reader-card__preview-placeholder {
+    animation: none;
+  }
 }

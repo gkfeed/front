@@ -59,6 +59,7 @@ describe('isOpenGraphPreview', () => {
         provider: 'onefootball',
         snapshot: {
           competition: 'LaLiga',
+          competitionLogo: null,
           teams: [{ name: 'Barcelona', logo: null }, { name: 'Rayo Vallecano', logo: null }],
           score: ['5', '2'],
           status: 'Full time',

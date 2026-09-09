@@ -15,6 +15,7 @@ export interface OneFootballMatchTeamPreview {
 
 export interface OneFootballMatchSnapshot {
   competition: string | null;
+  competitionLogo: string | null;
   teams: [OneFootballMatchTeamPreview, OneFootballMatchTeamPreview];
   score: [string, string] | null;
   status: string | null;
@@ -29,8 +30,10 @@ export interface OneFootballProviderData {
 
 export const oneFootballProviderDataModule: ProviderDataModule<OneFootballProviderData> = {
   is: isOneFootballProviderData,
-  imageUrls: ({ snapshot }) => snapshot.teams
-    .flatMap((team) => team.logo ? [team.logo] : []),
+  imageUrls: ({ snapshot }) => [
+    ...(snapshot.competitionLogo ? [snapshot.competitionLogo] : []),
+    ...snapshot.teams.flatMap((team) => team.logo ? [team.logo] : []),
+  ],
 };
 
 export function isOneFootballProviderData(value: unknown): value is OneFootballProviderData {
@@ -46,6 +49,7 @@ export function getOneFootballSnapshot(value: unknown): OneFootballMatchSnapshot
 function isOneFootballMatchSnapshot(value: unknown): value is OneFootballMatchSnapshot {
   return isRecord(value)
     && isNullableString(value.competition)
+    && isNullableString(value.competitionLogo)
     && isMatchTeams(value.teams)
     && isNullable(value.score, isStringPair)
     && isNullableString(value.status)

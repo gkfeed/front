@@ -172,6 +172,22 @@ describe('feed item preview policy', () => {
     expect(policy.visiblePreview?.src ?? null).toBe(visible);
     expect(policy.preview?.fallbackSrc).toBe(fallback);
   });
+
+  it('shows a loading placeholder for OneFootball even when the feed contains an image', () => {
+    const item = feedItem({
+      link: 'https://onefootball.com/en/match/2700208',
+      text: '<img src="https://example.com/match.jpg">',
+    });
+    const policy = resolveFeedItemPreviewPolicy({
+      item,
+      providerView: analyzeFeedItem(item),
+      nsfwMode: 'show',
+      remotePreview: EMPTY_REMOTE_PREVIEW,
+      previewFailures: 0,
+    });
+
+    expect(policy.showLoadingPlaceholder).toBe(true);
+  });
 });
 
 function feedItem(overrides: Partial<FeedItem> = {}): FeedItem {

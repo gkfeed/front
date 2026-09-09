@@ -12,6 +12,13 @@ function withPeriod(period: unknown): string {
 }
 
 describe('OneFootball structured match state', () => {
+  it('extracts the competition name and logo from the matched summary', () => {
+    expect(parseOneFootballProviderData(fixture('scheduled'), url)?.snapshot).toMatchObject({
+      competition: 'Premier League',
+      competitionLogo: 'https://images.onefootball.com/icons/leagueColoredCompetition/128/9.png',
+    });
+  });
+
   it.each([
     ['scheduled', 'scheduled'], ['first-half', 'live'], ['full-time', 'over'],
     ['full-time-de', 'over'], ['penalties-ended', 'over'], ['abandoned', null],

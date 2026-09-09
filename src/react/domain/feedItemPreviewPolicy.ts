@@ -79,9 +79,9 @@ export function resolveFeedItemPreviewPolicy({
     isNsfw,
     shouldBlurNsfw,
     shouldHideNsfw,
-    showLoadingPlaceholder: loading.loadingPlaceholder === 'when-missing'
+    showLoadingPlaceholder: loading.loadingPlaceholder !== 'none'
       && Boolean(remoteRequest)
-      && !providerView.localPreview,
+      && (loading.loadingPlaceholder === 'always' || !providerView.localPreview),
   };
 }
 
