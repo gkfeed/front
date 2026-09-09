@@ -32,10 +32,26 @@ const OPEN_GRAPH_PREVIEW = {
 
 afterEach(() => {
   clearPreviewCache();
+  vi.useRealTimers();
   vi.resetAllMocks();
 });
 
 describe('loadRemotePreview', () => {
+  it('recovers a shared preview after rate limiting without navigating away', async () => {
+    vi.useFakeTimers();
+    vi.mocked(getOpenGraphPreview)
+      .mockRejectedValueOnce(new BffHttpError('Busy', 429, '/bff/open-graph'))
+      .mockResolvedValue(OPEN_GRAPH_PREVIEW);
+    const first = loadRemotePreview(LIQUIPEDIA_URL, 'open-graph', new AbortController().signal);
+    const second = loadRemotePreview(LIQUIPEDIA_URL, 'open-graph', new AbortController().signal);
+
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    await expect(first).resolves.toMatchObject({ openGraphPreview: OPEN_GRAPH_PREVIEW });
+    await expect(second).resolves.toMatchObject({ openGraphPreview: OPEN_GRAPH_PREVIEW });
+    expect(getOpenGraphPreview).toHaveBeenCalledTimes(2);
+  });
+
   it.each([
     ['invalid response', new BffResponseError('Invalid Liquipedia preview response', '/bff/liquipedia-match', 200)],
     ['unsupported markup', new BffHttpError('Liquipedia preview request failed with 422', 422, '/bff/liquipedia-match')],
@@ -52,7 +68,6 @@ describe('loadRemotePreview', () => {
     ['abort', new DOMException('The operation was aborted', 'AbortError')],
     ['invalid JSON', new BffResponseError('Invalid Liquipedia preview response', '/bff/liquipedia-match', 200, 'invalid-json')],
     ['timeout', new BffTimeoutError('/bff/liquipedia-match', 10_000)],
-    ['rate limit', new BffHttpError('Liquipedia preview request failed with 429', 429, '/bff/liquipedia-match')],
     ['upstream failure', new BffHttpError('Liquipedia preview request failed with 502', 502, '/bff/liquipedia-match')],
     ['auth failure', new BffHttpError('Liquipedia preview request failed with 401', 401, '/bff/liquipedia-match')],
     ['forbidden', new BffHttpError('Liquipedia preview request failed with 403', 403, '/bff/liquipedia-match')],

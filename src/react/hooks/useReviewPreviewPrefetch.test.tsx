@@ -50,7 +50,7 @@ describe('useReviewPreviewPrefetch', () => {
     expect(loadRemotePreview).not.toHaveBeenCalled();
   });
 
-  it('keeps pending prefetches across navigation and aborts them on unmount', async () => {
+  it('aborts skipped prefetches on navigation and remaining ones on unmount', async () => {
     const signals: AbortSignal[] = [];
     const loadRemotePreview = vi.fn((
       _url: string,
@@ -78,7 +78,7 @@ describe('useReviewPreviewPrefetch', () => {
     rerender({ activeReviewIds: [3, 4] });
     await waitFor(() => expect(signals).toHaveLength(2));
 
-    expect(firstSignal.aborted).toBe(false);
+    expect(firstSignal.aborted).toBe(true);
     const secondSignal = signals[1]!;
     unmount();
     expect(firstSignal.aborted).toBe(true);
@@ -103,10 +103,39 @@ describe('useReviewPreviewPrefetch', () => {
     );
 
     await waitFor(() => expect(loadRemotePreview).toHaveBeenCalledTimes(2));
-    rerender({ activeReviewIds: [3, 2] });
+    rerender({ activeReviewIds: [2, 3] });
     await new Promise((resolve) => window.setTimeout(resolve, 0));
 
     expect(loadRemotePreview).toHaveBeenCalledTimes(2);
+  });
+
+  it('bounds pending work during rapid navigation and releases it when review finishes', async () => {
+    const signals: AbortSignal[] = [];
+    const loadRemotePreview = vi.fn((_url: string, _source: string, signal: AbortSignal) => {
+      signals.push(signal);
+      return new Promise<typeof EMPTY_REMOTE_PREVIEW>(() => undefined);
+    });
+    const items = Array.from({ length: 20 }, (_, index) => createItem(index + 1));
+    const ids = items.map((item) => item.id);
+    const { rerender } = renderHook(
+      ({ activeReviewIds }: { activeReviewIds: number[] }) => useReviewPreviewPrefetch({
+        enabled: true,
+        items,
+        activeReviewIds,
+      }),
+      { initialProps: { activeReviewIds: ids }, wrapper: createWrapper(loadRemotePreview) },
+    );
+
+    for (let index = 0; index < ids.length; index += 1) {
+      rerender({ activeReviewIds: ids.slice(index) });
+      await new Promise((resolve) => window.setTimeout(resolve, 0));
+      expect(signals.filter((signal) => !signal.aborted).length)
+        .toBeLessThanOrEqual(REVIEW_PREVIEW_PREFETCH_COUNT + 1);
+    }
+
+    expect(loadRemotePreview).toHaveBeenCalledTimes(items.length - 1);
+    rerender({ activeReviewIds: [] });
+    expect(signals.every((signal) => signal.aborted)).toBe(true);
   });
 });
 

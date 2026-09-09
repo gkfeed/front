@@ -4,6 +4,14 @@ import { createDetachedRequestExecutionContext } from '../application/requestExe
 import { createBffRequestGate } from './bffRequestGate.js';
 
 describe('BFF request gate', () => {
+  it('allows rapid review navigation with the default rate limit', async () => {
+    const gate = createBffRequestGate({ now: () => 1_000 });
+    const context = createDetachedRequestExecutionContext();
+    for (let item = 0; item < 120; item += 1) {
+      await expect(gate.run('reader', context, async () => item)).resolves.toBe(item);
+    }
+  });
+
   it('limits concurrency per client while letting another client use available capacity', async () => {
     const gate = createBffRequestGate({
       maxActive: 3,

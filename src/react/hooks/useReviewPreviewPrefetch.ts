@@ -35,6 +35,16 @@ export function useReviewPreviewPrefetch({
       abortPrefetches(prefetchControllersRef.current);
       return undefined;
     }
+    const retainedIds = new Set(activeReviewIds.slice(0, REVIEW_PREVIEW_PREFETCH_COUNT + 1));
+    const retainedKeys = new Set(items.filter((item) => retainedIds.has(item.id)).flatMap((item) => [
+      `open-graph:${item.link}`,
+      `liquipedia:${item.link}`,
+    ]));
+    for (const [key, controller] of prefetchControllersRef.current) {
+      if (retainedKeys.has(key)) continue;
+      controller.abort();
+      prefetchControllersRef.current.delete(key);
+    }
     if (nextItems.length === 0) return undefined;
 
     // Let the current card enqueue its request first. The shared preview queue
@@ -52,7 +62,7 @@ export function useReviewPreviewPrefetch({
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [enabled, nextItems, nsfwMode, previewUseCases]);
+  }, [activeReviewIds, enabled, items, nextItems, nsfwMode, previewUseCases]);
 
   useEffect(() => () => {
     abortPrefetches(prefetchControllersRef.current);

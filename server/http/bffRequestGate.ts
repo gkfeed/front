@@ -6,7 +6,8 @@ const DEFAULT_MAX_ACTIVE = 24;
 const DEFAULT_MAX_QUEUED = 32;
 const DEFAULT_MAX_ACTIVE_PER_CLIENT = 2;
 const DEFAULT_MAX_QUEUED_PER_CLIENT = 2;
-const DEFAULT_RATE_LIMIT = 30;
+// Review mode loads a new preview on every Keep/Delete, plus a few ahead.
+const DEFAULT_RATE_LIMIT = 300;
 const DEFAULT_RATE_WINDOW_MS = 60_000;
 const DEFAULT_MAX_TRACKED_CLIENTS = 10_000;
 
