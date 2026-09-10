@@ -44,6 +44,7 @@ export type ReviewSessionState = {
 export type ReviewSessionEvent =
   | { type: 'sessionChanged'; storageKey: string | null; restoredProgress: ReviewProgress | null }
   | { type: 'snapshotChanged'; items: FeedItem[] | undefined; isComplete: boolean }
+  | { type: 'syncFailed' }
   | { type: 'presentationChanged'; presentation: ReviewPresentation }
   | { type: 'keep'; id: number }
   | { type: 'remove'; id: number }
@@ -95,6 +96,8 @@ export function reviewSessionReducer(
     }
     case 'snapshotChanged':
       return reduceSnapshotChanged(state, event.items, event.isComplete);
+    case 'syncFailed':
+      return reduceSyncFailed(state);
     case 'presentationChanged':
       return reducePresentationChanged(state, event.presentation);
     case 'keep':
@@ -123,6 +126,23 @@ export function reviewSessionReducer(
         ? state
         : { ...state, progressToPersist: null };
   }
+}
+
+function reduceSyncFailed(state: ReviewSessionState): ReviewSessionState {
+  if (!state.snapshot) return state;
+
+  const projection = projectSnapshot(state.snapshot, state.presentation, state.deletions);
+  const progress = state.hasProgress
+    ? reconcileProgress(state.progress, projection.reviewableIds)
+    : createProgress(projection.reviewableIds);
+  return {
+    ...state,
+    isSyncComplete: false,
+    ...projection,
+    progress,
+    hasProgress: true,
+    progressToPersist: progress,
+  };
 }
 
 export function getActiveReviewIds(state: ReviewSessionState): number[] {

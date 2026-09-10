@@ -13,6 +13,7 @@ export function useReviewSession({
   loadedItems,
   username,
   isSyncComplete,
+  isSyncFailed,
   itemOrder,
   nsfwMode,
   hideTikTokItems,
@@ -21,6 +22,7 @@ export function useReviewSession({
   loadedItems: FeedItem[] | undefined;
   username: string | null;
   isSyncComplete: boolean;
+  isSyncFailed: boolean;
 }) {
   const storageKey = username ? getReviewStateStorageKey(username) : null;
   const presentation = useMemo(() => ({
@@ -51,6 +53,10 @@ export function useReviewSession({
   useEffect(() => {
     dispatch({ type: 'snapshotChanged', items: loadedItems, isComplete: isSyncComplete });
   }, [isSyncComplete, loadedItems, storageKey]);
+
+  useEffect(() => {
+    if (isSyncFailed) dispatch({ type: 'syncFailed' });
+  }, [isSyncFailed, storageKey]);
 
   useEffect(() => {
     dispatch({ type: 'presentationChanged', presentation });

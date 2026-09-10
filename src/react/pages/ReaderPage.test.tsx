@@ -240,6 +240,33 @@ describe('ReaderPage', () => {
     expect(screen.getByText('2 remaining')).toBeTruthy();
   });
 
+  it('queues received cursor cards when a later page fails', async () => {
+    let publishProgress: ((items: typeof ITEMS) => boolean | void) | undefined;
+    let failLoad: ((error: Error) => void) | undefined;
+    vi.mocked(getFeedItems).mockImplementation((_credentials, _limit, _signal, onProgress) => {
+      publishProgress = onProgress;
+      return new Promise((_resolve, reject) => {
+        failLoad = reject;
+      });
+    });
+    vi.mocked(deleteFeedItemById).mockResolvedValue();
+    renderReader();
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
+    act(() => publishProgress?.([ITEMS[0]]));
+    expect(await screen.findByText('First story')).toBeTruthy();
+
+    act(() => publishProgress?.(ITEMS));
+    expect(screen.queryByText('Second story')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    expect(await screen.findByText('You’ve reviewed everything')).toBeTruthy();
+
+    await act(async () => failLoad?.(new Error('Later page failed')));
+
+    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(screen.getByText('1 remaining')).toBeTruthy();
+  });
+
   it('keeps showing loading while an empty partial snapshot is still syncing', async () => {
     let publishProgress: ((items: typeof ITEMS) => boolean | void) | undefined;
     let finishLoad: ((items: typeof ITEMS) => void) | undefined;

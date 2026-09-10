@@ -61,6 +61,7 @@ export function useFeedReader({
     loadedItems,
     username: credentials?.username ?? null,
     isSyncComplete,
+    isSyncFailed: status === 'error',
     ...reviewPresentation,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);

@@ -65,6 +65,25 @@ describe('review session', () => {
     });
   });
 
+  it('adds received partial cards to the queue when synchronization fails', () => {
+    let state = startSession(null);
+    state = snapshot(state, [3], false);
+    state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
+    state = snapshot(state, [3, 2, 1], false);
+
+    expect(getActiveReviewIds(state)).toEqual([]);
+
+    state = reviewSessionReducer(state, { type: 'syncFailed' });
+
+    expect(getActiveReviewIds(state)).toEqual([2, 1]);
+    expect(state.progress).toEqual({
+      pendingIds: [2, 1],
+      revisitIds: [],
+      keptItemIds: new Set(),
+    });
+    expect(state.isSyncComplete).toBe(false);
+  });
+
   it('reset restores every card from the current snapshot without loading data', () => {
     let state = startSession(null);
     state = snapshot(state, [3, 2, 1], true);
