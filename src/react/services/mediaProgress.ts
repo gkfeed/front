@@ -33,8 +33,6 @@ export function writeMediaProgress(
 
   try {
     const storageKey = getProgressStorageKey(storagePrefix, mediaId);
-    const storedProgress = readStoredProgress(storage, storageKey);
-    if (storedProgress && position < storedProgress.position) return;
     if (
       position < MINIMUM_RESUME_SECONDS
       || position >= duration
