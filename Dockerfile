@@ -17,6 +17,7 @@ WORKDIR /usr/src/app
 RUN apk add --no-cache aria2
 
 COPY package*.json ./
+COPY server/vendor/parseuri ./server/vendor/parseuri
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /usr/src/app/dist ./dist
