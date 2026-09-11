@@ -10,7 +10,7 @@ import {
   type RequestExecutionContext,
 } from '../application/requestExecutionContext.js';
 import { getRequiredPreviewUrl } from './previewQuery.js';
-import { sendPreviewImage } from './previewResponse.js';
+import { sendPreviewImage, sendPreviewVideo } from './previewResponse.js';
 import { bffRequestGate, type BffRequestGate } from './bffRequestGate.js';
 import { bffResultCache, type BffResultCache } from './bffResultCache.js';
 
@@ -33,6 +33,7 @@ export async function routeBffRequest(
   clientId = 'detached',
   requestGate: BffRequestGate = bffRequestGate,
   resultCache: BffResultCache = bffResultCache,
+  requestRange?: string,
 ): Promise<boolean> {
   const requestContext = context ?? createDetachedRequestExecutionContext();
   if (requestUrl.pathname === '/bff/hltv-live') {
@@ -73,6 +74,18 @@ export async function routeBffRequest(
       ))
     ));
     sendPreviewImage(response, image);
+    return true;
+  }
+
+  if (requestUrl.pathname === '/bff/vk-video') {
+    const input = getRequiredPreviewUrl(requestUrl);
+    await requestGate.run(clientId, requestContext, async () => {
+      const source = await resultCache.load(`${requestUrl.pathname}:${input}`, () => (
+        useCases.vkVideoSource(input, requestContext)
+      ));
+      const video = await useCases.vkVideoStream(source, requestRange, requestContext);
+      await sendPreviewVideo(response, video);
+    });
     return true;
   }
 

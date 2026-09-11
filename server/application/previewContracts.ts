@@ -1,3 +1,5 @@
+import type { Readable } from 'node:stream';
+
 import type { TikTokPlaybackPreview } from '../../shared/tiktokContracts.js';
 import type {
   HltvLiveIndex,
@@ -20,6 +22,20 @@ export interface PreviewImage {
   contentType: string;
 }
 
+export interface VkVideoSource {
+  url: string;
+  referer: string;
+}
+
+export interface PreviewVideo {
+  body: Readable;
+  status: 200 | 206;
+  contentType: string;
+  acceptRanges: string;
+  contentLength?: string;
+  contentRange?: string;
+}
+
 export type PreviewUseCase<TResult> = (
   input: string,
   context: RequestExecutionContext,
@@ -33,6 +49,12 @@ export interface PreviewUseCases {
   tiktokComments: PreviewUseCase<TikTokCommentsPreview>;
   youtubeComments: PreviewUseCase<YoutubeCommentsPreview>;
   redditPreviewImage: PreviewUseCase<PreviewImage>;
+  vkVideoSource: PreviewUseCase<VkVideoSource>;
+  vkVideoStream: (
+    source: VkVideoSource,
+    range: string | undefined,
+    context: RequestExecutionContext,
+  ) => Promise<PreviewVideo>;
   hltvLiveIndex: (
     context: RequestExecutionContext,
   ) => Promise<HltvLiveIndex>;

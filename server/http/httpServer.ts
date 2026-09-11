@@ -39,6 +39,9 @@ export async function handleHttpRequest(
       context,
       undefined,
       request.socket.remoteAddress ?? 'unknown',
+      undefined,
+      undefined,
+      request.headers.range,
     )) return;
 
     if (requestUrl.pathname.startsWith('/api/')) {

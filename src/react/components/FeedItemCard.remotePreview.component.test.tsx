@@ -284,7 +284,7 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(player.getAttribute('allow')).toContain('fullscreen');
   });
 
-  it('renders a VK wall video discovered by the remote preview', async () => {
+  it('plays a VK wall video through the first-party proxy', async () => {
     getPreview.mockResolvedValue({
       url: 'https://vk.ru/wall-28905875_36129480',
       title: 'Рифмы и Панчи',
@@ -303,10 +303,12 @@ describe('FeedItemCard remote and feed previews', () => {
       text: 'ФИДБЭК ПО СВИДАНИЮ',
     }} />);
 
-    const player = await screen.findByTitle('Video preview for Рифмы и Панчи');
-    expect(player.tagName).toBe('IFRAME');
+    const player = await screen.findByLabelText('Video preview for Рифмы и Панчи');
+    expect(player.tagName).toBe('VIDEO');
     expect(player.getAttribute('src')).toBe(
-      'https://vk.ru/video_ext.php?oid=-28905875&id=456404323&hash=secret&autoplay=0&muted=0',
+      '/bff/vk-video?url=https%3A%2F%2Fvk.ru%2Fvideo_ext.php%3Foid%3D-28905875%26id%3D456404323%26hash%3Dsecret',
     );
+    expect(player.getAttribute('poster')).toBe('https://iv.okcdn.ru/getVideoPreview?id=123');
+    expect(document.querySelector('.reader-card--vk iframe')).toBeNull();
   });
 });

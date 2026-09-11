@@ -28,6 +28,11 @@ describe('server composition root', () => {
         body: new Uint8Array([1]),
         contentType: 'image/png',
       }),
+      fetchVkVideoSource: vi.fn().mockResolvedValue({
+        url: 'https://cdn.example/video.mp4',
+        referer: 'https://vk.ru/',
+      }),
+      fetchVkVideoStream: vi.fn(),
       fetchHltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: ['1'] }),
     };
     const limit = vi.fn((load: () => Promise<unknown>) => load()) as unknown as PreviewConcurrencyLimiter;

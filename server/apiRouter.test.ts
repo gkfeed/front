@@ -40,6 +40,11 @@ function createUseCases(): PreviewUseCases {
       body: new Uint8Array([1, 2]),
       contentType: 'image/jpeg',
     }),
+    vkVideoSource: vi.fn().mockResolvedValue({
+      url: 'https://cdn.example.com/video.mp4',
+      referer: 'https://vk.ru/',
+    }),
+    vkVideoStream: vi.fn(),
     hltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: ['2396948'] }),
   };
 }

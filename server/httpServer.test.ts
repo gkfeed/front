@@ -31,6 +31,9 @@ describe('HTTP server composition root', () => {
       expect.any(Object),
       undefined,
       '203.0.113.10',
+      undefined,
+      undefined,
+      undefined,
     );
     expect(serveFrontend).toHaveBeenCalledWith('/reader', false, response);
   });

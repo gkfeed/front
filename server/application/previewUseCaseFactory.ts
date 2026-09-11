@@ -17,6 +17,10 @@ export function createPreviewUseCases(
     tiktokComments: withLimit(ports.fetchTikTokComments, limit),
     youtubeComments: withLimit(ports.fetchYoutubeComments, limit),
     redditPreviewImage: withLimit(ports.fetchRedditPreviewImage, limit),
+    vkVideoSource: withLimit(ports.fetchVkVideoSource, limit),
+    vkVideoStream: (source, range, context) => (
+      limit(() => ports.fetchVkVideoStream(source, range, context))
+    ),
     hltvLiveIndex: (context) => limit(() => ports.fetchHltvLiveIndex(context)),
   };
 }

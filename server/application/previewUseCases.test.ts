@@ -28,6 +28,11 @@ describe('preview use cases', () => {
         body: new Uint8Array([1, 2, 3]),
         contentType: 'image/jpeg',
       }),
+      fetchVkVideoSource: vi.fn().mockResolvedValue({
+        url: 'https://cdn.example/video.mp4',
+        referer: 'https://vk.ru/',
+      }),
+      fetchVkVideoStream: vi.fn(),
       fetchHltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: ['1'] }),
     };
     const useCases = createPreviewUseCases(ports);
@@ -44,6 +49,8 @@ describe('preview use cases', () => {
       .resolves.toEqual({ type: 'youtube' });
     await expect(useCases.redditPreviewImage('https://reddit.com/image', context))
       .resolves.toEqual({ body: new Uint8Array([1, 2, 3]), contentType: 'image/jpeg' });
+    await expect(useCases.vkVideoSource('https://vk.ru/video_ext.php?oid=-1&id=2', context))
+      .resolves.toEqual({ url: 'https://cdn.example/video.mp4', referer: 'https://vk.ru/' });
     await expect(useCases.hltvLiveIndex(context)).resolves.toEqual({ eventIds: ['1'] });
 
     expect(ports.fetchArticle).toHaveBeenCalledWith('https://example.com/article', context);
@@ -52,6 +59,10 @@ describe('preview use cases', () => {
     expect(ports.fetchTikTokComments).toHaveBeenCalledWith('https://tiktok.com/video', context);
     expect(ports.fetchYoutubeComments).toHaveBeenCalledWith('https://youtube.com/watch?v=video', context);
     expect(ports.fetchRedditPreviewImage).toHaveBeenCalledWith('https://reddit.com/image', context);
+    expect(ports.fetchVkVideoSource).toHaveBeenCalledWith(
+      'https://vk.ru/video_ext.php?oid=-1&id=2',
+      context,
+    );
     expect(ports.fetchHltvLiveIndex).toHaveBeenCalledWith(context);
   });
 
@@ -64,6 +75,8 @@ describe('preview use cases', () => {
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
       fetchYoutubeComments: vi.fn().mockResolvedValue({}),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
+      fetchVkVideoSource: vi.fn().mockResolvedValue({ url: 'https://cdn.example/video.mp4', referer: 'https://vk.ru/' }),
+      fetchVkVideoStream: vi.fn(),
       fetchHltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: [] }),
     };
     const limit = vi.fn((load: () => Promise<unknown>) => load()) as unknown as PreviewConcurrencyLimiter;
@@ -75,8 +88,9 @@ describe('preview use cases', () => {
     await useCases.tiktokComments('https://tiktok.com/video', context);
     await useCases.youtubeComments('https://youtube.com/watch?v=video', context);
     await useCases.redditPreviewImage('https://reddit.com/image', context);
+    await useCases.vkVideoSource('https://vk.ru/video_ext.php?oid=-1&id=2', context);
     await useCases.hltvLiveIndex(context);
 
-    expect(limit).toHaveBeenCalledTimes(7);
+    expect(limit).toHaveBeenCalledTimes(8);
   });
 });

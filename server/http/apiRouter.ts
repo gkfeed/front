@@ -15,6 +15,16 @@ export function handleBffRequest(
   clientId = 'detached',
   requestGate: BffRequestGate = bffRequestGate,
   resultCache: BffResultCache = bffResultCache,
+  requestRange?: string,
 ): Promise<boolean> {
-  return routeBffRequest(requestUrl, response, context, useCases, clientId, requestGate, resultCache);
+  return routeBffRequest(
+    requestUrl,
+    response,
+    context,
+    useCases,
+    clientId,
+    requestGate,
+    resultCache,
+    requestRange,
+  );
 }

@@ -7,7 +7,9 @@ import type {
 import type { ArticlePreview } from '../../shared/articleContracts.js';
 import type {
   PreviewImage,
+  PreviewVideo,
   TikTokCommentsPreview,
+  VkVideoSource,
 } from './previewContracts.js';
 import type { YoutubeCommentsPreview } from '../../shared/youtubeContracts.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
@@ -25,6 +27,12 @@ export interface PreviewPorts {
   fetchTikTokComments: PreviewPort<TikTokCommentsPreview>;
   fetchYoutubeComments: PreviewPort<YoutubeCommentsPreview>;
   fetchRedditPreviewImage: PreviewPort<PreviewImage>;
+  fetchVkVideoSource: PreviewPort<VkVideoSource>;
+  fetchVkVideoStream: (
+    source: VkVideoSource,
+    range: string | undefined,
+    context: RequestExecutionContext,
+  ) => Promise<PreviewVideo>;
   fetchHltvLiveIndex: (
     context: RequestExecutionContext,
   ) => Promise<HltvLiveIndex>;

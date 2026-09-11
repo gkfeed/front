@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-test('renders a video recovered from a VK wall post in Reader fullscreen', async ({ page }) => {
+test('plays a VK wall video without loading its iframe challenge in Reader fullscreen', async ({ page }) => {
   const post = 'https://vk.com/wall-182864292_1336279';
   const video = 'https://vk.ru/video_ext.php?oid=-182864292&id=456257584&hash=2ad8edc0b31dd0da';
+  const poster = 'https://example.com/vk-video-poster.jpg';
   await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
     json: {
@@ -15,24 +16,23 @@ test('renders a video recovered from a VK wall post in Reader fullscreen', async
       url: post,
       title: 'STREAM INSIDE. Пост со стены.',
       description: null,
-      image: null,
+      image: poster,
       video,
       siteName: 'ВКонтакте',
       type: 'article',
       providerData: null,
     },
   }));
-  await page.route('https://vk.ru/video_ext.php?**', (route) => route.fulfill({
-    contentType: 'text/html', body: '<html><body>VK video player</body></html>',
-  }));
+  await page.route('**/bff/vk-video?**', () => new Promise(() => {}));
   await page.addInitScript(() => {
     localStorage.setItem('gkfeed.credentials', JSON.stringify({ username: 'automation', password: 'secret' }));
   });
   await page.setViewportSize({ width: 2048, height: 1152 });
   await page.goto('/reader');
-  const player = page.locator('.reader-card--vk iframe');
-  await expect(player).toHaveAttribute('src', `${video}&autoplay=0&muted=0`);
-  await expect(player).toBeVisible();
+  const player = page.locator('.reader-card--vk video');
+  await expect(player).toHaveAttribute('src', `/bff/vk-video?url=${encodeURIComponent(video)}`);
+  await expect(player).toHaveAttribute('poster', poster);
+  await expect(page.locator('.reader-card--vk iframe')).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
   await expect(player).toBeVisible();
   const playerBox = await player.boundingBox();

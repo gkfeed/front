@@ -13,7 +13,14 @@ export function getRemoteFeedItemPreview(
   if (preview.video) {
     const videoUrl = parseUrl(preview.video);
     const vkVideoPreview = videoUrl ? getVkVideoPreview(videoUrl, altTitle) : null;
-    if (vkVideoPreview) return vkVideoPreview;
+    if (videoUrl && vkVideoPreview) {
+      return {
+        src: `/bff/vk-video?url=${encodeURIComponent(videoUrl.href)}`,
+        alt: { kind: 'vk', title: altTitle || null },
+        type: 'video',
+        ...(preview.image ? { poster: preview.image } : {}),
+      };
+    }
     if (videoUrl && isRedditVideoUrl(videoUrl)) {
       return {
         src: videoUrl.href,
