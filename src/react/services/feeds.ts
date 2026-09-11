@@ -30,13 +30,9 @@ export async function getFeedById(
 }
 
 export async function deleteFeedItemById(id: number, credentials: Credentials | null): Promise<void> {
-  await request(endpoint('add_deleted_items'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authorization(requireCredentials(credentials)),
-    },
-    body: JSON.stringify({ itemIds: [id] }),
+  await request(endpoint(`items/${id}`), {
+    method: 'DELETE',
+    headers: authorization(requireCredentials(credentials)),
   });
 }
 

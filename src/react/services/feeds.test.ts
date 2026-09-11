@@ -249,14 +249,13 @@ describe('feed service', () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it('deletes a feed reader item using the API batch shape', async () => {
-    respondWithoutBody();
+  it('deletes a feed reader item using the API item route', async () => {
+    respondWithoutBody(204);
 
     await expect(deleteFeedItemById(10, CREDENTIALS)).resolves.toBeUndefined();
-    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/add_deleted_items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Basic w7xzZXI6cMOkc3M=' },
-      body: JSON.stringify({ itemIds: [10] }),
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/items/10', {
+      method: 'DELETE',
+      headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
       signal: expect.any(AbortSignal),
     });
   });

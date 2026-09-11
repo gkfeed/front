@@ -54,7 +54,7 @@ test.describe('Reader deletion recovery', () => {
         next_cursor: null,
       },
     }));
-    await page.route('**/api/v1/add_deleted_items', (route) => {
+    await page.route('**/api/v1/items/20', (route) => {
       deletionAttempts += 1;
       return route.fulfill({ status: 503, json: { error: 'offline' } });
     });
