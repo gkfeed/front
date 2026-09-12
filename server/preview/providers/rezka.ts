@@ -42,10 +42,24 @@ function isRezkaUrl(url: URL): boolean {
 }
 
 function getRezkaPreviewUrls(url: URL): URL[] {
-  if (normalizeHostname(url.hostname) !== 'hdrezka.me') return [url];
-  const mirrorUrl = new URL(url.href);
-  mirrorUrl.host = 'rezka.ag';
-  return [mirrorUrl, url];
+  const urls = normalizeHostname(url.hostname) === 'hdrezka.me'
+    ? [withRezkaHost(url, 'rezka.ag'), url]
+    : [url];
+  return [...urls, ...urls.flatMap((candidate) => getRezkaLatestUrl(candidate) ?? [])];
+}
+
+function withRezkaHost(url: URL, host: string): URL {
+  const result = new URL(url.href);
+  result.host = host;
+  return result;
+}
+
+function getRezkaLatestUrl(url: URL): URL | null {
+  if (!url.pathname.startsWith('/series/') || !url.pathname.endsWith('.html')
+    || url.pathname.endsWith('-latest.html')) return null;
+  const result = new URL(url.href);
+  result.pathname = result.pathname.replace(/\.html$/, '-latest.html');
+  return result;
 }
 
 export function parseRezkaOriginalCover(html: string, pageUrl: URL): string | null {

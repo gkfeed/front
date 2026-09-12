@@ -94,4 +94,34 @@ describe('Rezka OpenGraph provider', () => {
     });
     expect(requestPublicHttp).toHaveBeenCalledTimes(2);
   });
+
+  it('recovers a stale series URL through its latest-series page', async () => {
+    const requestedUrl = new URL(
+      'https://hdrezka.me/series/documentary/30365-formula-1-gonyat-chtoby-vyzhivat-2019.html',
+    );
+    requestPublicHttp.mockImplementation((url: URL) => {
+      if (!url.pathname.endsWith('-latest.html')) {
+        return Promise.resolve({
+          body: { destroy: vi.fn() },
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+          status: 500,
+          url,
+        });
+      }
+      return Promise.resolve(gzipHtmlResponse(
+        '<meta property="og:image" content="https://static.hdrezka.ac/covers/formula-1.jpg">',
+        url,
+      ));
+    });
+
+    await expect(fetchOpenGraph(requestedUrl.href)).resolves.toMatchObject({
+      image: 'https://static.hdrezka.ac/covers/formula-1.jpg',
+      url: 'https://rezka.ag/series/documentary/30365-formula-1-gonyat-chtoby-vyzhivat-2019-latest.html',
+    });
+    expect(requestPublicHttp.mock.calls.map(([url]) => url.href)).toEqual([
+      'https://rezka.ag/series/documentary/30365-formula-1-gonyat-chtoby-vyzhivat-2019.html',
+      requestedUrl.href,
+      'https://rezka.ag/series/documentary/30365-formula-1-gonyat-chtoby-vyzhivat-2019-latest.html',
+    ]);
+  });
 });
