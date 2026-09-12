@@ -67,7 +67,7 @@ test('shows Twitch and HLTV events from the signed-in feed history', async ({ pa
     );
   });
 
-  await page.goto('/live');
+  await page.goto('http://localhost:4300/live');
 
   await expect(page.getByRole('heading', { name: 'Streams' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Esports' })).toBeVisible();

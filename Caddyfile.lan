@@ -1,0 +1,8 @@
+{
+	skip_install_trust
+}
+
+gkfeed.local {
+	tls internal
+	reverse_proxy react:3000
+}

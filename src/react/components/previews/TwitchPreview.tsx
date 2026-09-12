@@ -3,6 +3,7 @@ import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
+import { getTwitchChannelUrl, getTwitchEmbedUrl } from '../../domain/twitchEmbed';
 import { TheaterPlayerShell } from './TheaterPlayerShell';
 import { useTheaterDialog } from './useTheaterDialog';
 
@@ -26,6 +27,7 @@ export function TwitchPreview({
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
+  const embedUrl = getTwitchEmbedUrl(channel);
 
   useEffect(() => {
     setIsPlayerOpen(false);
@@ -44,10 +46,11 @@ export function TwitchPreview({
     triggerRef,
   });
 
-  if (isPlayerOpen) {
+  if (isPlayerOpen && embedUrl) {
     return (
       <TwitchPlayer
         channel={channel}
+        embedUrl={embedUrl}
         isLive={isLive}
         isTheaterOpen={isTheaterOpen}
         shellRef={playerRef}
@@ -59,16 +62,26 @@ export function TwitchPreview({
   return (
     <>
       <div className="reader-card__preview-trigger-wrap">
-        <button
-          type="button"
-          ref={triggerRef}
-          className="reader-card__preview-trigger"
-          aria-label={t('preview.playTwitch', { channel })}
-          onClick={() => {
-            setIsPlayerOpen(true);
-            setIsTheaterOpen(true);
-          }}
-        />
+        {embedUrl ? (
+          <button
+            type="button"
+            ref={triggerRef}
+            className="reader-card__preview-trigger"
+            aria-label={t('preview.playTwitch', { channel })}
+            onClick={() => {
+              setIsPlayerOpen(true);
+              setIsTheaterOpen(true);
+            }}
+          />
+        ) : (
+          <a
+            className="reader-card__preview-trigger"
+            href={getTwitchChannelUrl(channel)}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={t('preview.playTwitch', { channel })}
+          />
+        )}
         {preview ? (
           <div className="reader-card__preview">
             <img
@@ -86,19 +99,15 @@ export function TwitchPreview({
 
 type TwitchPlayerProps = {
   channel: string;
+  embedUrl: string;
   isLive: boolean;
   isTheaterOpen: boolean;
   onToggleTheater: () => void;
   shellRef: RefObject<HTMLDivElement | null>;
 };
 
-function TwitchPlayer({ channel, isLive, isTheaterOpen, onToggleTheater, shellRef }: TwitchPlayerProps) {
+function TwitchPlayer({ channel, embedUrl, isLive, isTheaterOpen, onToggleTheater, shellRef }: TwitchPlayerProps) {
   const { t } = useTranslation();
-  const parameters = new URLSearchParams({
-    channel,
-    parent: window.location.hostname || 'localhost',
-    autoplay: 'true',
-  });
   const playerTitle = t('preview.twitchPlayer', { channel });
 
   return (
@@ -110,7 +119,7 @@ function TwitchPlayer({ channel, isLive, isTheaterOpen, onToggleTheater, shellRe
     >
       {isLive ? (
         <iframe
-          src={`https://player.twitch.tv/?${parameters}`}
+          src={embedUrl}
           title={playerTitle}
           allow="autoplay; fullscreen"
           allowFullScreen
