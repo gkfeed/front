@@ -11,12 +11,36 @@ function withPeriod(period: unknown): string {
   return active.replace(/"period": 4/, `"period": ${JSON.stringify(period)}`);
 }
 
+function withJsonLdGraph(html: string): string {
+  return html.replace(
+    /(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/,
+    (_match, opening: string, json: string, closing: string) => (
+      `${opening}${JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'WebSite', name: 'OneFootball' },
+          JSON.parse(json),
+        ],
+      })}${closing}`
+    ),
+  );
+}
+
 describe('OneFootball structured match state', () => {
   it('extracts the competition name and logo from the matched summary', () => {
     expect(parseOneFootballProviderData(fixture('scheduled'), url)?.snapshot).toMatchObject({
       competition: 'Premier League',
       competitionLogo: 'https://images.onefootball.com/icons/leagueColoredCompetition/128/9.png',
     });
+  });
+
+  it('finds the sports event in OneFootball JSON-LD graphs', () => {
+    expect(parseOneFootballProviderData(withJsonLdGraph(fixture('full-time')), url)?.snapshot)
+      .toMatchObject({
+        teams: [{ name: 'Barcelona' }, { name: 'Rayo Vallecano' }],
+        score: ['5', '2'],
+        normalizedStatus: 'over',
+      });
   });
 
   it.each([

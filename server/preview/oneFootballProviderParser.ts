@@ -81,7 +81,11 @@ function findSportsEvent(html: string): SportsEvent | null {
     const json = script.slice(openingTag.length, -'</script>'.length).trim();
     try {
       const value: unknown = JSON.parse(decodeHtml(json));
-      const values = Array.isArray(value) ? value : [value];
+      const values = Array.isArray(value)
+        ? value
+        : isRecord(value) && Array.isArray(value['@graph'])
+          ? value['@graph']
+          : [value];
       const event = values.find((entry): entry is SportsEvent => (
         Boolean(entry) && typeof entry === 'object' && (entry as SportsEvent)['@type'] === 'SportsEvent'
       ));
