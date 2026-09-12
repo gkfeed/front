@@ -1,0 +1,23 @@
+name: gkfeed-lan
+
+services:
+  react:
+    build: .
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2.11.4-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    depends_on:
+      - react
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.lan:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

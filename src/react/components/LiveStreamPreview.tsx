@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import '../../styles/live-stream-preview.css';
+import { getTwitchChannelUrl, getTwitchEmbedUrl } from '../domain/twitchEmbed';
 import type { LiveStreamViewModel } from '../features/live/liveViewModel';
 
 export type LiveStreamPreviewProps = {
@@ -12,18 +13,13 @@ export type LiveStreamPreviewProps = {
 export function LiveStreamPreview({ stream, isPlaying, onPlay }: LiveStreamPreviewProps) {
   const { t } = useTranslation();
   const { channel, preview } = stream;
+  const embedUrl = getTwitchEmbedUrl(channel);
 
-  if (isPlaying) {
-    const parameters = new URLSearchParams({
-      channel,
-      parent: window.location.hostname || 'localhost',
-      autoplay: 'true',
-    });
-
+  if (isPlaying && embedUrl) {
     return (
       <div className="live-preview live-preview--player">
         <iframe
-          src={`https://player.twitch.tv/?${parameters}`}
+          src={embedUrl}
           title={t('live.playerTitle', { channel })}
           allow="autoplay; fullscreen"
           allowFullScreen
@@ -32,15 +28,31 @@ export function LiveStreamPreview({ stream, isPlaying, onPlay }: LiveStreamPrevi
     );
   }
 
-  return (
+  const previewContent = (
+    <>
+      {preview ? <img src={preview.src} alt={t('live.previewAlt', { channel })} /> : null}
+      <span className="live-preview__play" aria-hidden="true">▶</span>
+    </>
+  );
+
+  return embedUrl ? (
     <button
       type="button"
       className="live-preview live-preview--trigger"
       aria-label={t('live.playOn', { channel })}
       onClick={onPlay}
     >
-      {preview ? <img src={preview.src} alt={t('live.previewAlt', { channel })} /> : null}
-      <span className="live-preview__play" aria-hidden="true">▶</span>
+      {previewContent}
     </button>
+  ) : (
+    <a
+      className="live-preview live-preview--trigger"
+      href={getTwitchChannelUrl(channel)}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={t('live.playOn', { channel })}
+    >
+      {previewContent}
+    </a>
   );
 }
