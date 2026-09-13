@@ -15,6 +15,7 @@ export const FEED_TYPE_OPTIONS = [
   { value: 'vk', label: 'VK', display: 'initials' },
   { value: 'yt', label: 'YouTube', display: 'icon' },
   { value: 'ranobe.me', label: 'Ranobe.me', display: 'initials' },
+  { value: 'author.today', label: 'Author.Today', display: 'initials' },
   { value: 'spoti', label: 'Spotify artist', display: 'initials' },
   { value: 'rezka', label: 'Rezka', display: 'initials' },
   { value: 'inst', label: 'Instagram', display: 'icon' },

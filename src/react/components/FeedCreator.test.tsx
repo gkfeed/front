@@ -98,6 +98,7 @@ describe('CreateFeedPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Type Web' }));
     expect(screen.getByRole('radiogroup', { name: 'Type' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'YouTube' }).getAttribute('value')).toBe('yt');
+    expect(screen.getByRole('radio', { name: 'Author.Today' }).getAttribute('value')).toBe('author.today');
     expect((screen.getByRole('radio', { name: 'Web' }) as HTMLInputElement).checked).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Add feed' }));
