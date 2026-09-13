@@ -30,6 +30,12 @@ export function isRezkaUrl(url: URL | null): boolean {
   return hostname === 'hdrezka.me' || hostname === 'rezka.ag';
 }
 
+export function isTempfileUrl(url: URL | null): boolean {
+  if (!url) return false;
+  const hostname = hostnameOf(url);
+  return hostname === 'tempfile.org' || hostname.endsWith('.tempfile.org');
+}
+
 export function isDirectImage(url: URL): boolean {
   return /\.(?:avif|gif|jpe?g|png|webp)$/i.test(url.pathname);
 }

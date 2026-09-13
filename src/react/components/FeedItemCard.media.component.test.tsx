@@ -196,6 +196,23 @@ describe('FeedItemCard media providers', () => {
     expect(screen.getByText('kozyrevaaaaaaa')).toBeTruthy();
   });
 
+  it('explains when an extensionless tempfile video cannot be loaded', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://tempfile.org/XGVf8L8Htm1/download',
+      title: 'inst: kozyrevaaaaaaa',
+    }} />);
+
+    fireEvent.error(screen.getByLabelText('Video preview for inst: kozyrevaaaaaaa'));
+
+    expect(screen.getByRole('alert').textContent).toContain('Video unavailable');
+    expect(screen.getByRole('alert').textContent).toContain(
+      'The temporary link has expired or the file is damaged.',
+    );
+    expect(screen.getByRole('link', { name: 'Open temporary link' }).getAttribute('href'))
+      .toBe('https://tempfile.org/XGVf8L8Htm1/download');
+  });
+
   it('plays an Instagram Reel from the extracted media URL', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.instagram.com/reel/AbC_123/?igsh=example',

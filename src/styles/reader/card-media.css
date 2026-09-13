@@ -73,6 +73,43 @@
   justify-self: center;
 }
 
+.reader-card__media-error {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 88px 24px 32px;
+  background: color-mix(in oklch, var(--color-card) 88%, #000);
+  color: var(--color-ink-strong);
+  text-align: center;
+}
+
+.reader-card__media-error > svg {
+  width: 42px;
+  height: 42px;
+  color: var(--color-danger, #ef7a99);
+}
+
+.reader-card__media-error > strong {
+  font-size: 1.05rem;
+}
+
+.reader-card__media-error > span {
+  max-width: 28ch;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.reader-card__media-error > a {
+  margin-top: 6px;
+  color: var(--color-link, var(--color-ink-strong));
+  font-weight: 800;
+  text-underline-offset: 3px;
+}
+
 .reader-card__preview--embed iframe {
   display: block;
   width: 100%;
