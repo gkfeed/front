@@ -196,7 +196,7 @@ describe('FeedItemCard media providers', () => {
     expect(screen.getByText('kozyrevaaaaaaa')).toBeTruthy();
   });
 
-  it('explains when an extensionless tempfile video cannot be loaded', () => {
+  it('falls back to an image when an extensionless tempfile URL is not a video', () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://tempfile.org/XGVf8L8Htm1/download',
@@ -205,7 +205,22 @@ describe('FeedItemCard media providers', () => {
 
     fireEvent.error(screen.getByLabelText('Video preview for inst: kozyrevaaaaaaa'));
 
-    expect(screen.getByRole('alert').textContent).toContain('Video unavailable');
+    const image = screen.getByAltText('Image from temporary link');
+    expect(image.getAttribute('src')).toBe('https://tempfile.org/XGVf8L8Htm1/download');
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('explains when a tempfile URL is neither a playable video nor an image', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://tempfile.org/XGVf8L8Htm1/download',
+      title: 'inst: kozyrevaaaaaaa',
+    }} />);
+
+    fireEvent.error(screen.getByLabelText('Video preview for inst: kozyrevaaaaaaa'));
+    fireEvent.error(screen.getByAltText('Image from temporary link'));
+
+    expect(screen.getByRole('alert').textContent).toContain('File unavailable');
     expect(screen.getByRole('alert').textContent).toContain(
       'The temporary link has expired or the file is damaged.',
     );

@@ -7,6 +7,7 @@ import { isTempfileUrl, parseUrl } from '../../domain/feedItemUrls';
 import { type SoundGestureLifecycle, useSoundGesture } from '../../hooks/useSoundGesture';
 
 type VideoPreview = LocalizedFeedItemPreview & { type: 'video' };
+type TempfileFallback = 'none' | 'image' | 'error';
 
 export function FeedItemVideoMedia({
   preview,
@@ -27,7 +28,7 @@ export function FeedItemVideoMedia({
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [tempfileFailed, setTempfileFailed] = useState(false);
+  const [tempfileFallback, setTempfileFallback] = useState<TempfileFallback>('none');
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasAutoAppliedDoubleSpeed = useRef(false);
   const localSoundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
@@ -37,7 +38,7 @@ export function FeedItemVideoMedia({
     setAspectRatio(null);
     setDuration(null);
     setPlaybackRate(1);
-    setTempfileFailed(false);
+    setTempfileFallback('none');
     hasAutoAppliedDoubleSpeed.current = false;
     if (videoRef.current) videoRef.current.playbackRate = 1;
   }, [preview.src]);
@@ -70,7 +71,7 @@ export function FeedItemVideoMedia({
 
   const handlePreviewError = () => {
     if (isTempfileUrl(parseUrl(preview.src))) {
-      setTempfileFailed(true);
+      setTempfileFallback('image');
       return;
     }
     onPreviewError();
@@ -84,13 +85,14 @@ export function FeedItemVideoMedia({
         aspectRatio ? 'reader-card__preview--video-adaptive' : '',
         isShortVideo ? 'reader-card__preview--short-video' : '',
         isTikTok ? 'reader-card__preview--tiktok' : '',
+        tempfileFallback === 'image' ? 'reader-card__preview--tempfile-image' : '',
       ].filter(Boolean).join(' ')}
       style={aspectRatio ? {
         '--reader-video-aspect-ratio': aspectRatio,
         aspectRatio,
       } as CSSProperties : undefined}
     >
-      {tempfileFailed ? (
+      {tempfileFallback === 'error' ? (
         <div className="reader-card__media-error" role="alert">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M12 3 2.8 19h18.4L12 3Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
@@ -103,6 +105,16 @@ export function FeedItemVideoMedia({
             {t('preview.openTemporaryLink')}
           </a>
         </div>
+      ) : tempfileFallback === 'image' ? (
+        <img
+          src={preview.src}
+          alt={t('preview.tempfileImage')}
+          onLoad={(event) => {
+            const { naturalHeight, naturalWidth } = event.currentTarget;
+            if (naturalHeight > 0 && naturalWidth > 0) setAspectRatio(naturalWidth / naturalHeight);
+          }}
+          onError={() => setTempfileFallback('error')}
+        />
       ) : (
         <video
           key={preview.src}
@@ -140,7 +152,7 @@ export function FeedItemVideoMedia({
           2×
         </button>
       ) : null}
-      {!tempfileFailed && soundGesture.showPrompt ? (
+      {tempfileFallback === 'none' && soundGesture.showPrompt ? (
         <button
           type="button"
           className="reader-card__sound-toggle"
