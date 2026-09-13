@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getReviewStateStorageKey } from '../hooks/reviewStateStorage';
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
@@ -13,6 +13,8 @@ vi.mock('../state/useAuth', () => {
   const auth = { credentials: { username: 'reader', password: 'secret' } };
   return { useAuth: () => auth };
 });
+
+beforeEach(stubLocalStorage);
 
 afterEach(() => {
   resetReaderPageTest();

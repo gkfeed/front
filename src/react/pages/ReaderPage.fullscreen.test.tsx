@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
+import { stubLocalStorage } from '../testUtils';
 import { READER_ITEMS as ITEMS, renderReader, resetReaderPageTest } from './ReaderPage.test.utils';
 
 vi.mock('../services/feeds');
@@ -13,6 +14,7 @@ vi.mock('../state/useAuth', () => {
   return { useAuth: () => auth };
 });
 
+beforeEach(stubLocalStorage);
 afterEach(resetReaderPageTest);
 
 describe('ReaderPage fullscreen', () => {
