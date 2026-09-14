@@ -141,6 +141,34 @@ describe('FeedItemCard Sasflix player', () => {
     ) ?? '{}')).toMatchObject({ position: 240, duration: 3600 });
   });
 
+  it.each([false, true])('opens the original when metadata has no video, clicked while loading: %s', async (clickedWhileLoading) => {
+    let resolvePreview!: (preview: Awaited<ReturnType<typeof getPreview>>) => void;
+    getPreview.mockReturnValue(new Promise((resolve) => {
+      resolvePreview = resolve;
+    }));
+    const url = 'https://sasflix.ru/documentary/630ffde7-febb-4f95-a490-6208d8770dea';
+
+    render(<FeedItemCard item={{ ...item, link: url }} />);
+    if (clickedWhileLoading) {
+      fireEvent.click(screen.getByRole('button', { name: 'Play Sasflix video Story' }));
+    }
+    await act(async () => resolvePreview({
+      url,
+      title: 'Story',
+      description: null,
+      image: 'https://sasflix.ru/api/image/cover',
+      video: null,
+      siteName: 'Сасфликс',
+      type: 'website',
+      providerData: null,
+    }));
+
+    expect(screen.getByRole('link', { name: 'Open sasflix.ru' }).getAttribute('href')).toBe(url);
+    expect(screen.queryByRole('button', { name: 'Play Sasflix video Story' })).toBeNull();
+    expect(screen.queryByTitle('Sasflix video player: Story')).toBeNull();
+    expect(document.documentElement.classList.contains('reader-theater-open')).toBe(false);
+  });
+
   it('restores the original link when Sasflix metadata cannot be loaded', async () => {
     getPreview.mockRejectedValue(new Error('preview unavailable'));
 

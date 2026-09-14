@@ -133,7 +133,7 @@ function reduceSyncFailed(state: ReviewSessionState): ReviewSessionState {
 
   const projection = projectSnapshot(state.snapshot, state.presentation, state.deletions);
   const progress = state.hasProgress
-    ? reconcileProgress(state.progress, projection.reviewableIds)
+    ? mergePartialProgress(state.progress, projection.reviewableIds)
     : createProgress(projection.reviewableIds);
   return {
     ...state,
@@ -340,6 +340,18 @@ function removeItem(progress: ReviewProgress, id: number): ReviewProgress {
     revisitIds: removeId(progress.revisitIds, id),
     keptItemIds,
   };
+}
+
+function mergePartialProgress(progress: ReviewProgress, orderedIds: number[]): ReviewProgress {
+  // Missing cards may be on pages that failed to load. Keep their decisions
+  // until a complete snapshot confirms which cards are still available.
+  const knownIds = new Set([
+    ...orderedIds,
+    ...progress.pendingIds,
+    ...progress.revisitIds,
+    ...progress.keptItemIds,
+  ]);
+  return reconcileProgress(progress, [...knownIds]);
 }
 
 function reconcileProgress(progress: ReviewProgress, orderedIds: number[]): ReviewProgress {

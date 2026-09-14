@@ -9,6 +9,7 @@ export function parseFeeds(value: unknown): Feed[] {
 
 export type FeedItemsPage = {
   items: FeedItem[];
+  rawItemCount: number;
   nextCursor?: number;
 };
 
@@ -30,6 +31,7 @@ export function parseFeedItemsPage(value: unknown): FeedItemsPage {
   }
 
   return {
+    rawItemCount: items.length,
     items: items
       .filter((item) => Boolean(item.link))
       .map((item) => ({

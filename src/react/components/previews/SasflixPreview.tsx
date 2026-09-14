@@ -82,7 +82,7 @@ export function SasflixPreview({
 
   return (
     <div className="reader-card__preview-trigger-wrap">
-      {videoSrc || previewStatus !== 'failed' ? (
+      {videoSrc || previewStatus === 'pending' ? (
         <button
           type="button"
           ref={triggerRef}

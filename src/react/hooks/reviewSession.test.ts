@@ -84,6 +84,33 @@ describe('review session', () => {
     expect(state.isSyncComplete).toBe(false);
   });
 
+  it('preserves unseen review decisions after a partial load fails and across a retry', () => {
+    let state = startSession({
+      pendingIds: [5, 4],
+      revisitIds: [3],
+      keptItemIds: new Set([3, 2, 1]),
+    });
+    state = snapshot(state, [6, 5], false);
+    state = reviewSessionReducer(state, { type: 'syncFailed' });
+
+    expect(getActiveReviewIds(state)).toEqual([6, 5]);
+    expect(state.progressToPersist).toEqual({
+      pendingIds: [6, 5, 4],
+      revisitIds: [3],
+      keptItemIds: new Set([3, 2, 1]),
+    });
+
+    // Reopening Reader restores the saved decisions before retrying the load.
+    state = startSession(state.progressToPersist);
+    state = snapshot(state, [6, 5, 4, 3, 2], true);
+
+    expect(state.progress).toEqual({
+      pendingIds: [6, 5, 4],
+      revisitIds: [3],
+      keptItemIds: new Set([3, 2]),
+    });
+  });
+
   it('reset restores every card from the current snapshot without loading data', () => {
     let state = startSession(null);
     state = snapshot(state, [3, 2, 1], true);

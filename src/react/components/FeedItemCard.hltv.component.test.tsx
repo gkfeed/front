@@ -531,6 +531,69 @@ describe('FeedItemCard HLTV previews', () => {
     expect(screen.queryByAltText(/HLTV/)).toBeNull();
   });
 
+  it('refreshes a scheduled match through its live and final scores', async () => {
+    vi.useFakeTimers();
+    const preview = {
+      url: 'https://www.hltv.org/matches/2396006/og-vs-spirit-event',
+      title: 'OG vs Spirit',
+      description: null,
+      image: null,
+      video: null,
+      siteName: 'HLTV.org',
+      type: 'website',
+      providerData: {
+        provider: 'hltv' as const,
+        snapshot: {
+          startsAt: new Date(Date.now() + 10_000).toISOString(),
+          status: 'scheduled' as const,
+          teams: [
+            { name: 'OG', logo: null },
+            { name: 'Spirit', logo: null },
+          ] as [{ name: string; logo: null }, { name: string; logo: null }],
+          score: null,
+          currentMap: null,
+          completedMaps: null,
+          playerStats: null,
+          teamSides: null,
+        },
+      },
+    };
+    getPreview.mockResolvedValue(preview);
+
+    render(<FeedItemCard item={{ ...item, link: preview.url }} />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText(/^Starts in /)).toBeTruthy();
+
+    getPreview.mockResolvedValue({
+      ...preview,
+      providerData: {
+        ...preview.providerData,
+        snapshot: { ...preview.providerData.snapshot, status: 'live', score: ['0', '0'] },
+      },
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+
+    expect(screen.getByRole('link', { name: 'OG versus Spirit, live score 0 to 0' })).toBeTruthy();
+    expect(screen.queryByText(/^Starts in /)).toBeNull();
+
+    getPreview.mockResolvedValue({
+      ...preview,
+      providerData: {
+        ...preview.providerData,
+        snapshot: { ...preview.providerData.snapshot, status: 'over', score: ['1', '2'] },
+      },
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+
+    expect(screen.getByRole('link', { name: 'OG versus Spirit, final score 1 to 2' })).toBeTruthy();
+    const requestsAtCompletion = getPreview.mock.calls.length;
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    expect(getPreview).toHaveBeenCalledTimes(requestsAtCompletion);
+  });
+
   it('shows and refreshes the score while an HLTV match is live', async () => {
     vi.useFakeTimers();
     const basePreview = {

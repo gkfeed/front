@@ -180,6 +180,27 @@ describe('feed service', () => {
     );
   });
 
+  it.each([undefined, 1])('follows cursors after a page with no usable links, limit %s', async (limit) => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({
+        items: [{ id: 10, feed_id: 2, link: '', title: 'Missing link', text: '' }],
+        next_cursor: 10,
+      }))
+      .mockResolvedValueOnce(Response.json({
+        items: [{ id: 9, feed_id: 2, link: 'https://example.com/9', title: 'Nine', text: '' }],
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getFeedItems(CREDENTIALS, limit)).resolves.toEqual([
+      { id: 9, feedId: 2, link: 'https://example.com/9', title: 'Nine', text: '' },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `https://feed.gws.freemyip.com/api/v1/get_items?limit=${limit ?? 100}&cursor=10`,
+      expect.any(Object),
+    );
+  });
+
   it('applies the request timeout to each item page', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('fetch', vi.fn((_input: RequestInfo | URL, init?: RequestInit) => (

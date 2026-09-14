@@ -51,8 +51,8 @@ export async function getFeedItems(
     }
 
     // A broken upstream can keep returning empty pages with new cursors.
-    // There is no useful progress to make once a page contains no items.
-    if (page.items.length === 0 || page.nextCursor === undefined) break;
+    // Items filtered out for missing links still count as upstream progress.
+    if (page.rawItemCount === 0 || page.nextCursor === undefined) break;
     if (seenCursors.has(page.nextCursor)) throw new Error('Invalid API response');
     seenCursors.add(page.nextCursor);
     cursor = page.nextCursor;
