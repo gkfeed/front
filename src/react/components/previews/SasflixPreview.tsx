@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
+import type { HlsConfig } from 'hls.js';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
@@ -7,6 +8,10 @@ import { readSasflixProgress, writeSasflixProgress } from '../../services/sasfli
 import { TheaterPlayerShell } from './TheaterPlayerShell';
 import { useHlsVideo } from './useHlsVideo';
 import { useTheaterDialog } from './useTheaterDialog';
+
+const SASFLIX_HLS_CONFIG = {
+  capLevelToPlayerSize: true,
+} satisfies Partial<HlsConfig>;
 
 type SasflixPreviewProps = {
   href: string;
@@ -147,7 +152,8 @@ function SasflixPlayer({
   const durationRef = useRef<number | null>(null);
   const lastPersistedAtRef = useRef(0);
   const playerTitle = t('preview.sasflixPlayer', { title });
-  useHlsVideo({ src: videoSrc, videoRef });
+  const proxiedVideoSrc = `/bff/sasflix-media?url=${encodeURIComponent(videoSrc)}`;
+  useHlsVideo({ config: SASFLIX_HLS_CONFIG, src: proxiedVideoSrc, videoRef });
 
   useEffect(() => {
     const video = videoRef.current;

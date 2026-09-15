@@ -28,6 +28,7 @@ describe('preview use cases', () => {
         body: new Uint8Array([1, 2, 3]),
         contentType: 'image/jpeg',
       }),
+      fetchSasflixMedia: vi.fn(),
       fetchVkVideoSource: vi.fn().mockResolvedValue({
         url: 'https://cdn.example/video.mp4',
         referer: 'https://vk.ru/',
@@ -75,6 +76,7 @@ describe('preview use cases', () => {
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
       fetchYoutubeComments: vi.fn().mockResolvedValue({}),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
+      fetchSasflixMedia: vi.fn(),
       fetchVkVideoSource: vi.fn().mockResolvedValue({ url: 'https://cdn.example/video.mp4', referer: 'https://vk.ru/' }),
       fetchVkVideoStream: vi.fn(),
       fetchHltvLiveIndex: vi.fn().mockResolvedValue({ eventIds: [] }),

@@ -11,8 +11,21 @@ import {
 } from '../application/requestExecutionContext.js';
 import { getRequiredPreviewUrl } from './previewQuery.js';
 import { sendPreviewImage, sendPreviewVideo } from './previewResponse.js';
-import { bffRequestGate, type BffRequestGate } from './bffRequestGate.js';
+import {
+  bffRequestGate,
+  createBffRequestGate,
+  type BffRequestGate,
+} from './bffRequestGate.js';
 import { bffResultCache, type BffResultCache } from './bffResultCache.js';
+
+// HLS changes quality by overlapping playlist and byte-range requests. Keep
+// these transfers isolated from metadata previews and allow that short burst.
+const sasflixMediaRequestGate = createBffRequestGate({
+  maxActive: 32,
+  maxActivePerClient: 8,
+  maxQueuedPerClient: 8,
+  rateLimit: 600,
+});
 
 type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments'>;
 
@@ -85,6 +98,15 @@ export async function routeBffRequest(
       ));
       const video = await useCases.vkVideoStream(source, requestRange, requestContext);
       await sendPreviewVideo(response, video);
+    });
+    return true;
+  }
+
+  if (requestUrl.pathname === '/bff/sasflix-media') {
+    const input = getRequiredPreviewUrl(requestUrl);
+    await sasflixMediaRequestGate.run(clientId, requestContext, async () => {
+      const media = await useCases.sasflixMedia(input, requestRange, requestContext);
+      await sendPreviewVideo(response, media);
     });
     return true;
   }

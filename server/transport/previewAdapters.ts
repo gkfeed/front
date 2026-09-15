@@ -8,6 +8,7 @@ import { fetchArticle } from '../preview/article.js';
 import type { PreviewPorts } from '../application/previewPorts.js';
 import { fetchHltvLiveIndex } from '../preview/hltvLiveIndex.js';
 import { fetchVkVideoSource, fetchVkVideoStream } from '../preview/vkVideo.js';
+import { fetchSasflixMedia } from '../preview/sasflixMedia.js';
 
 export const previewProviderPorts: PreviewPorts = {
   fetchArticle,
@@ -17,6 +18,7 @@ export const previewProviderPorts: PreviewPorts = {
   fetchTikTokComments,
   fetchYoutubeComments,
   fetchRedditPreviewImage,
+  fetchSasflixMedia,
   fetchVkVideoSource,
   fetchVkVideoStream,
   fetchHltvLiveIndex,

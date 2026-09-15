@@ -11,6 +11,7 @@ const PREVIEW_HTTP_MAPPINGS: Record<string, PreviewHttpMapping> = {
   invalid_url: { status: 400, code: 'invalid_url' },
   invalid_tiktok_url: { status: 400, code: 'invalid_tiktok_url' },
   invalid_reddit_preview: { status: 400, code: 'invalid_reddit_preview' },
+  invalid_sasflix_media: { status: 400, code: 'invalid_sasflix_media' },
   invalid_vk_video: { status: 400, code: 'invalid_vk_video' },
   invalid_range: { status: 400, code: 'invalid_range' },
   invalid_liquipedia_match: { status: 400, code: 'invalid_liquipedia_match' },

@@ -27,6 +27,11 @@ export interface PreviewPorts {
   fetchTikTokComments: PreviewPort<TikTokCommentsPreview>;
   fetchYoutubeComments: PreviewPort<YoutubeCommentsPreview>;
   fetchRedditPreviewImage: PreviewPort<PreviewImage>;
+  fetchSasflixMedia: (
+    input: string,
+    range: string | undefined,
+    context: RequestExecutionContext,
+  ) => Promise<PreviewVideo>;
   fetchVkVideoSource: PreviewPort<VkVideoSource>;
   fetchVkVideoStream: (
     source: VkVideoSource,

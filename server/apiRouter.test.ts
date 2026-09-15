@@ -40,6 +40,7 @@ function createUseCases(): PreviewUseCases {
       body: new Uint8Array([1, 2]),
       contentType: 'image/jpeg',
     }),
+    sasflixMedia: vi.fn(),
     vkVideoSource: vi.fn().mockResolvedValue({
       url: 'https://cdn.example.com/video.mp4',
       referer: 'https://vk.ru/',

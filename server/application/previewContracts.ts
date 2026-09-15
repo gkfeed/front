@@ -49,6 +49,11 @@ export interface PreviewUseCases {
   tiktokComments: PreviewUseCase<TikTokCommentsPreview>;
   youtubeComments: PreviewUseCase<YoutubeCommentsPreview>;
   redditPreviewImage: PreviewUseCase<PreviewImage>;
+  sasflixMedia: (
+    input: string,
+    range: string | undefined,
+    context: RequestExecutionContext,
+  ) => Promise<PreviewVideo>;
   vkVideoSource: PreviewUseCase<VkVideoSource>;
   vkVideoStream: (
     source: VkVideoSource,
