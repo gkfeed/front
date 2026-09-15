@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { TheaterPlayerShell } from './TheaterPlayerShell';
+import { TwitchChat } from './TwitchChat';
 import { useTheaterDialog } from './useTheaterDialog';
 
 type TwitchPreviewProps = {
@@ -94,6 +95,7 @@ type TwitchPlayerProps = {
 
 function TwitchPlayer({ channel, isLive, isTheaterOpen, onToggleTheater, shellRef }: TwitchPlayerProps) {
   const { t } = useTranslation();
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const parameters = new URLSearchParams({
     channel,
     parent: window.location.hostname || 'localhost',
@@ -107,6 +109,20 @@ function TwitchPlayer({ channel, isLive, isTheaterOpen, onToggleTheater, shellRe
       isTheaterOpen={isTheaterOpen}
       onToggleTheater={onToggleTheater}
       shellRef={shellRef}
+      aside={isChatOpen && isLive ? <TwitchChat channel={channel} /> : undefined}
+      toolbar={isLive ? (
+        <button
+          type="button"
+          className="reader-card__comments-toggle"
+          aria-label={isChatOpen ? t('twitchChat.hide') : t('twitchChat.show')}
+          aria-pressed={isChatOpen}
+          aria-controls={`twitch-chat-${channel}`}
+          onClick={() => setIsChatOpen((value) => !value)}
+        >
+          <span aria-hidden="true">☰</span>
+          {t('twitchChat.chat')}
+        </button>
+      ) : undefined}
     >
       {isLive ? (
         <iframe

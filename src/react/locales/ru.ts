@@ -235,6 +235,11 @@ const ru = {
     loadError: 'Не удалось загрузить комментарии YouTube.',
     viewOnYoutube: 'Посмотреть комментарии на YouTube',
   },
+  twitchChat: {
+    chat: 'Чат',
+    show: 'Показать чат Twitch',
+    hide: 'Скрыть чат Twitch',
+  },
   preview: {
     doubleSpeed: 'Удвоенная скорость воспроизведения',
     previousSlide: 'Предыдущий слайд',
@@ -274,6 +279,7 @@ const ru = {
     exitTheaterShort: 'Выйти из театрального режима',
     youtubePlayer: 'Видеоплеер YouTube',
     twitchPlayer: 'Плеер Twitch: {{channel}}',
+    twitchChat: 'Чат Twitch: {{channel}}',
     matreshkaPlayer: 'Плеер Матрешки: {{title}}',
     sasflixPlayer: 'Плеер Сасфликса: {{title}}',
     hidden: 'Скрыто настройками',

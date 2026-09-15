@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 import { TwitchPreview } from './previews/TwitchPreview';
+import { applyTheme } from '../theme';
 
 describe('FeedItemCard Twitch player', () => {
   it('shows the channel separately from the stream title and highlights mentions and commands', () => {
@@ -51,6 +52,16 @@ describe('FeedItemCard Twitch player', () => {
     expect(player.getAttribute('src'))
       .toBe('https://player.twitch.tv/?channel=some_channel&parent=localhost&autoplay=true');
     expect(player.getAttribute('allow')).toContain('autoplay');
+    expect(screen.queryByTitle('some_channel Twitch chat')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Show Twitch chat' }));
+    const chat = screen.getByTitle('some_channel Twitch chat');
+    expect(chat.tagName).toBe('IFRAME');
+    expect(chat.getAttribute('src'))
+      .toBe('https://www.twitch.tv/embed/some_channel/chat?parent=localhost');
+    expect(screen.getByRole('button', { name: 'Hide Twitch chat' }).getAttribute('aria-pressed'))
+      .toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Hide Twitch chat' }));
+    expect(screen.queryByTitle('some_channel Twitch chat')).toBeNull();
     expect(screen.getByRole('button', { name: 'Exit theater mode' }).getAttribute('aria-pressed'))
       .toBe('true');
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
@@ -65,10 +76,12 @@ describe('FeedItemCard Twitch player', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Play some_channel on Twitch' }));
     const player = screen.getByTitle('some_channel Twitch player');
+    fireEvent.click(screen.getByRole('button', { name: 'Show Twitch chat' }));
 
     fireEvent.keyDown(window, { key: 'Escape' });
 
     expect(screen.getByTitle('some_channel Twitch player')).toBe(player);
+    expect(screen.getByTitle('some_channel Twitch chat')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Enter theater mode' })).toBeTruthy();
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(false);
   });
@@ -78,6 +91,7 @@ describe('FeedItemCard Twitch player', () => {
       <TwitchPreview channel="some_channel" preview={null} onPreviewError={() => {}} isLive />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Play some_channel on Twitch' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show Twitch chat' }));
 
     view.rerender(
       <TwitchPreview channel="some_channel" preview={null} onPreviewError={() => {}} isLive={false} />,
@@ -86,5 +100,21 @@ describe('FeedItemCard Twitch player', () => {
     expect(screen.getByRole('dialog', { name: 'some_channel Twitch player' })).toBeTruthy();
     expect(screen.getByRole('status').textContent).toBe('Stream ended');
     expect(screen.queryByTitle('some_channel Twitch player')).toBeNull();
+    expect(screen.queryByTitle('some_channel Twitch chat')).toBeNull();
+  });
+
+  it('updates the Twitch chat theme when the app theme changes', async () => {
+    applyTheme('dark');
+    render(<TwitchPreview channel="some_channel" preview={null} onPreviewError={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play some_channel on Twitch' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show Twitch chat' }));
+
+    expect(screen.getByTitle('some_channel Twitch chat').getAttribute('src'))
+      .toBe('https://www.twitch.tv/embed/some_channel/chat?parent=localhost&darkpopout=true');
+
+    act(() => applyTheme('light'));
+
+    await waitFor(() => expect(screen.getByTitle('some_channel Twitch chat').getAttribute('src'))
+      .toBe('https://www.twitch.tv/embed/some_channel/chat?parent=localhost'));
   });
 });

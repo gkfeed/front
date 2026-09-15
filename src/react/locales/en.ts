@@ -229,6 +229,11 @@ const en = {
     loadError: 'Could not load YouTube comments.',
     viewOnYoutube: 'View comments on YouTube',
   },
+  twitchChat: {
+    chat: 'Chat',
+    show: 'Show Twitch chat',
+    hide: 'Hide Twitch chat',
+  },
   preview: {
     doubleSpeed: 'Double playback speed',
     previousSlide: 'Previous slide',
@@ -268,6 +273,7 @@ const en = {
     exitTheaterShort: 'Exit theater',
     youtubePlayer: 'YouTube video player',
     twitchPlayer: '{{channel}} Twitch player',
+    twitchChat: '{{channel}} Twitch chat',
     matreshkaPlayer: 'Matreshka video player: {{title}}',
     sasflixPlayer: 'Sasflix video player: {{title}}',
     hidden: 'Hidden by settings',

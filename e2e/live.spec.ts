@@ -60,6 +60,10 @@ test('shows Twitch and HLTV events from the signed-in feed history', async ({ pa
     contentType: 'text/html',
     body: '<!doctype html><title>Twitch player</title>',
   }));
+  await page.route('https://www.twitch.tv/embed/**/chat?**', (route) => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><title>Twitch chat</title>',
+  }));
   await page.addInitScript(() => {
     window.localStorage.setItem(
       'gkfeed.credentials',
@@ -77,4 +81,8 @@ test('shows Twitch and HLTV events from the signed-in feed history', async ({ pa
 
   await page.getByRole('button', { name: 'Play some_channel on Twitch' }).click();
   await expect(page.getByRole('dialog', { name: 'some_channel Twitch player' })).toBeVisible();
+  await expect(page.getByTitle('some_channel Twitch chat')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Show Twitch chat' }).click();
+  await expect(page.getByTitle('some_channel Twitch chat')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Hide Twitch chat' })).toHaveAttribute('aria-pressed', 'true');
 });
