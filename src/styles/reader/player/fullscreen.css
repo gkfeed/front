@@ -47,17 +47,20 @@
      of the fullscreen card row. */
   .reader__item--fullscreen.reader__item--card-flow
   > .reader-card--player:has(> .reader-card__preview-trigger-wrap) {
-    height: auto;
+    height: 100%;
     align-self: center;
-    grid-template-rows: auto auto;
+    grid-template-rows: minmax(0, 1fr) auto;
   }
 
   .reader__item--fullscreen.reader__item--card-flow
   > .reader-card--player > .reader-card__preview-trigger-wrap {
     width: 100%;
+    max-width: 100%;
     height: auto;
+    min-height: 0;
     aspect-ratio: 16 / 9;
     align-self: center;
+    justify-self: center;
   }
 
   .reader__item--fullscreen.reader__item--card-flow

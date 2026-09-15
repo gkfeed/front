@@ -13,6 +13,12 @@
     justify-self: center;
   }
 
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card > .reader-card__copy):not(
+    :has(> .reader-card :is(.reader-card__preview, .reader-card__preview-placeholder))
+  ) {
+    height: fit-content;
+  }
+
   .reader__item--fullscreen.reader__item--card-flow > .reader-card {
     min-width: 0;
     min-height: 0;

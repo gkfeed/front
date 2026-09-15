@@ -37,12 +37,14 @@ test('TikTok player preference selects preview, controls speed, and falls back t
     element.dispatchEvent(new Event('loadedmetadata'));
   });
   const speed = page.getByRole('button', { name: 'Double playback speed' });
-  await speed.click();
   await expect(speed).toHaveAttribute('aria-pressed', 'true');
-  expect(await video.evaluate((element: HTMLVideoElement) => element.playbackRate)).toBe(2);
+  await expect(video).toHaveJSProperty('playbackRate', 2);
   await speed.click();
   await expect(speed).toHaveAttribute('aria-pressed', 'false');
-  expect(await video.evaluate((element: HTMLVideoElement) => element.playbackRate)).toBe(1);
+  await expect(video).toHaveJSProperty('playbackRate', 1);
+  await speed.click();
+  await expect(speed).toHaveAttribute('aria-pressed', 'true');
+  await expect(video).toHaveJSProperty('playbackRate', 2);
   await video.dispatchEvent('error');
   await expect(page.locator('iframe[src*="tiktok.com/player"]')).toHaveCount(1);
   await expect(video).toHaveCount(0);
