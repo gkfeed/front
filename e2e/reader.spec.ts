@@ -144,12 +144,20 @@ test.describe('Reader fullscreen with theater mode', () => {
     await expectYoutubePlayerToBeSixteenByNine(page);
   });
 
-  test('shows a fullscreen YouTube thumbnail without letterbox bars', async ({ page }) => {
+  test('fills the fullscreen card with a low-resolution YouTube fallback', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
+    await page.route('https://i.ytimg.com/vi/**/maxresdefault.jpg', (route) => route.fulfill({
+      status: 404,
+    }));
+    await page.route('https://i.ytimg.com/vi/**/mqdefault.jpg', (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="#cba6f7"/></svg>',
+    }));
     await page.goto('/reader');
     const preview = page.locator('.reader-card--youtube .reader-card__preview');
     const image = preview.locator('img');
     await expect(image).toBeVisible();
+    await expect(image).toHaveAttribute('src', /\/mqdefault\.jpg$/);
 
     await page.evaluate(() => {
       document.documentElement.dataset.readerFullscreen = 'true';
@@ -159,13 +167,16 @@ test.describe('Reader fullscreen with theater mode', () => {
 
     const previewBox = await preview.boundingBox();
     const imageBox = await image.boundingBox();
+    const cardBox = await page.locator('.reader-card--youtube').boundingBox();
     const actionsBox = await page.locator('.reader__actions').boundingBox();
     expect(previewBox).not.toBeNull();
     expect(imageBox).not.toBeNull();
+    expect(cardBox).not.toBeNull();
     expect(actionsBox).not.toBeNull();
     expect(Math.abs(previewBox!.width / previewBox!.height - 16 / 9)).toBeLessThan(0.01);
     expect(Math.abs(previewBox!.width - imageBox!.width)).toBeLessThan(2);
     expect(Math.abs(previewBox!.height - imageBox!.height)).toBeLessThan(2);
+    expect(previewBox!.width).toBeGreaterThan(cardBox!.width * 0.7);
     expect(previewBox!.y + previewBox!.height).toBeLessThanOrEqual(actionsBox!.y);
   });
 });

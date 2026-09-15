@@ -7,7 +7,9 @@ export function getYoutubePreview(url: URL, title: string): FeedItemPreview | nu
 
   return {
     src: `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/maxresdefault.jpg`,
-    fallbackSrc: `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`,
+    // hqdefault is 4:3 and letterboxes widescreen videos. mqdefault keeps the
+    // same 16:9 shape as the player when maxresdefault is unavailable.
+    fallbackSrc: `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`,
     alt: { kind: 'youtube', title: title || null },
   };
 }

@@ -70,7 +70,7 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(getPreview).not.toHaveBeenCalled();
   });
 
-  it('uses a max-resolution YouTube thumbnail with a reliable fallback', () => {
+  it('uses a max-resolution YouTube thumbnail with a 16:9 fallback', () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://www.youtube.com/watch?v=abc123xyz',
@@ -82,7 +82,7 @@ describe('FeedItemCard YouTube and general states', () => {
     fireEvent.error(image);
 
     expect(screen.getByAltText('Preview for Story').getAttribute('src'))
-      .toBe('https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg');
+      .toBe('https://i.ytimg.com/vi/abc123xyz/mqdefault.jpg');
   });
 
   it('rejects YouTube placeholder images that load successfully', () => {
@@ -100,7 +100,7 @@ describe('FeedItemCard YouTube and general states', () => {
 
     const fallbackImage = screen.getByAltText('Preview for Story');
     expect(fallbackImage.getAttribute('src'))
-      .toBe('https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg');
+      .toBe('https://i.ytimg.com/vi/abc123xyz/mqdefault.jpg');
     Object.defineProperties(fallbackImage, {
       naturalWidth: { configurable: true, value: 120 },
       naturalHeight: { configurable: true, value: 90 },

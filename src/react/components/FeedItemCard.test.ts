@@ -36,11 +36,11 @@ describe('getFeedItemPreview', () => {
   it('builds thumbnails for common YouTube URLs', () => {
     expect(getFeedItemPreview(item({ link: 'https://youtu.be/abc123xyz' }))).toMatchObject({
       src: 'https://i.ytimg.com/vi/abc123xyz/maxresdefault.jpg',
-      fallbackSrc: 'https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg',
+      fallbackSrc: 'https://i.ytimg.com/vi/abc123xyz/mqdefault.jpg',
     });
     expect(getFeedItemPreview(item({ link: 'https://www.youtube.com/shorts/xyz987abc' }))).toMatchObject({
       src: 'https://i.ytimg.com/vi/xyz987abc/maxresdefault.jpg',
-      fallbackSrc: 'https://i.ytimg.com/vi/xyz987abc/hqdefault.jpg',
+      fallbackSrc: 'https://i.ytimg.com/vi/xyz987abc/mqdefault.jpg',
     });
   });
 
