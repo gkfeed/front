@@ -7,6 +7,85 @@ import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 
 describe('FeedItemCard HLTV previews', () => {
+  it.each(['viewport', 'page', 'page without observer'])(
+    'pauses polling and refreshes immediately on return: %s',
+    async (scenario) => {
+      vi.useFakeTimers();
+      let intersect: (visible: boolean) => void = () => undefined;
+      const disconnect = vi.fn();
+      if (scenario !== 'page without observer') {
+        vi.stubGlobal('IntersectionObserver', class {
+          constructor(callback: IntersectionObserverCallback) {
+            intersect = (visible) => callback(
+              [{ isIntersecting: visible } as IntersectionObserverEntry],
+              {} as IntersectionObserver,
+            );
+          }
+          observe() {}
+          disconnect = disconnect;
+        });
+      } else {
+        vi.stubGlobal('IntersectionObserver', undefined);
+      }
+      const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+      const preview = {
+        url: 'https://www.hltv.org/matches/2396006/og-vs-spirit-event',
+        title: 'OG vs Spirit',
+        description: null,
+        image: null,
+        video: null,
+        siteName: 'HLTV.org',
+        type: 'website',
+        providerData: {
+          provider: 'hltv' as const,
+          snapshot: {
+            startsAt: null,
+            status: 'live' as const,
+            teams: [{ name: 'OG', logo: null }, { name: 'Spirit', logo: null }] as [
+              { name: string; logo: null }, { name: string; logo: null },
+            ],
+            score: ['1', '0'] as [string, string],
+            currentMap: null,
+            completedMaps: null,
+            playerStats: null,
+            teamSides: null,
+          },
+        },
+      };
+      getPreview.mockResolvedValue(preview);
+      const { unmount } = render(<FeedItemCard item={{ ...item, link: preview.url }} />);
+      await act(async () => { intersect(true); });
+      const initialRequests = getPreview.mock.calls.length;
+      expect(initialRequests).toBe(2);
+      expect(disconnect).not.toHaveBeenCalled();
+      await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+      expect(getPreview).toHaveBeenCalledTimes(initialRequests + 1);
+
+      const setVisible = (visible: boolean) => {
+        if (scenario === 'viewport') intersect(visible);
+        else {
+          visibility.mockReturnValue(visible ? 'visible' : 'hidden');
+          document.dispatchEvent(new Event('visibilitychange'));
+        }
+      };
+      await act(async () => { setVisible(false); });
+      expect(screen.getByRole('link', { name: 'OG versus Spirit, live score 1 to 0' })).toBeTruthy();
+      expect(screen.queryByLabelText('Loading preview')).toBeNull();
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(getPreview).toHaveBeenCalledTimes(initialRequests + 1);
+      await act(async () => { setVisible(true); });
+      expect(getPreview).toHaveBeenCalledTimes(initialRequests + 2);
+      await act(async () => { await vi.advanceTimersByTimeAsync(29_999); });
+      expect(getPreview).toHaveBeenCalledTimes(initialRequests + 2);
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(getPreview).toHaveBeenCalledTimes(initialRequests + 3);
+      unmount();
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(getPreview).toHaveBeenCalledTimes(initialRequests + 3);
+      if (scenario !== 'page without observer') expect(disconnect).toHaveBeenCalledOnce();
+    },
+  );
+
   it('shows an HLTV Open Graph match image without duplicating its content', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.hltv.org/matches/2396006/og-vs-spirit-blast-bounty-2026-season-2',

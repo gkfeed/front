@@ -4,6 +4,7 @@ import type { RefObject } from 'react';
 export function usePreviewVisibility(
   ref: RefObject<HTMLElement | null>,
   rootMargin = '400px 0px',
+  mode: 'once' | 'continuous' = 'once',
 ): boolean {
   const [isVisible, setIsVisible] = useState(() => typeof IntersectionObserver === 'undefined');
 
@@ -15,6 +16,10 @@ export function usePreviewVisibility(
     }
 
     const observer = new IntersectionObserver(([entry]) => {
+      if (mode === 'continuous') {
+        setIsVisible(Boolean(entry?.isIntersecting));
+        return;
+      }
       if (entry?.isIntersecting) {
         setIsVisible(true);
         observer.disconnect();
@@ -22,7 +27,7 @@ export function usePreviewVisibility(
     }, { rootMargin });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [ref, rootMargin]);
+  }, [ref, rootMargin, mode]);
 
   return isVisible;
 }

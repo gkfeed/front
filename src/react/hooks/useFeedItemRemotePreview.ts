@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type Dispatch,
@@ -11,6 +12,7 @@ import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useHltvLiveRefresh } from './useHltvLiveRefresh';
 import { useAsyncResource } from './useAsyncResource';
+import { usePageVisibility } from './usePageVisibility';
 import { usePreviewVisibility } from './usePreviewVisibility';
 
 type RemotePreviewStatus = 'idle' | 'pending' | 'loaded' | 'failed';
@@ -26,7 +28,17 @@ export function useFeedItemRemotePreview(
   const { enabled, source, livePreview: livePreviewMode } = options;
   const { preview: previewUseCases } = useFeatureUseCases();
   const cardRef = useRef<HTMLElement>(null);
-  const isVisible = usePreviewVisibility(cardRef);
+  const isVisible = usePreviewVisibility(
+    cardRef,
+    '400px 0px',
+    livePreviewMode === 'hltv' ? 'continuous' : 'once',
+  );
+  const [hasBeenVisible, setHasBeenVisible] = useState(isVisible);
+  useEffect(() => {
+    if (isVisible) setHasBeenVisible(true);
+  }, [isVisible]);
+  const canLoadPreview = isVisible || hasBeenVisible;
+  const isPageVisible = usePageVisibility();
   const load = useCallback(
     (signal: AbortSignal) => source === 'none'
       ? Promise.resolve(EMPTY_REMOTE_PREVIEW)
@@ -34,7 +46,7 @@ export function useFeedItemRemotePreview(
     [previewUseCases, source, url],
   );
   const resource = useAsyncResource(load, {
-    enabled: enabled && isVisible,
+    enabled: enabled && canLoadPreview,
     key: `${url}:${source}`,
   });
   const previewKey = `${url}:${source}`;
@@ -56,7 +68,7 @@ export function useFeedItemRemotePreview(
   }, [previewKey, resource.result]);
   const previewStatus: RemotePreviewStatus = !enabled
     ? 'idle'
-    : !isVisible
+    : !canLoadPreview
       ? 'pending'
       : resource.status === 'success'
         ? 'loaded'
@@ -67,7 +79,7 @@ export function useFeedItemRemotePreview(
   useHltvLiveRefresh({
     url,
     enabled,
-    isVisible,
+    isVisible: isVisible && isPageVisible,
     isHltv: livePreviewMode === 'hltv',
     currentPreview: preview.openGraphPreview,
     setPreview,
