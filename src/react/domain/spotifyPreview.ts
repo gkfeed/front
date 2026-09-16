@@ -54,6 +54,31 @@ export function getSpotifyDisplayTitle({
   return track && artists ? `${artists} - ${track}` : fallbackTitle;
 }
 
+export function getSpotifyReleaseDate({
+  url,
+  releaseDate,
+}: {
+  url: string;
+  releaseDate?: string | null;
+}): string | null {
+  const embed = getSpotifyEmbed(url);
+  if (!embed || embed.type === 'playlist' || !releaseDate) return null;
+  return isReleaseDate(releaseDate) ? releaseDate : null;
+}
+
+function isReleaseDate(value: string): boolean {
+  const match = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(value);
+  if (!match) return false;
+
+  const year = Number(match[1]);
+  const month = Number(match[2] ?? 1);
+  const day = Number(match[3] ?? 1);
+  if (year < 1000 || month < 1 || month > 12 || day < 1) return false;
+
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return day <= daysInMonth;
+}
+
 function isSpotifyEmbedType(value: string | undefined): value is SpotifyEmbed['type'] {
   return value === 'album' || value === 'playlist' || value === 'track';
 }

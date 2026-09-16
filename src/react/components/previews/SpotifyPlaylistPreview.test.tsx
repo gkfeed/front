@@ -22,6 +22,11 @@ const props = {
   imageAlt: 'Cover',
   title: 'Example track',
   onPreviewError: vi.fn(),
+  releaseDate: {
+    dateTime: '2025-02-14',
+    text: 'February 14, 2025',
+    ariaLabel: 'Released: February 14, 2025',
+  },
 };
 
 afterEach(() => {
@@ -31,6 +36,14 @@ afterEach(() => {
 });
 
 describe('SpotifyPlaylistPreview', () => {
+  it('shows the release date over the cover', () => {
+    render(<SpotifyPlaylistPreview {...props} />);
+
+    const releaseDate = screen.getByText('February 14, 2025');
+    expect(releaseDate.closest('button')).toBeTruthy();
+    expect(releaseDate.getAttribute('datetime')).toBe('2025-02-14');
+  });
+
   it('starts playback through the Spotify IFrame API on desktop', async () => {
     const play = vi.fn();
     const destroy = vi.fn();

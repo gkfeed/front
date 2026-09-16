@@ -4,7 +4,10 @@ import type { FeedItemCardModel } from '../../useFeedItemCardModel';
 import type { LocalizedFeedItemPreview } from '../../previewLocalization';
 import { ArticleReaderLink } from '../../ArticleReader';
 import { FeedItemMedia } from '../../previews/FeedItemMedia';
-import { getSpotifyDisplayTitle } from '../../../domain/spotifyPreview';
+import {
+  getSpotifyDisplayTitle,
+  getSpotifyReleaseDate,
+} from '../../../domain/spotifyPreview';
 
 export type FeedItemCardProviderRendererProps = {
   facts: FeedItemCardModel;
@@ -18,9 +21,17 @@ export function FeedItemMediaPreview({
   localizedPreview,
   displayHostname,
 }: FeedItemCardProviderRendererProps) {
+  const { t, i18n } = useTranslation();
   if (!localizedPreview) return null;
 
   const title = getCardTitle(facts, displayHostname);
+  const releaseDate = getSpotifyReleaseDate({
+    url: facts.item.link,
+    releaseDate: facts.openGraphPreview?.releaseDate,
+  });
+  const formattedReleaseDate = releaseDate
+    ? formatSpotifyReleaseDate(releaseDate, i18n.resolvedLanguage)
+    : null;
 
   return (
     <FeedItemMedia
@@ -32,6 +43,11 @@ export function FeedItemMediaPreview({
       hltvImageScore={facts.hltvImageScore}
       onPreviewError={facts.onPreviewError}
       imagePresentation={facts.provider === 'vk' ? 'vk' : 'standard'}
+      spotifyReleaseDate={releaseDate && formattedReleaseDate ? {
+        dateTime: releaseDate,
+        text: formattedReleaseDate,
+        ariaLabel: t('preview.spotifyReleaseDate', { date: formattedReleaseDate }),
+      } : undefined}
     />
   );
 }
@@ -64,6 +80,16 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
       />
     </div>
   );
+}
+
+function formatSpotifyReleaseDate(value: string, language?: string): string {
+  const [year, month, day] = value.split('-').map(Number);
+  if (!month) return String(year);
+
+  const date = new Date(Date.UTC(year, month - 1, day || 1));
+  return new Intl.DateTimeFormat(language, day
+    ? { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }
+    : { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date);
 }
 
 function getCardTitle(facts: FeedItemCardModel, displayHostname: string): string {

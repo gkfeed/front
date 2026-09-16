@@ -12,6 +12,7 @@ export function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   return typeof object.url === 'string'
     && [object.title, object.description, object.image, object.video, object.siteName, object.type]
       .every(isNullableString)
+    && (object.releaseDate === undefined || isNullableString(object.releaseDate))
     && isOpenGraphProviderData(object.providerData);
 }
 

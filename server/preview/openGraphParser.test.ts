@@ -11,6 +11,7 @@ describe('parseOpenGraph: generic metadata', () => {
       <meta content="/cover.jpg" property="og:image">
       <meta property="og:site_name" content="Example">
       <meta property="og:type" content="article">
+      <meta property="music:release_date" content="2025-02-14">
     `);
 
     expect(parseOpenGraph(html, new URL('https://example.com/posts/1'))).toEqual({
@@ -21,6 +22,7 @@ describe('parseOpenGraph: generic metadata', () => {
       video: null,
       siteName: 'Example',
       type: 'article',
+      releaseDate: '2025-02-14',
       providerData: null,
     });
   });

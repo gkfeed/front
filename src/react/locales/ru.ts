@@ -267,6 +267,7 @@ const ru = {
     vkVideo: 'Предпросмотр видео VK',
     playSpotify: 'Воспроизвести в Spotify: {{title}}',
     spotifyPlayer: 'Плеер Spotify: {{title}}',
+    spotifyReleaseDate: 'Дата выхода: {{date}}',
     playVideo: 'Воспроизвести видео: {{title}}',
     continueVideo: 'Продолжить с {{position}}',
     playTwitch: 'Воспроизвести {{channel}} на Twitch',

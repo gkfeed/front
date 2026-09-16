@@ -261,6 +261,7 @@ const en = {
     vkVideo: 'VK video preview',
     playSpotify: 'Play {{title}} on Spotify',
     spotifyPlayer: 'Spotify player: {{title}}',
+    spotifyReleaseDate: 'Released: {{date}}',
     playVideo: 'Play video {{title}}',
     continueVideo: 'Continue from {{position}}',
     playTwitch: 'Play {{channel}} on Twitch',

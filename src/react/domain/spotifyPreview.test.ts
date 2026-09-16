@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { getSpotifyDisplayTitle, getSpotifyEmbed } from './spotifyPreview';
+import {
+  getSpotifyDisplayTitle,
+  getSpotifyEmbed,
+  getSpotifyReleaseDate,
+} from './spotifyPreview';
 
 describe('getSpotifyEmbed', () => {
   it('creates an embed URL for a Spotify playlist', () => {
@@ -74,5 +78,29 @@ describe('getSpotifyDisplayTitle', () => {
       previewTitle: 'CLICK',
       previewDescription: null,
     })).toBe('CLICK');
+  });
+});
+
+describe('getSpotifyReleaseDate', () => {
+  it('returns the release date for a Spotify track', () => {
+    expect(getSpotifyReleaseDate({
+      url: 'https://open.spotify.com/track/11dFghVXANMlKmJXsNCbNl',
+      releaseDate: '2025-02-14',
+    })).toBe('2025-02-14');
+  });
+
+  it('does not return dates for playlists or malformed metadata', () => {
+    expect(getSpotifyReleaseDate({
+      url: 'https://open.spotify.com/playlist/37i9dQZEVXbeUwP0nygk6B',
+      releaseDate: '2025-02-14',
+    })).toBeNull();
+    expect(getSpotifyReleaseDate({
+      url: 'https://open.spotify.com/track/11dFghVXANMlKmJXsNCbNl',
+      releaseDate: 'February 14, 2025',
+    })).toBeNull();
+    expect(getSpotifyReleaseDate({
+      url: 'https://open.spotify.com/track/11dFghVXANMlKmJXsNCbNl',
+      releaseDate: '2025-02-30',
+    })).toBeNull();
   });
 });

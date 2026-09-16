@@ -29,6 +29,7 @@ export interface OpenGraphMetadata {
   video: string | null;
   siteName: string | null;
   type: string | null;
+  releaseDate?: string | null;
 }
 
 export interface OpenGraphPreview extends OpenGraphMetadata {

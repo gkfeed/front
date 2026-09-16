@@ -16,6 +16,7 @@ describe('FeedItemCard media providers', () => {
       video: null,
       siteName: 'Spotify',
       type: 'music.song',
+      releaseDate: '2025-02-14',
       providerData: null,
     });
 
@@ -26,6 +27,10 @@ describe('FeedItemCard media providers', () => {
     }} />);
 
     expect(await screen.findByRole('heading', { name: 'JISOO - CLICK' })).toBeTruthy();
+    const releaseDate = screen.getByText('February 14, 2025');
+    expect(releaseDate.getAttribute('datetime')).toBe('2025-02-14');
+    expect(releaseDate.getAttribute('aria-label')).toBe('Released: February 14, 2025');
+    expect(releaseDate.closest('button')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Play JISOO - CLICK on Spotify' })).toBeTruthy();
     expect(container.querySelector('.reader-card')?.classList.contains('reader-card--spotify')).toBe(true);
   });

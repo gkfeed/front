@@ -15,6 +15,11 @@ type SpotifyPlaylistPreviewProps = {
   imageAlt: string;
   title: string;
   onPreviewError: () => void;
+  releaseDate?: {
+    dateTime: string;
+    text: string;
+    ariaLabel: string;
+  };
 };
 
 export function SpotifyPlaylistPreview({
@@ -25,6 +30,7 @@ export function SpotifyPlaylistPreview({
   imageAlt,
   title,
   onPreviewError,
+  releaseDate,
 }: SpotifyPlaylistPreviewProps) {
   const { t } = useTranslation();
   const [activeEmbedUrl, setActiveEmbedUrl] = useState<string | null>(null);
@@ -53,6 +59,15 @@ export function SpotifyPlaylistPreview({
         referrerPolicy="no-referrer"
         onError={onPreviewError}
       />
+      {releaseDate ? (
+        <time
+          className="reader-card__spotify-release-date"
+          dateTime={releaseDate.dateTime}
+          aria-label={releaseDate.ariaLabel}
+        >
+          {releaseDate.text}
+        </time>
+      ) : null}
     </button>
   );
 }

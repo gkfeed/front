@@ -18,6 +18,13 @@ type FeedItemMediaProps = {
   onPreviewError: () => void;
   overlay?: ReactNode;
   imagePresentation?: ImagePresentationProfile;
+  spotifyReleaseDate?: SpotifyReleaseDateOverlay;
+};
+
+type SpotifyReleaseDateOverlay = {
+  dateTime: string;
+  text: string;
+  ariaLabel: string;
 };
 
 export function FeedItemMedia({
@@ -30,6 +37,7 @@ export function FeedItemMedia({
   onPreviewError,
   overlay,
   imagePresentation = 'standard',
+  spotifyReleaseDate,
 }: FeedItemMediaProps) {
   if (preview.type === 'video') {
     return (
@@ -66,6 +74,7 @@ export function FeedItemMedia({
         imageAlt={preview.alt}
         title={hostname}
         onPreviewError={onPreviewError}
+        releaseDate={spotifyReleaseDate}
       />
     );
   }

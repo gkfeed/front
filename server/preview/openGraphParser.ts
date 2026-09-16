@@ -27,6 +27,7 @@ export function parseOpenGraph(html: string, pageUrl: URL): OpenGraphPreview {
     video: resolveHttpUrl(video, pageUrl),
     siteName: metadata.get('og:site_name') ?? null,
     type: metadata.get('og:type') ?? null,
+    releaseDate: metadata.get('music:release_date') ?? null,
     providerData: null,
   };
 }
