@@ -4,6 +4,10 @@ import type { FeedDecision } from './feedDecisions';
 export type FeedPriorities = Readonly<Record<number, number>>;
 
 export const FEED_PRIORITIES_STORAGE_KEY = 'gkfeed.feedPriorities.v1';
+
+const PRIOR_KEEP_RATE = 0.5;
+const PRIOR_REVIEW_COUNT = 4;
+
 export function getEffectiveFeedPriorities(
   priorities: FeedPriorities,
   decisions: readonly FeedDecision[],
@@ -17,8 +21,9 @@ export function getEffectiveFeedPriorities(
   }
   const result = { ...priorities };
   for (const [feedId, total] of totals) {
-    result[feedId] = getFeedPriority(priorities, feedId)
-      + (total.kept + 2) / (total.reviewed + 4) - 0.5;
+    const smoothedKeepRate = (total.kept + PRIOR_KEEP_RATE * PRIOR_REVIEW_COUNT)
+      / (total.reviewed + PRIOR_REVIEW_COUNT);
+    result[feedId] = getFeedPriority(priorities, feedId) + smoothedKeepRate - PRIOR_KEEP_RATE;
   }
   return result;
 }
