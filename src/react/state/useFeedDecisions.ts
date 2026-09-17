@@ -14,13 +14,13 @@ export function useFeedDecisions(username: string | null) {
   }
 
   useEffect(() => {
-    if (!storageKey || state.storageKey !== storageKey) return;
+    if (!state.storageKey) return;
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(state.decisions));
+      window.localStorage.setItem(state.storageKey, JSON.stringify(state.decisions));
     } catch {
       return;
     }
-  }, [state, storageKey]);
+  }, [state]);
 
   const recordDecision = useCallback((decision: FeedDecision) => {
     if (!storageKey) return;

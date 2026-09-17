@@ -29,8 +29,8 @@ describe('ReaderPage smart order', () => {
   it('orders review items by the keep rate of their feeds', async () => {
     const storage = stubLocalStorage();
     const items = [
-      { id: 21, feedId: 5, link: 'https://example.com/low', title: 'Low keep rate', text: '' },
-      { id: 22, feedId: 6, link: 'https://example.com/high', title: 'High keep rate', text: '' },
+      { id: 22, feedId: 5, link: 'https://example.com/low', title: 'Low keep rate', text: '' },
+      { id: 21, feedId: 6, link: 'https://example.com/high', title: 'High keep rate', text: '' },
     ];
     storage.set(getFeedDecisionsStorageKey('reader'), JSON.stringify([
       { itemId: 1, feedId: 5, kept: false },
@@ -57,7 +57,7 @@ describe('ReaderPage smart order', () => {
     expect(await screen.findByText('Low keep rate')).toBeTruthy();
 
     await waitFor(() => expect(JSON.parse(storage.get(getFeedDecisionsStorageKey('reader')) ?? '[]')).toContainEqual({
-      itemId: 22, feedId: 6, kept: true,
+      itemId: 21, feedId: 6, kept: true,
     }));
   });
 });

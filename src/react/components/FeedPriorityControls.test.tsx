@@ -3,10 +3,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { FeedPriorityContext } from '../state/feedPriorityContext';
+import { FeedPriorityContext, type FeedPriorityValue } from '../state/feedPriorityContext';
 import { FeedPriorityControls } from './FeedPriorityControls';
 
-function createContextValue(overrides: Partial<Parameters<typeof FeedPriorityContext>[0]['value']> = {}) {
+function createContextValue(overrides: Partial<FeedPriorityValue> = {}) {
   return {
     isEnabled: true,
     priorities: {},
