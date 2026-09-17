@@ -2,7 +2,7 @@ import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { pipeline } from 'node:stream/promises';
-import { extname, resolve } from 'node:path';
+import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 
 import { HttpRequestError } from './httpErrors.js';
 
@@ -23,14 +23,19 @@ export async function serveFrontend(
   }
 
   const requestedFile = resolve(resolvedRoot, `.${decodedPath}`);
-  const safeFile = requestedFile.startsWith(`${resolvedRoot}/`)
+  const requestedRelativePath = relative(resolvedRoot, requestedFile);
+  const safeFile = !isAbsolute(requestedRelativePath)
+    && requestedRelativePath !== '..'
+    && !requestedRelativePath.startsWith(`..${sep}`)
     ? requestedFile
     : resolve(resolvedRoot, 'index.html');
   const file = await isFile(safeFile) ? safeFile : resolve(resolvedRoot, 'index.html');
   const fileStat = await stat(file);
+  const relativeFile = relative(resolvedRoot, file);
+  const isAsset = relativeFile === 'assets' || relativeFile.startsWith(`assets${sep}`);
 
   response.writeHead(200, {
-    'cache-control': file.includes('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache',
+    'cache-control': isAsset ? 'public, max-age=31536000, immutable' : 'no-cache',
     'content-length': fileStat.size,
     'content-type': contentType(file),
     'referrer-policy': 'strict-origin-when-cross-origin',
