@@ -8,13 +8,17 @@ export function getFeedDecisionsStorageKey(username: string): string {
 
 export function useFeedDecisions(username: string | null) {
   const storageKey = username ? getFeedDecisionsStorageKey(username) : null;
-  const [state, setState] = useState(() => ({ storageKey, decisions: readDecisions(storageKey) }));
+  const [state, setState] = useState(() => ({
+    storageKey,
+    decisions: readDecisions(storageKey),
+    modified: false,
+  }));
   if (state.storageKey !== storageKey) {
-    setState({ storageKey, decisions: readDecisions(storageKey) });
+    setState({ storageKey, decisions: readDecisions(storageKey), modified: false });
   }
 
   useEffect(() => {
-    if (!state.storageKey) return;
+    if (!state.storageKey || !state.modified) return;
     try {
       window.localStorage.setItem(state.storageKey, JSON.stringify(state.decisions));
     } catch {
@@ -27,7 +31,7 @@ export function useFeedDecisions(username: string | null) {
     setState((current) => {
       if (current.storageKey !== storageKey) return current;
       const decisions = recordFeedDecision(current.decisions, decision);
-      return decisions === current.decisions ? current : { storageKey, decisions };
+      return decisions === current.decisions ? current : { storageKey, decisions, modified: true };
     });
   }, [storageKey]);
 
