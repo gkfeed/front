@@ -26,28 +26,10 @@ afterEach(() => {
 });
 
 describe('ReaderPage with feed priority provider', () => {
-  it('records keep decisions and persists them for the signed-in user', async () => {
-    const storage = stubLocalStorage();
-    vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
-    render(
-      <MemoryRouter initialEntries={['/reader']}>
-        <FeedPriorityProvider>
-          <ReaderPage />
-        </FeedPriorityProvider>
-      </MemoryRouter>,
-    );
-
-    expect(await screen.findByText('First story')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
-
-    const decisionsKey = getFeedDecisionsStorageKey('reader');
-    await waitFor(() => expect(JSON.parse(storage.get(decisionsKey) ?? '[]')).toEqual([
-      { itemId: 11, feedId: 2, kept: true },
-    ]));
-    expect(vi.mocked(deleteFeedItemById)).not.toHaveBeenCalled();
-  });
-
-  it('records delete decisions as not kept', async () => {
+  it.each([
+    { action: 'keep', kept: true, deleteCalls: 0 },
+    { action: 'delete', kept: false, deleteCalls: 1 },
+  ])('records $action decisions and persists them for the signed-in user', async ({ action, kept, deleteCalls }) => {
     const storage = stubLocalStorage();
     vi.mocked(deleteFeedItemById).mockResolvedValue();
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
@@ -60,12 +42,12 @@ describe('ReaderPage with feed priority provider', () => {
     );
 
     expect(await screen.findByText('First story')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(action, 'i') }));
 
     const decisionsKey = getFeedDecisionsStorageKey('reader');
     await waitFor(() => expect(JSON.parse(storage.get(decisionsKey) ?? '[]')).toEqual([
-      { itemId: 11, feedId: 2, kept: false },
+      { itemId: 11, feedId: 2, kept },
     ]));
-    expect(vi.mocked(deleteFeedItemById)).toHaveBeenCalled();
+    expect(vi.mocked(deleteFeedItemById)).toHaveBeenCalledTimes(deleteCalls);
   });
 });

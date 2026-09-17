@@ -24,7 +24,7 @@ describe('feed priority', () => {
     const priorities = getEffectiveFeedPriorities({}, decisions);
     expect(orderFeedItems(items, 'desc', priorities).map(({ feedId }) => feedId)).toEqual([2, 3, 1]);
     expect(getEffectiveFeedPriorities({ 1: 1 }, decisions)[1]).toBeGreaterThan(priorities[2]);
-    expect(getEffectiveFeedPriorities({ 1: -1 }, []).valueOf()).toEqual({ 1: -1 });
+    expect(getEffectiveFeedPriorities({ 1: -1 }, [])).toEqual({ 1: -1 });
   });
 
   it('orders feeds and their items by feed id priority', () => {

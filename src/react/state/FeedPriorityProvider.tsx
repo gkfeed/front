@@ -40,21 +40,16 @@ export function FeedPriorityProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const effectivePriorities = useMemo(
-    () => (isEnabled ? getEffectiveFeedPriorities(priorities, decisions) : {}),
-    [decisions, isEnabled, priorities],
-  );
-
   const value = useMemo(() => ({
     isEnabled,
     priorities,
-    effectivePriorities,
+    effectivePriorities: isEnabled ? getEffectiveFeedPriorities(priorities, decisions) : {},
     changePriority,
     recordDecision,
     setEnabled,
   }), [
     changePriority,
-    effectivePriorities,
+    decisions,
     isEnabled,
     priorities,
     recordDecision,
