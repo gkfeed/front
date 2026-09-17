@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { parseFeedDecisions, recordFeedDecision, type FeedDecision } from './feedPriority';
+import { parseFeedDecisions, recordFeedDecision, type FeedDecision } from './feedDecisions';
 
 export function getFeedDecisionsStorageKey(username: string): string {
   return `gkfeed.feedDecisions.v1:${encodeURIComponent(username)}`;

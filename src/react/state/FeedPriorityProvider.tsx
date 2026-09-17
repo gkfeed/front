@@ -4,9 +4,8 @@ import { useAuth } from './useAuth';
 import {
   changeFeedPriority,
   FEED_PRIORITIES_STORAGE_KEY,
-  getSmartFeedPriorities,
+  getEffectiveFeedPriorities,
   parseFeedPriorities,
-  type FeedDecision,
   type FeedPriorities,
 } from './feedPriority';
 import { FeedPriorityContext } from './feedPriorityContext';
@@ -41,31 +40,25 @@ export function FeedPriorityProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const recordDecisionAction = useCallback((decision: FeedDecision) => {
-    recordDecision(decision);
-  }, [recordDecision]);
-
-  const smartPriorities = useMemo(
-    () => (isEnabled ? getSmartFeedPriorities(priorities, decisions) : {}),
+  const effectivePriorities = useMemo(
+    () => (isEnabled ? getEffectiveFeedPriorities(priorities, decisions) : {}),
     [decisions, isEnabled, priorities],
   );
 
   const value = useMemo(() => ({
     isEnabled,
     priorities,
-    smartPriorities,
-    decisions,
+    effectivePriorities,
     changePriority,
-    recordDecision: recordDecisionAction,
+    recordDecision,
     setEnabled,
   }), [
     changePriority,
-    decisions,
+    effectivePriorities,
     isEnabled,
     priorities,
-    recordDecisionAction,
+    recordDecision,
     setEnabled,
-    smartPriorities,
   ]);
   return <FeedPriorityContext value={value}>{children}</FeedPriorityContext>;
 }

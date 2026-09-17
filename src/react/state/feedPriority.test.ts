@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { FeedItem } from '../types';
 import {
   changeFeedPriority,
-  getSmartFeedPriorities,
+  getEffectiveFeedPriorities,
   orderFeedItems,
   parseFeedPriorities,
 } from './feedPriority';
@@ -21,10 +21,10 @@ describe('feed priority', () => {
     decisions.push({ itemId: 11, feedId: 2, kept: true });
     decisions.push({ itemId: 12, feedId: 2, kept: true });
 
-    const priorities = getSmartFeedPriorities({}, decisions);
+    const priorities = getEffectiveFeedPriorities({}, decisions);
     expect(orderFeedItems(items, 'desc', priorities).map(({ feedId }) => feedId)).toEqual([2, 3, 1]);
-    expect(getSmartFeedPriorities({ 1: 1 }, decisions)[1]).toBeGreaterThan(priorities[2]);
-    expect(getSmartFeedPriorities({ 1: -1 }, []).valueOf()).toEqual({ 1: -1 });
+    expect(getEffectiveFeedPriorities({ 1: 1 }, decisions)[1]).toBeGreaterThan(priorities[2]);
+    expect(getEffectiveFeedPriorities({ 1: -1 }, []).valueOf()).toEqual({ 1: -1 });
   });
 
   it('orders feeds and their items by feed id priority', () => {
