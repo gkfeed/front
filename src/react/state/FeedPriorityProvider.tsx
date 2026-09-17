@@ -1,18 +1,25 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
+import { useAuth } from './useAuth';
 import {
   changeFeedPriority,
   FEED_PRIORITIES_STORAGE_KEY,
+  getSmartFeedPriorities,
   parseFeedPriorities,
+  type FeedDecision,
   type FeedPriorities,
 } from './feedPriority';
 import { FeedPriorityContext } from './feedPriorityContext';
+import { useFeedDecisions } from './useFeedDecisions';
 
 export const FEED_PRIORITIZATION_ENABLED_STORAGE_KEY = 'gkfeed.feedPrioritizationEnabled.v1';
 
 export function FeedPriorityProvider({ children }: { children: ReactNode }) {
+  const { credentials } = useAuth();
+  const username = credentials?.username ?? null;
   const [isEnabled, setEnabledState] = useState(readFeedPrioritizationEnabled);
   const [priorities, setPriorities] = useState(readFeedPriorities);
+  const { decisions, recordDecision } = useFeedDecisions(username);
 
   const setEnabled = useCallback((nextIsEnabled: boolean) => {
     setEnabledState(nextIsEnabled);
@@ -34,12 +41,32 @@ export function FeedPriorityProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const recordDecisionAction = useCallback((decision: FeedDecision) => {
+    recordDecision(decision);
+  }, [recordDecision]);
+
+  const smartPriorities = useMemo(
+    () => (isEnabled ? getSmartFeedPriorities(priorities, decisions) : {}),
+    [decisions, isEnabled, priorities],
+  );
+
   const value = useMemo(() => ({
     isEnabled,
     priorities,
+    smartPriorities,
+    decisions,
     changePriority,
+    recordDecision: recordDecisionAction,
     setEnabled,
-  }), [changePriority, isEnabled, priorities, setEnabled]);
+  }), [
+    changePriority,
+    decisions,
+    isEnabled,
+    priorities,
+    recordDecisionAction,
+    setEnabled,
+    smartPriorities,
+  ]);
   return <FeedPriorityContext value={value}>{children}</FeedPriorityContext>;
 }
 

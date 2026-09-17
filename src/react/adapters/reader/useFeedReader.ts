@@ -22,10 +22,14 @@ export function useFeedReader({
   const { feeds } = useFeatureUseCases();
   const { nsfwMode } = useNsfwPreferences();
   const { hideTikTokItems } = useTikTokPreferences();
-  const { isEnabled: isFeedPrioritizationEnabled, priorities } = useFeedPriority();
+  const {
+    isEnabled: isFeedPrioritizationEnabled,
+    smartPriorities,
+    recordDecision,
+  } = useFeedPriority();
   const feedPriorities = useMemo(
-    () => (isFeedPrioritizationEnabled ? priorities : {}),
-    [isFeedPrioritizationEnabled, priorities],
+    () => (isFeedPrioritizationEnabled ? smartPriorities : {}),
+    [isFeedPrioritizationEnabled, smartPriorities],
   );
   const {
     loadedItems,
@@ -98,14 +102,16 @@ export function useFeedReader({
   const keepItem = useCallback(() => {
     if (!currentItem) return;
 
+    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: true });
     keep(currentItem.id);
-  }, [currentItem, keep]);
+  }, [currentItem, keep, recordDecision]);
 
   const deleteCurrentItem = useCallback(() => {
     if (!currentItem) return;
 
+    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: false });
     startDeletion(currentItem.id, getItemTitle(currentItem));
-  }, [currentItem, startDeletion]);
+  }, [currentItem, recordDecision, startDeletion]);
 
   const recoverFailedDeletion = useCallback((itemId: number) => {
     recoverDeletion(itemId);
