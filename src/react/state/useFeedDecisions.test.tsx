@@ -99,6 +99,75 @@ describe('useFeedDecisions', () => {
     expect(setItem).toHaveBeenCalledTimes(1);
   });
 
+  it('merges interleaved writers without restoring stale decisions', () => {
+    const first = { itemId: 1, feedId: 2, kept: true };
+    const second = { itemId: 2, feedId: 3, kept: true };
+    const changed = { ...first, kept: false };
+    const third = { itemId: 3, feedId: 4, kept: true };
+    const key = getFeedDecisionsStorageKey('reader');
+    const { result: left } = renderHook(() => useFeedDecisions('reader'));
+    const { result: right } = renderHook(() => useFeedDecisions('reader'));
+
+    act(() => left.current.recordDecision(first));
+    act(() => right.current.recordDecision(second));
+    expect(right.current.decisions).toEqual([first, second]);
+
+    act(() => left.current.recordDecision(changed));
+    act(() => right.current.recordDecision(third));
+
+    expect(right.current.decisions).toEqual([second, changed, third]);
+    expect(JSON.parse(storage.get(key)!)).toEqual([second, changed, third]);
+  });
+
+  it('retries pending decisions after a failed write without losing other writers', () => {
+    const first = { itemId: 1, feedId: 2, kept: true };
+    const second = { itemId: 2, feedId: 3, kept: false };
+    const third = { itemId: 3, feedId: 4, kept: true };
+    const key = getFeedDecisionsStorageKey('reader');
+    const { result: left } = renderHook(() => useFeedDecisions('reader'));
+    const { result: right } = renderHook(() => useFeedDecisions('reader'));
+    vi.spyOn(window.localStorage, 'setItem').mockImplementationOnce(() => {
+      throw new Error('quota exceeded');
+    });
+
+    act(() => left.current.recordDecision(first));
+    act(() => right.current.recordDecision(second));
+    act(() => left.current.recordDecision(third));
+
+    expect(left.current.decisions).toEqual([second, first, third]);
+    expect(JSON.parse(storage.get(key)!)).toEqual([second, first, third]);
+  });
+
+  it('preserves loaded history when a later storage read fails', () => {
+    const first = { itemId: 1, feedId: 2, kept: true };
+    const second = { itemId: 2, feedId: 3, kept: false };
+    const key = getFeedDecisionsStorageKey('reader');
+    storage.set(key, JSON.stringify([first]));
+    const { result } = renderHook(() => useFeedDecisions('reader'));
+    vi.spyOn(window.localStorage, 'getItem').mockImplementationOnce(() => {
+      throw new Error('storage unavailable');
+    });
+
+    act(() => result.current.recordDecision(second));
+
+    expect(result.current.decisions).toEqual([first, second]);
+    expect(JSON.parse(storage.get(key)!)).toEqual([first, second]);
+  });
+
+  it('ignores callbacks from a previous user', () => {
+    const { result, rerender } = renderHook(({ username }) => useFeedDecisions(username), {
+      initialProps: { username: 'reader' },
+    });
+    const recordDecision = result.current.recordDecision;
+    const setItem = vi.spyOn(window.localStorage, 'setItem');
+    rerender({ username: 'other' });
+
+    act(() => recordDecision({ itemId: 1, feedId: 2, kept: true }));
+
+    expect(result.current.decisions).toEqual([]);
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
   it('keeps recording when storage writes fail', () => {
     vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
       throw new Error('quota exceeded');

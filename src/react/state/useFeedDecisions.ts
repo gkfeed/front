@@ -10,17 +10,19 @@ export function useFeedDecisions(username: string | null) {
   const storageKey = username ? getFeedDecisionsStorageKey(username) : null;
   const [state, setState] = useState(() => ({
     storageKey,
-    decisions: readDecisions(storageKey),
-    modified: false,
+    decisions: readDecisions(storageKey) ?? [],
+    pending: [] as readonly FeedDecision[],
   }));
   if (state.storageKey !== storageKey) {
-    setState({ storageKey, decisions: readDecisions(storageKey), modified: false });
+    setState({ storageKey, decisions: readDecisions(storageKey) ?? [], pending: [] });
   }
 
   useEffect(() => {
-    if (!state.storageKey || !state.modified) return;
+    if (!state.storageKey || state.pending.length === 0) return;
+    const decisions = state.pending.reduce(recordFeedDecision, readDecisions(state.storageKey) ?? state.decisions);
     try {
-      window.localStorage.setItem(state.storageKey, JSON.stringify(state.decisions));
+      window.localStorage.setItem(state.storageKey, JSON.stringify(decisions));
+      setState((current) => current === state ? { ...current, decisions, pending: [] } : current);
     } catch {
       return;
     }
@@ -31,19 +33,23 @@ export function useFeedDecisions(username: string | null) {
     setState((current) => {
       if (current.storageKey !== storageKey) return current;
       const decisions = recordFeedDecision(current.decisions, decision);
-      return decisions === current.decisions ? current : { storageKey, decisions, modified: true };
+      return decisions === current.decisions ? current : {
+        storageKey,
+        decisions,
+        pending: recordFeedDecision(current.pending, decision),
+      };
     });
   }, [storageKey]);
 
   return { decisions: state.decisions, recordDecision };
 }
 
-function readDecisions(storageKey: string | null): readonly FeedDecision[] {
-  if (!storageKey || typeof window === 'undefined') return [];
+function readDecisions(storageKey: string | null): readonly FeedDecision[] | null {
+  if (!storageKey || typeof window === 'undefined') return null;
   try {
     const saved = window.localStorage.getItem(storageKey);
     return saved ? parseFeedDecisions(JSON.parse(saved)) : [];
   } catch {
-    return [];
+    return null;
   }
 }
