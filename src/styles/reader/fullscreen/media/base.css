@@ -22,11 +22,14 @@
     main[data-reader-fullscreen="true"],
     main:fullscreen,
     main:-webkit-full-screen
-  ) :is(.reader-card__preview--image, .reader-card__preview:has(img)),
+  )
+  :is(.reader-card__preview--image, .reader-card__preview:has(img)):not(
+      .reader-card--player .reader-card__preview
+    ),
   .reader__item--fullscreen :is(
     .reader-card__preview--image,
     .reader-card__preview:has(img)
-  ) {
+  ):not(.reader-card--player .reader-card__preview) {
     isolation: isolate;
     overflow: hidden !important;
     border-radius: 22px !important;
@@ -39,11 +42,13 @@
     main[data-reader-fullscreen="true"],
     main:fullscreen,
     main:-webkit-full-screen
-  ) :is(.reader-card__preview--image, .reader-card__preview:has(img)) img,
+  ) :is(.reader-card__preview--image, .reader-card__preview:has(img)):not(
+      .reader-card--player .reader-card__preview
+    ) img,
   .reader__item--fullscreen :is(
     .reader-card__preview--image,
     .reader-card__preview:has(img)
-  ) img {
+  ):not(.reader-card--player .reader-card__preview) img {
     border-radius: 22px !important;
     -webkit-clip-path: inset(0 round 22px);
     clip-path: inset(0 round 22px);

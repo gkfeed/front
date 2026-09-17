@@ -144,6 +144,21 @@ test.describe('Reader fullscreen with theater mode', () => {
     await expectYoutubePlayerToBeSixteenByNine(page);
   });
 
+  test('keeps YouTube thumbnail corners square inside the fullscreen card', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/reader');
+    const preview = page.locator('.reader-card--youtube .reader-card__preview');
+    const image = preview.locator('img');
+    await expect(image).toBeVisible();
+
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('main')).toHaveAttribute('data-reader-fullscreen', 'true');
+    await expect(preview).toHaveCSS('border-radius', '0px');
+    await expect(preview).toHaveCSS('clip-path', 'none');
+    await expect(image).toHaveCSS('border-radius', '0px');
+    await expect(image).toHaveCSS('clip-path', 'none');
+  });
+
   test('fills the fullscreen card with a low-resolution YouTube fallback', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.route('https://i.ytimg.com/vi/**/maxresdefault.jpg', (route) => route.fulfill({
