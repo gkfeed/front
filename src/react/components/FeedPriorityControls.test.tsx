@@ -10,9 +10,7 @@ function createContextValue(overrides: Partial<FeedPriorityValue> = {}) {
   return {
     isEnabled: true,
     priorities: {},
-    effectivePriorities: {},
     changePriority: vi.fn(),
-    recordDecision: vi.fn(),
     setEnabled: vi.fn(),
     ...overrides,
   };

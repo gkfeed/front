@@ -4,10 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  getFeedDecisionsStorageKey,
-} from '../state/useFeedDecisions';
-import { FeedPriorityProvider } from '../state/FeedPriorityProvider';
+import { getFeedDecisionsStorageKey } from '../state/useFeedDecisions';
 import { deleteFeedItemById, getFeedItems } from '../services/feeds';
 import { stubLocalStorage } from '../testUtils';
 import { READER_ITEMS as ITEMS, resetReaderPageTest } from './ReaderPage.test.utils';
@@ -25,7 +22,7 @@ afterEach(() => {
   resetReaderPageTest();
 });
 
-describe('ReaderPage with feed priority provider', () => {
+describe('ReaderPage decisions', () => {
   it.each([
     { action: 'keep', kept: true, deleteCalls: 0 },
     { action: 'delete', kept: false, deleteCalls: 1 },
@@ -35,9 +32,7 @@ describe('ReaderPage with feed priority provider', () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     render(
       <MemoryRouter initialEntries={['/reader']}>
-        <FeedPriorityProvider>
-          <ReaderPage />
-        </FeedPriorityProvider>
+        <ReaderPage />
       </MemoryRouter>,
     );
 

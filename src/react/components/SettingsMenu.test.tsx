@@ -9,7 +9,6 @@ import {
   FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
   FeedPriorityProvider,
 } from '../state/FeedPriorityProvider';
-import { AuthProvider } from '../state/AuthProvider';
 import {
   NSFW_MODE_STORAGE_KEY,
   NsfwPreferencesProvider,
@@ -51,11 +50,9 @@ describe('SettingsMenu', () => {
     const storage = stubLocalStorage();
     document.documentElement.dataset.theme = 'light';
     render(
-      <AuthProvider>
-        <FeedPriorityProvider>
-          <SettingsMenu />
-        </FeedPriorityProvider>
-      </AuthProvider>,
+      <FeedPriorityProvider>
+        <SettingsMenu />
+      </FeedPriorityProvider>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
