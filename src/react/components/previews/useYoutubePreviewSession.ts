@@ -9,7 +9,7 @@ export function useYoutubePreviewSession(videoId: string) {
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
   const [isDoubleSpeed, setIsDoubleSpeed] = useState(true);
   const [resumeProgress, setResumeProgress] = useState(() => readYoutubeProgress(videoId));
-  const [isPlaying, setIsPlaying] = useState(() => resumeProgress === null);
+  const [isPlaying, setIsPlaying] = useState(true);
   const isPlayingRef = useRef(isPlaying);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -21,9 +21,8 @@ export function useYoutubePreviewSession(videoId: string) {
     setIsDoubleSpeed(true);
     const nextResumeProgress = readYoutubeProgress(videoId);
     setResumeProgress(nextResumeProgress);
-    const nextIsPlaying = nextResumeProgress === null;
-    isPlayingRef.current = nextIsPlaying;
-    setIsPlaying(nextIsPlaying);
+    isPlayingRef.current = true;
+    setIsPlaying(true);
   }, [videoId]);
 
   const handleTheaterChange = useCallback((isOpen: boolean) => {

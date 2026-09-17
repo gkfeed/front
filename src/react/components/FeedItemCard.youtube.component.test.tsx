@@ -166,7 +166,8 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(fill.style.width).toBe('3%');
 
     fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
-    expect(screen.getByRole('button', { name: 'Continue from 1:48' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Continue from 1:48' })).toBeNull();
+    expect(screen.getByTitle('Story').getAttribute('src')).toContain('start=108');
   });
 
   it('hides watch progress on the YouTube preview without saved progress', () => {
@@ -179,7 +180,7 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(document.querySelector('.reader-card__preview-progress')).toBeNull();
   });
 
-  it('offers to continue a YouTube video from its saved position', () => {
+  it('autoplays a YouTube video from its saved position on the first click without the API', () => {
     window.localStorage.setItem('gkfeed.youtube-progress.v1.abc123xyz', JSON.stringify({
       position: 108,
       duration: 3600,
@@ -195,25 +196,15 @@ describe('FeedItemCard YouTube and general states', () => {
 
     const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
     const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
-    const resumeButton = screen.getByRole('button', { name: 'Continue from 1:48' });
-    expect(resumeButton.nextElementSibling?.textContent).toBe('2x');
+    const parameters = new URL(iframe.src).searchParams;
+    expect(parameters.get('autoplay')).toBe('1');
+    expect(parameters.get('start')).toBe('108');
 
     const speedToggle = screen.getByRole('button', { name: 'Playback speed: 2x' });
     speedToggle.focus();
     fireEvent.keyDown(speedToggle, { key: ' ' });
     expect(postMessage).toHaveBeenCalledWith(
-      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
-      '*',
-    );
-
-    fireEvent.click(resumeButton);
-
-    expect(postMessage).toHaveBeenCalledWith(
-      JSON.stringify({ event: 'command', func: 'seekTo', args: [108, true] }),
-      '*',
-    );
-    expect(postMessage).toHaveBeenCalledWith(
-      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+      JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
       '*',
     );
     expect(screen.queryByRole('button', { name: 'Continue from 1:48' })).toBeNull();
@@ -443,14 +434,17 @@ describe('FeedItemCard YouTube and general states', () => {
       .toMatchObject({ position: 108, duration: 3600 });
   });
 
-  it('does not overwrite saved progress before the user chooses how to resume', async () => {
+  it('resumes when the API is ready and preserves saved progress until playback starts', async () => {
     window.localStorage.setItem('gkfeed.youtube-progress.v1.abc123xyz', JSON.stringify({
       position: 108,
       duration: 3600,
       updatedAt: Date.now(),
     }));
+    let currentTime = 0;
+    let readyHandler: (event: { target: YoutubePlayer }) => void = () => undefined;
+    let stateChangeHandler: (event: YoutubePlayerStateChangeEvent) => void = () => undefined;
     const player: YoutubePlayer = {
-      getCurrentTime: () => 0,
+      getCurrentTime: () => currentTime,
       getDuration: () => 3600,
       setPlaybackRate: vi.fn(),
       seekTo: vi.fn(),
@@ -461,9 +455,13 @@ describe('FeedItemCard YouTube and general states', () => {
       configurable: true,
       value: {
         Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
-          events: { onReady: (event: { target: YoutubePlayer }) => void };
+          events: {
+            onReady: (event: { target: YoutubePlayer }) => void;
+            onStateChange: (event: YoutubePlayerStateChangeEvent) => void;
+          };
         }) {
-          options.events.onReady({ target: player });
+          readyHandler = options.events.onReady;
+          stateChangeHandler = options.events.onStateChange;
           return player;
         }),
       },
@@ -480,11 +478,23 @@ describe('FeedItemCard YouTube and general states', () => {
     });
 
     const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
-    expect(iframe.getAttribute('src')).toContain('autoplay=0');
+    expect(iframe.getAttribute('src')).toContain('autoplay=1');
+    expect(player.seekTo).not.toHaveBeenCalled();
+    act(() => readyHandler({ target: player }));
+    expect(player.seekTo).toHaveBeenCalledWith(108, true);
+    expect(player.playVideo).toHaveBeenCalledTimes(1);
+    act(() => stateChangeHandler({ data: 2, target: player }));
     window.dispatchEvent(new Event('pagehide'));
 
     expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
       .toMatchObject({ position: 108, duration: 3600 });
+
+    currentTime = 120;
+    act(() => stateChangeHandler({ data: 1, target: player }));
+    act(() => stateChangeHandler({ data: 2, target: player }));
+    expect(JSON.parse(window.localStorage.getItem('gkfeed.youtube-progress.v1.abc123xyz')!))
+      .toMatchObject({ position: 120, duration: 3600 });
+    expect(player.seekTo).toHaveBeenCalledTimes(1);
   });
 
   it('focuses the video in theater mode so Space controls playback', () => {

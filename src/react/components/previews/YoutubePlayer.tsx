@@ -19,7 +19,7 @@ type YoutubePlayerProps = {
 };
 
 export function YoutubePlayer(props: YoutubePlayerProps) {
-  const { iframeRef, isResumeAvailable, resume } = useYoutubePlayerController({
+  const { iframeRef } = useYoutubePlayerController({
     isDoubleSpeed: props.isDoubleSpeed,
     onPlaybackStateChange: props.onPlaybackStateChange,
     resumePosition: props.resumePosition,
@@ -35,8 +35,6 @@ export function YoutubePlayer(props: YoutubePlayerProps) {
     <YoutubePlayerView
       {...props}
       iframeRef={iframeRef}
-      isResumeAvailable={isResumeAvailable}
-      onResume={resume}
       onTogglePlaybackSpeed={togglePlaybackSpeed}
     />
   );
@@ -44,8 +42,6 @@ export function YoutubePlayer(props: YoutubePlayerProps) {
 
 type YoutubePlayerViewProps = YoutubePlayerProps & {
   iframeRef: RefObject<HTMLIFrameElement | null>;
-  isResumeAvailable: boolean;
-  onResume: () => void;
 };
 
 export function YoutubePlayerView({
@@ -58,16 +54,17 @@ export function YoutubePlayerView({
   onTogglePlaybackSpeed,
   shellRef,
   iframeRef,
-  isResumeAvailable,
-  onResume,
 }: YoutubePlayerViewProps) {
   const { t } = useTranslation();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const parameters = new URLSearchParams({
-    autoplay: resumePosition === null ? '1' : '0',
+    autoplay: '1',
     rel: '0',
     enablejsapi: '1',
   });
+  if (resumePosition !== null) {
+    parameters.set('start', String(Math.floor(resumePosition)));
+  }
 
   return (
     <TheaterPlayerShell
@@ -78,16 +75,6 @@ export function YoutubePlayerView({
       aside={isCommentsOpen ? <YoutubeComments videoId={videoId} isOpen /> : undefined}
       toolbar={(
         <>
-          {isResumeAvailable && resumePosition !== null ? (
-            <button
-              type="button"
-              className="reader-card__resume-toggle"
-              aria-label={t('preview.continueVideo', { position: formatYoutubeTime(resumePosition) })}
-              onClick={onResume}
-            >
-              {t('preview.continueVideo', { position: formatYoutubeTime(resumePosition) })}
-            </button>
-          ) : null}
           <button
             type="button"
             className="reader-card__speed-toggle"
@@ -121,15 +108,4 @@ export function YoutubePlayerView({
       />
     </TheaterPlayerShell>
   );
-}
-
-function formatYoutubeTime(seconds: number): string {
-  const totalSeconds = Math.max(0, Math.floor(seconds));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const remainingSeconds = totalSeconds % 60;
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-  }
-  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
 }

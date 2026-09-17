@@ -11,11 +11,9 @@ export function useYoutubePlayerConnection({
   iframeRef,
   isDoubleSpeedRef,
   onPlaybackStateChangeRef,
-  onPlaybackStarted,
   persistProgress,
   playerRef,
   resumePosition,
-  resumeRequestedRef,
   sampleProgress,
   videoId,
 }: {
@@ -23,11 +21,9 @@ export function useYoutubePlayerConnection({
   iframeRef: RefObject<HTMLIFrameElement | null>;
   isDoubleSpeedRef: { current: boolean };
   onPlaybackStateChangeRef: { current: (isPlaying: boolean) => void };
-  onPlaybackStarted: () => void;
   persistProgress: (force: boolean, player: YoutubePlayer) => void;
   playerRef: { current: YoutubePlayer | null };
   resumePosition: number | null;
-  resumeRequestedRef: { current: boolean };
   sampleProgress: (player: YoutubePlayer) => void;
   videoId: string;
 }): void {
@@ -42,7 +38,6 @@ export function useYoutubePlayerConnection({
       onPlaybackStateChangeRef.current(event.data === 1);
       if (event.data === 1) {
         canPersistRef.current = true;
-        onPlaybackStarted();
       }
       if (event.data === 0 || event.data === 2) {
         persistProgress(true, event.target);
@@ -64,7 +59,7 @@ export function useYoutubePlayerConnection({
                 playerRef.current = target;
                 target.setPlaybackRate(isDoubleSpeedRef.current ? 2 : 1);
                 sampleProgress(target);
-                if (resumeRequestedRef.current && resumePosition !== null) {
+                if (resumePosition !== null) {
                   target.seekTo(resumePosition, true);
                   target.playVideo();
                 }
@@ -92,11 +87,9 @@ export function useYoutubePlayerConnection({
     iframeRef,
     isDoubleSpeedRef,
     onPlaybackStateChangeRef,
-    onPlaybackStarted,
     persistProgress,
     playerRef,
     resumePosition,
-    resumeRequestedRef,
     sampleProgress,
     videoId,
   ]);
