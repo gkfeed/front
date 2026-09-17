@@ -34,6 +34,48 @@
   border-radius: 0;
 }
 
+.reader-card--player:has(.reader-card__preview-progress) {
+  border-color: #f5c76b;
+  outline: 3px solid #f5c76b;
+  outline-offset: 0;
+  box-shadow: 0 0 28px rgb(245 199 107 / 24%), var(--shadow-card);
+}
+
+.reader-card--player:has(.reader-card__preview-progress) .reader-card__copy {
+  --color-ink: #30220c;
+  --color-ink-strong: #30220c;
+  --color-muted: #604619;
+  background: #f5c76b;
+  color: var(--color-ink);
+}
+
+.reader-card__preview-progress {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  pointer-events: none;
+}
+
+.reader-card__preview-progress-fill {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-accent, #e52d27);
+  box-shadow: 0 0 6px rgb(0 0 0 / 55%);
+}
+
+.reader-card__preview-progress-label {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: rgb(0 0 0 / 68%);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+}
+
 .reader-card__player-shell {
   min-width: 0;
 }

@@ -56,6 +56,7 @@ export function useYoutubePreviewSession(videoId: string) {
     isPlayerOpen,
     isTheaterOpen,
     isDoubleSpeed,
+    resumeProgress,
     resumePosition: resumeProgress?.position ?? null,
     triggerRef,
     playerRef,

@@ -149,6 +149,36 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(screen.getByRole('button', { name: 'Hide YouTube comments' }).getAttribute('aria-pressed')).toBe('true');
   });
 
+  it('shows saved watch progress on the YouTube preview before the player opens', () => {
+    window.localStorage.setItem('gkfeed.youtube-progress.v1.abc123xyz', JSON.stringify({
+      position: 108,
+      duration: 3600,
+      updatedAt: Date.now(),
+    }));
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    const progress = screen.getByRole('img', { name: 'Continue from 1:48' });
+    const fill = progress.querySelector('.reader-card__preview-progress-fill') as HTMLElement;
+    expect(fill.style.width).toBe('3%');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    expect(screen.getByRole('button', { name: 'Continue from 1:48' })).toBeTruthy();
+  });
+
+  it('hides watch progress on the YouTube preview without saved progress', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    expect(screen.queryByRole('img', { name: 'Continue from 1:48' })).toBeNull();
+    expect(document.querySelector('.reader-card__preview-progress')).toBeNull();
+  });
+
   it('offers to continue a YouTube video from its saved position', () => {
     window.localStorage.setItem('gkfeed.youtube-progress.v1.abc123xyz', JSON.stringify({
       position: 108,

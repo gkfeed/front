@@ -56,6 +56,25 @@ export function YoutubePreview({
             }}
             onError={onPreviewError}
           />
+          {session.resumeProgress ? (
+            <div
+              className="reader-card__preview-progress"
+              role="img"
+              aria-label={t('preview.continueVideo', {
+                position: formatYoutubeTime(session.resumeProgress.position),
+              })}
+            >
+              <div
+                className="reader-card__preview-progress-fill"
+                style={{ width: `${progressPercent(session.resumeProgress)}%` }}
+              />
+              <span className="reader-card__preview-progress-label">
+                {t('preview.continueVideo', {
+                  position: formatYoutubeTime(session.resumeProgress.position),
+                })}
+              </span>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -72,4 +91,20 @@ function isYoutubeMissingThumbnail(image: HTMLImageElement): boolean {
   } catch {
     return !image.src.endsWith('/default.jpg');
   }
+}
+
+function formatYoutubeTime(seconds: number): string {
+  const totalSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  }
+  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
+}
+
+function progressPercent(progress: { position: number; duration: number }): number {
+  if (progress.duration <= 0) return 0;
+  return Math.min(100, Math.max(0, (progress.position / progress.duration) * 100));
 }
