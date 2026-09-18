@@ -8,6 +8,8 @@ import { useFeedItems } from '../../hooks/useFeedItems';
 import { useReviewSession } from '../../hooks/useReviewSession';
 import { useReviewPreviewPrefetch } from '../../hooks/useReviewPreviewPrefetch';
 import { useFeedPriority } from '../../state/useFeedPriority';
+import { useFeedDecisions } from '../../state/useFeedDecisions';
+import { getEffectiveFeedPriorities } from '../../state/feedPriority';
 import { useFeatureUseCases } from '../../state/useFeatureUseCases';
 
 /** Connects the Reader transaction model to loading, deletion, and cache I/O. */
@@ -22,10 +24,11 @@ export function useFeedReader({
   const { feeds } = useFeatureUseCases();
   const { nsfwMode } = useNsfwPreferences();
   const { hideTikTokItems } = useTikTokPreferences();
-  const { isEnabled: isFeedPrioritizationEnabled, priorities } = useFeedPriority();
+  const { isEnabled, priorities } = useFeedPriority();
+  const { decisions, recordDecision } = useFeedDecisions(credentials?.username ?? null);
   const feedPriorities = useMemo(
-    () => (isFeedPrioritizationEnabled ? priorities : {}),
-    [isFeedPrioritizationEnabled, priorities],
+    () => (isEnabled ? getEffectiveFeedPriorities(priorities, decisions) : {}),
+    [decisions, isEnabled, priorities],
   );
   const {
     loadedItems,
@@ -36,17 +39,6 @@ export function useFeedReader({
     invalidateCache,
     retry,
   } = useFeedItems(credentials);
-  const reviewPresentation = useMemo(() => ({
-    itemOrder,
-    nsfwMode,
-    hideTikTokItems,
-    feedPriorities,
-  }), [
-    feedPriorities,
-    hideTikTokItems,
-    itemOrder,
-    nsfwMode,
-  ]);
   const {
     items,
     activeReviewIds,
@@ -62,7 +54,10 @@ export function useFeedReader({
     username: credentials?.username ?? null,
     isSyncComplete,
     isSyncFailed: status === 'error',
-    ...reviewPresentation,
+    itemOrder,
+    nsfwMode,
+    hideTikTokItems,
+    feedPriorities,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
   const attemptedDeletions = useRef(new Set<string>());
@@ -98,14 +93,16 @@ export function useFeedReader({
   const keepItem = useCallback(() => {
     if (!currentItem) return;
 
+    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: true });
     keep(currentItem.id);
-  }, [currentItem, keep]);
+  }, [currentItem, keep, recordDecision]);
 
   const deleteCurrentItem = useCallback(() => {
     if (!currentItem) return;
 
+    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: false });
     startDeletion(currentItem.id, getItemTitle(currentItem));
-  }, [currentItem, startDeletion]);
+  }, [currentItem, recordDecision, startDeletion]);
 
   const recoverFailedDeletion = useCallback((itemId: number) => {
     recoverDeletion(itemId);

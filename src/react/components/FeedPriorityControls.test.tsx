@@ -3,19 +3,27 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { FeedPriorityContext } from '../state/feedPriorityContext';
+import { FeedPriorityContext, type FeedPriorityValue } from '../state/feedPriorityContext';
 import { FeedPriorityControls } from './FeedPriorityControls';
+
+function createContextValue(overrides: Partial<FeedPriorityValue> = {}) {
+  return {
+    isEnabled: true,
+    priorities: {},
+    changePriority: vi.fn(),
+    setEnabled: vi.fn(),
+    ...overrides,
+  };
+}
 
 describe('FeedPriorityControls', () => {
   it('changes the priority assigned to the current item feed id', () => {
     const changePriority = vi.fn();
     render(
-      <FeedPriorityContext value={{
-        isEnabled: true,
+      <FeedPriorityContext value={createContextValue({
         priorities: { 7: -1 },
         changePriority,
-        setEnabled: vi.fn(),
-      }}>
+      })}>
         <FeedPriorityControls feedId={7} />
       </FeedPriorityContext>,
     );
@@ -31,12 +39,7 @@ describe('FeedPriorityControls', () => {
 
   it('is hidden when feed prioritization is disabled', () => {
     const { container } = render(
-      <FeedPriorityContext value={{
-        isEnabled: false,
-        priorities: { 7: -1 },
-        changePriority: vi.fn(),
-        setEnabled: vi.fn(),
-      }}>
+      <FeedPriorityContext value={createContextValue({ isEnabled: false, priorities: { 7: -1 } })}>
         <FeedPriorityControls feedId={7} />
       </FeedPriorityContext>,
     );
