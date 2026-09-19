@@ -20,6 +20,7 @@ export { isRedirect, parsePublicHttpUrl, safeDecodeURIComponent } from './public
 
 export interface PublicResponseOptions {
   accept: string;
+  acceptEncoding?: string;
   userAgent: string;
   invalidRedirectMessage: string;
   tooManyRedirectsMessage: string;
@@ -43,6 +44,7 @@ export async function fetchPublicResponse(
     try {
       const headers = {
         accept: options.accept,
+        ...(options.acceptEncoding ? { 'accept-encoding': options.acceptEncoding } : {}),
         'user-agent': options.userAgent,
       };
       response = context

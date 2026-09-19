@@ -36,7 +36,7 @@ describe('parseLiquipediaMatch: provider fixture', () => {
               </div>
             </div>
           </div>
-          <div class="match-bm-match-header-tournament">
+          <div class="match-bm-match-header-tournament tournament-highlighted-bg">
             <a>The International 2026: Europe Regional Qualifier</a>
           </div>
         </div>

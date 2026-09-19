@@ -53,7 +53,10 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
     case 'instagram':
       return { preview: <InstagramPreview {...props} /> };
     case 'liquipedia':
-      return { preview: <LiquipediaPreview {...props} />, copy: <StandardCopy {...props} /> };
+      return {
+        preview: <LiquipediaPreview {...props} />,
+        copy: facts.liquipediaMatch ? undefined : <StandardCopy {...props} />,
+      };
     case 'matreshka':
       return { preview: <MatreshkaVideoPreview facts={facts} {...sharedProps} />, copy: <MatreshkaCopy facts={facts} {...sharedProps} /> };
     case 'onefootball':

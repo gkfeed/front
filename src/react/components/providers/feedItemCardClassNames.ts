@@ -28,7 +28,10 @@ function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
           ? ['reader-card--instagram-photo', 'reader-card--portrait-image']
           : []),
       ];
-    case 'liquipedia': return ['reader-card--liquipedia'];
+    case 'liquipedia': return [
+      'reader-card--liquipedia',
+      ...(facts.liquipediaMatch ? ['reader-card--liquipedia-widget'] : []),
+    ];
     case 'matreshka': return ['reader-card--matreshka', 'reader-card--player', 'reader-card--landscape-media'];
     case 'onefootball': return ['reader-card--onefootball'];
     case 'sasflix': return ['reader-card--sasflix', 'reader-card--player', 'reader-card--landscape-media'];

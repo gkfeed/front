@@ -39,6 +39,8 @@ describe('FeedItemCard Liquipedia previews', () => {
     expect(screen.getByText('The International 2026: Europe Regional Qualifier')).toBeTruthy();
     expect(screen.getAllByLabelText('win')).toHaveLength(2);
     expect(screen.getAllByLabelText('loss')).toHaveLength(2);
+    expect(screen.getByRole('article').classList.contains('reader-card--liquipedia-widget')).toBe(true);
+    expect(document.querySelector('.reader-card__copy')).toBeNull();
     expect(getPreview).not.toHaveBeenCalled();
   });
 });

@@ -1,51 +1,61 @@
+import { parseHTML } from 'linkedom';
+
 import type { LiquipediaMatchPreview } from '../../shared/previewContracts.js';
-import { decodeHtml, htmlText, resolveHttpUrl } from './html.js';
+import { resolveHttpUrl } from './html.js';
 
 export function parseLiquipediaMatch(
   html: string,
   pageUrl: URL,
 ): LiquipediaMatchPreview | null {
-  const headerStart = html.indexOf('<div class="match-bm">');
-  if (headerStart < 0) return null;
+  const { document } = parseHTML(html);
+  const header = document.querySelector('.match-bm > .match-bm-match-header');
+  const overview = header?.querySelector('.match-bm-match-header-overview');
+  const date = text(header?.querySelector('.match-bm-match-header-date'));
+  const result = overview?.querySelector('.match-bm-match-header-result');
+  const status = text(result?.querySelector('.match-bm-match-header-result-text'));
+  const tournament = text(header?.querySelector('.match-bm-match-header-tournament'));
+  const teamElements = overview
+    ? Array.from(overview.querySelectorAll('.match-bm-match-header-opponent')).slice(0, 2)
+    : [];
 
-  const headerEnd = html.indexOf('<div class="toggle-area', headerStart);
-  const header = html.slice(headerStart, headerEnd < 0 ? undefined : headerEnd);
-  const dateMarkup = header.match(/match-bm-match-header-date"[^>]*>([\s\S]*?)<div class="match-bm-match-header-overview"/i)?.[1];
-  const resultMatch = header.match(/match-bm-match-header-result"[^>]*>\s*([^<]+)<div class="match-bm-match-header-result-text"[^>]*>([\s\S]*?)<\/div>/i);
-  const tournamentMarkup = header.match(/match-bm-match-header-tournament"[^>]*>([\s\S]*?)<\/div>/i)?.[1];
-  const teamNamePattern = /match-bm-match-header-team-long"[^>]*>\s*<a\b[^>]*>([\s\S]*?)<\/a>/gi;
-  const teamNameMatches = [...header.matchAll(teamNamePattern)].slice(0, 2);
+  if (!date || !result || !status || !tournament || teamElements.length !== 2) return null;
 
-  if (!dateMarkup || !resultMatch || !tournamentMarkup || teamNameMatches.length !== 2) return null;
-
-  const teams = teamNameMatches.map((match, index) => {
-    const matchIndex = match.index ?? 0;
-    const nextIndex = teamNameMatches[index + 1]?.index ?? header.length;
-    const opponentStart = header.lastIndexOf('match-bm-match-header-opponent ', matchIndex);
-    const segment = header.slice(Math.max(opponentStart, 0), nextIndex);
-    const name = htmlText(match[1] ?? '');
-    const shortNameMarkup = segment.match(/match-bm-match-header-team-short"[^>]*>\s*<a\b[^>]*>([\s\S]*?)<\/a>/i)?.[1];
-    const imageSources = [...segment.matchAll(/<img\b[^>]*\bsrc=(?:"([^"]+)"|'([^']+)')[^>]*>/gi)]
-      .map((image) => image[1] ?? image[2] ?? '');
-    const preferredImage = imageSources.find((source) => /darkmode/i.test(source)) ?? imageSources[0];
-    const results = [...segment.matchAll(/data-label-type=(?:"result-(win|loss|default)"|'result-(win|loss|default)')/gi)]
-      .map((label) => (label[1] ?? label[2])!.toLowerCase() as 'win' | 'loss' | 'default');
+  const score = Array.from(result.childNodes)
+    .filter((node) => node.nodeType === 3)
+    .map((node) => node.textContent ?? '')
+    .join('')
+    .split(':')
+    .map((part) => part.replace(/\s+/g, ' ').trim());
+  const teams = teamElements.map((team) => {
+    const name = text(team.querySelector('.match-bm-match-header-team-long'));
+    const shortName = text(team.querySelector('.match-bm-match-header-team-short')) || name;
+    const images = Array.from(team.querySelectorAll('img'));
+    const preferredImage = team.querySelector('.team-template-darkmode img')
+      ?? images.find((image) => /darkmode/i.test(image.getAttribute('src') ?? ''))
+      ?? images[0];
+    const results = Array.from(team.querySelectorAll('[data-label-type]'))
+      .map((label) => label.getAttribute('data-label-type')?.match(/^result-(win|loss|default)$/i)?.[1])
+      .filter((value): value is 'win' | 'loss' | 'default' => Boolean(value))
+      .map((value) => value.toLowerCase() as 'win' | 'loss' | 'default');
 
     return {
       name,
-      shortName: htmlText(shortNameMarkup ?? name),
-      logo: preferredImage ? resolveHttpUrl(decodeHtml(preferredImage), pageUrl) : null,
+      shortName,
+      logo: resolveHttpUrl(preferredImage?.getAttribute('src'), pageUrl),
       results,
     };
   });
-  const score = htmlText(resultMatch[1] ?? '').split(':').map((part) => part.trim());
   if (score.length !== 2 || teams.some((team) => !team.name)) return null;
 
   return {
-    date: htmlText(dateMarkup),
-    status: htmlText(resultMatch[2] ?? ''),
+    date,
+    status,
     score: [score[0]!, score[1]!],
     teams: [teams[0]!, teams[1]!],
-    tournament: htmlText(tournamentMarkup),
+    tournament,
   };
+}
+
+function text(element: Element | null | undefined): string {
+  return element?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
 }

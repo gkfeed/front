@@ -17,6 +17,24 @@ beforeEach(() => {
 });
 
 describe('fetchPublicResponse', () => {
+  it('passes an optional accepted response encoding to the transport', async () => {
+    requestPublicHttp.mockResolvedValue(response(200));
+
+    await fetchPublicResponse(new URL('https://example.com/'), {
+      ...options(),
+      acceptEncoding: 'gzip',
+    });
+
+    expect(requestPublicHttp).toHaveBeenCalledWith(
+      new URL('https://example.com/'),
+      {
+        accept: 'text/html',
+        'accept-encoding': 'gzip',
+        'user-agent': 'test-agent',
+      },
+    );
+  });
+
   it('destroys an infinite redirect body instead of draining it', async () => {
     const body = infiniteBody();
     requestPublicHttp.mockResolvedValue(response(302, 'file:///etc/passwd', body));
