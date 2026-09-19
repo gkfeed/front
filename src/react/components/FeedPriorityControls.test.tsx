@@ -8,10 +8,12 @@ import { FeedPriorityControls } from './FeedPriorityControls';
 
 function createContextValue(overrides: Partial<FeedPriorityValue> = {}) {
   return {
-    isEnabled: true,
+    isManualEnabled: true,
+    isAutomaticEnabled: true,
     priorities: {},
     changePriority: vi.fn(),
-    setEnabled: vi.fn(),
+    setManualEnabled: vi.fn(),
+    setAutomaticEnabled: vi.fn(),
     ...overrides,
   };
 }
@@ -37,9 +39,13 @@ describe('FeedPriorityControls', () => {
     expect(changePriority).toHaveBeenNthCalledWith(2, 7, 1);
   });
 
-  it('is hidden when feed prioritization is disabled', () => {
+  it('is hidden when manual feed prioritization is disabled', () => {
     const { container } = render(
-      <FeedPriorityContext value={createContextValue({ isEnabled: false, priorities: { 7: -1 } })}>
+      <FeedPriorityContext value={createContextValue({
+        isManualEnabled: false,
+        isAutomaticEnabled: true,
+        priorities: { 7: -1 },
+      })}>
         <FeedPriorityControls feedId={7} />
       </FeedPriorityContext>,
     );

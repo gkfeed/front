@@ -4,7 +4,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { FeedPriorityProvider } from '../state/FeedPriorityProvider';
+import {
+  AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
+  FeedPriorityProvider,
+  MANUAL_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
+} from '../state/FeedPriorityProvider';
+import { FEED_PRIORITIES_STORAGE_KEY } from '../state/feedPriority';
 import { getFeedDecisionsStorageKey } from '../state/useFeedDecisions';
 import { getFeedItems } from '../services/feeds';
 import { stubLocalStorage, restoreLocalStorage } from '../testUtils';
@@ -59,5 +64,49 @@ describe('ReaderPage smart order', () => {
     await waitFor(() => expect(JSON.parse(storage.get(getFeedDecisionsStorageKey('reader')) ?? '[]')).toContainEqual({
       itemId: 21, feedId: 6, kept: true,
     }));
+  });
+
+  it('does not use keep rates when automatic prioritization is disabled', async () => {
+    const storage = stubLocalStorage();
+    storage.set(AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY, 'false');
+    storage.set(getFeedDecisionsStorageKey('reader'), JSON.stringify([
+      { itemId: 1, feedId: 5, kept: false },
+      { itemId: 2, feedId: 6, kept: true },
+    ]));
+    vi.mocked(getFeedItems).mockResolvedValue([
+      { id: 22, feedId: 5, link: 'https://example.com/newer', title: 'Newer item', text: '' },
+      { id: 21, feedId: 6, link: 'https://example.com/older', title: 'Older item', text: '' },
+    ]);
+    render(
+      <MemoryRouter initialEntries={['/reader']}>
+        <FeedPriorityProvider>
+          <ReaderPage />
+        </FeedPriorityProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Newer item')).toBeTruthy();
+    expect(screen.queryByText('Older item')).toBeNull();
+  });
+
+  it('does not use saved feed weights when manual prioritization is disabled', async () => {
+    const storage = stubLocalStorage();
+    storage.set(MANUAL_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY, 'false');
+    storage.set(AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY, 'false');
+    storage.set(FEED_PRIORITIES_STORAGE_KEY, JSON.stringify({ 6: 99 }));
+    vi.mocked(getFeedItems).mockResolvedValue([
+      { id: 22, feedId: 5, link: 'https://example.com/newer', title: 'Newer item', text: '' },
+      { id: 21, feedId: 6, link: 'https://example.com/older', title: 'Older item', text: '' },
+    ]);
+    render(
+      <MemoryRouter initialEntries={['/reader']}>
+        <FeedPriorityProvider>
+          <ReaderPage />
+        </FeedPriorityProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Newer item')).toBeTruthy();
+    expect(screen.queryByText('Older item')).toBeNull();
   });
 });

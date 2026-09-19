@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { THEME_STORAGE_KEY } from '../theme';
 import {
+  AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
   FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
   FeedPriorityProvider,
+  MANUAL_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
 } from '../state/FeedPriorityProvider';
 import {
   NSFW_MODE_STORAGE_KEY,
@@ -46,7 +48,7 @@ describe('SettingsMenu', () => {
     expect(storage.get(TIKTOK_PLAYBACK_MODE_STORAGE_KEY)).toBe('embed');
   });
 
-  it('enables feed prioritization by default and persists disabling it', () => {
+  it('persists manual and automatic feed prioritization separately', () => {
     const storage = stubLocalStorage();
     document.documentElement.dataset.theme = 'light';
     render(
@@ -56,12 +58,35 @@ describe('SettingsMenu', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    expect(screen.getByRole('menuitemradio', { name: 'Enabled' }).getAttribute('aria-checked')).toBe('true');
+    const manual = within(screen.getByRole('group', { name: 'Manual prioritization' }));
+    const automatic = within(screen.getByRole('group', { name: 'Automatic prioritization' }));
+    expect(manual.getByRole('menuitemradio', { name: 'Enabled' }).getAttribute('aria-checked')).toBe('true');
+    expect(automatic.getByRole('menuitemradio', { name: 'Enabled' }).getAttribute('aria-checked')).toBe('true');
 
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Disabled' }));
+    fireEvent.click(manual.getByRole('menuitemradio', { name: 'Disabled' }));
 
-    expect(screen.getByRole('menuitemradio', { name: 'Disabled' }).getAttribute('aria-checked')).toBe('true');
-    expect(storage.get(FEED_PRIORITIZATION_ENABLED_STORAGE_KEY)).toBe('false');
+    expect(manual.getByRole('menuitemradio', { name: 'Disabled' }).getAttribute('aria-checked')).toBe('true');
+    expect(automatic.getByRole('menuitemradio', { name: 'Enabled' }).getAttribute('aria-checked')).toBe('true');
+    expect(storage.get(MANUAL_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY)).toBe('false');
+    expect(storage.get(AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY)).toBeUndefined();
+
+    fireEvent.click(automatic.getByRole('menuitemradio', { name: 'Disabled' }));
+
+    expect(storage.get(AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY)).toBe('false');
+  });
+
+  it('uses the former shared prioritization preference as a fallback', () => {
+    const storage = stubLocalStorage();
+    storage.set(FEED_PRIORITIZATION_ENABLED_STORAGE_KEY, 'false');
+    render(<FeedPriorityProvider><SettingsMenu /></FeedPriorityProvider>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+    for (const name of ['Manual prioritization', 'Automatic prioritization']) {
+      expect(within(screen.getByRole('group', { name }))
+        .getByRole('menuitemradio', { name: 'Disabled' })
+        .getAttribute('aria-checked')).toBe('true');
+    }
   });
 
   it('blurs NSFW by default and persists the hide mode', () => {

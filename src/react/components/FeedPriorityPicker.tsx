@@ -4,14 +4,48 @@ import { useFeedPriority } from '../state/useFeedPriority';
 
 export function FeedPriorityPicker() {
   const { t } = useTranslation();
-  const { isEnabled, setEnabled } = useFeedPriority();
+  const {
+    isManualEnabled,
+    isAutomaticEnabled,
+    setManualEnabled,
+    setAutomaticEnabled,
+  } = useFeedPriority();
 
   return (
-    <div className="settings-menu__section">
-      <span className="settings-menu__section-title">{t('settings.feedPrioritization')}</span>
-      <span className="settings-menu__content-description">
-        {t('settings.feedPrioritizationDescription')}
-      </span>
+    <>
+      <PriorityToggle
+        title={t('settings.manualFeedPrioritization')}
+        description={t('settings.manualFeedPrioritizationDescription')}
+        isEnabled={isManualEnabled}
+        onChange={setManualEnabled}
+      />
+      <PriorityToggle
+        title={t('settings.automaticFeedPrioritization')}
+        description={t('settings.automaticFeedPrioritizationDescription')}
+        isEnabled={isAutomaticEnabled}
+        onChange={setAutomaticEnabled}
+      />
+    </>
+  );
+}
+
+function PriorityToggle({
+  title,
+  description,
+  isEnabled,
+  onChange,
+}: {
+  title: string;
+  description: string;
+  isEnabled: boolean;
+  onChange: (isEnabled: boolean) => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="settings-menu__section" role="group" aria-label={title}>
+      <span className="settings-menu__section-title">{title}</span>
+      <span className="settings-menu__content-description">{description}</span>
       <div className="settings-menu__reader-options">
         {([true, false] as const).map((enabled) => (
           <button
@@ -21,7 +55,7 @@ export function FeedPriorityPicker() {
             type="button"
             role="menuitemradio"
             aria-checked={enabled === isEnabled}
-            onClick={() => setEnabled(enabled)}
+            onClick={() => onChange(enabled)}
           >
             {t(enabled ? 'settings.enabled' : 'settings.disabled')}
           </button>

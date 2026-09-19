@@ -24,11 +24,14 @@ export function useFeedReader({
   const { feeds } = useFeatureUseCases();
   const { nsfwMode } = useNsfwPreferences();
   const { hideTikTokItems } = useTikTokPreferences();
-  const { isEnabled, priorities } = useFeedPriority();
+  const { isManualEnabled, isAutomaticEnabled, priorities } = useFeedPriority();
   const { decisions, recordDecision } = useFeedDecisions(credentials?.username ?? null);
   const feedPriorities = useMemo(
-    () => (isEnabled ? getEffectiveFeedPriorities(priorities, decisions) : {}),
-    [decisions, isEnabled, priorities],
+    () => getEffectiveFeedPriorities(
+      isManualEnabled ? priorities : {},
+      isAutomaticEnabled ? decisions : [],
+    ),
+    [decisions, isAutomaticEnabled, isManualEnabled, priorities],
   );
   const {
     loadedItems,

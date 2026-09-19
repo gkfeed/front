@@ -9,22 +9,26 @@ import {
 import { FeedPriorityContext } from './feedPriorityContext';
 
 export const FEED_PRIORITIZATION_ENABLED_STORAGE_KEY = 'gkfeed.feedPrioritizationEnabled.v1';
+export const MANUAL_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY = 'gkfeed.manualFeedPrioritizationEnabled.v1';
+export const AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY = 'gkfeed.automaticFeedPrioritizationEnabled.v1';
 
 export function FeedPriorityProvider({ children }: { children: ReactNode }) {
-  const [isEnabled, setEnabledState] = useState(readFeedPrioritizationEnabled);
+  const [isManualEnabled, setManualEnabledState] = useState(
+    () => readFeedPrioritizationEnabled(MANUAL_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY),
+  );
+  const [isAutomaticEnabled, setAutomaticEnabledState] = useState(
+    () => readFeedPrioritizationEnabled(AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY),
+  );
   const [priorities, setPriorities] = useState(readFeedPriorities);
 
-  const setEnabled = useCallback((nextIsEnabled: boolean) => {
-    setEnabledState(nextIsEnabled);
-    try {
-      window.localStorage.setItem(
-        FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
-        String(nextIsEnabled),
-      );
-    } catch {
-      // Keep the in-memory preference usable when storage is unavailable.
-    }
-  }, []);
+  const setManualEnabled = usePersistedEnabledState(
+    setManualEnabledState,
+    MANUAL_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
+  );
+  const setAutomaticEnabled = usePersistedEnabledState(
+    setAutomaticEnabledState,
+    AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY,
+  );
 
   const changePriority = useCallback((feedId: number, delta: -1 | 1) => {
     setPriorities((current) => {
@@ -35,17 +39,44 @@ export function FeedPriorityProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(() => ({
-    isEnabled,
+    isManualEnabled,
+    isAutomaticEnabled,
     priorities,
     changePriority,
-    setEnabled,
-  }), [changePriority, isEnabled, priorities, setEnabled]);
+    setManualEnabled,
+    setAutomaticEnabled,
+  }), [
+    changePriority,
+    isAutomaticEnabled,
+    isManualEnabled,
+    priorities,
+    setAutomaticEnabled,
+    setManualEnabled,
+  ]);
   return <FeedPriorityContext value={value}>{children}</FeedPriorityContext>;
 }
 
-function readFeedPrioritizationEnabled(): boolean {
+function usePersistedEnabledState(
+  setState: (isEnabled: boolean) => void,
+  storageKey: string,
+) {
+  return useCallback((isEnabled: boolean) => {
+    setState(isEnabled);
+    try {
+      window.localStorage.setItem(storageKey, String(isEnabled));
+    } catch {
+      // Keep the in-memory preference usable when storage is unavailable.
+    }
+  }, [setState, storageKey]);
+}
+
+function readFeedPrioritizationEnabled(storageKey: string): boolean {
   if (typeof window === 'undefined') return true;
   try {
+    const saved = window.localStorage.getItem(storageKey);
+    if (saved !== null) return saved !== 'false';
+
+    // Apply the former shared preference until the user chooses separate values.
     return window.localStorage.getItem(FEED_PRIORITIZATION_ENABLED_STORAGE_KEY) !== 'false';
   } catch {
     return true;

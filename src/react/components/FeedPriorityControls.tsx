@@ -9,8 +9,8 @@ import { useFeedPriority } from '../state/useFeedPriority';
 
 export function FeedPriorityControls({ feedId }: { feedId: number }) {
   const { t } = useTranslation();
-  const { isEnabled, priorities, changePriority } = useFeedPriority();
-  if (!isEnabled) return null;
+  const { isManualEnabled, priorities, changePriority } = useFeedPriority();
+  if (!isManualEnabled) return null;
 
   const priority = getFeedPriority(priorities, feedId);
 
