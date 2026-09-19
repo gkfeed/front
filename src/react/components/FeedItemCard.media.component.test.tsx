@@ -186,6 +186,35 @@ describe('FeedItemCard media providers', () => {
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
+  it('shows the failed media URL when an Instagram preview cannot load', () => {
+    const mediaUrl = 'https://files.catbox.moe/story.mp4';
+    render(<FeedItemCard item={{
+      ...item,
+      link: mediaUrl,
+      title: 'inst: marcian0chka',
+    }} />);
+
+    fireEvent.error(screen.getByLabelText('Video preview for inst: marcian0chka'));
+
+    expect(screen.getByRole('alert').textContent).toContain('Media unavailable');
+    const failedMediaLink = screen.getByRole('link', { name: mediaUrl });
+    expect(failedMediaLink.getAttribute('href')).toBe(mediaUrl);
+  });
+
+  it('shows the item URL when an Instagram preview cannot be created', async () => {
+    const mediaUrl = 'https://www.instagram.com/reel/Unavailable123/';
+    getPreview.mockRejectedValue(new Error('Preview unavailable'));
+    render(<FeedItemCard item={{
+      ...item,
+      link: mediaUrl,
+      title: 'inst: marcian0chka',
+    }} />);
+
+    const failedMediaLink = await screen.findByRole('link', { name: mediaUrl });
+    expect(failedMediaLink.getAttribute('href')).toBe(mediaUrl);
+    expect(screen.getByRole('alert').textContent).toContain('Media unavailable');
+  });
+
   it('renders an extensionless Instagram story download as a story card', () => {
     render(<FeedItemCard item={{
       ...item,

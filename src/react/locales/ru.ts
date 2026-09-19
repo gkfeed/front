@@ -251,6 +251,8 @@ const ru = {
     playSlideshow: 'Продолжить слайд-шоу',
     loadingVideo: 'Загрузка видео…',
     loading: 'Загрузка предпросмотра',
+    mediaUnavailable: 'Медиафайл недоступен',
+    mediaError: 'Не удалось загрузить изображение или видео.',
     tempfileUnavailable: 'Файл недоступен',
     tempfileError: 'Ссылка на временный файл истекла или файл повреждён.',
     tempfileImage: 'Изображение из временной ссылки',

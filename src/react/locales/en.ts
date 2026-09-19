@@ -245,6 +245,8 @@ const en = {
     playSlideshow: 'Play slideshow',
     loadingVideo: 'Loading video…',
     loading: 'Loading preview',
+    mediaUnavailable: 'Media unavailable',
+    mediaError: 'The image or video could not be loaded.',
     tempfileUnavailable: 'File unavailable',
     tempfileError: 'The temporary link has expired or the file is damaged.',
     tempfileImage: 'Image from temporary link',

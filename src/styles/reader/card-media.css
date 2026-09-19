@@ -116,6 +116,11 @@
   text-underline-offset: 3px;
 }
 
+.reader-card__media-error-url {
+  max-width: min(70vw, 42ch);
+  overflow-wrap: anywhere;
+}
+
 .reader-card__preview--embed iframe {
   display: block;
   width: 100%;
