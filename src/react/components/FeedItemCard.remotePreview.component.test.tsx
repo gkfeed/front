@@ -239,6 +239,34 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(screen.queryByRole('link', { name: /Open original/i })).toBeNull();
   });
 
+  it('shows a deleted-post preview for a missing VK wall post', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.ru/wall-45277565_394259',
+      title: null,
+      description: null,
+      image: null,
+      video: null,
+      siteName: null,
+      type: null,
+      providerData: { provider: 'vk', status: 'deleted' },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/wall-45277565_394259',
+      title: '36 студия | Русские комментарии NFL,NHL,MLB,NBA',
+      text: '<p>Старый текст удалённого поста</p>',
+    }} />);
+
+    const deletedPreview = await screen.findByRole('link', { name: 'Post deleted' });
+    expect(deletedPreview.getAttribute('href')).toBe('https://vk.com/wall-45277565_394259');
+    expect(deletedPreview.closest('.reader-card--vk-deleted')).toBeTruthy();
+    expect(screen.getByRole('heading', {
+      name: '36 студия | Русские комментарии NFL,NHL,MLB,NBA',
+    })).toBeTruthy();
+    expect(screen.queryByText('Старый текст удалённого поста')).toBeNull();
+  });
+
   it('renders VK images in a media-first card', async () => {
     getPreview.mockResolvedValue({
       url: 'https://vk.com/wall-123_456',

@@ -7,6 +7,7 @@ import { readHtmlBody } from './previewBodyReaders.js';
 import { TWITTERBOT_USER_AGENT } from './previewFetchers.js';
 import { isRedirect, parsePublicHttpUrl, throwPublicUrlError } from './remoteHttp.js';
 import { getVkChallengeAnswer } from './vkChallenge.js';
+import { isVkMissingWallPage } from './vkPageState.js';
 
 const MAX_REQUESTS = 12;
 const MAX_CHALLENGES = 3;
@@ -53,7 +54,9 @@ export async function fetchVkHtml(input: URL, context?: RequestExecutionContext)
       }
       continue;
     }
-    if (response.status < 200 || response.status >= 300) {
+    const isMissingWallPage = response.status === 404
+      && /^\/wall-?\d+_\d+\/?$/i.test(url.pathname);
+    if ((response.status < 200 || response.status >= 300) && !isMissingWallPage) {
       discardResponseBody(response.body);
       throw new PreviewError(`VK returned HTTP ${response.status}`, 'upstream_error');
     }
@@ -64,6 +67,9 @@ export async function fetchVkHtml(input: URL, context?: RequestExecutionContext)
     }
     const encoding = contentType.match(/charset\s*=\s*["']?([^;\s"']+)/)?.[1];
     const html = await readHtmlBody(response, { encoding, context });
+    if (isMissingWallPage && !isVkMissingWallPage(html, url)) {
+      throw new PreviewError('VK returned an unrecognized missing post page', 'upstream_error');
+    }
     if (url.pathname !== '/challenge.html') {
       const pageUrl = new URL(url);
       pageUrl.searchParams.delete('s429');

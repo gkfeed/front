@@ -7,6 +7,17 @@ import { fetchVkHtml } from './vkFetcher.js';
 vi.mock('./vkFetcher.js', () => ({ fetchVkHtml: vi.fn() }));
 
 describe('parseOpenGraph: VK provider', () => {
+  it('marks a missing VK wall post as deleted', () => {
+    const preview = parseOpenGraph(
+      '<div data-testid="page_not_found_placeholder"></div>',
+      new URL('https://vk.ru/wall-45277565_394259'),
+    );
+
+    expect(preview.providerData).toEqual({ provider: 'vk', status: 'deleted' });
+    expect(preview.image).toBeNull();
+    expect(preview.video).toBeNull();
+  });
+
   it('preserves the video embed from the reported STREAM INSIDE post', async () => {
     vi.mocked(fetchVkHtml).mockResolvedValue({
       url: new URL('https://vk.ru/wall-182864292_1336279'),

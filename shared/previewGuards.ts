@@ -4,6 +4,7 @@ import { isRecord } from './valueGuards.js';
 
 export { isHltvProviderData } from './providerData/hltv.js';
 export { isOneFootballProviderData } from './providerData/oneFootball.js';
+export { isVkProviderData } from './providerData/vk.js';
 
 export function isOpenGraphPreview(value: unknown): value is OpenGraphPreview {
   if (!isRecord(value)) return false;

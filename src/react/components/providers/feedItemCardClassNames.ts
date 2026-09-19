@@ -34,7 +34,10 @@ function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
     case 'sasflix': return ['reader-card--sasflix', 'reader-card--player', 'reader-card--landscape-media'];
     case 'tiktok': return ['reader-card--short-video', 'reader-card--tiktok'];
     case 'twitch': return ['reader-card--twitch', 'reader-card--player', 'reader-card--landscape-media'];
-    case 'vk': return ['reader-card--vk'];
+    case 'vk': return [
+      'reader-card--vk',
+      ...(facts.vkStatus === 'deleted' ? ['reader-card--vk-deleted'] : []),
+    ];
     case 'youtube': return ['reader-card--youtube', 'reader-card--player', 'reader-card--landscape-media'];
     default: return assertNever(facts);
   }

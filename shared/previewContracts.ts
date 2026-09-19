@@ -19,6 +19,7 @@ export type {
   OneFootballMatchTeamPreview,
   OneFootballProviderData,
 } from './providerData/oneFootball.js';
+export type { VkProviderData } from './providerData/vk.js';
 export type { OpenGraphProviderData } from './providerData.js';
 
 export interface OpenGraphMetadata {

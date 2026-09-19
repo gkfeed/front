@@ -76,6 +76,19 @@ describe('fetchVkHtml', () => {
     expect((await fetchVkHtml(post)).html).toBe('Привет');
   });
 
+  it('returns VK missing-page HTML for wall posts', async () => {
+    const html = '<div data-testid="page_not_found_placeholder"></div>';
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(response(404, html));
+
+    await expect(fetchVkHtml(post)).resolves.toMatchObject({ html });
+  });
+
+  it('rejects unrecognized VK 404 responses', async () => {
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(response(404, '<h1>Not found</h1>'));
+
+    await expect(fetchVkHtml(post)).rejects.toMatchObject({ kind: 'upstream_error' });
+  });
+
   it('rejects unknown challenges instead of returning an empty successful preview', async () => {
     vi.mocked(requestPublicHttp)
       .mockResolvedValueOnce(response(302, '', { location: challenge }))

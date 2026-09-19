@@ -37,6 +37,7 @@ type FeedItemCardCommonMetadata = {
   hltvSnapshot: HltvMatchSnapshot | null;
   hltvImageScore: [string, string] | null;
   oneFootballSnapshot: OneFootballMatchSnapshot | null;
+  vkStatus: 'deleted' | null;
 };
 
 export type FeedItemCardMetadata = FeedItemProviderViewModel extends infer Provider

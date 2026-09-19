@@ -111,6 +111,43 @@
   -webkit-line-clamp: 3;
 }
 
+.reader-card--vk.reader-card--vk-deleted {
+  width: 100%;
+}
+
+.reader-card--vk-deleted .reader-card__vk-deleted-preview {
+  display: grid;
+  width: 100%;
+  min-height: 220px;
+  aspect-ratio: 16 / 9;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.reader-card__vk-deleted-icon {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 48px;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+}
+
+.reader-card__vk-deleted-icon::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 37px;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
 /* VK uses a small set of roughly 1.9:1 service banners when a post has no meaningful photo.
    Keep that banner available as a link, but let the post copy carry the card. */
 .reader-card--vk:has(> .reader-card__preview[data-vk-feed-placeholder]) {

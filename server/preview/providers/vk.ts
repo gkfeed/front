@@ -5,6 +5,7 @@ import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
 import { fetchVkHtml } from '../vkFetcher.js';
 import { parseOpenGraph } from '../openGraphParser.js';
 import { resolveHttpUrl } from '../html.js';
+import { isVkMissingWallPage } from '../vkPageState.js';
 
 export const vkOpenGraphAdapter: OpenGraphProviderAdapter = {
   matches: (url) => isVkHost(url.hostname),
@@ -17,6 +18,12 @@ export const vkOpenGraphAdapter: OpenGraphProviderAdapter = {
 
 function parseVkOpenGraph(html: string, pageUrl: URL) {
   const preview = parseOpenGraph(html, pageUrl);
+  if (isVkMissingWallPage(html, pageUrl)) {
+    return {
+      ...preview,
+      providerData: { provider: 'vk', status: 'deleted' } as const,
+    };
+  }
   const structuredVideo = parseVkStructuredVideo(html, pageUrl);
   return {
     ...preview,

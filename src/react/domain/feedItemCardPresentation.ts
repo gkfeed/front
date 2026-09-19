@@ -18,6 +18,7 @@ import type {
 import type { FeedItem } from '../types';
 import { getHltvSnapshot } from '../../../shared/providerData/hltv';
 import { getOneFootballSnapshot } from '../../../shared/providerData/oneFootball';
+import { getVkStatus } from '../../../shared/providerData/vk';
 
 export type { FeedItemCardPresentation } from './feedItemCardContracts';
 
@@ -119,6 +120,7 @@ function resolveMetadata({
     hltvSnapshot,
     hltvImageScore,
     oneFootballSnapshot,
+    vkStatus: getVkStatus(remotePreview.openGraphPreview?.providerData),
   };
 }
 

@@ -243,6 +243,7 @@ const ru = {
     hide: 'Скрыть чат Twitch',
   },
   preview: {
+    postDeleted: 'Пост удалён',
     doubleSpeed: 'Удвоенная скорость воспроизведения',
     previousSlide: 'Предыдущий слайд',
     nextSlide: 'Следующий слайд',

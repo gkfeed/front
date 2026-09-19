@@ -61,4 +61,11 @@ describe('provider-data modules', () => {
     expect(isOpenGraphProviderData(undefined)).toBe(false);
     expect(getProviderDataImageUrls(null)).toEqual([]);
   });
+
+  it('accepts deleted VK post data without image assets', () => {
+    const value = { provider: 'vk', status: 'deleted' };
+
+    expect(isOpenGraphProviderData(value)).toBe(true);
+    expect(getProviderDataImageUrls(value)).toEqual([]);
+  });
 });

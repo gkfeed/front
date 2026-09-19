@@ -237,6 +237,7 @@ const en = {
     hide: 'Hide Twitch chat',
   },
   preview: {
+    postDeleted: 'Post deleted',
     doubleSpeed: 'Double playback speed',
     previousSlide: 'Previous slide',
     nextSlide: 'Next slide',

@@ -11,7 +11,7 @@ import { OneFootballCopy, OneFootballPreview } from './providerRenderers/onefoot
 import { SasflixCopy, SasflixVideoPreview } from './providerRenderers/sasflix';
 import { TikTokSupplementary } from './providerRenderers/tiktok';
 import { TwitchCopy, TwitchVideoPreview } from './providerRenderers/twitch';
-import { VkCopy } from './providerRenderers/vk';
+import { VkCopy, VkDeletedPreview } from './providerRenderers/vk';
 import { YoutubeCopy, YoutubeVideoPreview } from './providerRenderers/youtube';
 
 export function FeedItemCardProviderContent({
@@ -65,7 +65,12 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
     case 'twitch':
       return { preview: <TwitchVideoPreview facts={facts} {...sharedProps} />, copy: <TwitchCopy facts={facts} {...sharedProps} /> };
     case 'vk':
-      return { preview: <FeedItemMediaPreview {...props} />, copy: <VkCopy {...props} /> };
+      return {
+        preview: facts.vkStatus === 'deleted'
+          ? <VkDeletedPreview facts={facts} />
+          : <FeedItemMediaPreview {...props} />,
+        copy: <VkCopy {...props} />,
+      };
     case 'youtube':
       return { preview: <YoutubeVideoPreview facts={facts} {...sharedProps} />, copy: <YoutubeCopy facts={facts} {...sharedProps} /> };
     default:
