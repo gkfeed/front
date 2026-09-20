@@ -16,7 +16,13 @@ export type YoutubePlayerStateChangeEvent = {
   target: YoutubePlayer;
 };
 
+export type YoutubePlayerErrorEvent = {
+  data: number;
+  target: YoutubePlayer;
+};
+
 type YoutubePlayerEvents = {
+  onError: (event: YoutubePlayerErrorEvent) => void;
   onReady: (event: YoutubePlayerReadyEvent) => void;
   onStateChange: (event: YoutubePlayerStateChangeEvent) => void;
 };

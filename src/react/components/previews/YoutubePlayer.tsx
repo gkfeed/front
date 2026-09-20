@@ -1,4 +1,4 @@
-import { useState, type RefObject } from 'react';
+import { useCallback, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TheaterPlayerShell } from './TheaterPlayerShell';
@@ -19,9 +19,12 @@ type YoutubePlayerProps = {
 };
 
 export function YoutubePlayer(props: YoutubePlayerProps) {
+  const [isPlayerUnavailable, setIsPlayerUnavailable] = useState(false);
+  const markPlayerUnavailable = useCallback(() => setIsPlayerUnavailable(true), []);
   const { iframeRef } = useYoutubePlayerController({
     isDoubleSpeed: props.isDoubleSpeed,
     onPlaybackStateChange: props.onPlaybackStateChange,
+    onPlayerUnavailable: markPlayerUnavailable,
     resumePosition: props.resumePosition,
     shellRef: props.shellRef,
     videoId: props.videoId,
@@ -35,6 +38,7 @@ export function YoutubePlayer(props: YoutubePlayerProps) {
     <YoutubePlayerView
       {...props}
       iframeRef={iframeRef}
+      isPlayerUnavailable={isPlayerUnavailable}
       onTogglePlaybackSpeed={togglePlaybackSpeed}
     />
   );
@@ -42,6 +46,7 @@ export function YoutubePlayer(props: YoutubePlayerProps) {
 
 type YoutubePlayerViewProps = YoutubePlayerProps & {
   iframeRef: RefObject<HTMLIFrameElement | null>;
+  isPlayerUnavailable?: boolean;
 };
 
 export function YoutubePlayerView({
@@ -54,6 +59,7 @@ export function YoutubePlayerView({
   onTogglePlaybackSpeed,
   shellRef,
   iframeRef,
+  isPlayerUnavailable = false,
 }: YoutubePlayerViewProps) {
   const { t } = useTranslation();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -72,8 +78,10 @@ export function YoutubePlayerView({
       isTheaterOpen={isTheaterOpen}
       onToggleTheater={onToggleTheater}
       shellRef={shellRef}
-      aside={isCommentsOpen ? <YoutubeComments videoId={videoId} isOpen /> : undefined}
-      toolbar={(
+      aside={!isPlayerUnavailable && isCommentsOpen
+        ? <YoutubeComments videoId={videoId} isOpen />
+        : undefined}
+      toolbar={!isPlayerUnavailable ? (
         <>
           <button
             type="button"
@@ -96,16 +104,30 @@ export function YoutubePlayerView({
             {t('youtubeComments.comments')}
           </button>
         </>
-      )}
+      ) : undefined}
     >
-      <iframe
-        src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
-        title={title || t('preview.youtubePlayer')}
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-        allowFullScreen
-        referrerPolicy="strict-origin-when-cross-origin"
-        ref={iframeRef}
-      />
+      {isPlayerUnavailable ? (
+        <div className="reader-card__media-error" role="alert">
+          <strong>{t('preview.youtubeEmbedUnavailable')}</strong>
+          <span>{t('preview.youtubeEmbedError')}</span>
+          <a
+            href={`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('preview.watchOnYoutube')} <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      ) : (
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${parameters}`}
+          title={title || t('preview.youtubePlayer')}
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          ref={iframeRef}
+        />
+      )}
     </TheaterPlayerShell>
   );
 }

@@ -11,6 +11,7 @@ export function useYoutubePlayerConnection({
   iframeRef,
   isDoubleSpeedRef,
   onPlaybackStateChangeRef,
+  onPlayerUnavailable,
   persistProgress,
   playerRef,
   resumePosition,
@@ -21,6 +22,7 @@ export function useYoutubePlayerConnection({
   iframeRef: RefObject<HTMLIFrameElement | null>;
   isDoubleSpeedRef: { current: boolean };
   onPlaybackStateChangeRef: { current: (isPlaying: boolean) => void };
+  onPlayerUnavailable: () => void;
   persistProgress: (force: boolean, player: YoutubePlayer) => void;
   playerRef: { current: YoutubePlayer | null };
   resumePosition: number | null;
@@ -32,6 +34,7 @@ export function useYoutubePlayerConnection({
     if (!iframe) return;
     let isDisposed = false;
     let isPlayerAttached = false;
+    let readinessTimeout: number | undefined;
 
     const handleStateChange = (event: YoutubePlayerStateChangeEvent) => {
       if (isDisposed) return;
@@ -52,10 +55,19 @@ export function useYoutubePlayerConnection({
       void loadYoutubeIframeApi()
         .then((api) => {
           if (isDisposed || !iframe.isConnected) return;
+          readinessTimeout = window.setTimeout(() => {
+            if (!isDisposed) onPlayerUnavailable();
+          }, 10_000);
           const player = new api.Player(iframe, {
             events: {
+              onError: () => {
+                if (isDisposed) return;
+                window.clearTimeout(readinessTimeout);
+                onPlayerUnavailable();
+              },
               onReady: ({ target }) => {
                 if (isDisposed) return;
+                window.clearTimeout(readinessTimeout);
                 playerRef.current = target;
                 target.setPlaybackRate(isDoubleSpeedRef.current ? 2 : 1);
                 sampleProgress(target);
@@ -78,6 +90,7 @@ export function useYoutubePlayerConnection({
     attachPlayer();
     return () => {
       isDisposed = true;
+      window.clearTimeout(readinessTimeout);
       iframe.removeEventListener('load', attachPlayer);
       playerRef.current?.destroy();
       playerRef.current = null;
@@ -87,6 +100,7 @@ export function useYoutubePlayerConnection({
     iframeRef,
     isDoubleSpeedRef,
     onPlaybackStateChangeRef,
+    onPlayerUnavailable,
     persistProgress,
     playerRef,
     resumePosition,

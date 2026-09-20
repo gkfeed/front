@@ -10,12 +10,14 @@ import { useYoutubePlayerRate } from './useYoutubePlayerRate';
 export function useYoutubePlayerController({
   isDoubleSpeed,
   onPlaybackStateChange,
+  onPlayerUnavailable,
   resumePosition,
   shellRef,
   videoId,
 }: {
   isDoubleSpeed: boolean;
   onPlaybackStateChange: (isPlaying: boolean) => void;
+  onPlayerUnavailable: () => void;
   resumePosition: number | null;
   shellRef: RefObject<HTMLDivElement | null>;
   videoId: string;
@@ -41,6 +43,7 @@ export function useYoutubePlayerController({
     iframeRef,
     isDoubleSpeedRef,
     onPlaybackStateChangeRef,
+    onPlayerUnavailable,
     persistProgress,
     playerRef,
     resumePosition,

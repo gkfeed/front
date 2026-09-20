@@ -154,6 +154,77 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
   });
 
+  it('replaces a blocked YouTube embed with a direct watch link', async () => {
+    let errorHandler!: () => void;
+    const player: YoutubePlayer = {
+      getCurrentTime: () => 0,
+      getDuration: () => 0,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: { onError: () => void };
+        }) {
+          errorHandler = options.events.onError;
+          return player;
+        }),
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => errorHandler());
+
+    expect(screen.queryByTitle('Story')).toBeNull();
+    const link = screen.getByRole('link', { name: /Watch on YouTube/ });
+    expect(link.getAttribute('href')).toBe('https://www.youtube.com/watch?v=abc123xyz');
+    expect(link.getAttribute('target')).toBe('_blank');
+  });
+
+  it('replaces a YouTube bot-check embed that never becomes ready', async () => {
+    vi.useFakeTimers();
+    const player: YoutubePlayer = {
+      getCurrentTime: () => 0,
+      getDuration: () => 0,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(() => player),
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(10_000));
+
+    expect(screen.getByRole('link', { name: /Watch on YouTube/ })).toBeTruthy();
+    vi.useRealTimers();
+  });
+
   it('loads YouTube comments on demand from the player toolbar', async () => {
     render(<FeedItemCard item={{
       ...item,
