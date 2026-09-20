@@ -1,6 +1,7 @@
 import type { Feed, FeedItem } from '../types';
 import { getObjectProperty } from '../unknownObject';
 import { normalizeExternalText } from '../../../shared/text';
+import { normalizeShikimoriAnimeUrl } from '../domain/shikimoriPreview';
 
 export function parseFeeds(value: unknown): Feed[] {
   if (Array.isArray(value) && value.every(isFeed)) return value;
@@ -37,7 +38,7 @@ export function parseFeedItemsPage(value: unknown): FeedItemsPage {
       .map((item) => ({
         id: item.id,
         feedId: item.feed_id,
-        link: item.link,
+        link: normalizeShikimoriAnimeUrl(item.link),
         title: normalizeExternalText(item.title),
         text: normalizeExternalText(item.text),
       })),

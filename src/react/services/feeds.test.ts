@@ -122,6 +122,26 @@ describe('feed service', () => {
     });
   });
 
+  it('resolves relative Shikimori anime links against the public site', async () => {
+    respondWith({
+      items: [{
+        id: 10,
+        feed_id: 2,
+        link: '/animes/63347-world-is-dancing',
+        title: 'World Is Dancing',
+        text: '',
+      }],
+    });
+
+    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([{
+      id: 10,
+      feedId: 2,
+      link: 'https://shikimori.one/animes/63347-world-is-dancing',
+      title: 'World Is Dancing',
+      text: '',
+    }]);
+  });
+
   it('drops Unicode replacement markers without dropping valid emoji', async () => {
     respondWith({
       items: [

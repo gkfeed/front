@@ -5,6 +5,7 @@ import { matreshkaOpenGraphAdapter } from './providers/matreshka.js';
 import { oneFootballOpenGraphAdapter } from './providers/oneFootball.js';
 import { rezkaOpenGraphAdapter } from './providers/rezka.js';
 import { sasflixOpenGraphAdapter } from './providers/sasflix.js';
+import { shikimoriOpenGraphAdapter } from './providers/shikimori.js';
 import { vkOpenGraphAdapter } from './providers/vk.js';
 import { youtubeOpenGraphAdapter } from './providers/youtube.js';
 
@@ -15,6 +16,7 @@ export const openGraphProviderAdapters: readonly OpenGraphProviderAdapter[] = [
   instagramOpenGraphAdapter,
   matreshkaOpenGraphAdapter,
   sasflixOpenGraphAdapter,
+  shikimoriOpenGraphAdapter,
   vkOpenGraphAdapter,
   youtubeOpenGraphAdapter,
 ];
