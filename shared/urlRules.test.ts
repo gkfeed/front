@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getMatreshkaVideoIdFromUrl,
   getSasflixPublicationIdFromUrl,
+  getYoutubeVideoIdFromUrl,
   isHltvMatchUrl,
   isInstagramMediaUrl,
   isLiquipediaMatchUrl,
@@ -10,11 +11,29 @@ import {
   isRedditVideoUrl,
   isTikTokVideoUrl,
   isVkHost,
+  isYoutubeVideoUrl,
 } from './urlRules.js';
 
 const url = (value: string) => new URL(value);
 
 describe('shared URL rules', () => {
+  it.each([
+    ['https://youtu.be/abc123xyz', 'abc123xyz'],
+    ['https://www.youtube.com/watch?v=abc123xyz', 'abc123xyz'],
+    ['https://m.youtube.com/shorts/abc123xyz', 'abc123xyz'],
+  ])('recognizes YouTube video URL %s', (value, videoId) => {
+    expect(getYoutubeVideoIdFromUrl(url(value))).toBe(videoId);
+    expect(isYoutubeVideoUrl(url(value))).toBe(true);
+  });
+
+  it.each([
+    'https://youtube.com.example.org/watch?v=abc123xyz',
+    'ftp://youtube.com/watch?v=abc123xyz',
+    'https://www.youtube.com/@creator',
+  ])('rejects non-video YouTube URL %s', (value) => {
+    expect(isYoutubeVideoUrl(url(value))).toBe(false);
+  });
+
   it.each([
     'https://www.tiktok.com/@creator/video/123',
     'https://m.tiktok.com/v/123',

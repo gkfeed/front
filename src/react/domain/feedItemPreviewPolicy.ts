@@ -104,6 +104,7 @@ function shouldRequestRemotePreview(
       || (providerView.provider === 'instagram' && Boolean(url && isInstagramMediaUrl(url)))
       || providerView.provider === 'sasflix'
       || providerView.provider === 'onefootball'
+      || providerView.provider === 'youtube'
       || !(localPreview?.src && (!usesVkDescription || feedDescription)));
 }
 

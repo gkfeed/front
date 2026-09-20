@@ -1,5 +1,6 @@
 const HTTP_PROTOCOLS = new Set(['http:', 'https:']);
 const TIKTOK_HOSTS = ['tiktok.com'] as const;
+const YOUTUBE_HOSTS = new Set(['youtube.com', 'm.youtube.com']);
 const VK_HOSTS = ['vk.com', 'vk.ru', 'vkvideo.ru'] as const;
 const VK_IMAGE_HOSTS = ['vkuserphoto.ru', 'userapi.com'] as const;
 const REDDIT_VIDEO_HOST = 'v.redd.it';
@@ -35,6 +36,26 @@ export function isTikTokVideoUrl(url: URL): boolean {
   return HTTP_PROTOCOLS.has(url.protocol)
     && isHostnameOrSubdomain(url.hostname, TIKTOK_HOSTS)
     && TIKTOK_VIDEO_PATH.test(url.pathname);
+}
+
+export function getYoutubeVideoIdFromUrl(url: URL): string | null {
+  const hostname = normalizeHostname(url.hostname);
+  let videoId: string | null = null;
+
+  if (hostname === 'youtu.be') {
+    videoId = url.pathname.split('/').filter(Boolean)[0] ?? null;
+  } else if (YOUTUBE_HOSTS.has(hostname)) {
+    if (url.pathname === '/watch') videoId = url.searchParams.get('v');
+    if (/^\/(?:shorts|embed)\//.test(url.pathname)) {
+      videoId = url.pathname.split('/')[2] ?? null;
+    }
+  }
+
+  return videoId && /^[\w-]{6,}$/.test(videoId) ? videoId : null;
+}
+
+export function isYoutubeVideoUrl(url: URL): boolean {
+  return HTTP_PROTOCOLS.has(url.protocol) && getYoutubeVideoIdFromUrl(url) !== null;
 }
 
 export function isRedditVideoUrl(url: URL): boolean {

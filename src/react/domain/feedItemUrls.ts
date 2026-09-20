@@ -1,6 +1,7 @@
 import {
   getMatreshkaVideoIdFromUrl,
   getSasflixPublicationIdFromUrl,
+  getYoutubeVideoIdFromUrl,
   normalizeHostname,
 } from '../../../shared/urlRules';
 
@@ -49,17 +50,7 @@ export function isDirectVideoValue(value: string): boolean {
 }
 
 export function getYoutubeVideoId(url: URL): string | null {
-  const hostname = hostnameOf(url);
-  let videoId: string | null = null;
-
-  if (hostname === 'youtu.be') {
-    videoId = url.pathname.split('/').filter(Boolean)[0] ?? null;
-  } else if (['youtube.com', 'm.youtube.com'].includes(hostname)) {
-    if (url.pathname === '/watch') videoId = url.searchParams.get('v');
-    if (/^\/(?:shorts|embed)\//.test(url.pathname)) videoId = url.pathname.split('/')[2] ?? null;
-  }
-
-  return videoId && /^[\w-]{6,}$/.test(videoId) ? videoId : null;
+  return getYoutubeVideoIdFromUrl(url);
 }
 
 export function getMatreshkaVideoId(url: URL): string | null {

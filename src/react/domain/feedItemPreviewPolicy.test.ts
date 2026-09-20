@@ -109,6 +109,18 @@ const cases: PolicyCase[] = [
     visible: 'https://example.com/match.jpg',
   },
   {
+    name: 'YouTube requests the original title despite a local thumbnail',
+    item: feedItem({
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+      title: 'YT: Example Channel',
+      text: 'Translated video title',
+    }),
+    request: 'open-graph',
+    preview: 'https://i.ytimg.com/vi/abc123xyz/maxresdefault.jpg',
+    visible: 'https://i.ytimg.com/vi/abc123xyz/maxresdefault.jpg',
+    fallback: 'https://i.ytimg.com/vi/abc123xyz/mqdefault.jpg',
+  },
+  {
     name: 'TikTok embed needs no remote request',
     item: feedItem({ link: 'https://www.tiktok.com/@creator/video/1234567890' }),
     request: 'none',

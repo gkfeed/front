@@ -6,6 +6,7 @@ import { oneFootballOpenGraphAdapter } from './providers/oneFootball.js';
 import { rezkaOpenGraphAdapter } from './providers/rezka.js';
 import { sasflixOpenGraphAdapter } from './providers/sasflix.js';
 import { vkOpenGraphAdapter } from './providers/vk.js';
+import { youtubeOpenGraphAdapter } from './providers/youtube.js';
 
 export const openGraphProviderAdapters: readonly OpenGraphProviderAdapter[] = [
   hltvOpenGraphAdapter,
@@ -15,6 +16,7 @@ export const openGraphProviderAdapters: readonly OpenGraphProviderAdapter[] = [
   matreshkaOpenGraphAdapter,
   sasflixOpenGraphAdapter,
   vkOpenGraphAdapter,
+  youtubeOpenGraphAdapter,
 ];
 
 export function findOpenGraphProviderAdapter(url: URL): OpenGraphProviderAdapter | undefined {

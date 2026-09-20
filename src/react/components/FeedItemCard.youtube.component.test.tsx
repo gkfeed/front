@@ -85,6 +85,30 @@ describe('FeedItemCard YouTube and general states', () => {
       .toBe('https://i.ytimg.com/vi/abc123xyz/mqdefault.jpg');
   });
 
+  it('shows the original YouTube title from remote metadata', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://www.youtube.com/watch?v=abc123xyz',
+      title: 'Оригинальное название',
+      description: null,
+      image: 'https://i.ytimg.com/vi/abc123xyz/hqdefault.jpg',
+      video: null,
+      siteName: 'YouTube',
+      type: 'video',
+      providerData: null,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+      title: 'YT: Example Channel',
+      text: 'Translated video title',
+    }} />);
+
+    expect(await screen.findByRole('heading', { name: 'Оригинальное название' })).toBeTruthy();
+    expect(screen.queryByText('Translated video title')).toBeNull();
+    expect(screen.getByText('Example Channel')).toBeTruthy();
+  });
+
   it('rejects YouTube placeholder images that load successfully', () => {
     render(<FeedItemCard item={{
       ...item,
