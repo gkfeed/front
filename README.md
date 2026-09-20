@@ -12,6 +12,10 @@ with Make by default.
 Set `BFF_PORT=<port>` to select a different BFF port. You can also run
 `npm run dev:front` and `npm run dev:bff` separately.
 
+HLTV sometimes blocks requests from local development IPs. `npm run dev` falls back to the
+hosted BFF for HLTV previews when the local fetch fails. Set
+`HLTV_PREVIEW_FALLBACK_ORIGIN` to change that origin, or to an empty value to disable the fallback.
+
 The dev server listens on `0.0.0.0`, so it is also reachable from your local network at `http://<your-lan-ip>:4200/` or, when `gkfeed.local` resolves to this machine, at `http://gkfeed.local:4200/`. Vite allows the `gkfeed.local` host header for this LAN setup. Set `FRONT_HOST` or `FRONT_PORT` when invoking `make dev` to override the frontend bind address or port. In development, API requests use `/api/v1` and are proxied by Vite to `https://feed.gws.freemyip.com` so browsers do not block them with CORS.
 
 Set `VITE_API_ROOT` at build time to override the API URL. The default is the

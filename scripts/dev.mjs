@@ -2,6 +2,8 @@ import { spawn } from 'node:child_process';
 
 const bffPort = process.env.BFF_PORT ?? process.env.PORT ?? '3000';
 const bffTarget = process.env.BFF_TARGET ?? `http://127.0.0.1:${bffPort}`;
+const hltvPreviewFallbackOrigin = process.env.HLTV_PREVIEW_FALLBACK_ORIGIN
+  ?? 'https://feed.gws.freemyip.com';
 const frontHost = process.env.FRONT_HOST ?? '0.0.0.0';
 const frontPort = process.env.FRONT_PORT ?? '4200';
 
@@ -16,7 +18,11 @@ const services = [
     name: 'bff',
     command: 'node_modules/.bin/tsx',
     args: ['watch', 'server/index.ts'],
-    env: { ...process.env, PORT: bffPort },
+    env: {
+      ...process.env,
+      PORT: bffPort,
+      HLTV_PREVIEW_FALLBACK_ORIGIN: hltvPreviewFallbackOrigin,
+    },
   },
 ];
 
