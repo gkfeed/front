@@ -4,6 +4,7 @@ import type { NsfwMode, RemotePreview, RemotePreviewSource } from '../domain/fee
 import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
 import type { FeedItem } from '../types';
 import { getProviderDataImageUrls } from '../../../shared/providerData';
+import type { FeedPluginId } from '../domain/feedItemProviderPresentation';
 
 type PreviewLoader = {
   loadRemotePreview: (
@@ -19,8 +20,9 @@ export function prefetchFeedItem(
   prefetchedImageUrls: Set<string>,
   prefetchControllers: Map<string, AbortController>,
   nsfwMode: NsfwMode,
+  disabledPlugins: ReadonlySet<FeedPluginId> = new Set(),
 ): void {
-  const providerView = analyzeFeedItem(item);
+  const providerView = analyzeFeedItem(item, disabledPlugins);
   const initialPolicy = resolveFeedItemPreviewPolicy({
     item,
     providerView,

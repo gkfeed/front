@@ -61,6 +61,10 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
       return { preview: <MatreshkaVideoPreview facts={facts} {...sharedProps} />, copy: <MatreshkaCopy facts={facts} {...sharedProps} /> };
     case 'onefootball':
       return { preview: <OneFootballPreview {...props} />, copy: <OneFootballCopy {...props} /> };
+    case 'reddit':
+    case 'rezka':
+    case 'spotify':
+      return { preview: <FeedItemMediaPreview {...props} />, copy: <StandardCopy {...props} /> };
     case 'sasflix':
       return { preview: <SasflixVideoPreview facts={facts} {...sharedProps} />, copy: <SasflixCopy facts={facts} {...sharedProps} /> };
     case 'tiktok':

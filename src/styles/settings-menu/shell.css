@@ -17,7 +17,8 @@
 }
 
 .settings-menu__trigger:hover,
-.settings-menu__trigger[aria-expanded="true"] {
+.settings-menu__trigger[aria-expanded="true"],
+.settings-menu__trigger--active {
   border-color: color-mix(in oklch, var(--color-ink-inverse) 44%, var(--color-border));
   background: color-mix(in oklch, var(--color-page) 68%, var(--color-border));
 }
@@ -88,6 +89,10 @@
 .settings-menu__trigger:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 3px;
+}
+
+a.settings-menu__trigger {
+  text-decoration: none;
 }
 
 @media (max-width: 760px) {

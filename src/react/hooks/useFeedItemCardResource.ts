@@ -6,10 +6,12 @@ import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
 import { useFeedItemRemotePreview } from './useFeedItemRemotePreview';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
+import { usePluginPreferences } from '../state/usePluginPreferences';
 
 export function useFeedItemCardResource(item: FeedItem) {
   const { nsfwMode } = useNsfwPreferences();
-  const providerView = analyzeFeedItem(item);
+  const { disabledPlugins } = usePluginPreferences();
+  const providerView = analyzeFeedItem(item, disabledPlugins);
   const previewPolicy = resolveFeedItemPreviewPolicy({
     item,
     providerView,

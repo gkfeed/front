@@ -1,7 +1,10 @@
 import type { FeedItem } from '../types';
 import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getEmbeddedPreview } from './embeddedPreview';
-import { getFeedItemProviderFromUrl } from './feedItemProviderPresentation';
+import {
+  getFeedItemProviderFromUrl,
+  type FeedPluginId,
+} from './feedItemProviderPresentation';
 import { getShikimoriHighQualityImageUrl } from './shikimoriPreview';
 import { getTwitchPreview } from './twitchPreview';
 import { getVkVideoPreview } from './vkPreview';
@@ -14,14 +17,22 @@ import {
 import { getYoutubePreview } from './youtubePreview';
 import { isInstagramMediaUrl } from './instagramPreview';
 
-export function getFeedItemPreview(item: FeedItem): FeedItemPreview | null {
-  return getFeedItemPreviewFromUrl(item, parseUrl(item.link));
+export function getFeedItemPreview(
+  item: FeedItem,
+  disabledPlugins: ReadonlySet<FeedPluginId> = new Set(),
+): FeedItemPreview | null {
+  return getFeedItemPreviewFromUrl(item, parseUrl(item.link), disabledPlugins);
 }
 
-function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPreview | null {
+function getFeedItemPreviewFromUrl(
+  item: FeedItem,
+  url: URL | null,
+  disabledPlugins: ReadonlySet<FeedPluginId>,
+): FeedItemPreview | null {
   if (!url) return getEmbeddedPreview(item.text, item.title);
+  const provider = getFeedItemProviderFromUrl(item, url, disabledPlugins);
 
-  const vkVideoEmbed = getVkVideoPreview(url, item.title);
+  const vkVideoEmbed = provider === 'vk' ? getVkVideoPreview(url, item.title) : null;
   if (vkVideoEmbed) return vkVideoEmbed;
 
   if (isDirectImage(url)) {
@@ -31,7 +42,7 @@ function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPre
     };
   }
 
-  if (isRedditVideoUrl(url)) {
+  if (provider === 'reddit' && isRedditVideoUrl(url)) {
     return {
       src: url.href,
       alt: { kind: 'video', title: item.title || null },
@@ -51,7 +62,7 @@ function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPre
   // example, tempfile.org/.../download). The `inst:` marker is the only media
   // type information available in those feed items.
   if (
-    getFeedItemProviderFromUrl(item, url) === 'instagram'
+    provider === 'instagram'
     && !isInstagramMediaUrl(url)
     && (url.protocol === 'http:' || url.protocol === 'https:')
   ) {
@@ -62,10 +73,10 @@ function getFeedItemPreviewFromUrl(item: FeedItem, url: URL | null): FeedItemPre
     };
   }
 
-  const twitchPreview = getTwitchPreview(url);
+  const twitchPreview = provider === 'twitch' ? getTwitchPreview(url) : null;
   if (twitchPreview) return twitchPreview;
 
-  const youtubePreview = getYoutubePreview(url, item.title);
+  const youtubePreview = provider === 'youtube' ? getYoutubePreview(url, item.title) : null;
   if (youtubePreview) return youtubePreview;
 
   return getEmbeddedPreview(item.text, item.title);

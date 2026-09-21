@@ -14,8 +14,11 @@ import {
   getMatreshkaVideoId,
   getSasflixPublicationId,
   getYoutubeVideoId,
+  isRedditUrl,
+  isRezkaUrl,
   parseUrl,
 } from './feedItemUrls';
+import { getSpotifyEmbed } from './spotifyPreview';
 import { getTwitchChannel } from './twitchPreview';
 
 export type FeedItemProviderLoadingRules = {
@@ -27,10 +30,35 @@ export type FeedItemProviderLoadingRules = {
   metadata: 'none' | 'hltv';
 };
 
-type FeedItemProviderDefinition = {
+export type FeedPluginId = Exclude<FeedItemProvider, 'generic'>;
+
+export type PluginSettingDefinition =
+  | {
+    id: string;
+    type: 'boolean';
+    defaultValue: boolean;
+    labelKey: string;
+  }
+  | {
+    id: string;
+    type: 'select';
+    defaultValue: string;
+    labelKey: string;
+    options: readonly { value: string; labelKey: string }[];
+  };
+
+export type FeedItemProviderDefinition = {
+  id: FeedPluginId;
+  title: string;
   matches: (item: FeedItem, url: URL | null) => boolean;
+  matchesLegacy?: (item: FeedItem, url: URL | null) => boolean;
   loading: FeedItemProviderLoadingRules;
+  live?: true;
+  settings?: readonly PluginSettingDefinition[];
 };
+
+type FeedItemProviderResource = Pick<FeedItemProviderDefinition, 'matches' | 'loading'>
+  & Partial<Pick<FeedItemProviderDefinition, 'id' | 'title' | 'matchesLegacy' | 'live' | 'settings'>>;
 
 const defaultLoadingRules: FeedItemProviderLoadingRules = {
   remotePreview: 'open-graph',
@@ -42,60 +70,101 @@ const defaultLoadingRules: FeedItemProviderLoadingRules = {
 };
 
 function defineProvider(
+  id: FeedPluginId,
+  title: string,
   overrides: {
     matches?: FeedItemProviderDefinition['matches'];
+    matchesLegacy?: FeedItemProviderDefinition['matchesLegacy'];
     loading?: Partial<FeedItemProviderLoadingRules>;
+    live?: true;
+    settings?: readonly PluginSettingDefinition[];
   } = {},
 ): FeedItemProviderDefinition {
   return {
+    id,
+    title,
     matches: overrides.matches ?? (() => false),
+    matchesLegacy: overrides.matchesLegacy,
     loading: { ...defaultLoadingRules, ...overrides.loading },
+    live: overrides.live,
+    settings: overrides.settings,
   };
 }
 
 /** Provider detection and the loading facts needed before a remote response exists. */
 export const feedItemProviderResources = {
-  generic: defineProvider(),
-  hltv: defineProvider({
+  generic: { matches: () => false, loading: defaultLoadingRules },
+  hltv: defineProvider('hltv', 'HLTV', {
     matches: (_item, url) => Boolean(url && isHltvMatchUrl(url)),
     loading: { livePreview: 'hltv', metadata: 'hltv' },
+    live: true,
   }),
-  instagram: defineProvider({
+  instagram: defineProvider('instagram', 'Instagram', {
     matches: (_item, url) => Boolean(url && isInstagramMediaUrl(url)),
+    matchesLegacy: (item) => /^inst:\s*/i.test(item.title),
   }),
-  liquipedia: defineProvider({
+  liquipedia: defineProvider('liquipedia', 'Liquipedia', {
     matches: (_item, url) => Boolean(url && isLiquipediaMatchUrl(url)),
     loading: { remotePreview: 'liquipedia' },
   }),
-  matreshka: defineProvider({
+  matreshka: defineProvider('matreshka', 'Matreshka', {
     matches: (_item, url) => Boolean(url && getMatreshkaVideoId(url)),
   }),
-  onefootball: defineProvider({
+  onefootball: defineProvider('onefootball', 'OneFootball', {
     matches: (_item, url) => Boolean(url && isOneFootballMatchUrl(url)),
     loading: { loadingPlaceholder: 'always' },
+    live: true,
   }),
-  sasflix: defineProvider({
+  reddit: defineProvider('reddit', 'Reddit', {
+    matches: (_item, url) => isRedditUrl(url),
+  }),
+  rezka: defineProvider('rezka', 'Rezka', {
+    matches: (_item, url) => isRezkaUrl(url),
+  }),
+  sasflix: defineProvider('sasflix', 'Sasflix', {
     matches: (_item, url) => Boolean(url && getSasflixPublicationId(url)),
     loading: { loadingPlaceholder: 'none' },
   }),
-  tiktok: defineProvider({
+  spotify: defineProvider('spotify', 'Spotify', {
+    matches: (_item, url) => Boolean(url && getSpotifyEmbed(url.href)),
+  }),
+  tiktok: defineProvider('tiktok', 'TikTok', {
     matches: (_item, url) => Boolean(url && isTikTokVideoUrl(url)),
     loading: { remotePreview: 'none', previewMode: 'tiktok-embed' },
+    settings: [
+      {
+        id: 'hideItems',
+        type: 'boolean',
+        defaultValue: false,
+        labelKey: 'settings.tiktokItems',
+      },
+      {
+        id: 'playbackMode',
+        type: 'select',
+        defaultValue: 'embed',
+        labelKey: 'settings.tiktokPlayback',
+        options: [
+          { value: 'embed', labelKey: 'settings.tiktokEmbed' },
+          { value: 'preview', labelKey: 'settings.tiktokPreview' },
+        ],
+      },
+    ],
   }),
-  twitch: defineProvider({
+  twitch: defineProvider('twitch', 'Twitch', {
     matches: (_item, url) => Boolean(url && getTwitchChannel(url)),
     loading: { remotePreview: 'none' },
+    live: true,
   }),
-  vk: defineProvider({
+  vk: defineProvider('vk', 'VK', {
     matches: (_item, url) => Boolean(url && isVkHost(url.hostname)),
     loading: { description: 'vk' },
   }),
-  youtube: defineProvider({
+  youtube: defineProvider('youtube', 'YouTube', {
     matches: (_item, url) => Boolean(url && getYoutubeVideoId(url)),
   }),
-} satisfies Readonly<Record<FeedItemProvider, FeedItemProviderDefinition>>;
+} satisfies Readonly<Record<FeedItemProvider, FeedItemProviderResource>>;
 
-const detectedProviders: readonly Exclude<FeedItemProvider, 'generic'>[] = [
+const detectedProviders: readonly FeedPluginId[] = [
   'matreshka',
   'sasflix',
   'youtube',
@@ -106,19 +175,27 @@ const detectedProviders: readonly Exclude<FeedItemProvider, 'generic'>[] = [
   'hltv',
   'onefootball',
   'liquipedia',
+  'reddit',
+  'rezka',
+  'spotify',
 ];
+
+export const feedPluginCatalog: readonly FeedItemProviderDefinition[] = detectedProviders
+  .map((provider) => feedItemProviderResources[provider]);
 
 export function getFeedItemProvider(item: FeedItem): FeedItemProvider {
   return getFeedItemProviderFromUrl(item, parseUrl(item.link));
 }
 
-export function getFeedItemProviderFromUrl(item: FeedItem, url: URL | null): FeedItemProvider {
-  for (const provider of detectedProviders) {
-    if (feedItemProviderResources[provider].matches(item, url)) return provider;
-  }
-
-  // A valid provider URL wins over stale imported title markers.
-  return /^inst:\s*/i.test(item.title) ? 'instagram' : 'generic';
+export function getFeedItemProviderFromUrl(
+  item: FeedItem,
+  url: URL | null,
+  disabledPlugins: ReadonlySet<FeedPluginId> = new Set(),
+): FeedItemProvider {
+  const matched = feedPluginCatalog.find((plugin) => plugin.matches(item, url))
+    ?? feedPluginCatalog.find((plugin) => plugin.matchesLegacy?.(item, url));
+  if (!matched || disabledPlugins.has(matched.id)) return 'generic';
+  return matched.id;
 }
 
 export function getFeedItemProviderLoadingRules(

@@ -26,9 +26,9 @@ test('TikTok player preference selects preview, controls speed, and falls back t
   await page.goto('/reader');
   await expect(page.locator('iframe[src*="tiktok.com/player"]')).toHaveCount(1);
   expect(playbackRequests).toBe(0);
-  await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('menuitemradio', { name: 'Preview', exact: true }).click();
-  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('radio', { name: 'Preview', exact: true }).click();
+  await page.getByRole('link', { name: 'Reader' }).click();
   const video = page.locator('video');
   await expect(video).toHaveCount(1);
   await expect(page.locator('iframe')).toHaveCount(0);
@@ -49,5 +49,7 @@ test('TikTok player preference selects preview, controls speed, and falls back t
   await expect(page.locator('iframe[src*="tiktok.com/player"]')).toHaveCount(1);
   await expect(video).toHaveCount(0);
   await expect(speed).toHaveCount(0);
-  expect(await page.evaluate(() => localStorage.getItem('gkfeed.tiktokPlaybackMode'))).toBe('preview');
+  expect(await page.evaluate(() => JSON.parse(
+    localStorage.getItem('gkfeed.pluginSettings.tiktok.v1') ?? '{}',
+  ).playbackMode)).toBe('preview');
 });
