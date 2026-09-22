@@ -17,6 +17,37 @@
   gap: 15px;
 }
 
+.creator .field__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.creator__detect-type {
+  min-height: 32px;
+  padding: 4px 10px;
+  border-color: var(--color-control-border);
+  background: var(--color-control-well);
+  color: var(--color-ink-inverse);
+  font-size: 0.82rem;
+}
+
+.creator__detection {
+  margin: 7px 0 0;
+  color: color-mix(in oklch, var(--color-ink-inverse) 72%, var(--color-page));
+  font-size: 0.82rem;
+}
+
+.creator__detection--success {
+  color: color-mix(in oklch, var(--color-accent) 46%, var(--color-focus-light));
+}
+
+.creator__detection--error,
+.creator__detection--uncertain {
+  color: color-mix(in oklch, var(--color-danger) 58%, var(--color-focus-light));
+}
+
 .creator h1 {
   margin: 0;
   color: var(--color-ink-strong);

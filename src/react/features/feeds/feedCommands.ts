@@ -11,6 +11,7 @@ export function createFeedCommandUseCases(
   port: FeedCommandPort,
   metadataPort: FeedMetadataPort,
 ) {
+  const suggestFeedType = metadataPort.getFeedTypeSuggestion;
   function deleteFeedItem(id: number, credentials: Credentials | null): Promise<void> {
     return port.deleteFeedItemById(id, credentials);
   }
@@ -41,5 +42,5 @@ export function createFeedCommandUseCases(
     await port.createFeed({ ...inferredSource, title }, credentials);
   }
 
-  return { deleteFeed, deleteFeedItem, saveFeed };
+  return { deleteFeed, deleteFeedItem, saveFeed, suggestFeedType };
 }

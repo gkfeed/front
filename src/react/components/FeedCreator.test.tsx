@@ -5,16 +5,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createFeed, createFeedFromUrl } from '../services/feeds';
 import { getOpenGraphPreview } from '../services/openGraph';
+import { getFeedTypeSuggestion } from '../services/feedTypeSuggestion';
 import { AppProviders } from '../state/AppProviders';
 import { getControlValue } from '../testUtils';
 import { CreateFeedPage } from '../pages/CreateFeedPage';
 
 vi.mock('../services/feeds');
 vi.mock('../services/openGraph');
+vi.mock('../services/feedTypeSuggestion');
 
 const create = vi.mocked(createFeed);
 const createLazy = vi.mocked(createFeedFromUrl);
 const getPreview = vi.mocked(getOpenGraphPreview);
+const detectType = vi.mocked(getFeedTypeSuggestion);
 
 afterEach(() => {
   cleanup();
@@ -118,5 +121,22 @@ describe('CreateFeedPage', () => {
     expect(create).toHaveBeenLastCalledWith(input, null);
     expect(createLazy).not.toHaveBeenCalled();
     expect(getControlValue(screen.getByLabelText('Title'))).toBe('');
+  });
+
+  it('uses Jev to select a feed type from the URL', async () => {
+    detectType.mockResolvedValueOnce({ type: 'twitch', confidence: 0.91 });
+    render(<AppProviders><CreateFeedPage /></AppProviders>);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Manual' }));
+    const detectButton = screen.getByRole('button', { name: 'Detect from URL' });
+    expect((detectButton as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'My streams' } });
+    fireEvent.change(screen.getByLabelText('URL'), { target: { value: 'https://twitch.tv/gkfeed' } });
+    fireEvent.click(detectButton);
+
+    expect(await screen.findByText('Selected with 91% confidence.')).toBeTruthy();
+    expect(detectType).toHaveBeenCalledWith('https://twitch.tv/gkfeed', 'My streams');
+    expect(screen.getByRole('button', { name: 'Type Twitch' })).toBeTruthy();
   });
 });

@@ -28,6 +28,10 @@ Run `npm run build` to create a production build in `dist/`.
 Run `npm start` after building to serve both the frontend and BFF on port 3000.
 Set `PORT` to use a different port.
 
+Set `OPENROUTER_API_KEY` on the BFF process to enable Jev-assisted feed type detection in the
+manual source form. The key stays on the server. GKFEED sends the source URL and optional title
+to OpenRouter's Decisions API with the `typesafe/jev-1.13` model.
+
 ## Open Graph preview
 
 The BFF exposes the Open Graph metadata route:
