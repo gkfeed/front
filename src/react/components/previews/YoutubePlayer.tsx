@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { TheaterPlayerShell } from './TheaterPlayerShell';
 import { YoutubeComments } from './YoutubeComments';
+import { YoutubeTimecodes } from './YoutubeTimecodes';
 import { useYoutubePlayerController } from './useYoutubePlayerController';
 import { sendPlaybackRate } from './youtubePlayerProtocol';
 
@@ -21,7 +22,7 @@ type YoutubePlayerProps = {
 export function YoutubePlayer(props: YoutubePlayerProps) {
   const [isPlayerUnavailable, setIsPlayerUnavailable] = useState(false);
   const markPlayerUnavailable = useCallback(() => setIsPlayerUnavailable(true), []);
-  const { iframeRef } = useYoutubePlayerController({
+  const { currentTime, iframeRef, seekTo } = useYoutubePlayerController({
     isDoubleSpeed: props.isDoubleSpeed,
     onPlaybackStateChange: props.onPlaybackStateChange,
     onPlayerUnavailable: markPlayerUnavailable,
@@ -38,15 +39,19 @@ export function YoutubePlayer(props: YoutubePlayerProps) {
     <YoutubePlayerView
       {...props}
       iframeRef={iframeRef}
+      currentTime={currentTime}
       isPlayerUnavailable={isPlayerUnavailable}
+      onSeek={seekTo}
       onTogglePlaybackSpeed={togglePlaybackSpeed}
     />
   );
 }
 
 type YoutubePlayerViewProps = YoutubePlayerProps & {
+  currentTime?: number;
   iframeRef: RefObject<HTMLIFrameElement | null>;
   isPlayerUnavailable?: boolean;
+  onSeek?: (seconds: number) => void;
 };
 
 export function YoutubePlayerView({
@@ -59,10 +64,14 @@ export function YoutubePlayerView({
   onTogglePlaybackSpeed,
   shellRef,
   iframeRef,
+  currentTime = 0,
   isPlayerUnavailable = false,
+  onSeek = () => {},
 }: YoutubePlayerViewProps) {
   const { t } = useTranslation();
-  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState<'comments' | 'timecodes' | null>(null);
+  const isCommentsOpen = openPanel === 'comments';
+  const isTimecodesOpen = openPanel === 'timecodes';
   const parameters = new URLSearchParams({
     autoplay: '1',
     rel: '0',
@@ -80,9 +89,22 @@ export function YoutubePlayerView({
       shellRef={shellRef}
       aside={!isPlayerUnavailable && isCommentsOpen
         ? <YoutubeComments videoId={videoId} isOpen />
-        : undefined}
+        : !isPlayerUnavailable && isTimecodesOpen
+          ? <YoutubeTimecodes currentTime={currentTime} videoId={videoId} onSeek={onSeek} />
+          : undefined}
       toolbar={!isPlayerUnavailable ? (
         <>
+          <button
+            type="button"
+            className="reader-card__timecodes-toggle"
+            aria-label={isTimecodesOpen ? t('youtubeTimecodes.hide') : t('youtubeTimecodes.show')}
+            aria-pressed={isTimecodesOpen}
+            aria-controls={`youtube-timecodes-${videoId}`}
+            onClick={() => setOpenPanel((panel) => panel === 'timecodes' ? null : 'timecodes')}
+          >
+            <span aria-hidden="true">⌁</span>
+            {t('youtubeTimecodes.timecodes')}
+          </button>
           <button
             type="button"
             className="reader-card__speed-toggle"
@@ -98,7 +120,7 @@ export function YoutubePlayerView({
             aria-label={isCommentsOpen ? t('youtubeComments.hide') : t('youtubeComments.show')}
             aria-pressed={isCommentsOpen}
             aria-controls={`youtube-comments-${videoId}`}
-            onClick={() => setIsCommentsOpen((value) => !value)}
+            onClick={() => setOpenPanel((panel) => panel === 'comments' ? null : 'comments')}
           >
             <span aria-hidden="true">☰</span>
             {t('youtubeComments.comments')}

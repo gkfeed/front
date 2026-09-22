@@ -231,6 +231,16 @@ const en = {
     loadError: 'Could not load YouTube comments.',
     viewOnYoutube: 'View comments on YouTube',
   },
+  youtubeTimecodes: {
+    timecodes: 'Timecodes',
+    title: 'Video timecodes',
+    show: 'Show video timecodes',
+    hide: 'Hide video timecodes',
+    loading: 'Loading timecodes…',
+    empty: 'This video has no timecodes.',
+    loadError: 'Could not load YouTube timecodes.',
+    seek: 'Go to {{time}}, {{label}}',
+  },
   twitchChat: {
     chat: 'Chat',
     show: 'Show Twitch chat',

@@ -1,6 +1,7 @@
 import { fetchTikTokPlayback } from '../tiktokPlayback.js';
 import { fetchTikTokComments } from '../tiktok.js';
 import { fetchYoutubeComments } from '../youtubeComments.js';
+import { fetchYoutubeTimecodes } from '../youtubeTimecodes.js';
 import { fetchLiquipediaMatch } from '../preview/liquipedia.js';
 import { fetchOpenGraph } from '../preview/openGraph.js';
 import { fetchRedditPreviewImage } from '../preview/reddit.js';
@@ -17,6 +18,7 @@ export const previewProviderPorts: PreviewPorts = {
   fetchTikTokPlayback,
   fetchTikTokComments,
   fetchYoutubeComments,
+  fetchYoutubeTimecodes,
   fetchRedditPreviewImage,
   fetchSasflixMedia,
   fetchVkVideoSource,

@@ -95,6 +95,7 @@
 
 :is(
   .reader-card__resume-toggle,
+  .reader-card__timecodes-toggle,
   .reader-card__comments-toggle,
   .reader-card__speed-toggle,
   .reader-card__theater-toggle
@@ -129,6 +130,7 @@
 
 :is(
   .reader-card__resume-toggle,
+  .reader-card__timecodes-toggle,
   .reader-card__comments-toggle,
   .reader-card__speed-toggle,
   .reader-card__theater-toggle
@@ -144,6 +146,7 @@
 
 :is(
   .reader-card__resume-toggle,
+  .reader-card__timecodes-toggle,
   .reader-card__comments-toggle,
   .reader-card__speed-toggle,
   .reader-card__theater-toggle

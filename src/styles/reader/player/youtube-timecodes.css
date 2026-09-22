@@ -1,0 +1,161 @@
+.reader-card__timecodes-toggle {
+  display: inline-flex;
+}
+
+.reader-card__timecodes-toggle[aria-pressed="true"] {
+  border-color: color-mix(in oklch, var(--color-field) 62%, var(--color-page));
+  background: color-mix(in oklch, var(--color-field) 26%, var(--color-control-well));
+}
+
+.youtube-timecodes {
+  display: grid;
+  box-sizing: border-box;
+  height: 0;
+  min-width: 0;
+  min-height: 100%;
+  grid-template-rows: minmax(0, 1fr);
+  padding: 12px;
+  overflow: hidden;
+  border-left: 1px solid rgb(255 255 255 / 14%);
+  background: #18181b;
+  color: #f7f7f8;
+}
+
+.youtube-timecodes__state button {
+  padding: 7px 10px;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 9%);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.youtube-timecodes__state {
+  align-self: center;
+  margin: 0;
+  color: #aaa;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.youtube-timecodes__state p {
+  margin: 0 0 10px;
+}
+
+.youtube-timecodes__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 4px 0 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.youtube-timecodes__list li {
+  min-width: 0;
+  transition: opacity var(--ease), filter var(--ease);
+}
+
+.youtube-timecodes__list li[data-past="true"] {
+  filter: saturate(0.25);
+  opacity: 0.42;
+}
+
+.youtube-timecodes__list li[data-current="true"] .youtube-timecodes__seek {
+  border-color: color-mix(in oklch, var(--color-field) 62%, transparent);
+  background: color-mix(in oklch, var(--color-field) 18%, #18181b);
+  box-shadow: inset 3px 0 0 color-mix(in oklch, var(--color-field) 82%, white);
+}
+
+.youtube-timecodes__seek {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #f7f7f8;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.youtube-timecodes__seek:disabled {
+  cursor: default;
+}
+
+.youtube-timecodes__seek:not(:disabled):hover,
+.youtube-timecodes__state button:hover {
+  background: rgb(255 255 255 / 15%);
+}
+
+.youtube-timecodes__seek img {
+  width: 100px;
+  aspect-ratio: 16 / 9;
+  border-radius: 7px;
+  object-fit: cover;
+  background: #29292d;
+}
+
+.youtube-timecodes__copy {
+  display: grid;
+  min-width: 0;
+  justify-items: start;
+  gap: 7px;
+}
+
+.youtube-timecodes__copy > span {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.84rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.youtube-timecodes__copy time {
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: color-mix(in oklch, var(--color-field) 30%, #18181b);
+  color: color-mix(in oklch, var(--color-field) 85%, white);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+.youtube-timecodes__list li[data-current="true"] .youtube-timecodes__copy time {
+  background: color-mix(in oklch, var(--color-field) 55%, #18181b);
+  color: #fff;
+}
+
+.youtube-timecodes button:focus-visible {
+  outline: 2px solid var(--color-focus-light);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .youtube-timecodes {
+    height: auto;
+    min-height: 0;
+    max-height: 38dvh;
+    border-top: 1px solid rgb(255 255 255 / 14%);
+    border-left: 0;
+  }
+
+  .youtube-timecodes__seek {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+
+  .youtube-timecodes__seek img {
+    width: 88px;
+  }
+}

@@ -18,6 +18,7 @@ import { getOpenGraphPreview } from '../services/openGraph';
 import { getArticle } from '../services/article';
 import { fetchTikTokComments } from '../services/tiktokComments';
 import { fetchYoutubeComments } from '../services/youtubeComments';
+import { fetchYoutubeTimecodes } from '../services/youtubeTimecodes';
 import { getLiveTwitchItems } from '../services/twitch';
 import {
   deleteFeedItemsCache,
@@ -61,6 +62,7 @@ export function createFeatureComposition() {
       getArticle,
       fetchTikTokComments,
       fetchYoutubeComments,
+      fetchYoutubeTimecodes,
       getOpenGraphPreview,
       loadRemotePreview: loadRemotePreviewRequest,
     }),

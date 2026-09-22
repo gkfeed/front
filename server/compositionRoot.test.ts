@@ -24,6 +24,7 @@ describe('server composition root', () => {
       fetchTikTokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ comments: [] }),
       fetchYoutubeComments: vi.fn().mockResolvedValue({ comments: [] }),
+      fetchYoutubeTimecodes: vi.fn().mockResolvedValue({ timecodes: [] }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({
         body: new Uint8Array([1]),
         contentType: 'image/png',

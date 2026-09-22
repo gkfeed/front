@@ -11,7 +11,7 @@ import type {
   TikTokCommentsPreview,
   VkVideoSource,
 } from './previewContracts.js';
-import type { YoutubeCommentsPreview } from '../../shared/youtubeContracts.js';
+import type { YoutubeCommentsPreview, YoutubeTimecodesPreview } from '../../shared/youtubeContracts.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
 
 export type PreviewPort<TResult> = (
@@ -26,6 +26,7 @@ export interface PreviewPorts {
   fetchTikTokPlayback: PreviewPort<TikTokPlaybackPreview>;
   fetchTikTokComments: PreviewPort<TikTokCommentsPreview>;
   fetchYoutubeComments: PreviewPort<YoutubeCommentsPreview>;
+  fetchYoutubeTimecodes: PreviewPort<YoutubeTimecodesPreview>;
   fetchRedditPreviewImage: PreviewPort<PreviewImage>;
   fetchSasflixMedia: (
     input: string,

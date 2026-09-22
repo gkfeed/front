@@ -1,7 +1,7 @@
 import type { ServerResponse } from 'node:http';
 
 import { isTikTokPlaybackPreview, isTikTokCommentsPreview } from '../../shared/tiktokContracts.js';
-import { isYoutubeCommentsPreview } from '../../shared/youtubeContracts.js';
+import { isYoutubeCommentsPreview, isYoutubeTimecodesPreview } from '../../shared/youtubeContracts.js';
 import { isArticlePreview } from '../../shared/articleContracts.js';
 import { sendJson } from './httpResponse.js';
 import type { PreviewUseCases } from '../application/previewUseCases.js';
@@ -27,7 +27,7 @@ const sasflixMediaRequestGate = createBffRequestGate({
   rateLimit: 600,
 });
 
-type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments'>;
+type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments' | 'youtubeTimecodes'>;
 
 const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
   '/bff/article': 'article',
@@ -36,6 +36,7 @@ const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
   '/bff/tiktok-playback': 'tiktokPlayback',
   '/bff/tiktok-comments': 'tiktokComments',
   '/bff/youtube-comments': 'youtubeComments',
+  '/bff/youtube-timecodes': 'youtubeTimecodes',
 };
 
 export async function routeBffRequest(
@@ -72,6 +73,8 @@ export async function routeBffRequest(
         ? isTikTokCommentsPreview
         : useCaseName === 'youtubeComments'
           ? isYoutubeCommentsPreview
+        : useCaseName === 'youtubeTimecodes'
+          ? isYoutubeTimecodesPreview
         : useCaseName === 'article'
           ? isArticlePreview
           : undefined,

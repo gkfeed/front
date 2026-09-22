@@ -36,6 +36,7 @@ function createUseCases(): PreviewUseCases {
       creatorAvatarUrl: null,
     }),
     youtubeComments: vi.fn().mockResolvedValue({ comments: [] }),
+    youtubeTimecodes: vi.fn().mockResolvedValue({ timecodes: [] }),
     redditPreviewImage: vi.fn().mockResolvedValue({
       body: new Uint8Array([1, 2]),
       contentType: 'image/jpeg',
@@ -79,6 +80,7 @@ describe('BFF HTTP router', () => {
       creatorAvatarUrl: null,
     }],
     ['/bff/youtube-comments', 'youtubeComments', { comments: [] }],
+    ['/bff/youtube-timecodes', 'youtubeTimecodes', { timecodes: [] }],
   ] as const)('dispatches %s through its application use case', async (pathname, useCaseName, result) => {
     const response = createResponse();
     const useCases = createUseCases();

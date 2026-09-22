@@ -237,6 +237,16 @@ const ru = {
     loadError: 'Не удалось загрузить комментарии YouTube.',
     viewOnYoutube: 'Посмотреть комментарии на YouTube',
   },
+  youtubeTimecodes: {
+    timecodes: 'Таймкоды',
+    title: 'Таймкоды видео',
+    show: 'Показать таймкоды видео',
+    hide: 'Скрыть таймкоды видео',
+    loading: 'Загрузка таймкодов…',
+    empty: 'В этом видео нет таймкодов.',
+    loadError: 'Не удалось загрузить таймкоды YouTube.',
+    seek: 'Перейти к {{time}}, {{label}}',
+  },
   twitchChat: {
     chat: 'Чат',
     show: 'Показать чат Twitch',
