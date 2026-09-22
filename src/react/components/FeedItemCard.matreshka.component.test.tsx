@@ -23,16 +23,16 @@ describe('Matreshka player', () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://matreshka.tv/video/LHAN5jgduhC',
-      title: 'Видео канала Стас Ай как дорого - Защищаю Братишкина от уставшего дедпи47',
+      title: 'МатрёшкаТВ — дом для видеоавторов и их сообществ - БОДИ ПОЗИТИВ НА ДИКОМ ЗАПАДЕ',
     }} />);
 
     expect(await screen.findByRole('heading', {
-      name: 'Защищаю Братишкина от уставшего дедпи47',
+      name: 'БОДИ ПОЗИТИВ НА ДИКОМ ЗАПАДЕ',
     })).toBeTruthy();
-    expect(screen.getByText('Стас Ай как дорого')).toBeTruthy();
-    expect(screen.queryByText(/Видео канала/)).toBeNull();
+    expect(screen.getByText('МатрёшкаТВ')).toBeTruthy();
+    expect(screen.queryByText(/дом для видеоавторов/)).toBeNull();
     expect(screen.getByRole('button', {
-      name: 'Play Matreshka video Защищаю Братишкина от уставшего дедпи47',
+      name: 'Play Matreshka video БОДИ ПОЗИТИВ НА ДИКОМ ЗАПАДЕ',
     })).toBeTruthy();
   });
 

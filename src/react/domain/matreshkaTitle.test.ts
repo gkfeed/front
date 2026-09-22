@@ -19,6 +19,15 @@ describe('parseMatreshkaTitle', () => {
     });
   });
 
+  it('removes the Matreshka site tagline from parser titles', () => {
+    expect(parseMatreshkaTitle(
+      'МатрёшкаТВ — дом для видеоавторов и их сообществ - БОДИ ПОЗИТИВ НА ДИКОМ ЗАПАДЕ',
+    )).toEqual({
+      channel: 'МатрёшкаТВ',
+      title: 'БОДИ ПОЗИТИВ НА ДИКОМ ЗАПАДЕ',
+    });
+  });
+
   it('falls back to the feed text for an unformatted title', () => {
     expect(parseMatreshkaTitle('Video', 'Readable video title')).toEqual({
       channel: null,
