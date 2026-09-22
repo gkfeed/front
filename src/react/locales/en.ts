@@ -47,9 +47,6 @@ const en = {
     decreasePriority: 'Decrease priority for feed #{{feedId}}',
   },
   creator: {
-    mode: 'Feed creation mode',
-    urlOnly: 'URL only',
-    manual: 'Manual',
     title: 'Title',
     type: 'Type',
     url: 'URL',
@@ -57,7 +54,6 @@ const en = {
     validUrl: 'Enter a valid feed URL.',
     titleRequired: 'Enter a feed title.',
     typeRequired: 'Select a feed type.',
-    detectType: 'Detect from URL',
     detectingType: 'Detecting...',
     typeDetected: 'Selected with {{confidence}}% confidence.',
     typeUncertain: 'The URL is ambiguous. Select a type manually.',

@@ -51,9 +51,6 @@ const ru = {
     decreasePriority: 'Понизить приоритет фида #{{feedId}}',
   },
   creator: {
-    mode: 'Режим создания ленты',
-    urlOnly: 'Только URL',
-    manual: 'Вручную',
     title: 'Название',
     type: 'Тип',
     url: 'URL',
@@ -61,7 +58,6 @@ const ru = {
     validUrl: 'Введите корректный URL ленты.',
     titleRequired: 'Введите название ленты.',
     typeRequired: 'Выберите тип ленты.',
-    detectType: 'Определить по URL',
     detectingType: 'Определение...',
     typeDetected: 'Выбрано с уверенностью {{confidence}}%.',
     typeUncertain: 'URL неоднозначен. Выберите тип вручную.',

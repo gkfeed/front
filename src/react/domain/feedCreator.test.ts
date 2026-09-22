@@ -12,7 +12,7 @@ import {
 describe('feed creator domain', () => {
   it('configures URL-only and manual fields independently', () => {
     expect(getFeedCreatorFields('lazy').map((field) => field.id)).toEqual(['url']);
-    expect(getFeedCreatorFields('extended').map((field) => field.id)).toEqual(['title', 'type', 'url']);
+    expect(getFeedCreatorFields('extended').map((field) => field.id)).toEqual(['url', 'title', 'type']);
   });
 
   it('validates required fields and only accepts HTTP(S) feed URLs', () => {

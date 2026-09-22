@@ -150,6 +150,16 @@ describe('feed use cases', () => {
     }, null);
     expect(metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
   });
+
+  it('falls back to a readable URL segment when title metadata is unavailable', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.metadataPort.getOpenGraphPreview).mockRejectedValue(new Error('blocked'));
+    const useCases = createFeedUseCases(ports);
+
+    await expect(useCases.suggestFeedTitle(
+      'https://de.pornhub.com/model/aquari',
+    )).resolves.toBe('Aquari');
+  });
 });
 
 function createPorts(preview = createOpenGraphPreview('Feed')): {

@@ -31,9 +31,9 @@ const URL_FIELD: FeedCreatorFieldConfig = {
 export const FEED_CREATOR_FIELDS: Readonly<Record<FeedCreatorMode, readonly FeedCreatorFieldConfig[]>> = {
   lazy: [URL_FIELD],
   extended: [
+    URL_FIELD,
     { id: 'title', labelKey: 'creator.title', type: 'text', placeholderKey: 'creator.titlePlaceholder', errorKey: 'creator.titleRequired' },
     { id: 'type', labelKey: 'creator.type', type: 'select', errorKey: 'creator.typeRequired' },
-    URL_FIELD,
   ],
 };
 
@@ -85,6 +85,20 @@ export function inferFeedSourceFromLazyUrl(value: string): Pick<FeedInput, 'type
 
     const channelId = parsedUrl.pathname.match(/^\/channel\/([^/]+)\/?$/)?.[1];
     return channelId ? { type: 'yt', url } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function inferFeedTitleFromUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    const lastPathSegment = url.pathname.split('/').filter(Boolean).at(-1);
+    const rawTitle = lastPathSegment
+      ? decodeURIComponent(lastPathSegment).replace(/^@/, '').replace(/\.[a-z0-9]{2,5}$/i, '')
+      : normalizeHostname(url.hostname).split('.')[0];
+    const title = rawTitle.replace(/[-_]+/g, ' ').trim();
+    return title ? title.charAt(0).toUpperCase() + title.slice(1) : null;
   } catch {
     return null;
   }

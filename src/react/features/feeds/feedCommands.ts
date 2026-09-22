@@ -1,6 +1,7 @@
 import type { Credentials, FeedInput } from '../../types';
 import {
   inferFeedSourceFromLazyUrl,
+  inferFeedTitleFromUrl,
   normalizeLazyFeedUrl,
   trimFeed,
   type FeedCreatorMode,
@@ -12,6 +13,15 @@ export function createFeedCommandUseCases(
   metadataPort: FeedMetadataPort,
 ) {
   const suggestFeedType = metadataPort.getFeedTypeSuggestion;
+  async function suggestFeedTitle(url: string, signal?: AbortSignal): Promise<string | null> {
+    try {
+      const preview = await metadataPort.getOpenGraphPreview(url, signal);
+      return preview.title?.trim() || inferFeedTitleFromUrl(url);
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      return inferFeedTitleFromUrl(url);
+    }
+  }
   function deleteFeedItem(id: number, credentials: Credentials | null): Promise<void> {
     return port.deleteFeedItemById(id, credentials);
   }
@@ -42,5 +52,5 @@ export function createFeedCommandUseCases(
     await port.createFeed({ ...inferredSource, title }, credentials);
   }
 
-  return { deleteFeed, deleteFeedItem, saveFeed, suggestFeedType };
+  return { deleteFeed, deleteFeedItem, saveFeed, suggestFeedTitle, suggestFeedType };
 }

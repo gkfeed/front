@@ -1,5 +1,7 @@
 services:
   react:
     build: .
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     ports:
       - "4200:3000"

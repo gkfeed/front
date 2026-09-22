@@ -31,6 +31,9 @@ Set `PORT` to use a different port.
 Set `OPENROUTER_API_KEY` on the BFF process to enable Jev-assisted feed type detection in the
 manual source form. The key stays on the server. GKFEED sends the source URL and optional title
 to OpenRouter's Decisions API with the `typesafe/jev-1.13` model.
+For local development, put the key in `.env`; the `dev`, `dev:bff`, and `start` scripts load that
+file when it exists. Docker Compose passes the same variable from its environment or `.env` into
+the application container.
 
 ## Open Graph preview
 

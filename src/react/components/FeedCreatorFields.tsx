@@ -8,8 +8,6 @@ import type { FeedInput } from '../types';
 import { FeedTypePicker } from './FeedTypePicker';
 
 export function FeedCreatorFields({
-  id,
-  labelledBy,
   fields,
   feed,
   submitted,
@@ -17,10 +15,7 @@ export function FeedCreatorFields({
   detectionStatus,
   isFeedFieldValid,
   updateFeed,
-  detectFeedType,
 }: {
-  id: string;
-  labelledBy: string;
   fields: readonly FeedCreatorFieldConfig[];
   feed: FeedInput;
   submitted: boolean;
@@ -28,10 +23,9 @@ export function FeedCreatorFields({
   detectionStatus: FeedTypeDetectionStatus;
   isFeedFieldValid: (field: keyof FeedInput) => boolean;
   updateFeed: (field: keyof FeedInput, value: string) => void;
-  detectFeedType: () => Promise<void>;
 }) {
   return (
-    <div id={id} className="creator__fields" role="tabpanel" aria-labelledby={labelledBy}>
+    <div className="creator__fields">
       {fields.map((field) => (
         <FeedCreatorField
           {...field}
@@ -40,8 +34,6 @@ export function FeedCreatorFields({
           invalid={submitted && !isFeedFieldValid(field.id)}
           disabled={isSaving}
           detectionStatus={detectionStatus}
-          canDetect={isFeedFieldValid('url')}
-          onDetect={detectFeedType}
           onChange={(value) => updateFeed(field.id, value)}
         />
       ))}
@@ -59,16 +51,12 @@ function FeedCreatorField({
   invalid,
   disabled,
   detectionStatus,
-  canDetect,
-  onDetect,
   onChange,
 }: FeedCreatorFieldConfig & {
   value: string;
   invalid: boolean;
   disabled: boolean;
   detectionStatus: FeedTypeDetectionStatus;
-  canDetect: boolean;
-  onDetect: () => Promise<void>;
   onChange: (value: string) => void;
 }) {
   const { t } = useTranslation();
@@ -79,19 +67,7 @@ function FeedCreatorField({
     <div className={`field field--${id}${invalid ? ' field--invalid' : ''}`}>
       {id === 'type' ? (
         <>
-          <div className="field__label-row">
-            <span id="type-label" className="field__label">{label}</span>
-            <button
-              type="button"
-              className="creator__detect-type"
-              disabled={disabled || !canDetect || detectionStatus.state === 'detecting'}
-              onClick={() => void onDetect()}
-            >
-              {detectionStatus.state === 'detecting'
-                ? t('creator.detectingType')
-                : t('creator.detectType')}
-            </button>
-          </div>
+          <span id="type-label" className="field__label">{label}</span>
           <FeedTypePicker
             value={value}
             disabled={disabled}
@@ -128,9 +104,11 @@ function FeedCreatorField({
 
 function FeedTypeDetectionMessage({ status }: { status: FeedTypeDetectionStatus }) {
   const { t } = useTranslation();
-  if (status.state === 'idle' || status.state === 'detecting') return null;
+  if (status.state === 'idle') return null;
 
-  const message = status.state === 'success'
+  const message = status.state === 'detecting'
+    ? t('creator.detectingType')
+    : status.state === 'success'
     ? t('creator.typeDetected', { confidence: Math.round(status.confidence * 100) })
     : status.state === 'uncertain'
       ? t('creator.typeUncertain')
