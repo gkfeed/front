@@ -17,10 +17,12 @@ export function FeedCreator({ model }: { model: FeedCreatorModel }) {
     fields,
     submitted,
     saveStatus,
+    detectionStatus,
     isSaving,
     isFeedFieldValid,
     updateMode,
     updateFeed,
+    detectFeedType,
     submitFeed,
   } = model;
 
@@ -50,8 +52,10 @@ export function FeedCreator({ model }: { model: FeedCreatorModel }) {
           feed={feed}
           submitted={submitted}
           isSaving={isSaving}
+          detectionStatus={detectionStatus}
           isFeedFieldValid={isFeedFieldValid}
           updateFeed={updateFeed}
+          detectFeedType={detectFeedType}
         />
         <FeedCreatorActions saveStatus={saveStatus} isSaving={isSaving} />
       </form>

@@ -175,6 +175,7 @@ function createPorts(preview = createOpenGraphPreview('Feed')): {
     },
     metadataPort: {
       getOpenGraphPreview: vi.fn().mockResolvedValue(preview),
+      getFeedTypeSuggestion: vi.fn().mockResolvedValue({ type: 'web', confidence: 1 }),
     },
     cachePort: {
       read: vi.fn().mockResolvedValue(undefined),
