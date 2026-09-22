@@ -17,6 +17,7 @@ import {
   type BffRequestGate,
 } from './bffRequestGate.js';
 import { bffResultCache, type BffResultCache } from './bffResultCache.js';
+import { suggestFeedType } from '../feedTypeSuggestion.js';
 
 // HLS changes quality by overlapping playlist and byte-range requests. Keep
 // these transfers isolated from metadata previews and allow that short burst.
@@ -50,6 +51,17 @@ export async function routeBffRequest(
   requestRange?: string,
 ): Promise<boolean> {
   const requestContext = context ?? createDetachedRequestExecutionContext();
+  if (requestUrl.pathname === '/bff/feed-type') {
+    const input = getRequiredPreviewUrl(requestUrl);
+    const title = requestUrl.searchParams.get('title')?.slice(0, 300);
+    const result = await requestGate.run(clientId, requestContext, () => (
+      resultCache.load(`${requestUrl.pathname}:${input}:${title ?? ''}`, () => (
+        suggestFeedType({ url: input, ...(title ? { title } : {}) }, requestContext)
+      ))
+    ));
+    sendJson(response, 200, result);
+    return true;
+  }
   if (requestUrl.pathname === '/bff/hltv-live') {
     const result = await requestGate.run(clientId, requestContext, () => (
       resultCache.load(requestUrl.pathname, () => useCases.hltvLiveIndex(requestContext))

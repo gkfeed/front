@@ -3,6 +3,10 @@ import { normalizeHostname } from '../../../shared/urlRules';
 
 export type FeedCreatorMode = 'lazy' | 'extended';
 
+export type FeedTypeDetectionStatus =
+  | { state: 'idle' | 'detecting' | 'error' | 'uncertain' }
+  | { state: 'success'; confidence: number };
+
 export type FeedCreatorFieldConfig = {
   id: keyof FeedInput;
   labelKey: string;

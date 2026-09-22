@@ -15,6 +15,7 @@ import { validateCredentials } from '../services/auth';
 import { isAuthenticationError } from '../domain/requestError';
 import { loadRemotePreview as loadRemotePreviewRequest } from '../services/remotePreview';
 import { getOpenGraphPreview } from '../services/openGraph';
+import { getFeedTypeSuggestion } from '../services/feedTypeSuggestion';
 import { getArticle } from '../services/article';
 import { fetchTikTokComments } from '../services/tiktokComments';
 import { fetchYoutubeComments } from '../services/youtubeComments';
@@ -48,7 +49,7 @@ export function createFeatureComposition() {
         deleteFeedById,
         deleteFeedItemById,
       },
-      metadataPort: { getOpenGraphPreview },
+      metadataPort: { getOpenGraphPreview, getFeedTypeSuggestion },
       cachePort: {
         read: readFeedItemsCache,
         write: writeFeedItemsCache,

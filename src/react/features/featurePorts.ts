@@ -1,4 +1,5 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
+import type { FeedTypeSuggestion } from '../../../shared/feedTypeSuggestion';
 import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../types';
 
 export type FeedQueryPort = {
@@ -29,6 +30,11 @@ export type FeedCommandPort = {
 
 export type FeedMetadataPort = {
   getOpenGraphPreview: (url: string, signal?: AbortSignal) => Promise<OpenGraphPreview>;
+  getFeedTypeSuggestion: (
+    url: string,
+    title: string,
+    signal?: AbortSignal,
+  ) => Promise<FeedTypeSuggestion>;
 };
 
 export type FeedItemsCachePort = {
