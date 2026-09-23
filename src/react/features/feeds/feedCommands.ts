@@ -2,6 +2,8 @@ import type { Credentials, FeedInput } from '../../types';
 import {
   inferFeedSourceFromLazyUrl,
   inferFeedTitleFromUrl,
+  inferInstagramFeedTitleFromUrl,
+  normalizeInstagramFeedUrl,
   normalizeLazyFeedUrl,
   trimFeed,
   type FeedCreatorMode,
@@ -14,6 +16,9 @@ export function createFeedCommandUseCases(
 ) {
   const suggestFeedType = metadataPort.getFeedTypeSuggestion;
   async function suggestFeedTitle(url: string, signal?: AbortSignal): Promise<string | null> {
+    const instagramTitle = inferInstagramFeedTitleFromUrl(url);
+    if (instagramTitle) return instagramTitle;
+
     try {
       const preview = await metadataPort.getOpenGraphPreview(url, signal);
       return preview.title?.trim() || inferFeedTitleFromUrl(url);
@@ -36,7 +41,20 @@ export function createFeedCommandUseCases(
     credentials: Credentials | null,
   ): Promise<void> {
     if (mode === 'extended') {
-      await port.createFeed(trimFeed(feed), credentials);
+      const normalizedFeed = trimFeed(feed);
+      const isInstagramProfile = normalizedFeed.type === 'inst'
+        && inferInstagramFeedTitleFromUrl(normalizedFeed.url) !== null;
+      if (!isInstagramProfile) {
+        await port.createFeed(normalizedFeed, credentials);
+        return;
+      }
+
+      const instagramFeed = {
+        ...normalizedFeed,
+        url: normalizeInstagramFeedUrl(normalizedFeed.url),
+      };
+      await port.createFeed(instagramFeed, credentials);
+      await port.createFeed({ ...instagramFeed, type: 'stories' }, credentials);
       return;
     }
 

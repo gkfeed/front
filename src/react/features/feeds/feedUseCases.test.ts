@@ -151,6 +151,31 @@ describe('feed use cases', () => {
     expect(metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
   });
 
+  it('creates posts and stories feeds from one Instagram profile', async () => {
+    const ports = createPorts();
+    const { commandPort } = ports;
+    const useCases = createFeedUseCases(ports);
+
+    await useCases.saveFeed({
+      title: '  katya.marfaknchov  ',
+      type: '  inst  ',
+      url: '  https://www.instagram.com/katya.marfaknchov?stkn=share  ',
+    }, 'extended', credentials);
+
+    const profileUrl = 'https://www.instagram.com/katya.marfaknchov';
+    expect(commandPort.createFeed).toHaveBeenCalledTimes(2);
+    expect(commandPort.createFeed).toHaveBeenNthCalledWith(1, {
+      title: 'katya.marfaknchov',
+      type: 'inst',
+      url: profileUrl,
+    }, credentials);
+    expect(commandPort.createFeed).toHaveBeenNthCalledWith(2, {
+      title: 'katya.marfaknchov',
+      type: 'stories',
+      url: profileUrl,
+    }, credentials);
+  });
+
   it('falls back to a readable URL segment when title metadata is unavailable', async () => {
     const ports = createPorts();
     vi.mocked(ports.metadataPort.getOpenGraphPreview).mockRejectedValue(new Error('blocked'));
@@ -159,6 +184,16 @@ describe('feed use cases', () => {
     await expect(useCases.suggestFeedTitle(
       'https://de.pornhub.com/model/aquari',
     )).resolves.toBe('Aquari');
+  });
+
+  it('uses the Instagram username instead of its generic page metadata', async () => {
+    const ports = createPorts(createOpenGraphPreview('Instagram'));
+    const useCases = createFeedUseCases(ports);
+
+    await expect(useCases.suggestFeedTitle(
+      'https://www.instagram.com/katya.marfaknchov?stkn=ZmJ1bHY0bWZ6eXh2',
+    )).resolves.toBe('katya.marfaknchov');
+    expect(ports.metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
   });
 });
 

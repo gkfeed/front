@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   EMPTY_FEED,
   getFeedCreatorFields,
+  inferFeedTitleFromUrl,
+  inferInstagramFeedTitleFromUrl,
   inferFeedSourceFromLazyUrl,
   isFeedFieldValid,
+  normalizeInstagramFeedUrl,
   normalizeLazyFeedUrl,
   trimFeed,
 } from './feedCreator';
@@ -49,5 +52,19 @@ describe('feed creator domain', () => {
     expect(normalizeLazyFeedUrl('https://youtube.com/watch?v=video&si=share'))
       .toBe('https://youtube.com/watch?v=video&si=share');
     expect(inferFeedSourceFromLazyUrl('https://youtube.com/watch?v=video&si=share')).toBeNull();
+  });
+
+  it('uses the Instagram profile username as its title', () => {
+    const url = 'https://www.instagram.com/katya.marfaknchov?stkn=ZmJ1bHY0bWZ6eXh2';
+
+    expect(inferInstagramFeedTitleFromUrl(url)).toBe('katya.marfaknchov');
+    expect(inferFeedTitleFromUrl(url)).toBe('katya.marfaknchov');
+    expect(normalizeInstagramFeedUrl(url))
+      .toBe('https://www.instagram.com/katya.marfaknchov');
+  });
+
+  it('does not treat Instagram content and reserved paths as profile usernames', () => {
+    expect(inferInstagramFeedTitleFromUrl('https://www.instagram.com/reel/ABC123/')).toBeNull();
+    expect(inferInstagramFeedTitleFromUrl('https://www.instagram.com/explore/')).toBeNull();
   });
 });
