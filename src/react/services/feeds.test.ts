@@ -142,6 +142,26 @@ describe('feed service', () => {
     }]);
   });
 
+  it('opens VK wall feed items on vk.com', async () => {
+    respondWith({
+      items: [{
+        id: 10,
+        feed_id: 2,
+        link: 'https://vk.ru/wall-50883936_828158',
+        title: 'VK post',
+        text: '',
+      }],
+    });
+
+    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([{
+      id: 10,
+      feedId: 2,
+      link: 'https://vk.com/wall-50883936_828158',
+      title: 'VK post',
+      text: '',
+    }]);
+  });
+
   it('drops Unicode replacement markers without dropping valid emoji', async () => {
     respondWith({
       items: [

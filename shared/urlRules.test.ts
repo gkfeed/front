@@ -12,6 +12,7 @@ import {
   isTikTokVideoUrl,
   isVkHost,
   isYoutubeVideoUrl,
+  normalizeVkWallPostUrl,
 } from './urlRules.js';
 
 const url = (value: string) => new URL(value);
@@ -101,6 +102,23 @@ describe('shared URL rules', () => {
     ['vk.com.example.org', false],
   ])('keeps VK host boundaries for %s', (hostname, expected) => {
     expect(isVkHost(hostname)).toBe(expected);
+  });
+
+  it('uses vk.com for VK wall posts and preserves their query and fragment', () => {
+    expect(normalizeVkWallPostUrl('https://vk.ru/wall-50883936_828158?foo=bar#reply'))
+      .toBe('https://vk.com/wall-50883936_828158?foo=bar#reply');
+    expect(normalizeVkWallPostUrl('http://m.vk.ru/wall-1_2/'))
+      .toBe('https://vk.com/wall-1_2/');
+  });
+
+  it.each([
+    'https://vk.ru/video_ext.php?oid=-1&id=2',
+    'https://vk.ru/profile',
+    'https://vk.ru.example.org/wall-1_2',
+    'https://user@vk.ru/wall-1_2',
+    'invalid URL',
+  ])('leaves non-wall or untrusted VK URLs unchanged: %s', (value) => {
+    expect(normalizeVkWallPostUrl(value)).toBe(value);
   });
 
   it.each([

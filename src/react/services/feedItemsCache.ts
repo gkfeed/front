@@ -1,4 +1,5 @@
 import type { FeedItem } from '../types';
+import { normalizeVkWallPostUrl } from '../../../shared/urlRules';
 
 const DATABASE_NAME = 'gkfeed-cache';
 const DATABASE_VERSION = 1;
@@ -22,7 +23,7 @@ export async function readFeedItemsCache(
       database.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(username),
     );
     if (!isCacheRecord(record) || Date.now() - record.savedAt > maxAgeMs) return undefined;
-    return record.items;
+    return record.items.map((item) => ({ ...item, link: normalizeVkWallPostUrl(item.link) }));
   } catch {
     return undefined;
   } finally {

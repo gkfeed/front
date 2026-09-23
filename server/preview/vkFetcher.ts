@@ -66,7 +66,13 @@ export async function fetchVkHtml(input: URL, context?: RequestExecutionContext)
       throw new PreviewError('VK did not return an HTML page', 'not_html');
     }
     const encoding = contentType.match(/charset\s*=\s*["']?([^;\s"']+)/)?.[1];
-    const html = await readHtmlBody(response, { encoding, context });
+    const isWallPost = /^\/wall-?\d+_\d+\/?$/i.test(url.pathname);
+    const html = await readHtmlBody(response, {
+      encoding,
+      context,
+      stopAfterHead: isWallPost,
+      truncateAtLimit: isWallPost,
+    });
     if (isMissingWallPage && !isVkMissingWallPage(html, url)) {
       throw new PreviewError('VK returned an unrecognized missing post page', 'upstream_error');
     }

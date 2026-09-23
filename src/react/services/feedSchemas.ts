@@ -1,6 +1,7 @@
 import type { Feed, FeedItem } from '../types';
 import { getObjectProperty } from '../unknownObject';
 import { normalizeExternalText } from '../../../shared/text';
+import { normalizeVkWallPostUrl } from '../../../shared/urlRules';
 import { normalizeShikimoriAnimeUrl } from '../domain/shikimoriPreview';
 
 export function parseFeeds(value: unknown): Feed[] {
@@ -38,7 +39,7 @@ export function parseFeedItemsPage(value: unknown): FeedItemsPage {
       .map((item) => ({
         id: item.id,
         feedId: item.feed_id,
-        link: normalizeShikimoriAnimeUrl(item.link),
+        link: normalizeVkWallPostUrl(normalizeShikimoriAnimeUrl(item.link)),
         title: normalizeExternalText(item.title),
         text: normalizeExternalText(item.text),
       })),

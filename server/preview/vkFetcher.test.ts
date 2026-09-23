@@ -76,6 +76,27 @@ describe('fetchVkHtml', () => {
     expect((await fetchVkHtml(post)).html).toBe('Привет');
   });
 
+  it('reads wall post metadata without downloading an oversized body', async () => {
+    const page = response(200);
+    page.body = Readable.from([
+      Buffer.from('<html><head><meta property="og:image" content="https://example.com/post.jpg"></head>'),
+      Buffer.alloc(1_000_001, 120),
+    ]) as IncomingMessage;
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(page);
+
+    await expect(fetchVkHtml(post)).resolves.toMatchObject({
+      html: '<html><head><meta property="og:image" content="https://example.com/post.jpg"></head>',
+    });
+  });
+
+  it('reads VK video embed data after the head', async () => {
+    const embed = new URL('https://vk.ru/video_ext.php?oid=-1&id=2');
+    const html = '<html><head></head><body>"url720":"https://cdn.example/video.mp4"</body></html>';
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(response(200, html));
+
+    await expect(fetchVkHtml(embed)).resolves.toMatchObject({ html });
+  });
+
   it('returns VK missing-page HTML for wall posts', async () => {
     const html = '<div data-testid="page_not_found_placeholder"></div>';
     vi.mocked(requestPublicHttp).mockResolvedValueOnce(response(404, html));
