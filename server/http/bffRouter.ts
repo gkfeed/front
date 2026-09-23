@@ -1,5 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
+import { isHltvMatchUrl } from '../../shared/urlRules.js';
 import { isTikTokPlaybackPreview, isTikTokCommentsPreview } from '../../shared/tiktokContracts.js';
 import { isYoutubeCommentsPreview, isYoutubeTimecodesPreview } from '../../shared/youtubeContracts.js';
 import { isArticlePreview } from '../../shared/articleContracts.js';
@@ -27,6 +28,7 @@ const sasflixMediaRequestGate = createBffRequestGate({
   maxQueuedPerClient: 8,
   rateLimit: 600,
 });
+const HLTV_MATCH_CACHE_TTL_MS = 20_000;
 
 type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments' | 'youtubeTimecodes'>;
 
@@ -55,16 +57,18 @@ export async function routeBffRequest(
     const input = getRequiredPreviewUrl(requestUrl);
     const title = requestUrl.searchParams.get('title')?.slice(0, 300);
     const result = await requestGate.run(clientId, requestContext, () => (
-      resultCache.load(`${requestUrl.pathname}:${input}:${title ?? ''}`, () => (
-        suggestFeedType({ url: input, ...(title ? { title } : {}) }, requestContext)
-      ))
+      resultCache.load(`${requestUrl.pathname}:${input}:${title ?? ''}`, (sharedContext) => (
+        suggestFeedType({ url: input, ...(title ? { title } : {}) }, sharedContext)
+      ), { context: requestContext })
     ));
     sendJson(response, 200, result);
     return true;
   }
   if (requestUrl.pathname === '/bff/hltv-live') {
     const result = await requestGate.run(clientId, requestContext, () => (
-      resultCache.load(requestUrl.pathname, () => useCases.hltvLiveIndex(requestContext))
+      resultCache.load(requestUrl.pathname, (sharedContext) => useCases.hltvLiveIndex(sharedContext), {
+        context: requestContext,
+      })
     ));
     sendJson(response, 200, result);
     return true;
@@ -97,9 +101,9 @@ export async function routeBffRequest(
   if (requestUrl.pathname === '/bff/reddit-preview-image') {
     const input = getRequiredPreviewUrl(requestUrl);
     const image = await requestGate.run(clientId, requestContext, () => (
-      resultCache.load(`${requestUrl.pathname}:${input}`, () => (
-        useCases.redditPreviewImage(input, requestContext)
-      ))
+      resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => (
+        useCases.redditPreviewImage(input, sharedContext)
+      ), { context: requestContext })
     ));
     sendPreviewImage(response, image);
     return true;
@@ -108,9 +112,9 @@ export async function routeBffRequest(
   if (requestUrl.pathname === '/bff/vk-video') {
     const input = getRequiredPreviewUrl(requestUrl);
     await requestGate.run(clientId, requestContext, async () => {
-      const source = await resultCache.load(`${requestUrl.pathname}:${input}`, () => (
-        useCases.vkVideoSource(input, requestContext)
-      ));
+      const source = await resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => (
+        useCases.vkVideoSource(input, sharedContext)
+      ), { context: requestContext });
       const video = await useCases.vkVideoStream(source, requestRange, requestContext);
       await sendPreviewVideo(response, video);
     });
@@ -143,8 +147,21 @@ async function handleJsonPreview(
   const result = await requestGate.run(clientId, context, () => (
     requestUrl.pathname === '/bff/tiktok-playback'
       ? load(input, context)
-      : resultCache.load(`${requestUrl.pathname}:${input}`, () => load(input, context))
+      : resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => load(input, sharedContext), {
+        context,
+        ...(requestUrl.pathname === '/bff/open-graph' && isHltvMatchInput(input)
+          ? { ttlMs: HLTV_MATCH_CACHE_TTL_MS }
+          : {}),
+      })
   ));
   if (validate && !validate(result)) throw new Error('Invalid preview contract');
   sendJson(response, 200, result);
+}
+
+function isHltvMatchInput(input: string): boolean {
+  try {
+    return isHltvMatchUrl(new URL(input));
+  } catch {
+    return false;
+  }
 }

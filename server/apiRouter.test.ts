@@ -6,6 +6,15 @@ import { handleBffRequest } from './http/apiRouter.js';
 import type { PreviewUseCases } from './application/previewUseCases.js';
 import { createBffResultCache } from './http/bffResultCache.js';
 import type { BffRequestGate } from './http/bffRequestGate.js';
+import type { RequestExecutionContext } from './application/requestExecutionContext.js';
+
+function context(controller: AbortController): RequestExecutionContext {
+  return {
+    signal: controller.signal,
+    deadline: Number.POSITIVE_INFINITY,
+    remainingMs: (maximum = Number.POSITIVE_INFINITY) => maximum,
+  };
+}
 
 function createResponse() {
   return {
@@ -200,5 +209,54 @@ describe('BFF HTTP router', () => {
 
     expect(run).toHaveBeenCalledTimes(2);
     expect(useCases.openGraph).toHaveBeenCalledOnce();
+  });
+
+  it('returns a shared preview to the remaining client after the first disconnects', async () => {
+    const useCases = createUseCases();
+    const cache = createBffResultCache();
+    const gate: BffRequestGate = { run: (_clientId, _context, load) => load() };
+    const firstController = new AbortController();
+    const secondController = new AbortController();
+    const firstResponse = createResponse();
+    const secondResponse = createResponse();
+    const url = new URL('http://localhost/bff/open-graph?url=https%3A%2F%2Fexample.com');
+    let release!: (value: Awaited<ReturnType<PreviewUseCases['openGraph']>>) => void;
+    const preview = {
+      url: 'https://example.com',
+      title: 'Story',
+      description: null,
+      image: null,
+      video: null,
+      siteName: null,
+      type: null,
+      providerData: null,
+    };
+    vi.mocked(useCases.openGraph).mockImplementation(() => new Promise((resolve) => {
+      release = resolve;
+    }));
+
+    const first = handleBffRequest(url, firstResponse, context(firstController), useCases, 'first', gate, cache);
+    const second = handleBffRequest(url, secondResponse, context(secondController), useCases, 'second', gate, cache);
+    await vi.waitFor(() => expect(useCases.openGraph).toHaveBeenCalledOnce());
+    firstController.abort();
+
+    await expect(first).rejects.toThrow('Request aborted');
+    release(preview);
+    await expect(second).resolves.toBe(true);
+    expect(firstResponse.end).not.toHaveBeenCalled();
+    expect(secondResponse.end).toHaveBeenCalledWith(JSON.stringify(preview));
+  });
+
+  it('refreshes HLTV match previews before the next 30-second poll', async () => {
+    let timestamp = 1_000;
+    const cache = createBffResultCache({ now: () => timestamp });
+    const useCases = createUseCases();
+    const url = new URL('http://localhost/bff/open-graph?url=https%3A%2F%2Fwww.hltv.org%2Fmatches%2F1234567%2Fmatch');
+
+    await handleBffRequest(url, createResponse(), undefined, useCases, 'client', undefined, cache);
+    timestamp += 30_000;
+    await handleBffRequest(url, createResponse(), undefined, useCases, 'client', undefined, cache);
+
+    expect(useCases.openGraph).toHaveBeenCalledTimes(2);
   });
 });

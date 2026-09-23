@@ -103,6 +103,27 @@ describe('CreateFeedPage', () => {
     expect(screen.getByRole('button', { name: 'Type Twitch' })).toBeTruthy();
     expect(getControlValue(screen.getByLabelText('Title'))).toBe('My streams');
   });
+
+  it('keeps a manually selected type when detection finishes later', async () => {
+    let finishDetection!: (suggestion: Awaited<ReturnType<typeof getFeedTypeSuggestion>>) => void;
+    detectType.mockImplementationOnce(() => new Promise((resolve) => {
+      finishDetection = resolve;
+    }));
+    render(<AppProviders><CreateFeedPage /></AppProviders>);
+
+    fireEvent.change(screen.getByLabelText('URL'), {
+      target: { value: 'https://example.com/feed.xml' },
+    });
+    await screen.findByText('Detecting...');
+    fireEvent.click(screen.getByRole('button', { name: 'Type Web' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'YouTube' }));
+    finishDetection({ type: 'twitch', confidence: 1 });
+
+    await vi.waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Type YouTube' })).toBeTruthy();
+    });
+    expect(screen.queryByText('Selected with 100% confidence.')).toBeNull();
+  });
 });
 
 function preview(title: string | null): OpenGraphPreview {

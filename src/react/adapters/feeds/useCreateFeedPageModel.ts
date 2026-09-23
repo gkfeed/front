@@ -21,12 +21,19 @@ export function useCreateFeedPageModel() {
   const [saveStatus, setSaveStatus] = useState<FeedCreatorSaveStatus>('idle');
   const [detectionStatus, setDetectionStatus] = useState<FeedTypeDetectionStatus>({ state: 'idle' });
   const generatedTitle = useRef<string | null>(null);
+  const manualTypeUrl = useRef<string | null>(null);
+  const latestUrl = useRef(feed.url.trim());
   const isSaving = saveStatus === 'saving';
   const fields = getFeedCreatorFields('extended');
   const isValid = fields.every((field) => isFeedFieldValid(feed, field.id));
 
   function updateFeed(field: keyof FeedInput, value: string) {
     if (field === 'title') generatedTitle.current = null;
+    if (field === 'type') manualTypeUrl.current = latestUrl.current;
+    if (field === 'url') {
+      latestUrl.current = value.trim();
+      manualTypeUrl.current = null;
+    }
     const clearGeneratedTitle = field === 'url'
       && generatedTitle.current !== null
       && feed.title === generatedTitle.current;
@@ -37,7 +44,7 @@ export function useCreateFeedPageModel() {
       ...(clearGeneratedTitle ? { title: '' } : {}),
     }));
     setSaveStatus('idle');
-    if (field === 'url') setDetectionStatus({ state: 'idle' });
+    if (field === 'url' || field === 'type') setDetectionStatus({ state: 'idle' });
   }
 
   useEffect(() => {
@@ -46,20 +53,25 @@ export function useCreateFeedPageModel() {
     const url = feed.url.trim();
     const title = feed.title.trim();
     const timeoutId = window.setTimeout(() => {
-      setDetectionStatus({ state: 'detecting' });
-      void feeds.suggestFeedType(url, title, controller.signal).then((suggestion) => {
-        if (suggestion.confidence < 0.35) {
-          setDetectionStatus({ state: 'uncertain' });
-          return;
-        }
-        setFeed((current) => ({ ...current, type: suggestion.type }));
-        setDetectionStatus({ state: 'success', confidence: suggestion.confidence });
-      }).catch(() => {
-        if (!controller.signal.aborted) setDetectionStatus({ state: 'error' });
-      });
+      if (manualTypeUrl.current !== url) {
+        setDetectionStatus({ state: 'detecting' });
+        void feeds.suggestFeedType(url, title, controller.signal).then((suggestion) => {
+          if (controller.signal.aborted || latestUrl.current !== url || manualTypeUrl.current === url) return;
+          if (suggestion.confidence < 0.35) {
+            setDetectionStatus({ state: 'uncertain' });
+            return;
+          }
+          setFeed((current) => ({ ...current, type: suggestion.type }));
+          setDetectionStatus({ state: 'success', confidence: suggestion.confidence });
+        }).catch(() => {
+          if (!controller.signal.aborted && latestUrl.current === url && manualTypeUrl.current !== url) {
+            setDetectionStatus({ state: 'error' });
+          }
+        });
+      }
 
       void feeds.suggestFeedTitle(url, controller.signal).then((suggestedTitle) => {
-        if (!suggestedTitle) return;
+        if (!suggestedTitle || controller.signal.aborted || latestUrl.current !== url) return;
         setFeed((current) => {
           if (current.title.trim() && current.title !== generatedTitle.current) return current;
           generatedTitle.current = suggestedTitle;
@@ -85,6 +97,8 @@ export function useCreateFeedPageModel() {
       await feeds.saveFeed(feed, 'extended', credentials);
       setFeed(EMPTY_FEED);
       generatedTitle.current = null;
+      manualTypeUrl.current = null;
+      latestUrl.current = '';
       setSubmitted(false);
       setSaveStatus('success');
     } catch {
