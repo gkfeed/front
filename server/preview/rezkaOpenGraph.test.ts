@@ -124,4 +124,31 @@ describe('Rezka OpenGraph provider', () => {
       'https://rezka.ag/series/documentary/30365-formula-1-gonyat-chtoby-vyzhivat-2019-latest.html',
     ]);
   });
+
+  it('uses the normal animation page when an episode link has a broken latest suffix', async () => {
+    const requestedUrl = new URL(
+      'https://hdrezka.me/animation/fantasy/90799-hell-mode-tv-2-2026-latest.html',
+    );
+    requestPublicHttp.mockImplementation((url: URL) => {
+      if (url.pathname.endsWith('-latest.html')) {
+        return Promise.resolve({
+          body: { destroy: vi.fn() },
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+          status: 500,
+          url,
+        });
+      }
+      return Promise.resolve(gzipHtmlResponse(
+        '<div class="b-sidecover"><a href="https://static.hdrezka.ac/covers/hell-mode.jpg"><img src="/small.jpg"></a></div>',
+        url,
+      ));
+    });
+
+    await expect(fetchOpenGraph(requestedUrl.href)).resolves.toMatchObject({
+      image: 'https://static.hdrezka.ac/covers/hell-mode.jpg',
+    });
+    expect(requestPublicHttp.mock.calls.map(([url]) => url.href)).toEqual([
+      'https://rezka.ag/animation/fantasy/90799-hell-mode-tv-2-2026.html',
+    ]);
+  });
 });

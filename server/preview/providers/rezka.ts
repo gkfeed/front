@@ -42,9 +42,10 @@ function isRezkaUrl(url: URL): boolean {
 }
 
 function getRezkaPreviewUrls(url: URL): URL[] {
+  const base = getRezkaBaseUrl(url);
   const urls = normalizeHostname(url.hostname) === 'hdrezka.me'
-    ? [withRezkaHost(url, 'rezka.ag'), url]
-    : [url];
+    ? [withRezkaHost(base, 'rezka.ag'), base]
+    : [base];
   return [...urls, ...urls.flatMap((candidate) => getRezkaLatestUrl(candidate) ?? [])];
 }
 
@@ -55,10 +56,17 @@ function withRezkaHost(url: URL, host: string): URL {
 }
 
 function getRezkaLatestUrl(url: URL): URL | null {
-  if (!url.pathname.startsWith('/series/') || !url.pathname.endsWith('.html')
+  if (!/^\/(?:series|animation)\//.test(url.pathname) || !url.pathname.endsWith('.html')
     || url.pathname.endsWith('-latest.html')) return null;
   const result = new URL(url.href);
   result.pathname = result.pathname.replace(/\.html$/, '-latest.html');
+  return result;
+}
+
+function getRezkaBaseUrl(url: URL): URL {
+  if (!url.pathname.endsWith('-latest.html')) return url;
+  const result = new URL(url.href);
+  result.pathname = result.pathname.replace(/-latest\.html$/, '.html');
   return result;
 }
 
