@@ -70,6 +70,40 @@ describe('feed use cases', () => {
     expect(cachePort.write).not.toHaveBeenCalled();
   });
 
+  it('deletes an already-started cache write before reading after invalidation', async () => {
+    const ports = createPorts();
+    const { itemsPort, cachePort } = ports;
+    let finishWrite!: () => void;
+    let storedItems: FeedItem[] | undefined;
+    vi.mocked(cachePort.read).mockImplementation(async () => storedItems);
+    vi.mocked(cachePort.write)
+      .mockImplementationOnce(async (_username, items) => {
+        await new Promise<void>((resolve) => { finishWrite = resolve; });
+        storedItems = items;
+      })
+      .mockImplementation(async (_username, items) => { storedItems = items; });
+    vi.mocked(cachePort.delete).mockImplementation(async () => { storedItems = undefined; });
+    vi.mocked(itemsPort.getFeedItems)
+      .mockResolvedValueOnce([cachedItem])
+      .mockResolvedValueOnce([currentItem]);
+    const useCases = createFeedUseCases(ports);
+
+    await useCases.loadFeedItems(credentials);
+    await vi.waitFor(() => expect(cachePort.write).toHaveBeenCalledOnce());
+    useCases.invalidateFeedItemsCache(credentials);
+    const onCached = vi.fn();
+    const nextLoad = useCases.loadFeedItems(credentials, { onCached });
+
+    expect(cachePort.delete).not.toHaveBeenCalled();
+    expect(cachePort.read).toHaveBeenCalledTimes(1);
+    finishWrite();
+    await expect(nextLoad).resolves.toEqual([currentItem]);
+
+    expect(cachePort.delete).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(storedItems).toEqual([currentItem]));
+    expect(onCached).not.toHaveBeenCalled();
+  });
+
   it('does not publish a cache read that was invalidated before it completed', async () => {
     const ports = createPorts();
     const { itemsPort, cachePort } = ports;

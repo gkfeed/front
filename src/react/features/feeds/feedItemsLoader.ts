@@ -22,6 +22,17 @@ export function createFeedItemsLoader(
   cachePort: FeedItemsCachePort = NO_FEED_ITEMS_CACHE,
 ) {
   const cacheRevisions = new Map<string, number>();
+  const cacheOperations = new Map<string, Promise<void>>();
+
+  function queueCacheOperation(username: string, operation: () => Promise<void>): void {
+    const previous = cacheOperations.get(username);
+    const pending = (previous ? previous.then(operation) : Promise.resolve().then(operation))
+      .catch(() => undefined);
+    cacheOperations.set(username, pending);
+    void pending.then(() => {
+      if (cacheOperations.get(username) === pending) cacheOperations.delete(username);
+    });
+  }
 
   async function load(
     credentials: Credentials | null,
@@ -36,6 +47,7 @@ export function createFeedItemsLoader(
     const cacheRevision = username ? getCacheRevision(username) : 0;
 
     if (!bypassCache && username) {
+      await cacheOperations.get(username);
       const cachedItems = await cachePort.read(username, CACHE_FRESHNESS_MS);
       if (!signal?.aborted && getCacheRevision(username) === cacheRevision && cachedItems) {
         onCached?.(cachedItems);
@@ -50,7 +62,7 @@ export function createFeedItemsLoader(
       INITIAL_PAGE_SIZE,
     );
     if (!signal?.aborted && username && getCacheRevision(username) === cacheRevision) {
-      void cachePort.write(username, items);
+      queueCacheOperation(username, () => cachePort.write(username, items));
     }
     return items;
   }
@@ -59,7 +71,7 @@ export function createFeedItemsLoader(
     const username = credentials?.username;
     if (!username) return;
     cacheRevisions.set(username, getCacheRevision(username) + 1);
-    void cachePort.delete(username);
+    queueCacheOperation(username, () => cachePort.delete(username));
   }
 
   return { invalidate, load };

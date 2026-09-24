@@ -52,24 +52,35 @@ export function loadYoutubeIframeApi(): Promise<YoutubeIframeApi> {
   if (youtubeIframeApiPromise) return youtubeIframeApiPromise;
 
   const promise = new Promise<YoutubeIframeApi>((resolve, reject) => {
-    const resolveApi = () => {
+    const previousReadyHandler = window.onYouTubeIframeAPIReady;
+    const fail = (message: string, script: HTMLScriptElement | null) => {
+      script?.remove();
+      if (window.onYouTubeIframeAPIReady === onReady) {
+        window.onYouTubeIframeAPIReady = previousReadyHandler;
+      }
+      reject(new Error(message));
+    };
+    const onReady = () => {
+      previousReadyHandler?.();
       if (window.YT?.Player) {
         resolve(window.YT);
       } else {
-        reject(new Error('YouTube IFrame API did not initialize'));
+        fail('YouTube IFrame API did not initialize', document.querySelector(
+          `script[src="${YOUTUBE_IFRAME_API_SRC}"]`,
+        ));
       }
     };
-    const previousReadyHandler = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => {
-      previousReadyHandler?.();
-      resolveApi();
+    window.onYouTubeIframeAPIReady = onReady;
+
+    const onScriptError = (script: HTMLScriptElement) => {
+      fail('Failed to load YouTube IFrame API', script);
     };
 
     const existingScript = document.querySelector<HTMLScriptElement>(
       `script[src="${YOUTUBE_IFRAME_API_SRC}"]`,
     );
     if (existingScript) {
-      existingScript.addEventListener('error', () => reject(new Error('Failed to load YouTube IFrame API')), {
+      existingScript.addEventListener('error', () => onScriptError(existingScript), {
         once: true,
       });
       return;
@@ -78,12 +89,15 @@ export function loadYoutubeIframeApi(): Promise<YoutubeIframeApi> {
     const script = document.createElement('script');
     script.src = YOUTUBE_IFRAME_API_SRC;
     script.async = true;
-    script.addEventListener('error', () => reject(new Error('Failed to load YouTube IFrame API')), {
+    script.addEventListener('error', () => onScriptError(script), {
       once: true,
     });
     document.head.appendChild(script);
   });
 
   youtubeIframeApiPromise = promise;
+  void promise.catch(() => {
+    if (youtubeIframeApiPromise === promise) youtubeIframeApiPromise = null;
+  });
   return promise;
 }
