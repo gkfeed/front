@@ -3,10 +3,10 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
 
 import { getRequestErrorMessage } from '../../presentation/requestErrorMessage';
-import { getFeedItems } from '../../services/feeds';
+import { getAllFeeds, getFeedItems } from '../../services/feeds';
 import { readLiveCandidateCatalog, writeLiveCandidateCatalog } from '../../services/liveCandidateCatalog';
 import { useAuth } from '../../state/useAuth';
-import { catalogCandidates, deduplicateLiveEvents, mergeCandidates } from '../../features/live/liveCatalog';
+import { catalogCandidates, deduplicateLiveEvents, mergeCandidates, retainCandidatesFromFeeds } from '../../features/live/liveCatalog';
 import type { LiveCandidate, LiveEvent, LiveProviderRuntime } from '../../domain/liveEvents';
 
 const REFRESH_INTERVAL_MS = 60_000;
@@ -45,6 +45,18 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     candidatesRef.current = next;
     setCandidates(next);
   }, []);
+  const commitCandidates = useCallback((next: LiveCandidate[]) => {
+    setCandidateState(next);
+    const keys = new Set(next.map((candidate) => candidate.key));
+    setEvents((current) => {
+      const retained = Object.fromEntries(Object.entries(current).filter(([key]) => keys.has(key)));
+      eventsRef.current = retained;
+      return retained;
+    });
+    for (const key of lastChecked.current.keys()) {
+      if (!keys.has(key)) lastChecked.current.delete(key);
+    }
+  }, [setCandidateState]);
 
   const runCycle = useCallback(async (signal = new AbortController().signal) => {
     if (cycleRunning.current || signal.aborted) return;
@@ -74,15 +86,17 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
               || !page.some((item) => item.id === previousNewestItemId);
           }, 100);
           if (signal.aborted) return;
+          const activeFeedIds = new Set((await getAllFeeds(credentials, signal)).map((feed) => feed.id));
+          if (signal.aborted) return;
           const discovered = catalogCandidates(items, providers);
-          const nextCandidates = fullReconciliation
+          const nextCandidates = retainCandidatesFromFeeds(fullReconciliation
             ? discovered
             : mergeIncrementalCandidates(
               discovered,
               candidatesRef.current,
               getNewItemCount(items, previousNewestItemId),
-            );
-          setCandidateState(nextCandidates);
+            ), activeFeedIds);
+          commitCandidates(nextCandidates);
           newestItemIdRef.current = items[0]?.id ?? previousNewestItemId;
           if (fullReconciliation) {
             lastReconciledAtRef.current = Date.now();
@@ -120,7 +134,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
             const next = { ...current };
             for (const update of result.updates) {
               if (update.status === 'live' && update.data) {
-                const candidate = providerCandidates.find((value) => value.key === update.key);
+                const candidate = candidatesRef.current.find((value) => value.key === update.key);
                 if (candidate) next[update.key] = { candidate, data: update.data, checkedAt };
               } else if (provider.preserveEndedPlayback && activePlayback.current.has(update.key) && next[update.key]) {
                 next[update.key] = { ...next[update.key], checkedAt, ended: true };
@@ -150,7 +164,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
         queueMicrotask(() => void cycleRef.current(signal));
       }
     }
-  }, [credentials, providers, scanComplete, setCandidateState, t, username]);
+  }, [commitCandidates, credentials, providers, scanComplete, t, username]);
   cycleRef.current = runCycle;
 
   useEffect(() => {
@@ -200,14 +214,16 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           return fullReconciliation || newestItemId === null || !page.some((item) => item.id === newestItemId);
         }, 100);
         if (signal.aborted) return;
-        const finalCandidates = fullReconciliation
+        const activeFeedIds = new Set((await getAllFeeds(credentials, signal)).map((feed) => feed.id));
+        if (signal.aborted) return;
+        const finalCandidates = retainCandidatesFromFeeds(fullReconciliation
           ? catalogCandidates(items, providers)
           : mergeIncrementalCandidates(
             catalogCandidates(items, providers),
             cached?.candidates ?? [],
             getNewItemCount(items, newestItemId),
-          );
-        setCandidateState(finalCandidates);
+          ), activeFeedIds);
+        commitCandidates(finalCandidates);
         const lastReconciledAt = fullReconciliation ? Date.now() : cached?.lastReconciledAt ?? null;
         await writeLiveCandidateCatalog(username, {
           candidates: finalCandidates,
@@ -255,7 +271,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [credentials, providers, setCandidateState, t, username]);
+  }, [commitCandidates, credentials, providers, setCandidateState, t, username]);
 
   const onPlaybackChange = useCallback((key: string, isOpen: boolean) => {
     if (isOpen) {
@@ -319,7 +335,10 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     scanError,
     lastSuccessfulAt,
     refreshing,
-    refresh: () => void cycleRef.current(),
+    refresh: () => {
+      lastDiscoveryAtRef.current = 0;
+      void cycleRef.current();
+    },
     onPlaybackChange,
     hasFreshEvents: sections.some((section) => section.events.some((event) => !event.ended)),
   };

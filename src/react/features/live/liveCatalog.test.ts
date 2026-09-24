@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { LiveEvent } from '../../domain/liveEvents';
-import { deduplicateLiveEvents } from './liveCatalog';
+import { deduplicateLiveEvents, retainCandidatesFromFeeds } from './liveCatalog';
 
 describe('live event deduplication', () => {
   it('keeps one Twitch card when another title only adds stream tags', () => {
@@ -51,6 +51,15 @@ describe('live event deduplication', () => {
       twitchEvent(2, '   '),
     ])).toHaveLength(2);
   });
+});
+
+it('drops cached candidates whose source was deleted', () => {
+  const active = twitchEvent(1, 'Active').candidate;
+  const removed = { ...twitchEvent(2, 'Removed').candidate, item: {
+    ...twitchEvent(2, 'Removed').candidate.item,
+    feedId: 2,
+  } };
+  expect(retainCandidatesFromFeeds([active, removed], new Set([1]))).toEqual([active]);
 });
 
 function twitchEvent(index: number, title: string): LiveEvent {

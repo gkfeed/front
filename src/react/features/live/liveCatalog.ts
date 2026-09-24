@@ -31,6 +31,13 @@ export function mergeCandidates(
   return [...byKey.values()].sort((a, b) => a.feedOrder - b.feedOrder);
 }
 
+export function retainCandidatesFromFeeds(
+  candidates: readonly LiveCandidate[],
+  activeFeedIds: ReadonlySet<number>,
+): LiveCandidate[] {
+  return candidates.filter((candidate) => activeFeedIds.has(candidate.item.feedId));
+}
+
 export function deduplicateLiveEvents(events: readonly LiveEvent[]): LiveEvent[] {
   const seenBroadcasts = new Set<string>();
 

@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../i18n';
 import { LivePage } from './LivePage';
 import { getOpenGraphPreview } from '../services/openGraph';
-import { getFeedItems } from '../services/feeds';
+import { getAllFeeds, getFeedItems } from '../services/feeds';
 import { readLiveCandidateCatalog, writeLiveCandidateCatalog } from '../services/liveCandidateCatalog';
 import type { OneFootballMatchSnapshot } from '../../../shared/previewContracts';
 import { liveProviderRegistry, catalogCandidates } from '../components/live/liveProviderRegistry';
@@ -38,6 +38,12 @@ beforeEach(async () => {
   vi.mocked(readLiveCandidateCatalog).mockResolvedValue(undefined);
   vi.mocked(writeLiveCandidateCatalog).mockResolvedValue();
   vi.mocked(getFeedItems).mockResolvedValue([item]);
+  vi.mocked(getAllFeeds).mockResolvedValue([{
+    id: item.feedId,
+    title: 'OneFootball',
+    type: 'rss',
+    url: 'https://onefootball.com/',
+  }]);
   vi.mocked(getOpenGraphPreview).mockResolvedValue(preview('live'));
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
@@ -79,6 +85,18 @@ describe('OneFootball on the live page', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
     expect(screen.queryByRole('link')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Football' })).toBeNull();
+  });
+
+  it('removes a live match when its source is deleted', async () => {
+    render(<LivePage />);
+    await flush();
+    expect(screen.getByRole('link')).toBeTruthy();
+
+    vi.mocked(getAllFeeds).mockResolvedValue([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    await flush();
+
+    expect(screen.queryByRole('link')).toBeNull();
   });
 
   it('warns on refresh failure, retains the last score, and expires it at five minutes', async () => {

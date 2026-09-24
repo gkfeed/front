@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 test('shows Twitch and HLTV events from the signed-in feed history', async ({ page }) => {
-  await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/v1/list', (route) => route.fulfill({ json: [
+    { id: 4, title: 'Twitch', type: 'twitch', url: 'https://www.twitch.tv/some_channel' },
+    { id: 5, title: 'HLTV', type: 'hltv', url: 'https://www.hltv.org/' },
+  ] }));
   await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
     json: {
       items: [

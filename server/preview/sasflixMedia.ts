@@ -3,19 +3,20 @@ import { Readable } from 'node:stream';
 import type { RequestExecutionContext } from '../application/requestExecutionContext.js';
 import type { PreviewVideo } from '../application/previewContracts.js';
 import { requestPublicHttp } from '../publicHttp.js';
-import { readBoundedText } from './boundedStreamReader.js';
+import { readBoundedBytes, readBoundedText } from './boundedStreamReader.js';
 import { PreviewError } from './errors.js';
 import { parsePublicHttpUrl, throwPublicUrlError } from './remoteHttp.js';
 import { TWITTERBOT_USER_AGENT } from './previewFetchers.js';
 
 const SASFLIX_VIDEO_PATH = /^\/api\/video\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?:\.m3u8|\/(?:240|360|480|720|1080|1440|2160))$/i;
-const SASFLIX_SEGMENT_PATH = /^\/sasflix\/[A-Za-z0-9._/-]+\.ts$/;
+const SASFLIX_SEGMENT_PATH = /^\/sasflix\/[A-Za-z0-9._/-]+\.(?:ts|m3u8|m4s|mp4|key|aac)$/i;
 const SASFLIX_SEGMENT_HOSTS = new Set([
   'media.sasflix.ru',
   'mirror.sasflix.ru',
   'reflector.sasflix.ru',
 ]);
 const MAX_PLAYLIST_BYTES = 1_000_000;
+const MAX_KEY_BYTES = 64_000;
 
 export async function fetchSasflixMedia(
   input: string,
@@ -28,7 +29,7 @@ export async function fetchSasflixMedia(
   }
 
   const headers: Record<string, string> = {
-    accept: 'application/vnd.apple.mpegurl,audio/mpegurl,video/mp2t,video/*;q=0.9,*/*;q=0.1',
+    accept: 'application/vnd.apple.mpegurl,audio/mpegurl,video/mp2t,video/*;q=0.9,audio/*;q=0.8,application/octet-stream;q=0.7,*/*;q=0.1',
     referer: 'https://sasflix.ru/',
     'user-agent': TWITTERBOT_USER_AGENT,
   };
@@ -64,9 +65,31 @@ export async function fetchSasflixMedia(
     };
   }
 
-  if (contentType !== 'video/mp2t') {
+  if (url.pathname.toLowerCase().endsWith('.key')) {
+    if (media.status !== 200 || !['application/octet-stream', 'binary/octet-stream'].includes(contentType ?? '')) {
+      media.body.destroy();
+      throw new PreviewError('Sasflix did not return an HLS key', 'invalid_video');
+    }
+    const body = await readBoundedBytes(media.body, MAX_KEY_BYTES, () => (
+      new PreviewError('The Sasflix key is too large', 'response_too_large')
+    ));
+    return {
+      body: Readable.from([body]),
+      status: 200,
+      contentType: 'application/octet-stream',
+      acceptRanges: 'none',
+      contentLength: String(body.byteLength),
+    };
+  }
+
+  const validContentTypes = url.pathname.toLowerCase().endsWith('.ts')
+    ? ['video/mp2t']
+    : url.pathname.toLowerCase().endsWith('.aac')
+      ? ['audio/aac', 'audio/aacp']
+      : ['video/mp4', 'audio/mp4', 'video/iso.segment', 'application/octet-stream'];
+  if (!contentType || !validContentTypes.includes(contentType)) {
     media.body.destroy();
-    throw new PreviewError('Sasflix did not return a video segment', 'invalid_video');
+    throw new PreviewError('Sasflix did not return an HLS media resource', 'invalid_video');
   }
   return {
     body: media.body,
@@ -100,7 +123,7 @@ function validateSasflixMediaUrl(input: string): URL {
 }
 
 function isPlaylistUrl(url: URL): boolean {
-  return url.hostname === 'sasflix.ru';
+  return url.hostname === 'sasflix.ru' || url.pathname.toLowerCase().endsWith('.m3u8');
 }
 
 function isPlaylistContentType(contentType: string | undefined): boolean {
@@ -112,8 +135,24 @@ function isPlaylistContentType(contentType: string | undefined): boolean {
 function rewritePlaylist(playlist: string, playlistUrl: URL): string {
   return playlist.split('\n').map((line) => {
     const value = line.trim();
-    if (!value || value.startsWith('#')) return line;
-    const mediaUrl = validateSasflixMediaUrl(new URL(value, playlistUrl).href);
-    return `/bff/sasflix-media?url=${encodeURIComponent(mediaUrl.href)}`;
+    if (!value) return line;
+    if (value.startsWith('#')) {
+      if (!value.startsWith('#EXT-X-')) return line;
+      return line.replace(/([:,])URI="([^"]*)"/g, (_attribute, separator: string, resource: string) => (
+        `${separator}URI="${proxyMediaUrl(resource, playlistUrl)}"`
+      ));
+    }
+    return proxyMediaUrl(value, playlistUrl);
   }).join('\n');
+}
+
+function proxyMediaUrl(resource: string, playlistUrl: URL): string {
+  let mediaUrl: URL;
+  try {
+    mediaUrl = validateSasflixMediaUrl(new URL(resource, playlistUrl).href);
+  } catch (error) {
+    if (error instanceof PreviewError) throw error;
+    throw new PreviewError('Invalid Sasflix HLS resource URL', 'invalid_sasflix_media');
+  }
+  return `/bff/sasflix-media?url=${encodeURIComponent(mediaUrl.href)}`;
 }

@@ -47,6 +47,58 @@ describe('Sasflix media proxy', () => {
     );
   });
 
+  it('rewrites URI attributes in HLS tags, including keys and initialization segments', async () => {
+    const keyUrl = 'https://mirror.sasflix.ru/sasflix/a/encryption.key?signature=signed';
+    const mapUrl = 'https://media.sasflix.ru/sasflix/a/init.mp4?signature=signed';
+    vi.mocked(requestPublicHttp).mockResolvedValue({
+      body: Readable.from([
+        `#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="${keyUrl}"\n#EXT-X-MAP:URI="${mapUrl}"\n`,
+      ]),
+      headers: { 'content-type': 'audio/mpegurl' },
+      status: 200,
+      url: new URL(`https://sasflix.ru/api/video/${videoId}.m3u8`),
+    } as never);
+
+    const media = await fetchSasflixMedia(`https://sasflix.ru/api/video/${videoId}.m3u8`, undefined, context);
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of media.body) chunks.push(Buffer.from(chunk));
+    const playlist = Buffer.concat(chunks).toString();
+
+    expect(playlist).toContain(`URI="/bff/sasflix-media?url=${encodeURIComponent(keyUrl)}"`);
+    expect(playlist).toContain(`URI="/bff/sasflix-media?url=${encodeURIComponent(mapUrl)}"`);
+    expect(playlist).not.toContain('URI="https://');
+  });
+
+  it('rejects HLS URI attributes outside the Sasflix media allowlist', async () => {
+    vi.mocked(requestPublicHttp).mockResolvedValue({
+      body: Readable.from(['#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="https://example.com/key"\n']),
+      headers: { 'content-type': 'audio/mpegurl' },
+      status: 200,
+      url: new URL(`https://sasflix.ru/api/video/${videoId}.m3u8`),
+    } as never);
+
+    await expect(fetchSasflixMedia(`https://sasflix.ru/api/video/${videoId}.m3u8`, undefined, context))
+      .rejects.toMatchObject({ kind: 'invalid_sasflix_media' });
+  });
+
+  it('serves a bounded binary HLS key through the media proxy', async () => {
+    const key = new Uint8Array([1, 2, 3, 4]);
+    vi.mocked(requestPublicHttp).mockResolvedValue({
+      body: Readable.from([key]),
+      headers: { 'content-type': 'application/octet-stream' },
+      status: 200,
+      url: new URL('https://mirror.sasflix.ru/sasflix/a/encryption.key'),
+    } as never);
+
+    const media = await fetchSasflixMedia(
+      'https://mirror.sasflix.ru/sasflix/a/encryption.key', undefined, context,
+    );
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of media.body) chunks.push(Buffer.from(chunk));
+    expect(Buffer.concat(chunks)).toEqual(Buffer.from(key));
+    expect(media).toMatchObject({ contentType: 'application/octet-stream', contentLength: '4' });
+  });
+
   it('proxies signed mirror segments and forwards byte ranges', async () => {
     const body = Readable.from([new Uint8Array([1, 2, 3])]);
     vi.mocked(requestPublicHttp).mockResolvedValue({
