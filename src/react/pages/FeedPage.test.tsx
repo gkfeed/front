@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteFeedById, getFeedById } from '../services/feeds';
@@ -120,5 +120,33 @@ describe('FeedPage', () => {
     expect((await screen.findByRole('alert')).textContent).toBe('Could not delete this feed source. Try again.');
     expect(document.activeElement).toBe(deleteButton);
     expect(screen.getByRole('button', { name: 'Delete feed source' })).toBeTruthy();
+  });
+
+  it('requires a new deletion confirmation after navigating to another feed', async () => {
+    vi.mocked(getFeedById).mockImplementation(async (id) => ({
+      id: id!,
+      title: `Feed ${id}`,
+      type: 'rss',
+      url: `https://example.com/${id}.xml`,
+    }));
+    vi.mocked(deleteFeedById).mockResolvedValue();
+    render(
+      <MemoryRouter initialEntries={['/feed/1']}>
+        <AppProviders>
+          <Link to="/feed/2">Next feed</Link>
+          <Routes><Route path="/feed/:id" element={<FeedPage />} /></Routes>
+        </AppProviders>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Feed 1')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(screen.getByRole('button', { name: 'Delete feed source' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('link', { name: 'Next feed' }));
+    expect(await screen.findByText('Feed 2')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Delete feed source' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
+    expect(vi.mocked(deleteFeedById)).not.toHaveBeenCalled();
   });
 });

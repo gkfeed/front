@@ -11,8 +11,12 @@ import {
 } from '../adapters/feeds/useFeedPageModel';
 
 export function FeedPage() {
-  const { t } = useTranslation();
   const { id } = useParams();
+  return <FeedPageForId key={id} id={id} />;
+}
+
+function FeedPageForId({ id }: { id: string | undefined }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const handleDeleted = useCallback(() => navigate('/'), [navigate]);
   const {
