@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
-import { isHltvMatchUrl } from '../../shared/urlRules.js';
+import { isHltvMatchUrl, isOneFootballMatchUrl } from '../../shared/urlRules.js';
 import { isTikTokPlaybackPreview, isTikTokCommentsPreview } from '../../shared/tiktokContracts.js';
 import { isYoutubeCommentsPreview, isYoutubeTimecodesPreview } from '../../shared/youtubeContracts.js';
 import { isArticlePreview } from '../../shared/articleContracts.js';
@@ -28,7 +28,7 @@ const sasflixMediaRequestGate = createBffRequestGate({
   maxQueuedPerClient: 8,
   rateLimit: 600,
 });
-const HLTV_MATCH_CACHE_TTL_MS = 20_000;
+const LIVE_RESULT_CACHE_TTL_MS = 0;
 
 type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments' | 'youtubeTimecodes'>;
 
@@ -68,6 +68,7 @@ export async function routeBffRequest(
     const result = await requestGate.run(clientId, requestContext, () => (
       resultCache.load(requestUrl.pathname, (sharedContext) => useCases.hltvLiveIndex(sharedContext), {
         context: requestContext,
+        ttlMs: LIVE_RESULT_CACHE_TTL_MS,
       })
     ));
     sendJson(response, 200, result);
@@ -149,8 +150,8 @@ async function handleJsonPreview(
       ? load(input, context)
       : resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => load(input, sharedContext), {
         context,
-        ...(requestUrl.pathname === '/bff/open-graph' && isHltvMatchInput(input)
-          ? { ttlMs: HLTV_MATCH_CACHE_TTL_MS }
+        ...(requestUrl.pathname === '/bff/open-graph' && isLiveMatchInput(input)
+          ? { ttlMs: LIVE_RESULT_CACHE_TTL_MS }
           : {}),
       })
   ));
@@ -158,9 +159,10 @@ async function handleJsonPreview(
   sendJson(response, 200, result);
 }
 
-function isHltvMatchInput(input: string): boolean {
+function isLiveMatchInput(input: string): boolean {
   try {
-    return isHltvMatchUrl(new URL(input));
+    const url = new URL(input);
+    return isHltvMatchUrl(url) || isOneFootballMatchUrl(url);
   } catch {
     return false;
   }

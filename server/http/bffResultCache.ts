@@ -122,11 +122,13 @@ export function createBffResultCache({
       };
       entry.promise = runSharedLoad(load, sharedContext, controller).then((value) => {
         if (controller.signal.aborted) throw abortError(sharedContext);
+        const entryTtlMs = options.ttlMs ?? ttlMs;
+        if (entryTtlMs <= 0) return value;
         const size = estimateSize(value);
         if (size > maxBytes) return value;
         const existing = entries.get(key);
         if (existing) remove(key, existing);
-        entries.set(key, { value, expiresAt: now() + (options.ttlMs ?? ttlMs), size });
+        entries.set(key, { value, expiresAt: now() + entryTtlMs, size });
         totalBytes += size;
         while (entries.size > maxEntries || totalBytes > maxBytes) {
           const oldest = entries.entries().next().value as [string, CacheEntry] | undefined;

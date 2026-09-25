@@ -123,6 +123,7 @@ export function useFeedReader({
     items: items ?? [],
     currentItem,
     isLoading,
+    isSyncComplete,
     isItemPending: (itemId: number) => deletions.some((deletion) => (
       deletion.itemId === itemId && deletion.status === 'pending'
     )),

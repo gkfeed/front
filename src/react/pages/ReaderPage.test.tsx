@@ -69,6 +69,29 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('You’ve reviewed everything')).toBeTruthy();
   });
 
+  it('waits for synchronization before declaring a partial review complete', async () => {
+    let publishProgress: ((items: typeof ITEMS) => boolean | void) | undefined;
+    let finishLoad: ((items: typeof ITEMS) => void) | undefined;
+    vi.mocked(getFeedItems).mockImplementation((_credentials, _limit, _signal, onProgress) => {
+      publishProgress = onProgress;
+      return new Promise((resolve) => { finishLoad = resolve; });
+    });
+    renderReader();
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
+    act(() => publishProgress?.([ITEMS[0]]));
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+
+    act(() => publishProgress?.(ITEMS));
+    expect(screen.queryByText('You’ve reviewed everything')).toBeNull();
+    expect(screen.getByRole('status', { name: 'Loading feed items' })).toBeTruthy();
+
+    await act(async () => finishLoad?.(ITEMS));
+    expect(await screen.findByText('Second story')).toBeTruthy();
+  });
+
   it('restores the review queue after the page is reloaded', async () => {
     stubLocalStorage();
     const newItem = {
@@ -261,7 +284,8 @@ describe('ReaderPage', () => {
     act(() => publishProgress?.(ITEMS));
     expect(screen.queryByText('Second story')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    expect(await screen.findByText('You’ve reviewed everything')).toBeTruthy();
+    expect(screen.queryByText('You’ve reviewed everything')).toBeNull();
+    expect(screen.getByRole('status', { name: 'Loading feed items' })).toBeTruthy();
 
     await act(async () => failLoad?.(new Error('Later page failed')));
 

@@ -3,5 +3,6 @@ services:
     build: .
     environment:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      BFF_TRUSTED_PROXY_CIDRS: ${BFF_TRUSTED_PROXY_CIDRS:-}
     ports:
       - "4200:3000"

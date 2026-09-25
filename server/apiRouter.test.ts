@@ -138,6 +138,22 @@ describe('BFF HTTP router', () => {
     expect(response.end).toHaveBeenCalledWith(JSON.stringify({ eventIds: ['2396948'] }));
   });
 
+  it.each([
+    '/bff/hltv-live',
+    '/bff/open-graph?url=https%3A%2F%2Fwww.hltv.org%2Fmatches%2F123%2Ftest',
+    '/bff/open-graph?url=https%3A%2F%2Fonefootball.com%2Fen%2Fmatch%2F123',
+  ])('fetches fresh live data on repeated %s requests', async (path) => {
+    const useCases = createUseCases();
+    const cache = createBffResultCache();
+    const url = new URL(`http://localhost${path}`);
+
+    await handleBffRequest(url, createResponse(), undefined, useCases, 'live-test', undefined, cache);
+    await handleBffRequest(url, createResponse(), undefined, useCases, 'live-test', undefined, cache);
+
+    const load = path === '/bff/hltv-live' ? useCases.hltvLiveIndex : useCases.openGraph;
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
   it('serves Reddit preview images through the HTTP adapter', async () => {
     const response = createResponse();
     const useCases = createUseCases();

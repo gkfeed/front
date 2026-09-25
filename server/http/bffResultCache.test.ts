@@ -118,4 +118,20 @@ describe('BFF result cache', () => {
     expect(live).toHaveBeenCalledTimes(2);
     expect(article).toHaveBeenCalledOnce();
   });
+
+  it('coalesces live loads without retaining their result for the next refresh', async () => {
+    const cache = createBffResultCache();
+    let release!: (value: string) => void;
+    const load = vi.fn()
+      .mockImplementationOnce(() => new Promise<string>((resolve) => { release = resolve; }))
+      .mockResolvedValueOnce('updated');
+
+    const first = cache.load('live', load, { ttlMs: 0 });
+    const concurrent = cache.load('live', load, { ttlMs: 0 });
+    await vi.waitFor(() => expect(load).toHaveBeenCalledOnce());
+    release('initial');
+    await expect(Promise.all([first, concurrent])).resolves.toEqual(['initial', 'initial']);
+    await expect(cache.load('live', load, { ttlMs: 0 })).resolves.toBe('updated');
+    expect(load).toHaveBeenCalledTimes(2);
+  });
 });

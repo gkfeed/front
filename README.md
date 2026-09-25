@@ -35,6 +35,11 @@ For local development, put the key in `.env`; the `dev`, `dev:bff`, and `start` 
 file when it exists. Docker Compose passes the same variable from its environment or `.env` into
 the application container.
 
+If the BFF runs behind a reverse proxy, set `BFF_TRUSTED_PROXY_CIDRS` to the comma-separated
+IP addresses or CIDR ranges of proxies that connect directly to the BFF. The proxy must append
+the client address to `X-Forwarded-For`. Direct connections and requests from unlisted proxies
+ignore that header. Docker Compose passes this setting from its environment or `.env`.
+
 ## Open Graph preview
 
 The BFF exposes the Open Graph metadata route:

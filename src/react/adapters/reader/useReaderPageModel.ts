@@ -42,12 +42,20 @@ export function useReaderPageModel(t: Translator) {
     onDelete: reader.deleteItem,
   });
 
+  const waitingForMoreReviewItems = mode === 'review'
+    && !reader.isSyncComplete
+    && !reader.loadFailed
+    && reader.remainingCount === 0;
+  const isLoading = reader.isLoading || waitingForMoreReviewItems;
+
   return {
     ...reader,
     mode,
     itemOrder,
     reviewPanelRef,
-    hasLoadedContent: !reader.isLoading && (!reader.loadFailed || reader.items.length > 0),
+    isLoading,
+    hasLoadedContent: !isLoading && (!reader.loadFailed || reader.items.length > 0)
+      && !(mode === 'review' && !reader.isSyncComplete && reader.remainingCount === 0),
     loadErrorMessage: reader.loadFailed
       ? getRequestErrorMessage(reader.loadError, t, 'reader.loadError')
       : '',
