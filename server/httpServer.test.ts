@@ -55,6 +55,22 @@ describe('HTTP server composition root', () => {
     expect(serveFrontend).not.toHaveBeenCalled();
   });
 
+  it('returns JSON 404 for unknown BFF paths instead of the frontend shell', async () => {
+    const serveFrontend = vi.fn();
+    const response = createResponse();
+
+    await handleHttpRequest(createRequest('/bff/missing', 'GET'), response, {
+      handleBffRequest: vi.fn().mockResolvedValue(false),
+      serveFrontend,
+    });
+
+    expect(response.writeHead).toHaveBeenCalledWith(404, expect.any(Object));
+    expect(response.end).toHaveBeenCalledWith(JSON.stringify({
+      error: { code: 'not_found', message: 'Route not found' },
+    }));
+    expect(serveFrontend).not.toHaveBeenCalled();
+  });
+
   it('maps provider failures after BFF routing at the HTTP boundary', async () => {
     const request = createRequest('/bff/open-graph?url=https%3A%2F%2Fexample.com', 'GET');
     const response = createResponse();

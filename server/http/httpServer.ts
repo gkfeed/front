@@ -56,6 +56,11 @@ export async function handleHttpRequest(
       return;
     }
 
+    if (requestUrl.pathname === '/bff' || requestUrl.pathname.startsWith('/bff/')) {
+      sendJson(response, 404, { error: { code: 'not_found', message: 'Route not found' } });
+      return;
+    }
+
     await dependencies.serveFrontend(requestUrl.pathname, request.method === 'HEAD', response);
   } catch (error) {
     if (context.clientAborted || response.destroyed) return;

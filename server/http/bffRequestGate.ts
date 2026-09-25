@@ -78,6 +78,9 @@ export function createBffRequestGate({
 
   return {
     run<T>(clientId: string, context: RequestExecutionContext, load: () => Promise<T>): Promise<T> {
+      if (context.signal.aborted) {
+        return Promise.reject(new Error('Request aborted before entering the preview gate'));
+      }
       const state = clients.get(clientId);
       if (state.requestsInWindow >= rateLimit) {
         return Promise.reject(new PreviewError('Too many preview requests from this client', 'preview_rate_limited'));

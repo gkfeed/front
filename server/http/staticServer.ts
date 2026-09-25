@@ -1,8 +1,8 @@
 import { createReadStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { realpath, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { pipeline } from 'node:stream/promises';
-import { extname, resolve } from 'node:path';
+import { extname, resolve, sep } from 'node:path';
 
 import { HttpRequestError } from './httpErrors.js';
 
@@ -23,10 +23,14 @@ export async function serveFrontend(
   }
 
   const requestedFile = resolve(resolvedRoot, `.${decodedPath}`);
-  const safeFile = requestedFile.startsWith(`${resolvedRoot}/`)
-    ? requestedFile
-    : resolve(resolvedRoot, 'index.html');
-  const file = await isFile(safeFile) ? safeFile : resolve(resolvedRoot, 'index.html');
+  const rootPath = await realpath(resolvedRoot);
+  const candidate = requestedFile.startsWith(`${resolvedRoot}${sep}`)
+    ? await resolveExistingFile(requestedFile)
+    : undefined;
+  if (candidate && !candidate.startsWith(`${rootPath}${sep}`)) {
+    throw new HttpRequestError('File not found', 'not_found', 404);
+  }
+  const file = candidate ?? resolve(rootPath, 'index.html');
   const fileStat = await stat(file);
 
   response.writeHead(200, {
@@ -44,11 +48,12 @@ export async function serveFrontend(
   await pipeline(createReadStream(file), response);
 }
 
-async function isFile(path: string): Promise<boolean> {
+async function resolveExistingFile(path: string): Promise<string | undefined> {
   try {
-    return (await stat(path)).isFile();
+    const file = await realpath(path);
+    return (await stat(file)).isFile() ? file : undefined;
   } catch {
-    return false;
+    return undefined;
   }
 }
 

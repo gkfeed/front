@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ServerResponse } from 'node:http';
@@ -42,6 +42,25 @@ describe('static server', () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
+  });
+
+  it('rejects symbolic links that resolve outside the static root', async () => {
+    const parent = await mkdtemp(join(tmpdir(), 'gkfeed-static-'));
+    const root = join(parent, 'dist');
+    await mkdir(root);
+    await writeFile(join(root, 'index.html'), '<!doctype html>');
+    await writeFile(join(parent, 'secret.txt'), 'private');
+    await symlink(join(parent, 'secret.txt'), join(root, 'leak.txt'));
+    const response = createResponse();
+
+    try {
+      await expect(serveFrontend('/leak.txt', true, response, root))
+        .rejects.toMatchObject({ code: 'not_found', status: 404 });
+    } finally {
+      await rm(parent, { recursive: true, force: true });
+    }
+
+    expect(response.writeHead).not.toHaveBeenCalled();
   });
 
   it('streams existing assets with their transport metadata', async () => {
