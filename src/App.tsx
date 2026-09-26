@@ -8,6 +8,7 @@ import { AppProviders } from './react/state/AppProviders';
 import { NsfwPreferencesProvider } from './react/state/NsfwPreferencesProvider';
 import { ReaderItemOrderPreferencesProvider } from './react/state/ReaderItemOrderPreferencesProvider';
 import { TikTokPreferencesProvider } from './react/state/TikTokPreferencesProvider';
+import { PluginPreferencesProvider } from './react/state/PluginPreferencesProvider';
 import { useAuth } from './react/state/useAuth';
 
 const FeedListPage = lazy(() => import('./react/pages/FeedListPage').then(({ FeedListPage: page }) => ({ default: page })));
@@ -16,6 +17,7 @@ const FeedPage = lazy(() => import('./react/pages/FeedPage').then(({ FeedPage: p
 const LoginPage = lazy(() => import('./react/pages/LoginPage').then(({ LoginPage: page }) => ({ default: page })));
 const LivePage = lazy(() => import('./react/pages/LivePage').then(({ LivePage: page }) => ({ default: page })));
 const ReaderPage = lazy(() => import('./react/pages/ReaderPage').then(({ ReaderPage: page }) => ({ default: page })));
+const SettingsPage = lazy(() => import('./react/pages/SettingsPage').then(({ SettingsPage: page }) => ({ default: page })));
 
 function RouteEffects() {
   const { pathname } = useLocation();
@@ -49,8 +51,9 @@ export function App() {
     <BrowserRouter>
       <AppProviders>
         <NsfwPreferencesProvider>
-          <TikTokPreferencesProvider>
-            <ReaderItemOrderPreferencesProvider>
+          <PluginPreferencesProvider>
+            <TikTokPreferencesProvider>
+              <ReaderItemOrderPreferencesProvider>
               <RouteEffects />
               <a className="skip-link" href="#main">{t('app.skipToContent')}</a>
               <Navbar />
@@ -61,14 +64,16 @@ export function App() {
                     <Route path="/create" element={<RequireAuth><CreateFeedPage /></RequireAuth>} />
                     <Route path="/reader" element={<RequireAuth><ReaderPage /></RequireAuth>} />
                     <Route path="/live" element={<RequireAuth><LivePage /></RequireAuth>} />
+                    <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/feed/:id" element={<RequireAuth><FeedPage /></RequireAuth>} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Suspense>
               </main>
-            </ReaderItemOrderPreferencesProvider>
-          </TikTokPreferencesProvider>
+              </ReaderItemOrderPreferencesProvider>
+            </TikTokPreferencesProvider>
+          </PluginPreferencesProvider>
         </NsfwPreferencesProvider>
       </AppProviders>
     </BrowserRouter>

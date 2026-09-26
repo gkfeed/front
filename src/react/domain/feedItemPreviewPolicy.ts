@@ -12,7 +12,6 @@ import type {
   FeedItemPreview,
   FeedItemProviderViewModel,
 } from './feedItemPreviewTypes';
-import { isRedditUrl, isRezkaUrl } from './feedItemUrls';
 import { isInstagramMediaUrl } from './instagramPreview';
 import { isNsfwLink } from './nsfw';
 import { getTikTokEmbedPreview } from './tiktokPreview';
@@ -98,9 +97,9 @@ function shouldRequestRemotePreview(
     : null;
 
   return !shouldHideNsfw
-    && (isRedditUrl(url)
+    && (providerView.provider === 'reddit'
       || providerView.provider === 'vk'
-      || isRezkaUrl(url)
+      || providerView.provider === 'rezka'
       || (providerView.provider === 'instagram' && Boolean(url && isInstagramMediaUrl(url)))
       || providerView.provider === 'sasflix'
       || providerView.provider === 'onefootball'
@@ -120,8 +119,8 @@ function selectPreview(
 } {
   const { localPreview } = providerView;
   const localPreviewSource = localPreview?.src;
-  const isRezka = isRezkaUrl(providerView.url);
-  const isReddit = isRedditUrl(providerView.url);
+  const isRezka = providerView.provider === 'rezka';
+  const isReddit = providerView.provider === 'reddit';
   const isVk = providerView.provider === 'vk';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
   const instagramVideoPreview = providerView.provider === 'instagram'

@@ -10,10 +10,14 @@ import {
   parseUrl,
 } from './feedItemUrls';
 import { getTwitchChannel } from './twitchPreview';
+import type { FeedPluginId } from './feedItemProviderPresentation';
 
-export function analyzeFeedItem(item: FeedItem): FeedItemProviderViewModel {
+export function analyzeFeedItem(
+  item: FeedItem,
+  disabledPlugins: ReadonlySet<FeedPluginId> = new Set(),
+): FeedItemProviderViewModel {
   const url = parseUrl(item.link);
-  const provider = getFeedItemProviderFromUrl(item, url);
+  const provider = getFeedItemProviderFromUrl(item, url, disabledPlugins);
   const providerViewModel = (() => {
     switch (provider) {
       case 'generic': return { provider, simpleImage: false } as const;
@@ -22,7 +26,10 @@ export function analyzeFeedItem(item: FeedItem): FeedItemProviderViewModel {
       case 'liquipedia': return { provider } as const;
       case 'matreshka': return { provider, videoId: getRequiredValue(url && getMatreshkaVideoId(url), provider) } as const;
       case 'onefootball': return { provider, simpleImage: false } as const;
+      case 'reddit': return { provider, simpleImage: false } as const;
+      case 'rezka': return { provider, simpleImage: false } as const;
       case 'sasflix': return { provider, publicationId: getRequiredValue(url && getSasflixPublicationId(url), provider) } as const;
+      case 'spotify': return { provider, simpleImage: false } as const;
       case 'tiktok': return { provider } as const;
       case 'twitch': return { provider, channel: getRequiredValue(url && getTwitchChannel(url), provider) } as const;
       case 'vk': return { provider } as const;
@@ -35,7 +42,7 @@ export function analyzeFeedItem(item: FeedItem): FeedItemProviderViewModel {
     ...providerViewModel,
     url,
     hostname: url ? hostnameOf(url) : null,
-    localPreview: getFeedItemPreview(item),
+    localPreview: getFeedItemPreview(item, disabledPlugins),
   };
 }
 

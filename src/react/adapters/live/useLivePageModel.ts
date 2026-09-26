@@ -194,13 +194,30 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     lastReconciledAtRef.current = null;
     lastDiscoveryAtRef.current = 0;
 
+    const enabledProviderIds = new Set(providers.map((provider) => provider.id));
+    const keepEnabledCandidates = (values: readonly LiveCandidate[]) => (
+      values.filter((candidate) => enabledProviderIds.has(candidate.providerId))
+    );
+
+    if (providers.length === 0) {
+      initialScanRunning.current = false;
+      setScanComplete(true);
+      void writeLiveCandidateCatalog(username, {
+        candidates: [],
+        lastReconciledAt: Date.now(),
+        newestItemId: null,
+      });
+      return undefined;
+    }
+
     void (async () => {
       const cached = await readLiveCandidateCatalog(username);
       if (signal.aborted) return;
       newestItemIdRef.current = cached?.newestItemId ?? null;
       lastReconciledAtRef.current = cached?.lastReconciledAt ?? null;
-      if (cached?.candidates.length) {
-        setCandidateState(cached.candidates);
+      const cachedCandidates = keepEnabledCandidates(cached?.candidates ?? []);
+      if (cachedCandidates.length) {
+        setCandidateState(cachedCandidates);
         void cycleRef.current(signal);
       }
       const fullReconciliation = !cached?.lastReconciledAt
@@ -227,7 +244,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           ? catalogCandidates(items, providers)
           : mergeIncrementalCandidates(
             catalogCandidates(items, providers),
-            cached?.candidates ?? [],
+            cachedCandidates,
             getNewItemCount(items, newestItemId),
           ), activeFeedIds);
         commitCandidates(finalCandidates);

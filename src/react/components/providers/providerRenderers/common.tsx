@@ -40,6 +40,7 @@ export function FeedItemMediaPreview({
       preview={localizedPreview}
       isShortVideo={facts.provider === 'instagram' || facts.provider === 'tiktok'}
       isTikTok={facts.provider === 'tiktok'}
+      isSpotify={facts.provider === 'spotify'}
       hltvImageScore={facts.hltvImageScore}
       onPreviewError={facts.onPreviewError}
       imagePresentation={facts.provider === 'vk' ? 'vk' : 'standard'}
@@ -57,7 +58,11 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
   const { item, description } = facts;
   const title = getCardTitle(facts, displayHostname);
 
-  if ((facts.provider === 'generic' || facts.provider === 'onefootball') && facts.simpleImage) {
+  if ((facts.provider === 'generic'
+    || facts.provider === 'onefootball'
+    || facts.provider === 'reddit'
+    || facts.provider === 'rezka'
+    || facts.provider === 'spotify') && facts.simpleImage) {
     return (
       <div className="reader-card__copy">
         <h2 className="reader-card__title">{title}</h2>
@@ -93,6 +98,7 @@ function formatSpotifyReleaseDate(value: string, language?: string): string {
 }
 
 function getCardTitle(facts: FeedItemCardModel, displayHostname: string): string {
+  if (facts.provider !== 'spotify') return facts.item.title || displayHostname;
   return getSpotifyDisplayTitle({
     url: facts.item.link,
     fallbackTitle: facts.item.title || displayHostname,

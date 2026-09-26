@@ -3,7 +3,6 @@ import {
   getFeedItemProviderLoadingRules,
 } from './feedItemProviderPresentation';
 import { resolveFeedItemPreviewPolicy } from './feedItemPreviewPolicy';
-import { isRedditUrl } from './feedItemUrls';
 import type {
   FeedItemPreview,
   FeedItemProviderViewModel,
@@ -106,7 +105,7 @@ function resolveMetadata({
     ...resolveProviderViewModel(providerView, visiblePreview),
     imagePreview: resolveImagePreview({
       isHltv,
-      isReddit: isRedditUrl(providerView.url),
+      isReddit: providerView.provider === 'reddit',
       visiblePreview,
       remotePreviewSource: remoteItemPreview?.src,
     }),
@@ -131,6 +130,9 @@ function resolveProviderViewModel(
   switch (providerView.provider) {
     case 'generic':
     case 'onefootball':
+    case 'reddit':
+    case 'rezka':
+    case 'spotify':
       return { ...providerView, simpleImage: isImagePreview(visiblePreview) };
     case 'instagram':
       return { ...providerView, media: isImagePreview(visiblePreview) ? 'photo' : 'video' };
