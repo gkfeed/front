@@ -12,6 +12,7 @@ import { SasflixCopy, SasflixVideoPreview } from './providerRenderers/sasflix';
 import { TikTokSupplementary } from './providerRenderers/tiktok';
 import { TwitchCopy, TwitchVideoPreview } from './providerRenderers/twitch';
 import { VkCopy, VkDeletedPreview } from './providerRenderers/vk';
+import { VkImageCarousel } from '../previews/VkImageCarousel';
 import { YoutubeCopy, YoutubeVideoPreview } from './providerRenderers/youtube';
 
 export function FeedItemCardProviderContent({
@@ -71,6 +72,11 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
       return {
         preview: facts.vkStatus === 'deleted'
           ? <VkDeletedPreview facts={facts} />
+          : props.localizedPreview
+            && props.localizedPreview.type === undefined
+            && (props.localizedPreview.imageUrls?.length ?? 0) > 1
+            ? <VkImageCarousel key={facts.item.link} href={facts.item.link} preview={props.localizedPreview}
+                onPreviewError={facts.onPreviewError} />
           : <FeedItemMediaPreview {...props} />,
         copy: <VkCopy {...props} />,
       };

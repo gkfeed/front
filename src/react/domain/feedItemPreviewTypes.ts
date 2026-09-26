@@ -6,6 +6,7 @@ export interface FeedItemPreview {
   type?: 'video' | 'embed';
   poster?: string;
   fallbackSrc?: string;
+  imageUrls?: string[];
 }
 
 export type FeedItemPreviewAlt =

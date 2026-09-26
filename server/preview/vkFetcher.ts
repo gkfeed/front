@@ -70,7 +70,7 @@ export async function fetchVkHtml(input: URL, context?: RequestExecutionContext)
     const html = await readHtmlBody(response, {
       encoding,
       context,
-      stopAfterHead: isWallPost,
+      maxBytes: isWallPost ? 4_000_000 : undefined,
       truncateAtLimit: isWallPost,
     });
     if (isMissingWallPage && !isVkMissingWallPage(html, url)) {

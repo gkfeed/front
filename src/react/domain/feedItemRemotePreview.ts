@@ -1,4 +1,5 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
+import { getVkImageUrls } from '../../../shared/providerData/vk';
 import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getVkVideoPreview } from './vkPreview';
 import { isDirectVideoValue, isRedditVideoUrl, parseUrl } from './feedItemUrls';
@@ -40,8 +41,11 @@ export function getRemoteFeedItemPreview(
     };
   }
 
-  return preview.image ? {
-    src: preview.image,
+  const vkImages = getVkImageUrls(preview.providerData);
+  const image = preview.image ?? vkImages[0];
+  return image ? {
+    src: image,
     alt: { kind: 'item', title: altTitle || null },
+    ...(vkImages.length > 1 ? { imageUrls: vkImages } : {}),
   } : null;
 }

@@ -775,6 +775,67 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(count!.x - (priority!.x + priority!.width)).toBeLessThanOrEqual(16);
   });
 
+  test('switches VK post photos in regular and fullscreen cards', async ({ page }) => {
+    const photos = ['first', 'second', 'third'];
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 42,
+          feed_id: 567,
+          link: 'https://vk.com/wall-187455013_1261115',
+          title: 'Wild Rift',
+          text: '<img src="https://example.com/first.svg">',
+        }],
+        next_cursor: null,
+      },
+    }));
+    for (const name of photos) {
+      await page.route(`https://example.com/${name}.svg`, (route) => route.fulfill({
+        contentType: 'image/svg+xml',
+        body: `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900"><rect width="900" height="900" fill="#334455"/></svg>`,
+      }));
+    }
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://vk.com/wall-187455013_1261115',
+        title: 'Wild Rift',
+        description: null,
+        image: 'https://example.com/first.svg',
+        video: null,
+        siteName: 'VK',
+        type: 'article',
+        providerData: { provider: 'vk', images: photos.map((name) => `https://example.com/${name}.svg`) },
+      },
+    }));
+    await page.goto('/reader');
+
+    const carousel = page.locator('.reader-card__vk-carousel');
+    const image = carousel.locator('.reader-card__image-surface img');
+    const previous = carousel.getByRole('button', { name: 'Previous slide' });
+    const next = carousel.getByRole('button', { name: 'Next slide' });
+    await expect(image).toHaveAttribute('src', 'https://example.com/first.svg');
+    const imageBox = await image.boundingBox();
+    const previousBox = await previous.boundingBox();
+    const nextBox = await next.boundingBox();
+    expect(imageBox).not.toBeNull();
+    expect(previousBox).not.toBeNull();
+    expect(nextBox).not.toBeNull();
+    expect(previousBox!.x).toBeLessThan(imageBox!.x + imageBox!.width * 0.1);
+    expect(nextBox!.x).toBeGreaterThan(imageBox!.x + imageBox!.width * 0.85);
+    expect(Math.abs(previousBox!.y + previousBox!.height / 2 - imageBox!.y - imageBox!.height / 2)).toBeLessThan(2);
+    await next.click();
+    await expect(image).toHaveAttribute('src', 'https://example.com/second.svg');
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await next.click();
+    await expect(image).toHaveAttribute('src', 'https://example.com/third.svg');
+    await expect(carousel.getByText('3 / 3')).toBeVisible();
+    await page.locator('#main').getByRole('button', { name: 'Exit Reader fullscreen' }).focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect(image).toHaveAttribute('src', 'https://example.com/second.svg');
+    await previous.click();
+    await expect(image).toHaveAttribute('src', 'https://example.com/first.svg');
+  });
+
   test('puts copy before the VK service banner in fullscreen', async ({ page }) => {
     const postText = 'Хочу искренне поблагодарить Николая Островского, владельца паблика. '
       + 'Если бы он не нашёл информацию о судебном решении, я бы об этом даже не узнал, '

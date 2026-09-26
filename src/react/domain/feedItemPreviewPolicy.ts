@@ -132,6 +132,10 @@ function selectPreview(
   const remoteItemPreview = prefersRemotePreview && loadedRemotePreview && localPreviewSource
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
+  if (isVk && remoteItemPreview && remoteItemPreview.type === undefined
+    && !remoteItemPreview.imageUrls && localPreview?.imageUrls) {
+    remoteItemPreview.imageUrls = [remoteItemPreview.src, ...localPreview.imageUrls.slice(1)];
+  }
   const tiktokEmbedPreview = previewMode === 'tiktok-embed'
     ? getTikTokEmbedPreview(item)
     : null;

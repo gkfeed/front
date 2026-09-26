@@ -76,17 +76,24 @@ describe('fetchVkHtml', () => {
     expect((await fetchVkHtml(post)).html).toBe('Привет');
   });
 
-  it('reads wall post metadata without downloading an oversized body', async () => {
+  it('reads wall post photos after the head within a bounded response', async () => {
     const page = response(200);
     page.body = Readable.from([
       Buffer.from('<html><head><meta property="og:image" content="https://example.com/post.jpg"></head>'),
-      Buffer.alloc(1_000_001, 120),
+      Buffer.from('<body><div data-testid="media-grid">photos</div></body></html>'),
     ]) as IncomingMessage;
     vi.mocked(requestPublicHttp).mockResolvedValueOnce(page);
 
-    await expect(fetchVkHtml(post)).resolves.toMatchObject({
-      html: '<html><head><meta property="og:image" content="https://example.com/post.jpg"></head>',
-    });
+    const result = await fetchVkHtml(post);
+    expect(result.html).toContain('<div data-testid="media-grid">photos</div>');
+  });
+
+  it('truncates oversized VK wall pages', async () => {
+    const page = response(200);
+    page.body = Readable.from([Buffer.from('<html><head></head><body>'), Buffer.alloc(4_000_001, 120)]) as IncomingMessage;
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(page);
+
+    expect((await fetchVkHtml(post)).html.length).toBe(4_000_000);
   });
 
   it('reads VK video embed data after the head', async () => {

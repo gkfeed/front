@@ -186,6 +186,97 @@ describe('FeedItemCard remote and feed previews', () => {
       .toBe('https://example.com/vk-cropped.jpg');
   });
 
+  it('shows every VK feed photo in a carousel and keeps the post link', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.com/wall-187455013_1261115',
+      title: 'League of Legends: Wild Rift',
+      description: null,
+      image: 'https://example.com/original-first.jpg',
+      video: null,
+      siteName: 'VK',
+      type: 'article',
+      providerData: null,
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/wall-187455013_1261115',
+      title: 'League of Legends: Wild Rift',
+      text: '<img src="https://example.com/first.jpg"><img src="https://example.com/second.jpg"><img src="https://example.com/third.jpg">',
+    }} />);
+
+    const image = screen.getByAltText('Preview for League of Legends: Wild Rift (1/3)');
+    expect(image.getAttribute('src')).toBe('https://example.com/first.jpg');
+    expect(document.querySelector('.reader-card__vk-carousel-link')?.getAttribute('href'))
+      .toBe('https://vk.com/wall-187455013_1261115');
+
+    await waitFor(() => expect(document.querySelector('[data-preview-preloader]')).toBeTruthy());
+    fireEvent.load(document.querySelector('[data-preview-preloader]')!);
+    expect(image.getAttribute('src')).toBe('https://example.com/original-first.jpg');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next slide' }));
+    expect(screen.getByAltText('Preview for League of Legends: Wild Rift (2/3)').getAttribute('src'))
+      .toBe('https://example.com/second.jpg');
+    screen.getByRole('button', { name: 'Next slide' }).focus();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(screen.getByAltText('Preview for League of Legends: Wild Rift (3/3)').getAttribute('src'))
+      .toBe('https://example.com/third.jpg');
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    expect(screen.getByAltText('Preview for League of Legends: Wild Rift (2/3)').getAttribute('src'))
+      .toBe('https://example.com/second.jpg');
+    fireEvent.click(screen.getByRole('button', { name: 'Previous slide' }));
+    expect(screen.getByAltText('Preview for League of Legends: Wild Rift (1/3)').getAttribute('src'))
+      .toBe('https://example.com/original-first.jpg');
+  });
+
+  it('shows VK photos supplied by remote metadata when the feed has one image', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.com/wall-1_2',
+      title: 'VK album',
+      description: null,
+      image: 'https://example.com/first.jpg',
+      video: null,
+      siteName: 'VK',
+      type: 'article',
+      providerData: {
+        provider: 'vk',
+        images: ['https://example.com/first.jpg', 'https://example.com/second.jpg'],
+      },
+    });
+
+    render(<FeedItemCard item={{ ...item, link: 'https://vk.com/wall-1_2' }} />);
+    expect(await screen.findByAltText('Preview for VK album (1/2)')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Next slide' }));
+    expect(screen.getByAltText('Preview for VK album (2/2)').getAttribute('src'))
+      .toBe('https://example.com/second.jpg');
+  });
+
+  it('keeps the feed photo when VK original fails to load', async () => {
+    getPreview.mockResolvedValue({
+      url: 'https://vk.com/wall-1_2',
+      title: 'VK album',
+      description: null,
+      image: 'https://example.com/broken.jpg',
+      video: null,
+      siteName: 'VK',
+      type: 'article',
+      providerData: null,
+    });
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://vk.com/wall-1_2',
+      text: '<img src="https://example.com/feed-first.jpg"><img src="https://example.com/second.jpg">',
+    }} />);
+
+    await waitFor(() => expect(document.querySelector('[data-preview-preloader]')).toBeTruthy());
+    fireEvent.error(document.querySelector('[data-preview-preloader]')!);
+    expect(screen.getByAltText('Preview for VK album (1/2)').getAttribute('src'))
+      .toBe('https://example.com/feed-first.jpg');
+    fireEvent.click(screen.getByRole('button', { name: 'Next slide' }));
+    expect(screen.getByAltText('Preview for VK album (2/2)').getAttribute('src'))
+      .toBe('https://example.com/second.jpg');
+  });
+
   it('shows the VK channel but not a generic remote description', async () => {
     getPreview.mockResolvedValue({
       url: 'https://vk.com/wall-123_456',

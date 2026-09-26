@@ -26,13 +26,18 @@ export function getEmbeddedPreview(html: string, title: string): FeedItemPreview
     };
   }
 
-  const source = document.querySelector('img')?.getAttribute('src');
-  const normalizedSource = source ? normalizeImageSource(source) : null;
-  if (!normalizedSource || !isSafeImageSource(normalizedSource)) return null;
+  const imageUrls = [...document.querySelectorAll('img')]
+    .map((image) => image.getAttribute('src'))
+    .filter((source): source is string => Boolean(source))
+    .map(normalizeImageSource)
+    .filter(isSafeImageSource)
+    .filter((source, index, sources) => sources.indexOf(source) === index);
+  if (!imageUrls.length) return null;
 
   return {
-    src: normalizedSource,
+    src: imageUrls[0]!,
     alt: { kind: 'item', title: title || null },
+    ...(imageUrls.length > 1 ? { imageUrls } : {}),
   };
 }
 
