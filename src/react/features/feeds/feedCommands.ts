@@ -8,11 +8,12 @@ import {
   trimFeed,
   type FeedCreatorMode,
 } from '../../domain/feedCreator';
-import type { FeedCommandPort, FeedMetadataPort } from '../featurePorts';
+import type { FeedCommandPort, FeedMetadataPort, FeedQueryPort } from '../featurePorts';
 
 export function createFeedCommandUseCases(
   port: FeedCommandPort,
   metadataPort: FeedMetadataPort,
+  queryPort: FeedQueryPort,
 ) {
   const suggestFeedType = metadataPort.getFeedTypeSuggestion;
   async function suggestFeedTitle(url: string, signal?: AbortSignal): Promise<string | null> {
@@ -42,9 +43,10 @@ export function createFeedCommandUseCases(
   ): Promise<void> {
     if (mode === 'extended') {
       const normalizedFeed = trimFeed(feed);
-      const isInstagramProfile = normalizedFeed.type === 'inst'
-        && inferInstagramFeedTitleFromUrl(normalizedFeed.url) !== null;
-      if (!isInstagramProfile) {
+      const instagramUsername = normalizedFeed.type === 'inst'
+        ? inferInstagramFeedTitleFromUrl(normalizedFeed.url)
+        : null;
+      if (!instagramUsername) {
         await port.createFeed(normalizedFeed, credentials);
         return;
       }
@@ -53,8 +55,15 @@ export function createFeedCommandUseCases(
         ...normalizedFeed,
         url: normalizeInstagramFeedUrl(normalizedFeed.url),
       };
-      await port.createFeed(instagramFeed, credentials);
-      await port.createFeed({ ...instagramFeed, type: 'stories' }, credentials);
+      const existingFeeds = await queryPort.getAllFeeds(credentials);
+      const exists = (type: string) => existingFeeds.some((existing) => (
+        existing.type === type
+        && inferInstagramFeedTitleFromUrl(existing.url)?.toLowerCase() === instagramUsername.toLowerCase()
+      ));
+      if (!exists('inst')) await port.createFeed(instagramFeed, credentials);
+      if (!exists('stories')) {
+        await port.createFeed({ ...instagramFeed, type: 'stories' }, credentials);
+      }
       return;
     }
 

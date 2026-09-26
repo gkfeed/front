@@ -29,7 +29,7 @@ export function createFeedUseCases({
 
   return {
     ...createFeedQueryUseCases(queryPort),
-    ...createFeedCommandUseCases(commandPort, metadataPort),
+    ...createFeedCommandUseCases(commandPort, metadataPort, queryPort),
     invalidateFeedItemsCache: feedItems.invalidate,
     loadFeedItems: feedItems.load,
   };

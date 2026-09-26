@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { OpenGraphPreview } from '../../../../shared/previewContracts';
-import type { FeedItem } from '../../types';
+import type { Feed, FeedItem } from '../../types';
 import type {
   FeedCommandPort,
   FeedItemsPort,
@@ -208,6 +208,29 @@ describe('feed use cases', () => {
       type: 'stories',
       url: profileUrl,
     }, credentials);
+  });
+
+  it('resumes Instagram profile creation after the stories request fails', async () => {
+    const ports = createPorts();
+    const created: Feed[] = [];
+    vi.mocked(ports.queryPort.getAllFeeds).mockImplementation(async () => [...created]);
+    let failStories = true;
+    vi.mocked(ports.commandPort.createFeed).mockImplementation(async (feed) => {
+      if (feed.type === 'stories' && failStories) {
+        failStories = false;
+        throw new Error('Connection lost');
+      }
+      created.push({ ...feed, id: created.length + 1, url: `${feed.url}/` });
+    });
+    const useCases = createFeedUseCases(ports);
+    const input = { title: 'Example', type: 'inst', url: 'https://www.instagram.com/example/' };
+
+    await expect(useCases.saveFeed(input, 'extended', credentials)).rejects.toThrow('Connection lost');
+    await expect(useCases.saveFeed(input, 'extended', credentials)).resolves.toBeUndefined();
+
+    expect(created.map(({ type }) => type)).toEqual(['inst', 'stories']);
+    expect(vi.mocked(ports.commandPort.createFeed).mock.calls.map(([feed]) => feed.type))
+      .toEqual(['inst', 'stories', 'stories']);
   });
 
   it('falls back to a readable URL segment when title metadata is unavailable', async () => {

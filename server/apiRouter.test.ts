@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { handleBffRequest } from './http/apiRouter.js';
 import type { PreviewUseCases } from './application/previewUseCases.js';
-import { createBffResultCache } from './http/bffResultCache.js';
+import { createBffResultCache, type BffResultCache } from './http/bffResultCache.js';
 import type { BffRequestGate } from './http/bffRequestGate.js';
 import type { RequestExecutionContext } from './application/requestExecutionContext.js';
 
@@ -136,6 +136,28 @@ describe('BFF HTTP router', () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
     expect(response.end).toHaveBeenCalledWith(JSON.stringify({ eventIds: ['2396948'] }));
+  });
+
+  it('uses distinct feed-type cache keys when URLs and titles contain colons', async () => {
+    const keys: string[] = [];
+    const cache = {
+      load: async (key: string) => {
+        keys.push(key);
+        return { type: 'web', confidence: 1 };
+      },
+    } as BffResultCache;
+    const first = new URL('http://localhost/bff/feed-type');
+    first.searchParams.set('url', 'https://example.com/p:a');
+    first.searchParams.set('title', 'b');
+    const second = new URL('http://localhost/bff/feed-type');
+    second.searchParams.set('url', 'https://example.com/p');
+    second.searchParams.set('title', 'a:b');
+
+    await handleBffRequest(first, createResponse(), undefined, createUseCases(), 'feed-type-test', undefined, cache);
+    await handleBffRequest(second, createResponse(), undefined, createUseCases(), 'feed-type-test', undefined, cache);
+
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).not.toBe(keys[1]);
   });
 
   it.each([

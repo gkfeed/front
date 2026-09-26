@@ -6,18 +6,22 @@ import { getRedirectTarget } from '../../state/routes';
 import { useAuth } from '../../state/useAuth';
 
 export function useLoginPageModel() {
-  const { credentials, status, authenticate, clearCredentials } = useAuth();
+  const { credentials, status, authenticate, retryRestore, clearCredentials } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const redirectTo = getRedirectTarget(location.state);
   const onAuthenticated = useCallback(() => {
     navigate(redirectTo, { replace: true });
   }, [navigate, redirectTo]);
+  const retrySavedLogin = useCallback(async () => {
+    if (await retryRestore()) onAuthenticated();
+  }, [onAuthenticated, retryRestore]);
   const loginForm = useLoginForm({ authenticate, onAuthenticated });
 
   return {
     status,
     savedUsername: credentials?.username ?? '',
+    retrySavedLogin,
     clearCredentials,
     loginForm,
   };

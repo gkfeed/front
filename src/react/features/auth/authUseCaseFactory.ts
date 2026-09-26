@@ -2,6 +2,7 @@ import type { AuthApplicationPort } from '../featurePorts';
 import type { Credentials } from '../../types';
 
 export interface AuthUseCases {
+  isAuthenticationError: AuthApplicationPort['isAuthenticationError'];
   authenticateCredentials: (
     credentials: Credentials,
     persist: (credentials: Credentials) => void,
@@ -38,5 +39,5 @@ export function createAuthUseCases(port: AuthApplicationPort): AuthUseCases {
     }
   }
 
-  return { authenticateCredentials, restoreAuthentication };
+  return { isAuthenticationError: port.isAuthenticationError, authenticateCredentials, restoreAuthentication };
 }

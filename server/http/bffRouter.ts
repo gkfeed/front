@@ -77,7 +77,7 @@ export async function routeBffRequest(
     const input = getRequiredPreviewUrl(requestUrl);
     const title = requestUrl.searchParams.get('title')?.slice(0, 300);
     const result = await requestGate.run(clientId, requestContext, () => (
-      resultCache.load(`${requestUrl.pathname}:${input}:${title ?? ''}`, (sharedContext) => (
+      resultCache.load(JSON.stringify([requestUrl.pathname, input, title ?? '']), (sharedContext) => (
         suggestFeedType({ url: input, ...(title ? { title } : {}) }, sharedContext)
       ), { context: requestContext, ttlMs: cacheTtlMs('/bff/feed-type') })
     ));

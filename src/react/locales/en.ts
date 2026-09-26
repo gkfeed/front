@@ -67,6 +67,9 @@ const en = {
   auth: {
     sessionExpired: 'Your session has expired. Please sign in again.',
     checking: 'Checking authentication…',
+    restoreError: 'Could not check your saved login. Check your connection and try again.',
+    retryRestore: 'Try saved login again',
+    useAnotherAccount: 'Use another account',
     username: 'Username',
     password: 'Password',
     required: 'Required. Enter your {{field}}.',

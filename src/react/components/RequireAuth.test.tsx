@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +11,7 @@ import { AUTH_STORAGE_KEY } from '../state/authStorage';
 import { getRouteLocation } from '../state/routes';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { RequireAuth } from './RequireAuth';
+import { LoginPage } from '../pages/LoginPage';
 
 vi.mock('../services/auth', async (importOriginal) => ({
   ...await importOriginal<typeof import('../services/auth')>(),
@@ -86,6 +87,27 @@ describe('RequireAuth', () => {
     expect(await screen.findByText('Login at /create')).toBeTruthy();
     expect(screen.queryByText('Protected content')).toBeNull();
     expect(storage.has(AUTH_STORAGE_KEY)).toBe(false);
+  });
+
+  it('returns to the protected route after retrying a saved login', async () => {
+    const storage = stubLocalStorage();
+    storage.set(AUTH_STORAGE_KEY, JSON.stringify({ username: 'alice', password: 'secret' }));
+    validateLogin.mockRejectedValueOnce(new Error('Network unavailable')).mockResolvedValueOnce();
+
+    render(
+      <MemoryRouter initialEntries={['/create?draft=1']}>
+        <AppProviders>
+          <Routes>
+            <Route path="/create" element={<RequireAuth><ProtectedContent /></RequireAuth>} />
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
+        </AppProviders>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Try saved login again' }));
+    expect(await screen.findByText('Protected content')).toBeTruthy();
+    expect(validateLogin).toHaveBeenCalledTimes(2);
   });
 });
 
