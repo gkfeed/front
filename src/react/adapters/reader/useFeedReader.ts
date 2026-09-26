@@ -45,6 +45,7 @@ export function useFeedReader({
   const {
     items,
     activeReviewIds,
+    hasKeptItems,
     keep,
     deleteItem: startDeletion,
     deletionSucceeded,
@@ -131,6 +132,7 @@ export function useFeedReader({
     loadError,
     failedDeletions: deletions.filter((deletion) => deletion.status === 'failed'),
     remainingCount: activeReviewIds.length,
+    hasKeptItems,
     keepItem,
     deleteItem: deleteCurrentItem,
     recoverDeletion: recoverFailedDeletion,

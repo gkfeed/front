@@ -91,6 +91,7 @@ export function useReviewSession({
     items: session.items,
     reviewableIds: session.reviewableIds,
     activeReviewIds,
+    hasKeptItems: session.progress.keptItemIds.size > 0,
     keep,
     deleteItem,
     deletionSucceeded,

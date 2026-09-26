@@ -763,14 +763,11 @@ test.describe('TikTok player on iPad-sized readers', () => {
     const copyCenter = fullscreenCopyBox!.y + fullscreenCopyBox!.height / 2;
     expect(Math.abs(imageCenter - copyCenter)).toBeLessThan(2);
 
-    const reset = await page.locator('.reader__reset').boundingBox();
+    await expect(page.locator('.reader__reset')).toHaveCount(0);
     const priority = await page.locator('.reader__feed-priority').boundingBox();
     const count = await page.locator('.reader__count').boundingBox();
-    expect(reset).not.toBeNull();
     expect(priority).not.toBeNull();
     expect(count).not.toBeNull();
-    expect(priority!.x - (reset!.x + reset!.width)).toBeGreaterThanOrEqual(8);
-    expect(priority!.x - (reset!.x + reset!.width)).toBeLessThanOrEqual(16);
     expect(count!.x - (priority!.x + priority!.width)).toBeGreaterThanOrEqual(8);
     expect(count!.x - (priority!.x + priority!.width)).toBeLessThanOrEqual(16);
   });

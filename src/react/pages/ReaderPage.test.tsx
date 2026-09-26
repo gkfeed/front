@@ -39,9 +39,11 @@ describe('ReaderPage', () => {
     renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reset kept items' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
 
     expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Reset kept items' })).toBeTruthy();
     expect(deleteFeedItemById).not.toHaveBeenCalled();
     expect(screen.getByText('1 remaining')).toBeTruthy();
   });
@@ -67,6 +69,7 @@ describe('ReaderPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
 
     expect(await screen.findByText('You’ve reviewed everything')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Reset kept items' })).toBeTruthy();
   });
 
   it('waits for synchronization before declaring a partial review complete', async () => {
@@ -180,6 +183,7 @@ describe('ReaderPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reset kept items' }));
 
     expect(await screen.findByText('First story')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reset kept items' })).toBeNull();
     expect(JSON.parse(storage.get(getReviewStateStorageKey('reader')) ?? '')).toEqual({
       version: 1,
       pendingIds: [11, 10],

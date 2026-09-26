@@ -19,6 +19,7 @@ export function ReaderPage() {
     loadFailed,
     failedDeletions,
     remainingCount,
+    hasKeptItems,
     keepItem,
     deleteItem,
     recoverDeletion,
@@ -67,6 +68,7 @@ export function ReaderPage() {
             key={currentItem.id}
             item={currentItem}
             remainingCount={remainingCount}
+            hasKeptItems={hasKeptItems}
             isDeleting={isItemPending(currentItem.id)}
             reviewPanelRef={reviewPanelRef}
             onKeep={keepItem}
@@ -80,9 +82,11 @@ export function ReaderPage() {
             <h2>{t('reader.reviewedEverything')}</h2>
             <p>{t('reader.switchToScroll')}</p>
             <div className="reader__state-actions">
-              <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={resetReview}>
-                {t('reader.reset')}
-              </button>
+              {hasKeptItems ? (
+                <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={resetReview}>
+                  {t('reader.reset')}
+                </button>
+              ) : null}
               <button type="button" className="ui-button--secondary" onClick={retryLoad}>
                 {t('reader.checkAgain')}
               </button>
