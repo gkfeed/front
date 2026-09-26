@@ -8,7 +8,7 @@ import { PreviewError } from './errors.js';
 import { parsePublicHttpUrl, throwPublicUrlError } from './remoteHttp.js';
 import { TWITTERBOT_USER_AGENT } from './previewFetchers.js';
 
-const SASFLIX_VIDEO_PATH = /^\/api\/video\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?:\.m3u8|\/(?:240|360|480|720|1080|1440|2160))$/i;
+const SASFLIX_VIDEO_PATH = /^\/api\/video\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?:\.m3u8|\/(?:240|360|480|720|1080|1440|2160|subtitle(?:\.vtt)?))$/i;
 const SASFLIX_SEGMENT_PATH = /^\/sasflix\/[A-Za-z0-9._/-]+\.(?:ts|m3u8|m4s|mp4|key|aac)$/i;
 const SASFLIX_SEGMENT_HOSTS = new Set([
   'media.sasflix.ru',
@@ -84,6 +84,8 @@ export async function fetchSasflixMedia(
 
   const validContentTypes = url.pathname.toLowerCase().endsWith('.ts')
     ? ['video/mp2t']
+    : url.pathname.toLowerCase().endsWith('.vtt')
+      ? ['text/vtt']
     : url.pathname.toLowerCase().endsWith('.aac')
       ? ['audio/aac', 'audio/aacp']
       : ['video/mp4', 'audio/mp4', 'video/iso.segment', 'application/octet-stream'];
@@ -123,7 +125,8 @@ function validateSasflixMediaUrl(input: string): URL {
 }
 
 function isPlaylistUrl(url: URL): boolean {
-  return url.hostname === 'sasflix.ru' || url.pathname.toLowerCase().endsWith('.m3u8');
+  return (url.hostname === 'sasflix.ru' && !url.pathname.toLowerCase().endsWith('.vtt'))
+    || url.pathname.toLowerCase().endsWith('.m3u8');
 }
 
 function isPlaylistContentType(contentType: string | undefined): boolean {

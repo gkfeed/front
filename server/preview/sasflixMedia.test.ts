@@ -69,6 +69,39 @@ describe('Sasflix media proxy', () => {
     expect(playlist).not.toContain('URI="https://');
   });
 
+  it('rewrites Sasflix subtitle playlists and serves their WebVTT resource', async () => {
+    const videoUrl = `https://sasflix.ru/api/video/${videoId}`;
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce({
+      body: Readable.from([`#EXTM3U\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subs",URI="${videoId}/subtitle"\n`]),
+      headers: { 'content-type': 'audio/mpegurl' },
+      status: 200,
+      url: new URL(`${videoUrl}.m3u8`),
+    } as never).mockResolvedValueOnce({
+      body: Readable.from(['#EXTM3U\n#EXTINF:10\nsubtitle.vtt\n#EXT-X-ENDLIST\n']),
+      headers: { 'content-type': 'audio/mpegurl' },
+      status: 200,
+      url: new URL(`${videoUrl}/subtitle`),
+    } as never).mockResolvedValueOnce({
+      body: Readable.from(['WEBVTT\n\n00:00.000 --> 00:01.000\nHello\n']),
+      headers: { 'content-type': 'text/vtt;charset=UTF-8' },
+      status: 200,
+      url: new URL(`${videoUrl}/subtitle.vtt`),
+    } as never);
+
+    const master = await fetchSasflixMedia(`${videoUrl}.m3u8`, undefined, context);
+    const masterText = await streamText(master.body);
+    expect(masterText).toContain(`URI="/bff/sasflix-media?url=${encodeURIComponent(`${videoUrl}/subtitle`)}"`);
+
+    const subtitles = await fetchSasflixMedia(`${videoUrl}/subtitle`, undefined, context);
+    expect(await streamText(subtitles.body)).toContain(
+      `/bff/sasflix-media?url=${encodeURIComponent(`${videoUrl}/subtitle.vtt`)}`,
+    );
+
+    const vtt = await fetchSasflixMedia(`${videoUrl}/subtitle.vtt`, undefined, context);
+    expect(vtt.contentType).toBe('text/vtt');
+    expect(await streamText(vtt.body)).toContain('WEBVTT');
+  });
+
   it('rejects HLS URI attributes outside the Sasflix media allowlist', async () => {
     vi.mocked(requestPublicHttp).mockResolvedValue({
       body: Readable.from(['#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="https://example.com/key"\n']),
@@ -160,3 +193,9 @@ describe('Sasflix media proxy', () => {
     expect(requestPublicHttp).not.toHaveBeenCalled();
   });
 });
+
+async function streamText(body: Readable): Promise<string> {
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of body) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks).toString();
+}
