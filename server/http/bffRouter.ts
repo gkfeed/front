@@ -28,7 +28,27 @@ const sasflixMediaRequestGate = createBffRequestGate({
   maxQueuedPerClient: 8,
   rateLimit: 600,
 });
-const LIVE_RESULT_CACHE_TTL_MS = 0;
+const CACHE_TTL_MS = {
+  '/bff/feed-type': 5 * 60_000,
+  '/bff/hltv-live': 0,
+  '/bff/article': 5 * 60_000,
+  '/bff/open-graph': 60_000,
+  '/bff/liquipedia-match': 60_000,
+  '/bff/tiktok-playback': 0, // Signed media URLs must not outlive the request.
+  '/bff/tiktok-comments': 60_000,
+  '/bff/youtube-comments': 60_000,
+  '/bff/youtube-timecodes': 5 * 60_000,
+  '/bff/reddit-preview-image': 5 * 60_000,
+  '/bff/vk-video': 60_000, // Only the source lookup is cached; video bytes are streamed.
+  '/bff/sasflix-media': 0, // Streamed responses cannot be shared or retained.
+} as const;
+
+function cacheTtlMs(pathname: string, input?: string): number {
+  if (pathname === '/bff/open-graph' && input && isLiveMatchInput(input)) return 0;
+  const ttlMs = CACHE_TTL_MS[pathname as keyof typeof CACHE_TTL_MS];
+  if (ttlMs === undefined) throw new Error(`Missing BFF cache policy for ${pathname}`);
+  return ttlMs;
+}
 
 type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments' | 'youtubeTimecodes'>;
 
@@ -59,7 +79,7 @@ export async function routeBffRequest(
     const result = await requestGate.run(clientId, requestContext, () => (
       resultCache.load(`${requestUrl.pathname}:${input}:${title ?? ''}`, (sharedContext) => (
         suggestFeedType({ url: input, ...(title ? { title } : {}) }, sharedContext)
-      ), { context: requestContext })
+      ), { context: requestContext, ttlMs: cacheTtlMs('/bff/feed-type') })
     ));
     sendJson(response, 200, result);
     return true;
@@ -68,7 +88,7 @@ export async function routeBffRequest(
     const result = await requestGate.run(clientId, requestContext, () => (
       resultCache.load(requestUrl.pathname, (sharedContext) => useCases.hltvLiveIndex(sharedContext), {
         context: requestContext,
-        ttlMs: LIVE_RESULT_CACHE_TTL_MS,
+        ttlMs: cacheTtlMs('/bff/hltv-live'),
       })
     ));
     sendJson(response, 200, result);
@@ -84,6 +104,7 @@ export async function routeBffRequest(
       clientId,
       requestGate,
       resultCache,
+      cacheTtlMs(requestUrl.pathname, getRequiredPreviewUrl(requestUrl)),
       useCaseName === 'tiktokPlayback'
         ? isTikTokPlaybackPreview
         : useCaseName === 'tiktokComments'
@@ -104,7 +125,7 @@ export async function routeBffRequest(
     const image = await requestGate.run(clientId, requestContext, () => (
       resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => (
         useCases.redditPreviewImage(input, sharedContext)
-      ), { context: requestContext })
+      ), { context: requestContext, ttlMs: cacheTtlMs('/bff/reddit-preview-image') })
     ));
     sendPreviewImage(response, image);
     return true;
@@ -115,7 +136,7 @@ export async function routeBffRequest(
     await requestGate.run(clientId, requestContext, async () => {
       const source = await resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => (
         useCases.vkVideoSource(input, sharedContext)
-      ), { context: requestContext });
+      ), { context: requestContext, ttlMs: cacheTtlMs('/bff/vk-video') });
       const video = await useCases.vkVideoStream(source, requestRange, requestContext);
       await sendPreviewVideo(response, video);
     });
@@ -142,18 +163,15 @@ async function handleJsonPreview(
   clientId: string,
   requestGate: BffRequestGate,
   resultCache: BffResultCache,
+  ttlMs: number,
   validate?: (value: unknown) => boolean,
 ): Promise<void> {
   const input = getRequiredPreviewUrl(requestUrl);
   const result = await requestGate.run(clientId, context, () => (
-    requestUrl.pathname === '/bff/tiktok-playback'
-      ? load(input, context)
-      : resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => load(input, sharedContext), {
-        context,
-        ...(requestUrl.pathname === '/bff/open-graph' && isLiveMatchInput(input)
-          ? { ttlMs: LIVE_RESULT_CACHE_TTL_MS }
-          : {}),
-      })
+    resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => load(input, sharedContext), {
+      context,
+      ttlMs,
+    })
   ));
   if (validate && !validate(result)) throw new Error('Invalid preview contract');
   sendJson(response, 200, result);

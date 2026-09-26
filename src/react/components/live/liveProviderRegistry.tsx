@@ -149,7 +149,7 @@ const oneFootballAdapter: LiveProviderAdapter = {
   id: 'onefootball',
   category: { id: 'football', titleKey: 'live.football', order: 30, layout: 'list', hideWhileLoading: true },
   strategy: 'round-robin',
-  // Matches the BFF result-cache TTL. Dormant candidates are swept within five cycles.
+  // Poll every minute; the BFF does not retain live match results.
   refreshIntervalMs: 60_000,
   dormantSweepCycles: 5,
   preserveEndedPlayback: false,

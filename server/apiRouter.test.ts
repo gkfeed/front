@@ -275,4 +275,46 @@ describe('BFF HTTP router', () => {
 
     expect(useCases.openGraph).toHaveBeenCalledTimes(2);
   });
+
+  it('expires ordinary previews after one minute and articles after five minutes', async () => {
+    let timestamp = 1_000;
+    const cache = createBffResultCache({ now: () => timestamp });
+    const useCases = createUseCases();
+    const previewUrl = new URL('http://localhost/bff/open-graph?url=https%3A%2F%2Fexample.com');
+    const articleUrl = new URL('http://localhost/bff/article?url=https%3A%2F%2Fexample.com%2Farticle');
+    const fetchBoth = async () => {
+      await handleBffRequest(previewUrl, createResponse(), undefined, useCases, 'client', undefined, cache);
+      await handleBffRequest(articleUrl, createResponse(), undefined, useCases, 'client', undefined, cache);
+    };
+
+    await fetchBoth();
+    timestamp += 60_000;
+    await fetchBoth();
+    expect(useCases.openGraph).toHaveBeenCalledTimes(2);
+    expect(useCases.article).toHaveBeenCalledOnce();
+
+    timestamp += 4 * 60_000;
+    await fetchBoth();
+    expect(useCases.article).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares concurrent TikTok playback lookups without retaining signed URLs', async () => {
+    const cache = createBffResultCache();
+    const useCases = createUseCases();
+    const gate: BffRequestGate = { run: (_clientId, _context, load) => load() };
+    const url = new URL('http://localhost/bff/tiktok-playback?url=https%3A%2F%2Fwww.tiktok.com%2F%40user%2Fvideo%2F123');
+    let release!: (value: Awaited<ReturnType<PreviewUseCases['tiktokPlayback']>>) => void;
+    vi.mocked(useCases.tiktokPlayback).mockImplementationOnce(() => new Promise((resolve) => {
+      release = resolve;
+    }));
+
+    const first = handleBffRequest(url, createResponse(), undefined, useCases, 'first', gate, cache);
+    const second = handleBffRequest(url, createResponse(), undefined, useCases, 'second', gate, cache);
+    await vi.waitFor(() => expect(useCases.tiktokPlayback).toHaveBeenCalledOnce());
+    release({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' });
+    await Promise.all([first, second]);
+    await handleBffRequest(url, createResponse(), undefined, useCases, 'third', gate, cache);
+
+    expect(useCases.tiktokPlayback).toHaveBeenCalledTimes(2);
+  });
 });
