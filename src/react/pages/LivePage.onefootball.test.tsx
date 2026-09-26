@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../i18n';
 import { LivePage } from './LivePage';
@@ -8,6 +8,7 @@ import { getAllFeeds, getFeedItems } from '../services/feeds';
 import { readLiveCandidateCatalog, writeLiveCandidateCatalog } from '../services/liveCandidateCatalog';
 import type { OneFootballMatchSnapshot } from '../../../shared/previewContracts';
 import { liveProviderRegistry, catalogCandidates } from '../components/live/liveProviderRegistry';
+import { useLivePageModel } from '../adapters/live/useLivePageModel';
 
 vi.mock('../services/openGraph');
 vi.mock('../services/feeds');
@@ -97,6 +98,28 @@ describe('OneFootball on the live page', () => {
     await flush();
 
     expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('runs a requested refresh after an in-progress check completes', async () => {
+    const { result } = renderHook(() => useLivePageModel(i18n.t, liveProviderRegistry));
+    await flush();
+    const initialChecks = vi.mocked(getOpenGraphPreview).mock.calls.length;
+    const initialScans = vi.mocked(getFeedItems).mock.calls.length;
+    let finishCheck!: (value: ReturnType<typeof preview>) => void;
+    vi.mocked(getOpenGraphPreview).mockImplementationOnce(() => new Promise((resolve) => {
+      finishCheck = resolve;
+    }));
+
+    act(() => result.current.refresh());
+    await flush();
+    expect(getOpenGraphPreview).toHaveBeenCalledTimes(initialChecks + 1);
+
+    act(() => result.current.refresh());
+    await act(async () => finishCheck(preview('live')));
+    await flush();
+
+    expect(getOpenGraphPreview).toHaveBeenCalledTimes(initialChecks + 2);
+    expect(getFeedItems).toHaveBeenCalledTimes(initialScans + 2);
   });
 
   it('warns on refresh failure, retains the last score, and expires it at five minutes', async () => {

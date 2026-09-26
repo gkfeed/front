@@ -30,6 +30,9 @@ export async function serveFrontend(
   if (candidate && !candidate.startsWith(`${rootPath}${sep}`)) {
     throw new HttpRequestError('File not found', 'not_found', 404);
   }
+  if (!candidate && (decodedPath === '/assets' || decodedPath.startsWith('/assets/') || extname(decodedPath))) {
+    throw new HttpRequestError('File not found', 'not_found', 404);
+  }
   const file = candidate ?? resolve(rootPath, 'index.html');
   const fileStat = await stat(file);
 

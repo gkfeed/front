@@ -33,6 +33,8 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
   const [clock, setClock] = useState(Date.now());
   const cycleRunning = useRef(false);
   const scanCyclePending = useRef(false);
+  const manualRefreshPending = useRef(false);
+  const activeSignalRef = useRef<AbortSignal | null>(null);
   const initialScanRunning = useRef(true);
   const newestItemIdRef = useRef<number | null>(null);
   const lastReconciledAtRef = useRef<number | null>(null);
@@ -159,7 +161,10 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     } finally {
       cycleRunning.current = false;
       if (!signal.aborted) setRefreshing(false);
-      if (!signal.aborted && scanCyclePending.current) {
+      const manualRefresh = manualRefreshPending.current;
+      manualRefreshPending.current = false;
+      if (manualRefresh) lastDiscoveryAtRef.current = 0;
+      if (!signal.aborted && (scanCyclePending.current || manualRefresh)) {
         scanCyclePending.current = false;
         queueMicrotask(() => void cycleRef.current(signal));
       }
@@ -171,6 +176,8 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     if (!credentials || !username) return;
     const controller = new AbortController();
     const { signal } = controller;
+    activeSignalRef.current = signal;
+    manualRefreshPending.current = false;
     candidatesRef.current = [];
     eventsRef.current = {};
     setCandidates([]);
@@ -268,6 +275,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       controller.abort();
+      if (activeSignalRef.current === signal) activeSignalRef.current = null;
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
@@ -336,8 +344,14 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     lastSuccessfulAt,
     refreshing,
     refresh: () => {
+      const signal = activeSignalRef.current;
+      if (!signal || signal.aborted) return;
+      if (cycleRunning.current) {
+        manualRefreshPending.current = true;
+        return;
+      }
       lastDiscoveryAtRef.current = 0;
-      void cycleRef.current();
+      void cycleRef.current(signal);
     },
     onPlaybackChange,
     hasFreshEvents: sections.some((section) => section.events.some((event) => !event.ended)),

@@ -44,6 +44,24 @@ describe('static server', () => {
     }
   });
 
+  it.each(['/assets/missing.js', '/assets/missing', '/favicon.ico'])(
+    'returns 404 for a missing static file at %s',
+    async (pathname) => {
+      const root = await mkdtemp(join(tmpdir(), 'gkfeed-static-'));
+      await writeFile(join(root, 'index.html'), '<!doctype html>');
+      const response = createResponse();
+
+      try {
+        await expect(serveFrontend(pathname, true, response, root))
+          .rejects.toMatchObject({ code: 'not_found', status: 404 });
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+
+      expect(response.writeHead).not.toHaveBeenCalled();
+    },
+  );
+
   it('rejects symbolic links that resolve outside the static root', async () => {
     const parent = await mkdtemp(join(tmpdir(), 'gkfeed-static-'));
     const root = join(parent, 'dist');
