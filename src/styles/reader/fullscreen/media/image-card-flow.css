@@ -11,6 +11,26 @@
     gap: 18px;
   }
 
+  /* Reserve the title's natural height before sizing a portrait image. */
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--simple-image:has(> .reader-card__copy) {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--simple-image:has(> .reader-card__copy)
+  > .reader-card__preview {
+    height: 100%;
+    justify-self: center;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--simple-image:has(> .reader-card__copy)
+  > .reader-card__preview > img {
+    height: 100%;
+  }
+
   .reader__item--fullscreen.reader__item--card-flow
   > :is(.reader-card--image-preview, .reader-card--simple-image)
   > .reader-card__preview {

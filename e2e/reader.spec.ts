@@ -1161,15 +1161,73 @@ test.describe('TikTok player on iPad-sized readers', () => {
 
     const poster = page.locator('.reader-card--rezka .reader-card__preview img');
     await expect(poster).toBeVisible();
+    await poster.evaluate((image: HTMLImageElement) => image.decode());
     await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('.reader__item')).toHaveClass(/reader__item--fullscreen/);
 
     const posterBox = await poster.boundingBox();
     const actionsBox = await page.locator('.reader__actions').boundingBox();
     expect(posterBox).not.toBeNull();
     expect(actionsBox).not.toBeNull();
-    expect(posterBox!.width).toBeGreaterThanOrEqual(590);
-    expect(posterBox!.height).toBeGreaterThanOrEqual(880);
+    expect(posterBox!.width).toBeGreaterThanOrEqual(550);
+    expect(posterBox!.height).toBeGreaterThanOrEqual(820);
     expect(actionsBox!.y + actionsBox!.height).toBeLessThanOrEqual(1152);
+  });
+
+  test('keeps a long Rezka title above fullscreen actions', async ({ page }) => {
+    const coverUrl = 'https://static.hdrezka.ac/covers/jojo.jpg';
+    const title = 'Невероятные приключения Джоджо: Гонка «Стальной шар» [ТВ-7]';
+    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+      json: {
+        items: [{
+          id: 29,
+          feed_id: 4,
+          link: 'https://hdrezka.me/animation/adventures/29-jojo.html',
+          title,
+          text: `<img src="${coverUrl}">`,
+        }],
+        next_cursor: null,
+      },
+    }));
+    await page.route('**/bff/open-graph?**', (route) => route.fulfill({
+      json: {
+        url: 'https://hdrezka.me/animation/adventures/29-jojo.html',
+        title,
+        description: null,
+        image: coverUrl,
+        video: null,
+        siteName: 'HDrezka',
+        type: null,
+      },
+    }));
+    await page.route(coverUrl, (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1200" viewBox="0 0 800 1200"><rect width="800" height="1200" fill="#181825"/></svg>',
+    }));
+    await page.setViewportSize({ width: 1920, height: 1280 });
+    await page.goto('/reader');
+    const poster = page.locator('.reader-card--rezka .reader-card__preview img');
+    await expect(poster).toBeVisible();
+    await poster.evaluate((image: HTMLImageElement) => image.decode());
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('.reader__item')).toHaveClass(/reader__item--fullscreen/);
+
+    const bounds = await page.evaluate(() => {
+      const image = document.querySelector('.reader-card--rezka .reader-card__preview img')?.getBoundingClientRect();
+      const title = document.querySelector('.reader-card--rezka .reader-card__title')?.getBoundingClientRect();
+      const actions = document.querySelector('.reader__actions')?.getBoundingClientRect();
+      return image && title && actions ? {
+        imageBottom: image.bottom,
+        titleTop: title.top,
+        titleBottom: title.bottom,
+        actionsTop: actions.top,
+        actionsBottom: actions.bottom,
+      } : null;
+    });
+    expect(bounds).not.toBeNull();
+    expect(bounds!.imageBottom).toBeLessThanOrEqual(bounds!.titleTop);
+    expect(bounds!.titleBottom).toBeLessThanOrEqual(bounds!.actionsTop);
+    expect(bounds!.actionsBottom).toBeLessThanOrEqual(1280);
   });
 
   test('reflows controls after rotating from landscape to portrait', async ({ page }) => {
