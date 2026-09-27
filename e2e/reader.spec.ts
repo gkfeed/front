@@ -1199,9 +1199,9 @@ test.describe('TikTok player on iPad-sized readers', () => {
     }));
     await page.route(coverUrl, (route) => route.fulfill({
       contentType: 'image/svg+xml',
-      body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1200" viewBox="0 0 800 1200"><rect width="800" height="1200" fill="#181825"/></svg>',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="577" height="722" viewBox="0 0 577 722"><rect width="577" height="722" fill="#181825"/></svg>',
     }));
-    await page.setViewportSize({ width: 2048, height: 1152 });
+    await page.setViewportSize({ width: 2557, height: 1438 });
     await page.goto('/reader');
 
     const poster = page.locator('.reader-card--rezka .reader-card__preview img');
@@ -1216,7 +1216,10 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(actionsBox).not.toBeNull();
     expect(posterBox!.width).toBeGreaterThanOrEqual(550);
     expect(posterBox!.height).toBeGreaterThanOrEqual(820);
-    expect(actionsBox!.y + actionsBox!.height).toBeLessThanOrEqual(1152);
+    expect(actionsBox!.y + actionsBox!.height).toBeLessThanOrEqual(1438);
+    expect(posterBox!.height).toBe(900);
+    expect(posterBox!.width / posterBox!.height)
+      .toBeCloseTo(577 / 722, 2);
   });
 
   test('keeps a long Rezka title above fullscreen actions', async ({ page }) => {

@@ -49,6 +49,14 @@
     background: transparent;
   }
 
+  /* Rezka caps the poster at 900px. Keep its rounded box at the same height
+     so object-fit does not letterbox the image inside square inner corners. */
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--simple-image.reader-card--rezka
+  > .reader-card__preview {
+    max-height: min(100%, 84dvh, 900px);
+  }
+
   .reader__item--fullscreen.reader__item--card-flow
   > :is(.reader-card--image-preview, .reader-card--simple-image)
   > .reader-card__preview > img {
