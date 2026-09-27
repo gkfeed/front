@@ -17,7 +17,7 @@ export const rezkaOpenGraphAdapter: OpenGraphProviderAdapter = {
       try {
         const page = await fetchHtml(url, REZKA_USER_AGENT, {}, context);
         const preview = parseRezkaOpenGraph(page.html, page.url);
-        if (preview.image || url.href === requestedUrl.href) return preview;
+        if (preview.image) return preview;
         firstPreview ??= preview;
       } catch (error) {
         if (context?.signal.aborted) throw error;
@@ -46,7 +46,11 @@ function getRezkaPreviewUrls(url: URL): URL[] {
   const urls = normalizeHostname(url.hostname) === 'hdrezka.me'
     ? [withRezkaHost(base, 'rezka.ag'), base]
     : [base];
-  return [...urls, ...urls.flatMap((candidate) => getRezkaLatestUrl(candidate) ?? [])];
+  return [
+    ...urls,
+    ...urls.flatMap((candidate) => getRezkaLatestUrl(candidate) ?? []),
+    ...urls.flatMap((candidate) => getRezkaAlternateUrl(candidate) ?? []),
+  ];
 }
 
 function withRezkaHost(url: URL, host: string): URL {
@@ -60,6 +64,14 @@ function getRezkaLatestUrl(url: URL): URL | null {
     || url.pathname.endsWith('-latest.html')) return null;
   const result = new URL(url.href);
   result.pathname = result.pathname.replace(/\.html$/, '-latest.html');
+  return result;
+}
+
+function getRezkaAlternateUrl(url: URL): URL | null {
+  if (!/^\/(?:films|series|animation)\/[^/]+\/\d+-[^/]+\.html$/.test(url.pathname)
+    || url.pathname.endsWith('-u.html')) return null;
+  const result = new URL(url.href);
+  result.pathname = result.pathname.replace(/\.html$/, '-u.html');
   return result;
 }
 

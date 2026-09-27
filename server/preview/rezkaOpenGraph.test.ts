@@ -183,4 +183,42 @@ describe('Rezka OpenGraph provider', () => {
       'https://rezka.ag/films/melodrama/89218-vsego-odna-noch-2026-latest.html',
     ]);
   });
+
+  it('recovers a renamed series preview through its alternate page', async () => {
+    const requestedUrl = new URL(
+      'https://hdrezka.me/series/comedy/92080-opg-2026-latest.html',
+    );
+    const alternateUrl = new URL('https://rezka.ag/series/comedy/92080-opg-2026-u.html');
+    requestPublicHttp.mockImplementation((url: URL) => {
+      if (url.href === requestedUrl.href) {
+        return Promise.resolve(gzipHtmlResponse('<title>Проверяем, что вы не бот!</title>', url));
+      }
+      if (url.href !== alternateUrl.href) {
+        return Promise.resolve({
+          body: { destroy: vi.fn() },
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+          status: 500,
+          url,
+        });
+      }
+      return Promise.resolve(gzipHtmlResponse(
+        '<meta property="og:title" content="ОПГ (2026)">'
+          + '<meta property="og:image" content="https://static.hdrezka.ac/i/2026/8/25/o25e2d414297amb13d70s.jpg">',
+        url,
+      ));
+    });
+
+    await expect(fetchOpenGraph(requestedUrl.href)).resolves.toMatchObject({
+      title: 'ОПГ (2026)',
+      image: 'https://static.hdrezka.ac/i/2026/8/25/o25e2d414297amb13d70s.jpg',
+      url: alternateUrl.href,
+    });
+    expect(requestPublicHttp.mock.calls.map(([url]) => url.href)).toEqual([
+      'https://rezka.ag/series/comedy/92080-opg-2026.html',
+      'https://hdrezka.me/series/comedy/92080-opg-2026.html',
+      'https://rezka.ag/series/comedy/92080-opg-2026-latest.html',
+      requestedUrl.href,
+      alternateUrl.href,
+    ]);
+  });
 });
