@@ -56,7 +56,7 @@ function withRezkaHost(url: URL, host: string): URL {
 }
 
 function getRezkaLatestUrl(url: URL): URL | null {
-  if (!/^\/(?:series|animation)\//.test(url.pathname) || !url.pathname.endsWith('.html')
+  if (!/^\/(?:films|series|animation)\//.test(url.pathname) || !url.pathname.endsWith('.html')
     || url.pathname.endsWith('-latest.html')) return null;
   const result = new URL(url.href);
   result.pathname = result.pathname.replace(/\.html$/, '-latest.html');

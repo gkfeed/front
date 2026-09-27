@@ -151,4 +151,36 @@ describe('Rezka OpenGraph provider', () => {
       'https://rezka.ag/animation/fantasy/90799-hell-mode-tv-2-2026.html',
     ]);
   });
+
+  it('recovers a film preview when only its latest page exists', async () => {
+    const requestedUrl = new URL(
+      'https://hdrezka.me/films/melodrama/89218-vsego-odna-noch-2026-latest.html',
+    );
+    requestPublicHttp.mockImplementation((url: URL) => {
+      if (!url.pathname.endsWith('-latest.html')) {
+        return Promise.resolve({
+          body: { destroy: vi.fn() },
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+          status: 500,
+          url,
+        });
+      }
+      return Promise.resolve(gzipHtmlResponse(
+        '<meta property="og:title" content="Всего одна ночь / Только на одну ночь (2026)">'
+          + '<meta property="og:image" content="https://static.hdrezka.ac/i/2026/8/24/h91539914457dkp13a82o.jpg">',
+        url,
+      ));
+    });
+
+    await expect(fetchOpenGraph(requestedUrl.href)).resolves.toMatchObject({
+      title: 'Всего одна ночь / Только на одну ночь (2026)',
+      image: 'https://static.hdrezka.ac/i/2026/8/24/h91539914457dkp13a82o.jpg',
+      url: 'https://rezka.ag/films/melodrama/89218-vsego-odna-noch-2026-latest.html',
+    });
+    expect(requestPublicHttp.mock.calls.map(([url]) => url.href)).toEqual([
+      'https://rezka.ag/films/melodrama/89218-vsego-odna-noch-2026.html',
+      'https://hdrezka.me/films/melodrama/89218-vsego-odna-noch-2026.html',
+      'https://rezka.ag/films/melodrama/89218-vsego-odna-noch-2026-latest.html',
+    ]);
+  });
 });
