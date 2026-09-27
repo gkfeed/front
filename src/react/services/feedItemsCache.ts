@@ -1,4 +1,5 @@
 import type { FeedItem } from '../types';
+import type { CachedFeedItems } from '../domain/itemSync';
 import { normalizeVkWallPostUrl } from '../../../shared/urlRules';
 
 const DATABASE_NAME = 'gkfeed-cache';
@@ -9,12 +10,12 @@ type FeedItemsCacheRecord = {
   username: string;
   savedAt: number;
   items: FeedItem[];
+  cursor?: string;
 };
 
 export async function readFeedItemsCache(
   username: string,
-  maxAgeMs: number,
-): Promise<FeedItem[] | undefined> {
+): Promise<CachedFeedItems | undefined> {
   const database = await openCacheDatabase();
   if (!database) return undefined;
 
@@ -22,8 +23,11 @@ export async function readFeedItemsCache(
     const record = await runRequest<unknown>(
       database.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(username),
     );
-    if (!isCacheRecord(record) || Date.now() - record.savedAt > maxAgeMs) return undefined;
-    return record.items.map((item) => ({ ...item, link: normalizeVkWallPostUrl(item.link) }));
+    if (!isCacheRecord(record)) return undefined;
+    return {
+      items: record.items.map((item) => ({ ...item, link: normalizeVkWallPostUrl(item.link) })),
+      ...(record.cursor ? { cursor: record.cursor } : {}),
+    };
   } catch {
     return undefined;
   } finally {
@@ -31,16 +35,19 @@ export async function readFeedItemsCache(
   }
 }
 
-export async function writeFeedItemsCache(username: string, items: FeedItem[]): Promise<void> {
+export async function writeFeedItemsCache(username: string, snapshot: CachedFeedItems): Promise<void> {
   const database = await openCacheDatabase();
   if (!database) return;
 
   try {
-    await runRequest(database.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put({
+    const transaction = database.transaction(STORE_NAME, 'readwrite');
+    const completed = transactionCompleted(transaction);
+    transaction.objectStore(STORE_NAME).put({
       username,
       savedAt: Date.now(),
-      items,
-    } satisfies FeedItemsCacheRecord));
+      ...snapshot,
+    } satisfies FeedItemsCacheRecord);
+    await completed;
   } catch {
     // Caching is an optimization; quota and privacy-mode failures must not break Reader.
   } finally {
@@ -53,9 +60,10 @@ export async function deleteFeedItemsCache(username: string): Promise<void> {
   if (!database) return;
 
   try {
-    await runRequest(
-      database.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).delete(username),
-    );
+    const transaction = database.transaction(STORE_NAME, 'readwrite');
+    const completed = transactionCompleted(transaction);
+    transaction.objectStore(STORE_NAME).delete(username);
+    await completed;
   } catch {
     // Caching is an optimization; cleanup failures must not break Reader.
   } finally {
@@ -93,12 +101,21 @@ function runRequest<T = IDBValidKey>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
+function transactionCompleted(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error ?? new Error('IndexedDB transaction aborted'));
+    transaction.onerror = () => reject(transaction.error ?? new Error('IndexedDB transaction failed'));
+  });
+}
+
 function isCacheRecord(value: unknown): value is FeedItemsCacheRecord {
   if (typeof value !== 'object' || value === null) return false;
   const record = value as Partial<FeedItemsCacheRecord>;
   return typeof record.username === 'string'
     && typeof record.savedAt === 'number'
     && Number.isFinite(record.savedAt)
+    && (record.cursor === undefined || (typeof record.cursor === 'string' && record.cursor.length > 0))
     && Array.isArray(record.items)
     && record.items.every(isFeedItem);
 }

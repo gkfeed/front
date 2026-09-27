@@ -16,6 +16,7 @@ const INITIAL_STATE: FeedItemsState = {
   error: null,
   isSyncComplete: false,
 };
+const POLL_INTERVAL_MS = 60_000;
 
 export function useFeedItems(credentials: Credentials | null) {
   const { feeds } = useFeatureUseCases();
@@ -25,8 +26,12 @@ export function useFeedItems(credentials: Credentials | null) {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
+    let pending = false;
 
     const loadSnapshot = async () => {
+      if (pending || !active) return;
+      pending = true;
+      setState((current) => ({ ...current, status: 'loading', error: null }));
       try {
         const items = await feeds.loadFeedItems(credentials, {
           bypassCache: attempt > 0,
@@ -37,7 +42,7 @@ export function useFeedItems(credentials: Credentials | null) {
               loadedItems: cachedItems,
               status: 'success',
               error: null,
-              isSyncComplete: false,
+              isSyncComplete: true,
             });
           },
           onProgress: (partialItems) => {
@@ -63,15 +68,26 @@ export function useFeedItems(credentials: Credentials | null) {
           error: normalizedError,
           isSyncComplete: false,
         }));
+      } finally {
+        pending = false;
       }
     };
 
     setState(INITIAL_STATE);
     void loadSnapshot();
+    const poll = () => {
+      if (document.visibilityState === 'visible') void loadSnapshot();
+    };
+    const interval = window.setInterval(poll, POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', poll);
+    window.addEventListener('focus', poll);
 
     return () => {
       active = false;
       controller.abort();
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', poll);
+      window.removeEventListener('focus', poll);
     };
   }, [attempt, credentials, feeds]);
 
@@ -84,10 +100,15 @@ export function useFeedItems(credentials: Credentials | null) {
     feeds.invalidateFeedItemsCache(credentials);
   }, [credentials, feeds]);
 
+  const removeCachedItem = useCallback((id: number) => {
+    feeds.removeFeedItemFromCache(credentials, id);
+  }, [credentials, feeds]);
+
   return {
     ...state,
     isLoading: state.loadedItems === undefined && state.status === 'loading',
     invalidateCache,
+    removeCachedItem,
     retry,
   };
 }

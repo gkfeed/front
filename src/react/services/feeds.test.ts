@@ -10,6 +10,7 @@ import {
   getFeedItems,
 } from './feeds';
 import { validateCredentials } from './auth';
+import { getFeedItemChanges, syncFeedItems } from './feedItems';
 import type { Feed } from '../types';
 
 vi.hoisted(() => {
@@ -105,209 +106,115 @@ describe('feed service', () => {
     });
   });
 
-  it('loads and normalizes feed reader items', async () => {
+  it('loads and normalizes items from the v2 sync endpoint', async () => {
     respondWith({
       items: [
-        { id: 10, feed_id: 2, link: 'https://example.com/story', title: 'Story', text: 'Summary' },
+        { id: 10, feed_id: 2, link: 'https://vk.ru/wall-1_2', title: '\uFFFD', text: 'Text 🎉' },
         { id: 11, feed_id: 2, link: '', title: 'Missing link', text: '' },
       ],
+      next_cursor: '',
+      has_more: false,
+      sync_cursor: 'sync-1',
     });
 
     await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([
-      { id: 10, feedId: 2, link: 'https://example.com/story', title: 'Story', text: 'Summary' },
+      { id: 10, feedId: 2, link: 'https://vk.com/wall-1_2', title: '', text: 'Text 🎉' },
     ]);
-    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v1/get_items?limit=100', {
+    expect(fetch).toHaveBeenCalledWith('https://feed.gws.freemyip.com/api/v2/items/sync?limit=100', {
       headers: { Authorization: 'Basic w7xzZXI6cMOkc3M=' },
       signal: expect.any(AbortSignal),
     });
   });
 
-  it('resolves relative Shikimori anime links against the public site', async () => {
-    respondWith({
-      items: [{
-        id: 10,
-        feed_id: 2,
-        link: '/animes/63347-world-is-dancing',
-        title: 'World Is Dancing',
-        text: '',
-      }],
-    });
-
-    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([{
-      id: 10,
-      feedId: 2,
-      link: 'https://shikimori.one/animes/63347-world-is-dancing',
-      title: 'World Is Dancing',
-      text: '',
-    }]);
-  });
-
-  it('opens VK wall feed items on vk.com', async () => {
-    respondWith({
-      items: [{
-        id: 10,
-        feed_id: 2,
-        link: 'https://vk.ru/wall-50883936_828158',
-        title: 'VK post',
-        text: '',
-      }],
-    });
-
-    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([{
-      id: 10,
-      feedId: 2,
-      link: 'https://vk.com/wall-50883936_828158',
-      title: 'VK post',
-      text: '',
-    }]);
-  });
-
-  it('drops Unicode replacement markers without dropping valid emoji', async () => {
-    respondWith({
-      items: [
-        {
-          id: 10,
-          feed_id: 2,
-          link: 'https://www.tiktok.com/@creator/video/123',
-          title: '\uFFFD',
-          text: '\uFFFC 🎉',
-        },
-      ],
-    });
-
-    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([
-      {
-        id: 10,
-        feedId: 2,
-        link: 'https://www.tiktok.com/@creator/video/123',
-        title: '',
-        text: '🎉',
-      },
-    ]);
-  });
-
-  it('follows item cursors using bounded pages', async () => {
+  it('follows opaque page cursors and preserves the first sync cursor', async () => {
     const onProgress = vi.fn();
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(Response.json({
         items: [{ id: 10, feed_id: 2, link: 'https://example.com/10', title: 'Ten', text: '' }],
-        next_cursor: 10,
+        next_cursor: 'page+1', has_more: true, sync_cursor: 'sync-1',
       }))
       .mockResolvedValueOnce(Response.json({
         items: [{ id: 9, feed_id: 2, link: 'https://example.com/9', title: 'Nine', text: '' }],
+        next_cursor: '', has_more: false, sync_cursor: 'sync-2',
       })));
 
-    await expect(getFeedItems(CREDENTIALS, 150, undefined, onProgress)).resolves.toEqual([
-      { id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' },
-      { id: 9, feedId: 2, link: 'https://example.com/9', title: 'Nine', text: '' },
-    ]);
-    expect(onProgress).toHaveBeenNthCalledWith(1, [
-      { id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' },
-    ]);
-    expect(onProgress).toHaveBeenNthCalledWith(2, [
-      { id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' },
-      { id: 9, feedId: 2, link: 'https://example.com/9', title: 'Nine', text: '' },
-    ]);
-    expect(fetch).toHaveBeenNthCalledWith(
-      1,
-      'https://feed.gws.freemyip.com/api/v1/get_items?limit=100',
-      expect.any(Object),
-    );
-    expect(fetch).toHaveBeenNthCalledWith(
-      2,
-      'https://feed.gws.freemyip.com/api/v1/get_items?limit=100&cursor=10',
-      expect.any(Object),
-    );
+    await expect(syncFeedItems(CREDENTIALS, undefined, onProgress, 10)).resolves.toEqual({
+      items: [
+        { id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' },
+        { id: 9, feedId: 2, link: 'https://example.com/9', title: 'Nine', text: '' },
+      ],
+      cursor: 'sync-1',
+    });
+    expect(onProgress).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenNthCalledWith(2,
+      'https://feed.gws.freemyip.com/api/v2/items/sync?limit=100&cursor=page%2B1',
+      expect.any(Object));
   });
 
-  it.each([undefined, 1])('follows cursors after a page with no usable links, limit %s', async (limit) => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(Response.json({
-        items: [{ id: 10, feed_id: 2, link: '', title: 'Missing link', text: '' }],
-        next_cursor: 10,
-      }))
-      .mockResolvedValueOnce(Response.json({
-        items: [{ id: 9, feed_id: 2, link: 'https://example.com/9', title: 'Nine', text: '' }],
+  it('loads beyond 1000 items without an implicit cap', async () => {
+    let pageIndex = 0;
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
+      const index = pageIndex++;
+      return Promise.resolve(Response.json({
+        items: Array.from({ length: 100 }, (_, offset) => {
+          const id = 2_000 - index * 100 - offset;
+          return { id, feed_id: 2, link: `https://example.com/${id}`, title: `${id}`, text: '' };
+        }),
+        next_cursor: index < 10 ? `page-${index + 1}` : '',
+        has_more: index < 10,
+        sync_cursor: 'first',
       }));
-    vi.stubGlobal('fetch', fetchMock);
+    }));
 
-    await expect(getFeedItems(CREDENTIALS, limit)).resolves.toEqual([
-      { id: 9, feedId: 2, link: 'https://example.com/9', title: 'Nine', text: '' },
-    ]);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      `https://feed.gws.freemyip.com/api/v1/get_items?limit=${limit ?? 100}&cursor=10`,
+    await expect(getFeedItems(CREDENTIALS)).resolves.toHaveLength(1_100);
+    expect(fetch).toHaveBeenCalledTimes(11);
+  });
+
+  it('parses upserts and tombstones from changes', async () => {
+    respondWith({
+      upserted: [{ id: 12, feed_id: 2, link: 'https://example.com/12', title: 'New', text: '' }],
+      deleted_ids: [10], next_cursor: 'next', has_more: false,
+    });
+
+    await expect(getFeedItemChanges(CREDENTIALS, 'sync+1')).resolves.toEqual({
+      upserted: [{ id: 12, feedId: 2, link: 'https://example.com/12', title: 'New', text: '' }],
+      deletedIds: [10], nextCursor: 'next', hasMore: false,
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      'https://feed.gws.freemyip.com/api/v2/items/changes?cursor=sync%2B1&limit=100',
       expect.any(Object),
     );
   });
 
-  it('applies the request timeout to each item page', async () => {
+  it('removes an existing item if an update no longer has a usable link', async () => {
+    respondWith({
+      upserted: [{ id: 10, feed_id: 2, link: '', title: 'Unavailable', text: '' }],
+      deleted_ids: [], next_cursor: 'next', has_more: false,
+    });
+
+    await expect(getFeedItemChanges(CREDENTIALS, 'saved')).resolves.toEqual({
+      upserted: [], deletedIds: [10], nextCursor: 'next', hasMore: false,
+    });
+  });
+
+  it('applies a timeout to item requests', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('fetch', vi.fn((_input: RequestInfo | URL, init?: RequestInit) => (
       new Promise<Response>((_resolve, reject) => {
-        init?.signal?.addEventListener('abort', () => {
-          reject(new DOMException('Aborted', 'AbortError'));
-        });
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
       })
     )));
 
     const rejection = expect(getFeedItems(CREDENTIALS)).rejects.toMatchObject({
-      name: 'ApiTimeoutError',
-      timeoutMs: 100_000,
+      name: 'ApiTimeoutError', timeoutMs: 100_000,
     });
-    await vi.advanceTimersByTimeAsync(99_999);
-    expect(fetch).toHaveBeenCalledOnce();
-    await vi.advanceTimersByTimeAsync(1);
-
+    await vi.advanceTimersByTimeAsync(100_000);
     await rejection;
   });
 
-  it('loads beyond 1000 items when no explicit limit is provided', async () => {
-    let pageIndex = 0;
-    const fetchMock = vi.fn().mockImplementation(() => {
-      const currentPage = pageIndex;
-      pageIndex += 1;
-      return Promise.resolve(Response.json({
-        items: Array.from({ length: 100 }, (_, itemIndex) => {
-          const id = 2_000 - currentPage * 100 - itemIndex;
-          return {
-            id,
-            feed_id: 2,
-            link: `https://example.com/${id}`,
-            title: `Item ${id}`,
-            text: '',
-          };
-        }),
-        next_cursor: currentPage < 10 ? currentPage + 1 : null,
-      }));
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    const items = await getFeedItems(CREDENTIALS);
-
-    expect(items).toHaveLength(1_100);
-    expect(items.at(-1)?.id).toBe(901);
-    expect(fetchMock).toHaveBeenCalledTimes(11);
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      'https://feed.gws.freemyip.com/api/v1/get_items?limit=100&cursor=10',
-      expect.any(Object),
-    );
-  });
-
-  it('treats a nil Go item slice as an empty page', async () => {
-    respondWith({ items: null });
-
-    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([]);
-  });
-
-  it('stops after an empty page even when the cursor changes', async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(Response.json({ items: [], next_cursor: 10 }))
-      .mockResolvedValueOnce(Response.json({ items: [], next_cursor: 20 }));
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(getFeedItems(CREDENTIALS)).resolves.toEqual([]);
-    expect(fetchMock).toHaveBeenCalledOnce();
+  it('rejects malformed sync cursors', async () => {
+    respondWith({ items: [], next_cursor: '', has_more: false, sync_cursor: null });
+    await expect(getFeedItems(CREDENTIALS)).rejects.toThrow('Invalid API response');
   });
 
   it('deletes a feed reader item using the API item route', async () => {

@@ -1,15 +1,60 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v2/items/changes?**', (route) => route.fulfill({
+    json: { upserted: [], deleted_ids: [], next_cursor: 'sync', has_more: false },
+  }));
+});
+
+test('resumes item changes after reload and keeps the current card until it is deleted', async ({ page }) => {
+  let syncRequests = 0;
+  let changeRequests = 0;
+  const item = (id: number) => ({
+    id, feed_id: 4, link: `https://example.com/${id}`, title: `Item ${id}`, text: '',
+  });
+  await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/v2/items/sync?**', (route) => {
+    syncRequests += 1;
+    return route.fulfill({
+      json: { items: [item(20), item(10)], next_cursor: '', has_more: false, sync_cursor: 'initial' },
+    });
+  });
+  await page.route('**/api/v2/items/changes?**', (route) => {
+    changeRequests += 1;
+    return route.fulfill({ json: changeRequests === 1
+      ? { upserted: [], deleted_ids: [], next_cursor: 'first', has_more: false }
+      : changeRequests === 2
+        ? { upserted: [item(30)], deleted_ids: [], next_cursor: 'second', has_more: false }
+        : { upserted: [], deleted_ids: [20], next_cursor: 'third', has_more: false },
+    });
+  });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('gkfeed.credentials', JSON.stringify({ username: 'automation', password: 'secret' }));
+  });
+
+  await page.goto('/reader');
+  await expect(page.getByRole('heading', { name: 'Item 20' })).toBeVisible();
+  await expect.poll(() => changeRequests).toBe(1);
+  await page.reload();
+  await expect.poll(() => changeRequests).toBe(2);
+  await expect(page.getByRole('heading', { name: 'Item 20' })).toBeVisible();
+  expect(syncRequests).toBe(1);
+
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect.poll(() => changeRequests).toBe(3);
+  await expect(page.getByRole('heading', { name: 'Item 30' })).toBeVisible();
+});
+
 test.describe('Reader item order', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [
           { id: 20, feed_id: 4, link: 'https://example.com/new', title: 'New item', text: '' },
           { id: 10, feed_id: 4, link: 'https://example.com/old', title: 'Old item', text: '' },
         ],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.addInitScript(() => {
@@ -45,13 +90,13 @@ test.describe('Reader deletion recovery', () => {
   test('retries once and restores the card from the keyboard-accessible final error', async ({ page }) => {
     let deletionAttempts = 0;
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [
           { id: 20, feed_id: 4, link: 'https://example.com/first', title: 'First item', text: '' },
           { id: 10, feed_id: 4, link: 'https://example.com/second', title: 'Second item', text: '' },
         ],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/api/v1/items/20', (route) => {
@@ -85,7 +130,7 @@ test.describe('Reader deletion recovery', () => {
 test.describe('Reader fullscreen with theater mode', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 19,
@@ -94,7 +139,7 @@ test.describe('Reader fullscreen with theater mode', () => {
           title: 'Theater video',
           text: '',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('https://www.youtube.com/embed/**', (route) => route.fulfill({
@@ -212,7 +257,7 @@ async function expectYoutubePlayerToBeSixteenByNine(page: import('@playwright/te
 test.describe('Fullscreen player card flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 21,
@@ -221,7 +266,7 @@ test.describe('Fullscreen player card flow', () => {
           title: 'Video title | Channel name',
           text: '',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/bff/open-graph?**', (route) => route.fulfill({
@@ -271,7 +316,7 @@ test.describe('Fullscreen player card flow', () => {
 test.describe('Fullscreen text card flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 15,
@@ -280,7 +325,7 @@ test.describe('Fullscreen text card flow', () => {
           title: 'Are We at War with AI Agent “Civilizations”?',
           text: '',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/bff/open-graph?**', (route) => route.fulfill({
@@ -340,7 +385,7 @@ test.describe('Fullscreen text card flow', () => {
 test.describe('TikTok player on iPad-sized readers', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 20,
@@ -349,7 +394,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'Short video',
           text: '',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('https://www.tiktok.com/player/**', (route) => route.fulfill({
@@ -522,7 +567,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   });
 
   test('does not add vertical bars around fullscreen feed images', async ({ page }) => {
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 22,
@@ -531,7 +576,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'Event Dispatch',
           text: '<img src="https://example.com/reddit-card.jpg">',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('https://example.com/reddit-card.jpg', (route) => route.fulfill({
@@ -560,7 +605,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   });
 
   test('fits wide Instagram photos above fullscreen controls', async ({ page }) => {
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 24,
@@ -569,7 +614,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'inst: photographer',
           text: '',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/bff/open-graph?**', (route) => route.fulfill({
@@ -627,7 +672,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   });
 
   test('keeps Instagram identity on a portrait photo', async ({ page }) => {
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 25,
@@ -636,7 +681,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'inst: portrait_creator',
           text: '',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/bff/open-graph?**', (route) => route.fulfill({
@@ -691,7 +736,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   });
 
   test('keeps the full VK image visible in regular and fullscreen cards', async ({ page }) => {
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 23,
@@ -700,7 +745,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'Рифмы и Панчи',
           text: '<img src="https://example.com/vk-card-cropped.jpg"><br>Post description',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('https://example.com/vk-card-cropped.jpg', (route) => route.fulfill({
@@ -774,7 +819,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
 
   test('switches VK post photos in regular and fullscreen cards', async ({ page }) => {
     const photos = ['first', 'second', 'third'];
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 42,
@@ -783,7 +828,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'Wild Rift',
           text: '<img src="https://example.com/first.svg">',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     for (const name of photos) {
@@ -837,7 +882,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
     const postText = 'Хочу искренне поблагодарить Николая Островского, владельца паблика. '
       + 'Если бы он не нашёл информацию о судебном решении, я бы об этом даже не узнал, '
       + 'и мне бы, по итогу, начислили огромный штраф.';
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 27,
@@ -846,7 +891,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'МЫСЛИ СТАСА',
           text: postText,
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/bff/open-graph?**', (route) => route.fulfill({
@@ -883,7 +928,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   });
 
   test('clips square VK post images to rounded corners', async ({ page }) => {
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 26,
@@ -892,7 +937,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'STREAM INSIDE',
           text: 'Post description',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/bff/open-graph?**', (route) => route.fulfill({
@@ -945,7 +990,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   });
 
   test('expands a landscape VK image to the fullscreen card width', async ({ page }) => {
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 24,
@@ -954,7 +999,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: '36 студия',
           text: '<img src="https://example.com/vk-landscape.jpg"><br>Post description',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('https://example.com/vk-landscape.jpg', (route) => route.fulfill({
@@ -1005,7 +1050,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   });
 
   test('uses the reader width for VK video embeds', async ({ page }) => {
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 25,
@@ -1014,7 +1059,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'VK video',
           text: 'Video description',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -1053,7 +1098,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   });
 
   test('keeps regular image cards and review actions inside fullscreen', async ({ page }) => {
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 21,
@@ -1062,7 +1107,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'A long image title that should wrap inside the fullscreen reader',
           text: '',
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('https://example.com/poster.jpg', (route) => route.fulfill({
@@ -1129,7 +1174,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
 
   test('uses more of the fullscreen stage for Rezka posters', async ({ page }) => {
     const coverUrl = 'https://static.hdrezka.ac/covers/sabrina.jpg';
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 28,
@@ -1138,7 +1183,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title: 'Леденящие душу приключения Сабрины',
           text: `<img src="${coverUrl}">`,
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/bff/open-graph?**', (route) => route.fulfill({
@@ -1177,7 +1222,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
   test('keeps a long Rezka title above fullscreen actions', async ({ page }) => {
     const coverUrl = 'https://static.hdrezka.ac/covers/jojo.jpg';
     const title = 'Невероятные приключения Джоджо: Гонка «Стальной шар» [ТВ-7]';
-    await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
       json: {
         items: [{
           id: 29,
@@ -1186,7 +1231,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
           title,
           text: `<img src="${coverUrl}">`,
         }],
-        next_cursor: null,
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
       },
     }));
     await page.route('**/bff/open-graph?**', (route) => route.fulfill({

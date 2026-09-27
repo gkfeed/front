@@ -116,12 +116,12 @@ describe('ReaderPage', () => {
     renderReader();
 
     await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('New story')).toBeTruthy();
+    expect(await screen.findByText('Second story')).toBeTruthy();
     expect(screen.queryByText('First story')).toBeNull();
     expect(screen.getByText('2 remaining')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
-    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(await screen.findByText('New story')).toBeTruthy();
   });
 
   it('does not add partial snapshot cards to a restored queue', async () => {
@@ -162,10 +162,10 @@ describe('ReaderPage', () => {
     expect(screen.queryByText('Story 110')).toBeNull();
 
     await act(async () => finishLoad?.(allItems));
-    expect(await screen.findByText('Story 110')).toBeTruthy();
+    expect(await screen.findByText('Story 98')).toBeTruthy();
     await waitFor(() => expect(JSON.parse(storage.get(storageKey) ?? '')).toEqual({
       version: 1,
-      pendingIds: [110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95],
+      pendingIds: [98, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 97, 96, 95],
       revisitIds: [],
       keptItemIds: [],
     }));
@@ -193,7 +193,7 @@ describe('ReaderPage', () => {
     expect(getFeedItems).toHaveBeenCalledOnce();
   });
 
-  it('starts with the newest item when a refresh finds several new items', async () => {
+  it('keeps the current card when a refresh finds several new items', async () => {
     stubLocalStorage();
     const newItems = [
       {
@@ -222,8 +222,10 @@ describe('ReaderPage', () => {
     renderReader();
 
     await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('Newest story')).toBeTruthy();
+    expect(await screen.findByText('First story')).toBeTruthy();
     expect(screen.queryByText('New story')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Newest story')).toBeTruthy();
   });
 
   it('keeps the current item with a', async () => {

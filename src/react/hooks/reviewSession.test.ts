@@ -42,9 +42,9 @@ describe('review session', () => {
 
     state = snapshot(state, [5, 4, 3], true);
 
-    expect(getActiveReviewIds(state)).toEqual([5, 4, 3]);
+    expect(getActiveReviewIds(state)).toEqual([3, 5, 4]);
     expect(state.progress).toEqual({
-      pendingIds: [5, 4, 3],
+      pendingIds: [3, 5, 4],
       revisitIds: [],
       keptItemIds: new Set(),
     });
@@ -59,7 +59,7 @@ describe('review session', () => {
     state = snapshot(state, [5, 4, 3, 2, 1], true);
 
     expect(state.progress).toEqual({
-      pendingIds: [5, 4, 2, 1],
+      pendingIds: [1, 5, 4, 2],
       revisitIds: [3],
       keptItemIds: new Set([3]),
     });
@@ -93,9 +93,9 @@ describe('review session', () => {
     state = snapshot(state, [6, 5], false);
     state = reviewSessionReducer(state, { type: 'syncFailed' });
 
-    expect(getActiveReviewIds(state)).toEqual([6, 5]);
+    expect(getActiveReviewIds(state)).toEqual([5, 6]);
     expect(state.progressToPersist).toEqual({
-      pendingIds: [6, 5, 4],
+      pendingIds: [5, 6, 4],
       revisitIds: [3],
       keptItemIds: new Set([3, 2, 1]),
     });
@@ -105,7 +105,7 @@ describe('review session', () => {
     state = snapshot(state, [6, 5, 4, 3, 2], true);
 
     expect(state.progress).toEqual({
-      pendingIds: [6, 5, 4],
+      pendingIds: [5, 6, 4],
       revisitIds: [3],
       keptItemIds: new Set([3, 2]),
     });
@@ -242,7 +242,7 @@ describe('review session', () => {
     state = snapshot(state, [3, 2, 1], true);
 
     expect(state.deletions).toEqual([]);
-    expect(getActiveReviewIds(state)).toEqual([3, 2, 1]);
+    expect(getActiveReviewIds(state)).toEqual([2, 3, 1]);
   });
 });
 

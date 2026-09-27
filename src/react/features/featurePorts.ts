@@ -1,6 +1,7 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
 import type { FeedTypeSuggestion } from '../../../shared/feedTypeSuggestion';
 import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../types';
+import type { ItemSnapshot, ItemChangesPage, CachedFeedItems } from '../domain/itemSync';
 
 export type FeedQueryPort = {
   getAllFeeds: (credentials: Credentials | null, signal?: AbortSignal) => Promise<Feed[]>;
@@ -12,13 +13,17 @@ export type FeedQueryPort = {
 };
 
 export type FeedItemsPort = {
-  getFeedItems: (
+  syncFeedItems: (
     credentials: Credentials | null,
-    limit?: number,
     signal?: AbortSignal,
     onProgress?: (items: FeedItem[]) => boolean | void,
     initialPageSize?: number,
-  ) => Promise<FeedItem[]>;
+  ) => Promise<ItemSnapshot>;
+  getFeedItemChanges: (
+    credentials: Credentials | null,
+    cursor: string,
+    signal?: AbortSignal,
+  ) => Promise<ItemChangesPage>;
 };
 
 export type FeedCommandPort = {
@@ -38,8 +43,8 @@ export type FeedMetadataPort = {
 };
 
 export type FeedItemsCachePort = {
-  read: (username: string, maxAgeMs: number) => Promise<FeedItem[] | undefined>;
-  write: (username: string, items: FeedItem[]) => Promise<void>;
+  read: (username: string) => Promise<CachedFeedItems | undefined>;
+  write: (username: string, snapshot: ItemSnapshot) => Promise<void>;
   delete: (username: string) => Promise<void>;
 };
 

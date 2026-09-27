@@ -1,11 +1,17 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v2/items/changes?**', (route) => route.fulfill({
+    json: { upserted: [], deleted_ids: [], next_cursor: 'sync', has_more: false },
+  }));
+});
+
 test('shows Twitch and HLTV events from the signed-in feed history', async ({ page }) => {
   await page.route('**/api/v1/list', (route) => route.fulfill({ json: [
     { id: 4, title: 'Twitch', type: 'twitch', url: 'https://www.twitch.tv/some_channel' },
     { id: 5, title: 'HLTV', type: 'hltv', url: 'https://www.hltv.org/' },
   ] }));
-  await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+  await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
     json: {
       items: [
         {
@@ -23,7 +29,7 @@ test('shows Twitch and HLTV events from the signed-in feed history', async ({ pa
           text: '',
         },
       ],
-      next_cursor: null,
+      next_cursor: '', has_more: false, sync_cursor: 'sync',
     },
   }));
   await page.route('**/bff/hltv-live?**', (route) => route.fulfill({

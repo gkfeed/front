@@ -20,6 +20,8 @@ The dev server listens on `0.0.0.0`, so it is also reachable from your local net
 
 Set `VITE_API_ROOT` at build time to override the API URL. The default is the
 same-origin `/api/v1` proxy in development and the hosted API URL in production.
+Item synchronization uses the corresponding `/api/v2/items` routes. The development
+server proxies both API versions.
 
 ## Build
 

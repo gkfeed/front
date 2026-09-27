@@ -11,6 +11,7 @@ import {
   getFeedById,
   getFeedItems,
 } from '../services/feeds';
+import { getFeedItemChanges } from '../services/feedItems';
 import { validateCredentials } from '../services/auth';
 import { isAuthenticationError } from '../domain/requestError';
 import { loadRemotePreview as loadRemotePreviewRequest } from '../services/remotePreview';
@@ -41,7 +42,11 @@ export function createFeatureComposition() {
         getFeedById,
       },
       itemsPort: {
-        getFeedItems,
+        syncFeedItems: async (credentials, signal, onProgress, initialPageSize) => {
+          const items = await getFeedItems(credentials, undefined, signal, onProgress, initialPageSize);
+          return { items, cursor: items.syncCursor ?? '' };
+        },
+        getFeedItemChanges,
       },
       commandPort: {
         createFeed: createFeedRequest,

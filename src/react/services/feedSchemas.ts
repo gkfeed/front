@@ -1,4 +1,5 @@
 import type { Feed, FeedItem } from '../types';
+import type { ItemChangesPage } from '../domain/itemSync';
 import { getObjectProperty } from '../unknownObject';
 import { normalizeExternalText } from '../../../shared/text';
 import { normalizeVkWallPostUrl } from '../../../shared/urlRules';
@@ -9,42 +10,54 @@ export function parseFeeds(value: unknown): Feed[] {
   throw new Error('Invalid API response');
 }
 
-export type FeedItemsPage = {
+export type ItemsSyncPage = {
   items: FeedItem[];
-  rawItemCount: number;
-  nextCursor?: number;
+  nextCursor: string;
+  hasMore: boolean;
+  syncCursor: string;
 };
 
-export function parseFeedItemsPage(value: unknown): FeedItemsPage {
-  const rawItems = getObjectProperty(value, 'items');
-  const rawNextCursor = getObjectProperty(value, 'next_cursor');
-  const items = rawItems === null ? [] : rawItems;
-  if (!Array.isArray(items) || !items.every(isFeedItem)) throw new Error('Invalid API response');
-  if (
-    rawNextCursor !== undefined
-    && rawNextCursor !== null
-    && (
-      typeof rawNextCursor !== 'number'
-      || !Number.isSafeInteger(rawNextCursor)
-      || rawNextCursor <= 0
-    )
-  ) {
+export function parseItemsSyncPage(value: unknown): ItemsSyncPage {
+  const items = getObjectProperty(value, 'items');
+  const nextCursor = getObjectProperty(value, 'next_cursor');
+  const syncCursor = getObjectProperty(value, 'sync_cursor');
+  const hasMore = getObjectProperty(value, 'has_more');
+  if (!Array.isArray(items) || !items.every(isFeedItem)
+    || typeof nextCursor !== 'string' || typeof syncCursor !== 'string' || !syncCursor
+    || typeof hasMore !== 'boolean' || (hasMore && !nextCursor)) {
     throw new Error('Invalid API response');
   }
+  return { items: normalizeItems(items), nextCursor, syncCursor, hasMore };
+}
 
+export function parseItemChangesPage(value: unknown): ItemChangesPage {
+  const upserted = getObjectProperty(value, 'upserted');
+  const deletedIds = getObjectProperty(value, 'deleted_ids');
+  const nextCursor = getObjectProperty(value, 'next_cursor');
+  const hasMore = getObjectProperty(value, 'has_more');
+  if (!Array.isArray(upserted) || !upserted.every(isFeedItem)
+    || !Array.isArray(deletedIds) || !deletedIds.every((id) => Number.isSafeInteger(id) && id > 0)
+    || typeof nextCursor !== 'string' || !nextCursor || typeof hasMore !== 'boolean') {
+    throw new Error('Invalid API response');
+  }
   return {
-    rawItemCount: items.length,
-    items: items
-      .filter((item) => Boolean(item.link))
-      .map((item) => ({
-        id: item.id,
-        feedId: item.feed_id,
-        link: normalizeVkWallPostUrl(normalizeShikimoriAnimeUrl(item.link)),
-        title: normalizeExternalText(item.title),
-        text: normalizeExternalText(item.text),
-      })),
-    nextCursor: typeof rawNextCursor === 'number' ? rawNextCursor : undefined,
+    upserted: normalizeItems(upserted),
+    deletedIds: [...deletedIds, ...upserted.filter((item) => !item.link).map((item) => item.id)],
+    nextCursor,
+    hasMore,
   };
+}
+
+function normalizeItems(items: Array<{ id: number; feed_id: number; link: string; title: string; text: string }>): FeedItem[] {
+  return items
+    .filter((item) => Boolean(item.link))
+    .map((item) => ({
+      id: item.id,
+      feedId: item.feed_id,
+      link: normalizeVkWallPostUrl(normalizeShikimoriAnimeUrl(item.link)),
+      title: normalizeExternalText(item.title),
+      text: normalizeExternalText(item.text),
+    }));
 }
 
 function isFeed(value: unknown): value is Feed {

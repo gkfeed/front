@@ -356,13 +356,23 @@ function mergePartialProgress(progress: ReviewProgress, orderedIds: number[]): R
 
 function reconcileProgress(progress: ReviewProgress, orderedIds: number[]): ReviewProgress {
   const availableIds = new Set(orderedIds);
+  const activeId = progress.pendingIds[0] ?? progress.revisitIds[0];
   const keptItemIds = new Set([...progress.keptItemIds].filter((id) => availableIds.has(id)));
   const pendingIds = new Set(progress.pendingIds.filter((id) => availableIds.has(id)));
   const revisitIds = new Set(progress.revisitIds.filter((id) => availableIds.has(id)));
   const knownIds = new Set([...pendingIds, ...revisitIds, ...keptItemIds]);
+  const nextPending = orderedIds.filter((id) => pendingIds.has(id) || !knownIds.has(id));
+  const nextRevisit = orderedIds.filter((id) => revisitIds.has(id));
+  if (activeId !== undefined && availableIds.has(activeId)) {
+    return {
+      pendingIds: [activeId, ...nextPending.filter((id) => id !== activeId)],
+      revisitIds: nextRevisit.filter((id) => id !== activeId),
+      keptItemIds,
+    };
+  }
   return {
-    pendingIds: orderedIds.filter((id) => pendingIds.has(id) || !knownIds.has(id)),
-    revisitIds: orderedIds.filter((id) => revisitIds.has(id)),
+    pendingIds: nextPending,
+    revisitIds: nextRevisit,
     keptItemIds,
   };
 }

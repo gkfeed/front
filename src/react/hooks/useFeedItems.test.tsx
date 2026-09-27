@@ -33,12 +33,13 @@ const CURRENT_ITEM: FeedItem = {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.resetAllMocks();
 });
 
 describe('useFeedItems', () => {
   it('uses a fresh cache as an initial snapshot and revalidates in background', async () => {
-    vi.mocked(readFeedItemsCache).mockResolvedValue([DELETED_ITEM, CURRENT_ITEM]);
+    vi.mocked(readFeedItemsCache).mockResolvedValue({ items: [DELETED_ITEM, CURRENT_ITEM] });
     let finishRevalidation!: (items: FeedItem[]) => void;
     vi.mocked(getFeedItems).mockImplementation(() => new Promise<FeedItem[]>((resolve) => {
       finishRevalidation = resolve;
@@ -47,16 +48,16 @@ describe('useFeedItems', () => {
     const { result } = renderHook(() => useFeedItems(CREDENTIALS));
 
     await waitFor(() => expect(result.current.loadedItems).toEqual([DELETED_ITEM, CURRENT_ITEM]));
-    expect(readFeedItemsCache).toHaveBeenCalledWith('reader', 15_000);
-    expect(result.current.isSyncComplete).toBe(false);
+    expect(readFeedItemsCache).toHaveBeenCalledWith('reader');
+    expect(result.current.isSyncComplete).toBe(true);
     expect(getFeedItems).toHaveBeenCalledOnce();
     await act(async () => finishRevalidation([CURRENT_ITEM]));
     await waitFor(() => expect(result.current.isSyncComplete).toBe(true));
     expect(result.current.loadedItems).toEqual([CURRENT_ITEM]);
-    expect(writeFeedItemsCache).toHaveBeenCalledWith('reader', [CURRENT_ITEM]);
+    expect(writeFeedItemsCache).not.toHaveBeenCalled();
   });
 
-  it('does not revalidate or change the snapshot when the window regains focus', async () => {
+  it('revalidates when the window regains focus', async () => {
     vi.mocked(readFeedItemsCache).mockResolvedValue(undefined);
     vi.mocked(getFeedItems).mockResolvedValue([CURRENT_ITEM]);
 
@@ -65,8 +66,23 @@ describe('useFeedItems', () => {
     const initialItems = result.current.loadedItems;
 
     await act(async () => fireEvent.focus(window));
-    expect(getFeedItems).toHaveBeenCalledOnce();
+    expect(getFeedItems).toHaveBeenCalledTimes(2);
     expect(result.current.loadedItems).toBe(initialItems);
+  });
+
+  it('checks for changes every minute while the tab is visible', async () => {
+    const interval = vi.spyOn(window, 'setInterval');
+    vi.mocked(readFeedItemsCache).mockResolvedValue(undefined);
+    vi.mocked(getFeedItems).mockResolvedValue([CURRENT_ITEM]);
+
+    const { result } = renderHook(() => useFeedItems(CREDENTIALS));
+    await waitFor(() => expect(result.current.isSyncComplete).toBe(true));
+    expect(getFeedItems).toHaveBeenCalledOnce();
+    expect(interval).toHaveBeenCalledWith(expect.any(Function), 60_000);
+    const poll = interval.mock.calls.find(([, delay]) => delay === 60_000)?.[0];
+
+    await act(async () => (poll as (() => void) | undefined)?.());
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
   });
 
   it('starts with 10 items and publishes each accumulated cursor page', async () => {
@@ -130,14 +146,14 @@ describe('useFeedItems', () => {
   });
 
   it('bypasses the cache only after an explicit retry', async () => {
-    vi.mocked(readFeedItemsCache).mockResolvedValue([DELETED_ITEM]);
+    vi.mocked(readFeedItemsCache).mockResolvedValue({ items: [DELETED_ITEM] });
     let finishInitialLoad!: (items: FeedItem[]) => void;
     vi.mocked(getFeedItems).mockImplementation(() => new Promise<FeedItem[]>((resolve) => {
       finishInitialLoad = resolve;
     }));
     const { result } = renderHook(() => useFeedItems(CREDENTIALS));
     await waitFor(() => expect(result.current.loadedItems).toEqual([DELETED_ITEM]));
-    expect(result.current.isSyncComplete).toBe(false);
+    expect(result.current.isSyncComplete).toBe(true);
     await act(async () => finishInitialLoad([CURRENT_ITEM]));
     await waitFor(() => expect(result.current.isSyncComplete).toBe(true));
     expect(result.current.loadedItems).toEqual([CURRENT_ITEM]);
@@ -148,7 +164,7 @@ describe('useFeedItems', () => {
     act(result.current.retry);
 
     await waitFor(() => expect(result.current.loadedItems).toEqual([DELETED_ITEM]));
-    expect(readFeedItemsCache).toHaveBeenCalledOnce();
+    expect(readFeedItemsCache).toHaveBeenCalledTimes(2);
     expect(getFeedItems).toHaveBeenCalledTimes(2);
   });
 

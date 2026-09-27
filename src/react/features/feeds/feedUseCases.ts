@@ -31,6 +31,7 @@ export function createFeedUseCases({
     ...createFeedQueryUseCases(queryPort),
     ...createFeedCommandUseCases(commandPort, metadataPort, queryPort),
     invalidateFeedItemsCache: feedItems.invalidate,
+    removeFeedItemFromCache: feedItems.remove,
     loadFeedItems: feedItems.load,
   };
 }

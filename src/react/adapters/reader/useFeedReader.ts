@@ -39,7 +39,7 @@ export function useFeedReader({
     error: loadError,
     isLoading: isFeedLoading,
     isSyncComplete,
-    invalidateCache,
+    removeCachedItem,
     retry,
   } = useFeedItems(credentials);
   const {
@@ -88,11 +88,11 @@ export function useFeedReader({
       void deleteRemoteItem(deletion.itemId)
         .then(() => {
           deletionSucceeded(deletion.itemId, deletion.operationId);
-          invalidateCache();
+          removeCachedItem(deletion.itemId);
         })
         .catch(() => deletionFailed(deletion.itemId, deletion.operationId));
     });
-  }, [deleteRemoteItem, deletionFailed, deletionSucceeded, deletions, invalidateCache]);
+  }, [deleteRemoteItem, deletionFailed, deletionSucceeded, deletions, removeCachedItem]);
 
   const keepItem = useCallback(() => {
     if (!currentItem) return;
