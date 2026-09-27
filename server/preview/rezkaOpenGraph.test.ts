@@ -221,4 +221,106 @@ describe('Rezka OpenGraph provider', () => {
       alternateUrl.href,
     ]);
   });
+
+  it('recovers a cartoon preview when only its latest page exists', async () => {
+    const requestedUrl = new URL(
+      'https://hdrezka.me/cartoons/comedy/90746-prezident-kertis-2026-latest.html',
+    );
+    requestPublicHttp.mockImplementation((url: URL) => {
+      if (!url.pathname.endsWith('-latest.html')) {
+        return Promise.resolve({
+          body: { destroy: vi.fn() },
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+          status: 500,
+          url,
+        });
+      }
+      return Promise.resolve(gzipHtmlResponse(
+        '<meta property="og:title" content="Президент Кертис (2026)">'
+          + '<meta property="og:image" content="https://static.hdrezka.ac/i/2026/7/15/d6cf1e8fae28fae55c97r.jpg">',
+        url,
+      ));
+    });
+
+    await expect(fetchOpenGraph(requestedUrl.href)).resolves.toMatchObject({
+      title: 'Президент Кертис (2026)',
+      image: 'https://static.hdrezka.ac/i/2026/7/15/d6cf1e8fae28fae55c97r.jpg',
+      url: 'https://rezka.ag/cartoons/comedy/90746-prezident-kertis-2026-latest.html',
+    });
+    expect(requestPublicHttp.mock.calls.map(([url]) => url.href)).toEqual([
+      'https://rezka.ag/cartoons/comedy/90746-prezident-kertis-2026.html',
+      'https://hdrezka.me/cartoons/comedy/90746-prezident-kertis-2026.html',
+      'https://rezka.ag/cartoons/comedy/90746-prezident-kertis-2026-latest.html',
+    ]);
+  });
+
+  it('finds a renamed film by its Rezka ID in search results', async () => {
+    const requestedUrl = new URL(
+      'https://hdrezka.me/films/drama/89473-soperniki-amzii-king-2025.html',
+    );
+    const renamedUrl = new URL(
+      'https://rezka.ag/films/drama/89473-soperniki-amzia-kinga-2025-latest.html',
+    );
+    requestPublicHttp.mockImplementation((url: URL) => {
+      if (url.pathname === '/search/') {
+        return Promise.resolve(gzipHtmlResponse(
+          '<div class="b-content__inline_item" data-id="89473"'
+            + ` data-url="${renamedUrl.href}"></div>`,
+          url,
+        ));
+      }
+      if (url.href === renamedUrl.href) {
+        return Promise.resolve(gzipHtmlResponse(
+          '<meta property="og:title" content="Соперники Амзиа Кинга (2025)">'
+            + '<meta property="og:image" content="https://static.hdrezka.ac/i/2026/9/17/kb2d00ea21dcbzm89g59b.jpg">',
+          url,
+        ));
+      }
+      return Promise.resolve({
+        body: { destroy: vi.fn() },
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+        status: 500,
+        url,
+      });
+    });
+
+    await expect(fetchOpenGraph(requestedUrl.href)).resolves.toMatchObject({
+      title: 'Соперники Амзиа Кинга (2025)',
+      image: 'https://static.hdrezka.ac/i/2026/9/17/kb2d00ea21dcbzm89g59b.jpg',
+      url: renamedUrl.href,
+    });
+    expect(requestPublicHttp.mock.calls.map(([url]) => url.href)).toEqual([
+      'https://rezka.ag/films/drama/89473-soperniki-amzii-king-2025.html',
+      requestedUrl.href,
+      'https://rezka.ag/films/drama/89473-soperniki-amzii-king-2025-latest.html',
+      'https://hdrezka.me/films/drama/89473-soperniki-amzii-king-2025-latest.html',
+      'https://rezka.ag/films/drama/89473-soperniki-amzii-king-2025-u.html',
+      'https://hdrezka.me/films/drama/89473-soperniki-amzii-king-2025-u.html',
+      'https://rezka.ag/search/?do=search&subaction=search&q=soperniki-amzii-king-2025',
+      renamedUrl.href,
+    ]);
+  });
+
+  it.each([
+    '<div data-id="89474" data-url="https://rezka.ag/films/drama/89474-other.html"></div>',
+    '<div data-id="89473" data-url="https://example.com/films/drama/89473-other.html"></div>',
+  ])('rejects unrelated search results: %s', async (searchResult) => {
+    requestPublicHttp.mockImplementation((url: URL) => {
+      if (url.pathname === '/search/') {
+        return Promise.resolve(gzipHtmlResponse(searchResult, url));
+      }
+      return Promise.resolve({
+        body: { destroy: vi.fn() },
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+        status: 500,
+        url,
+      });
+    });
+
+    await expect(fetchOpenGraph(
+      'https://hdrezka.me/films/drama/89473-soperniki-amzii-king-2025.html',
+    )).rejects.toMatchObject({ kind: 'upstream_error' });
+    expect(requestPublicHttp.mock.calls.map(([url]) => url.hostname))
+      .not.toContain('example.com');
+  });
 });

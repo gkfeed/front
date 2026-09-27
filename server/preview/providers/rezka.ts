@@ -6,6 +6,7 @@ import { parseOpenGraph } from '../openGraphParser.js';
 import { PreviewError } from '../errors.js';
 
 const REZKA_USER_AGENT = 'TelegramBot (like TwitterBot)';
+const REZKA_ITEM_PATH = /^\/(?:films|series|animation|cartoons)\/[^/]+\/(\d+)-([a-z0-9-]+)\.html$/;
 
 export const rezkaOpenGraphAdapter: OpenGraphProviderAdapter = {
   matches: isRezkaUrl,
@@ -13,12 +14,33 @@ export const rezkaOpenGraphAdapter: OpenGraphProviderAdapter = {
     let firstPreview: ReturnType<typeof parseRezkaOpenGraph> | null = null;
     let lastError: unknown = null;
 
-    for (const url of getRezkaPreviewUrls(requestedUrl)) {
+    const previewUrls = getRezkaPreviewUrls(requestedUrl);
+    for (const url of previewUrls) {
       try {
         const page = await fetchHtml(url, REZKA_USER_AGENT, {}, context);
         const preview = parseRezkaOpenGraph(page.html, page.url);
         if (preview.image) return preview;
         firstPreview ??= preview;
+      } catch (error) {
+        if (context?.signal.aborted) throw error;
+        lastError = error;
+      }
+    }
+
+    const searchUrl = getRezkaSearchUrl(requestedUrl);
+    if (searchUrl) {
+      try {
+        const searchPage = await fetchHtml(searchUrl, REZKA_USER_AGENT, {
+          maxBytes: 256_000,
+          truncateAtLimit: true,
+        }, context);
+        const matchUrl = parseRezkaSearchResult(searchPage.html, requestedUrl);
+        if (matchUrl && !previewUrls.some((url) => url.href === matchUrl.href)) {
+          const page = await fetchHtml(matchUrl, REZKA_USER_AGENT, {}, context);
+          const preview = parseRezkaOpenGraph(page.html, page.url);
+          if (preview.image) return preview;
+          firstPreview ??= preview;
+        }
       } catch (error) {
         if (context?.signal.aborted) throw error;
         lastError = error;
@@ -60,16 +82,14 @@ function withRezkaHost(url: URL, host: string): URL {
 }
 
 function getRezkaLatestUrl(url: URL): URL | null {
-  if (!/^\/(?:films|series|animation)\//.test(url.pathname) || !url.pathname.endsWith('.html')
-    || url.pathname.endsWith('-latest.html')) return null;
+  if (!REZKA_ITEM_PATH.test(url.pathname) || url.pathname.endsWith('-latest.html')) return null;
   const result = new URL(url.href);
   result.pathname = result.pathname.replace(/\.html$/, '-latest.html');
   return result;
 }
 
 function getRezkaAlternateUrl(url: URL): URL | null {
-  if (!/^\/(?:films|series|animation)\/[^/]+\/\d+-[^/]+\.html$/.test(url.pathname)
-    || url.pathname.endsWith('-u.html')) return null;
+  if (!REZKA_ITEM_PATH.test(url.pathname) || url.pathname.endsWith('-u.html')) return null;
   const result = new URL(url.href);
   result.pathname = result.pathname.replace(/\.html$/, '-u.html');
   return result;
@@ -80,6 +100,36 @@ function getRezkaBaseUrl(url: URL): URL {
   const result = new URL(url.href);
   result.pathname = result.pathname.replace(/-latest\.html$/, '.html');
   return result;
+}
+
+function getRezkaSearchUrl(url: URL): URL | null {
+  const slug = url.pathname.match(REZKA_ITEM_PATH)?.[2]
+    ?.replace(/-latest$/, '').replace(/-u$/, '');
+  if (!slug || slug.length > 150) return null;
+  const searchUrl = new URL('https://rezka.ag/search/');
+  searchUrl.searchParams.set('do', 'search');
+  searchUrl.searchParams.set('subaction', 'search');
+  searchUrl.searchParams.set('q', slug);
+  return searchUrl;
+}
+
+function parseRezkaSearchResult(html: string, requestedUrl: URL): URL | null {
+  const id = requestedUrl.pathname.match(REZKA_ITEM_PATH)?.[1];
+  if (!id) return null;
+  for (const tag of html.match(/<div\b[^>]*\bdata-id\s*=\s*["']?\d+[^>]*>/gi) ?? []) {
+    const attributes = parseAttributes(tag);
+    if (attributes['data-id'] !== id || !attributes['data-url']) continue;
+    try {
+      const url = new URL(attributes['data-url']);
+      if (url.protocol === 'https:' && normalizeHostname(url.hostname) === 'rezka.ag'
+        && url.pathname.match(REZKA_ITEM_PATH)?.[1] === id) {
+        return url;
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
 }
 
 export function parseRezkaOriginalCover(html: string, pageUrl: URL): string | null {
