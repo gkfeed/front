@@ -364,9 +364,14 @@ function reconcileProgress(progress: ReviewProgress, orderedIds: number[]): Revi
   const nextPending = orderedIds.filter((id) => pendingIds.has(id) || !knownIds.has(id));
   const nextRevisit = orderedIds.filter((id) => revisitIds.has(id));
   if (activeId !== undefined && availableIds.has(activeId)) {
+    const activeIsPending = pendingIds.has(activeId);
     return {
-      pendingIds: [activeId, ...nextPending.filter((id) => id !== activeId)],
-      revisitIds: nextRevisit.filter((id) => id !== activeId),
+      pendingIds: activeIsPending
+        ? [activeId, ...nextPending.filter((id) => id !== activeId)]
+        : nextPending,
+      revisitIds: activeIsPending
+        ? nextRevisit
+        : [activeId, ...nextRevisit.filter((id) => id !== activeId)],
       keptItemIds,
     };
   }

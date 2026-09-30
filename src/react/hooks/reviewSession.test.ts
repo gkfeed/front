@@ -18,6 +18,32 @@ const presentation: ReviewPresentation = {
 };
 
 describe('review session', () => {
+  it('keeps the active revisit in its queue across an unchanged refresh', () => {
+    let state = snapshot(startSession(null), [1], true);
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+
+    state = snapshot(state, [1], true);
+
+    expect(state.progress.pendingIds).toEqual([]);
+    expect(state.progress.revisitIds).toEqual([1]);
+    expect(getActiveReviewIds(state)).toEqual([1]);
+
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+    expect(getActiveReviewIds(state)).toEqual([]);
+  });
+
+  it('preserves revisits when a refresh adds new pending cards', () => {
+    let state = snapshot(startSession(null), [2, 1], true);
+    state = reviewSessionReducer(state, { type: 'keep', id: 2 });
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+
+    state = snapshot(state, [3, 2, 1], true);
+
+    expect(state.progress).toEqual({
+      pendingIds: [3], revisitIds: [2, 1], keptItemIds: new Set([2, 1]),
+    });
+  });
+
   it('restores progress and waits for a completed reload before adding new cards', () => {
     let state = startSession({
       pendingIds: [3, 2],

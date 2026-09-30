@@ -34,10 +34,74 @@ afterEach(() => {
   cleanup();
   window.sessionStorage.clear();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.resetAllMocks();
 });
 
 describe('TikTokComments', () => {
+  it('traps focus only in the mobile Review dialog and restores it on Escape', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockReturnValue(document.body);
+    vi.mocked(fetchTikTokComments).mockResolvedValue(emptyComments);
+    render(<div className="reader__item--tiktok"><TikTokComments item={item} /></div>);
+    const show = screen.getByRole('button', { name: 'Show comments' });
+    show.focus();
+    fireEvent.click(show);
+
+    const dialog = await screen.findByRole('dialog');
+    expect(document.activeElement).toBe(dialog);
+    const copy = screen.getByRole('button', { name: 'Copy link' });
+    copy.focus();
+    expect(fireEvent.keyDown(copy, { key: 'Tab', shiftKey: true })).toBe(false);
+    expect(document.activeElement).toBe(dialog.querySelector('a'));
+    fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(show);
+  });
+
+  it('releases the mobile dialog when the viewport becomes desktop', async () => {
+    let onChange!: () => void;
+    const mediaQuery = {
+      matches: true,
+      addEventListener: vi.fn((_event: string, listener: () => void) => { onChange = listener; }),
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal('matchMedia', () => mediaQuery);
+    vi.mocked(fetchTikTokComments).mockResolvedValue(emptyComments);
+    const view = render(<div className="reader__item--tiktok"><TikTokComments item={item} /></div>);
+    const show = screen.getByRole('button', { name: 'Show comments' });
+    show.focus();
+    fireEvent.click(show);
+    await screen.findByRole('dialog');
+
+    act(() => { mediaQuery.matches = false; onChange(); });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(show);
+    expect(screen.getByRole('button', { name: 'Hide comments' })).toBeTruthy();
+    view.unmount();
+    expect(mediaQuery.removeEventListener).toHaveBeenCalledWith('change', onChange);
+  });
+
+  it('preserves focus and normal Tab navigation when expanding multiple inline panels', async () => {
+    vi.mocked(fetchTikTokComments).mockResolvedValue(emptyComments);
+    render(<>
+      <TikTokComments item={item} />
+      <TikTokComments item={{ ...item, id: 13, link: 'https://www.tiktok.com/@creator/video/456' }} />
+      <button type="button">Outside comments</button>
+    </>);
+    const show = screen.getAllByRole('button', { name: 'Show comments' })[0]!;
+    show.focus();
+    fireEvent.click(show);
+
+    await screen.findAllByRole('button', { name: 'Hide comments' });
+    expect(document.activeElement).toBe(show);
+    expect(screen.queryAllByRole('dialog')).toHaveLength(0);
+    const outside = screen.getByRole('button', { name: 'Outside comments' });
+    outside.focus();
+    expect(fireEvent.keyDown(outside, { key: 'Tab' })).toBe(true);
+    expect(document.activeElement).toBe(outside);
+  });
+
   it('copies the TikTok link and confirms success', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', {

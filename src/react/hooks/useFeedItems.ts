@@ -42,7 +42,7 @@ export function useFeedItems(credentials: Credentials | null) {
               loadedItems: cachedItems,
               status: 'success',
               error: null,
-              isSyncComplete: true,
+              isSyncComplete: false,
             });
           },
           onProgress: (partialItems) => {

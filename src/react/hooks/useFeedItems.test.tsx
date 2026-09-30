@@ -11,11 +11,17 @@ import {
 import { getFeedItems } from '../services/feeds';
 import type { FeedItem } from '../types';
 import { useFeedItems } from './useFeedItems';
+import { useReviewSession } from './useReviewSession';
+import { getReviewStateStorageKey, readReviewState, writeReviewState } from './reviewStateStorage';
+import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 
 vi.mock('../services/feedItemsCache');
 vi.mock('../services/feeds');
 
 const CREDENTIALS = { username: 'reader', password: 'secret' };
+const REVIEW_PRESENTATION = {
+  itemOrder: 'desc', nsfwMode: 'show', hideTikTokItems: false, feedPriorities: {},
+} as const;
 const DELETED_ITEM: FeedItem = {
   id: 10,
   feedId: 2,
@@ -33,6 +39,7 @@ const CURRENT_ITEM: FeedItem = {
 
 afterEach(() => {
   cleanup();
+  restoreLocalStorage();
   vi.restoreAllMocks();
   vi.resetAllMocks();
 });
@@ -49,7 +56,7 @@ describe('useFeedItems', () => {
 
     await waitFor(() => expect(result.current.loadedItems).toEqual([DELETED_ITEM, CURRENT_ITEM]));
     expect(readFeedItemsCache).toHaveBeenCalledWith('reader');
-    expect(result.current.isSyncComplete).toBe(true);
+    expect(result.current.isSyncComplete).toBe(false);
     expect(getFeedItems).toHaveBeenCalledOnce();
     await act(async () => finishRevalidation([CURRENT_ITEM]));
     await waitFor(() => expect(result.current.isSyncComplete).toBe(true));
@@ -68,6 +75,33 @@ describe('useFeedItems', () => {
     await act(async () => fireEvent.focus(window));
     expect(getFeedItems).toHaveBeenCalledTimes(2);
     expect(result.current.loadedItems).toBe(initialItems);
+  });
+
+  it('preserves saved decisions missing from a stale cache until revalidation completes', async () => {
+    stubLocalStorage();
+    const key = getReviewStateStorageKey(CREDENTIALS.username);
+    writeReviewState(key, {
+      pendingIds: [CURRENT_ITEM.id], revisitIds: [], keptItemIds: new Set([DELETED_ITEM.id]),
+    });
+    vi.mocked(readFeedItemsCache).mockResolvedValue({ items: [CURRENT_ITEM] });
+    let finishLoad!: (items: FeedItem[]) => void;
+    vi.mocked(getFeedItems).mockImplementation(() => new Promise((resolve) => { finishLoad = resolve; }));
+    const { result } = renderHook(() => {
+      const loaded = useFeedItems(CREDENTIALS);
+      return useReviewSession({
+        loadedItems: loaded.loadedItems,
+        username: CREDENTIALS.username,
+        isSyncComplete: loaded.isSyncComplete,
+        isSyncFailed: loaded.status === 'error',
+        ...REVIEW_PRESENTATION,
+      });
+    });
+
+    await waitFor(() => expect(result.current.items).toEqual([CURRENT_ITEM]));
+    expect(readReviewState(key)?.keptItemIds.has(DELETED_ITEM.id)).toBe(true);
+    await act(async () => finishLoad([DELETED_ITEM, CURRENT_ITEM]));
+    expect(result.current.activeReviewIds).toEqual([CURRENT_ITEM.id]);
+    expect(readReviewState(key)?.keptItemIds.has(DELETED_ITEM.id)).toBe(true);
   });
 
   it('checks for changes every minute while the tab is visible', async () => {
@@ -153,7 +187,7 @@ describe('useFeedItems', () => {
     }));
     const { result } = renderHook(() => useFeedItems(CREDENTIALS));
     await waitFor(() => expect(result.current.loadedItems).toEqual([DELETED_ITEM]));
-    expect(result.current.isSyncComplete).toBe(true);
+    expect(result.current.isSyncComplete).toBe(false);
     await act(async () => finishInitialLoad([CURRENT_ITEM]));
     await waitFor(() => expect(result.current.isSyncComplete).toBe(true));
     expect(result.current.loadedItems).toEqual([CURRENT_ITEM]);
