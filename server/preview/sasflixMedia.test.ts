@@ -161,6 +161,7 @@ describe('Sasflix media proxy', () => {
       new URL('https://mirror.sasflix.ru/sasflix/a/video.ts?signature=signed'),
       expect.objectContaining({ range: 'bytes=0-2' }),
       context,
+      { streamBody: true },
     );
   });
 

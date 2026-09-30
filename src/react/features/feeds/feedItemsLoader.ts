@@ -8,7 +8,7 @@ export type LoadFeedItemsOptions = {
   bypassCache?: boolean;
   signal?: AbortSignal;
   onCached?: (items: FeedItem[]) => void;
-  onProgress?: (items: FeedItem[]) => boolean | void;
+  onProgress?: (items: FeedItem[], isSnapshotComplete?: boolean) => boolean | void;
 };
 
 const NO_FEED_ITEMS_CACHE: FeedItemsCachePort = {
@@ -101,6 +101,11 @@ export function createFeedItemsLoader(
           cursor: page.nextCursor,
         };
         await commitSnapshot(snapshot);
+        signal?.throwIfAborted();
+        // A change page updates a full baseline, even while more changes remain.
+        const shouldContinue = onProgress?.(snapshot.items, true);
+        signal?.throwIfAborted();
+        if (shouldContinue === false) return snapshot;
         if (!page.hasMore) return snapshot;
         if (seenCursors.has(page.nextCursor)) throw new Error('Invalid API response');
         seenCursors.add(page.nextCursor);

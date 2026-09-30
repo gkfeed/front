@@ -31,6 +31,7 @@ export async function requestPublicHttp(
   input: URL,
   headers: Record<string, string>,
   context?: RequestExecutionContext,
+  { streamBody = false }: { streamBody?: boolean } = {},
 ): Promise<PublicHttpResponse> {
   const requestContext = context ?? createDetachedRequestExecutionContext();
   const address = await resolvePublicAddress(input, requestContext);
@@ -54,6 +55,7 @@ export async function requestPublicHttp(
       lookup: createPinnedLookup(address),
     } satisfies RequestOptions, (response) => {
       responseBody = response;
+      if (streamBody) clearTimeout(totalTimeout);
       response.setTimeout(REMOTE_REQUEST_TIMEOUT_MS, () => {
         response.destroy(new PublicHttpError('timeout'));
       });

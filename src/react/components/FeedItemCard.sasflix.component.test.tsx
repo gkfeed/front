@@ -10,6 +10,7 @@ describe('FeedItemCard Sasflix player', () => {
   const sasflixStorage = new Map<string, string>();
 
   beforeEach(() => {
+    vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockReturnValue('probably');
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
       value: {
@@ -21,7 +22,10 @@ describe('FeedItemCard Sasflix player', () => {
     });
   });
 
-  afterEach(() => sasflixStorage.clear());
+  afterEach(() => {
+    sasflixStorage.clear();
+    vi.restoreAllMocks();
+  });
 
   it('opens the public HLS stream in theater mode', async () => {
     getPreview.mockResolvedValue({

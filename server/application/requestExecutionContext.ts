@@ -2,6 +2,8 @@ export interface RequestExecutionContext {
   readonly signal: AbortSignal;
   readonly deadline: number;
   remainingMs(maximum?: number): number;
+  /** Release the total deadline after media headers arrive; disconnects still abort. */
+  startStreaming?(): void;
 }
 
 export function createDetachedRequestExecutionContext(): RequestExecutionContext {

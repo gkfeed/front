@@ -9,6 +9,7 @@ import {
   writeFeedItemsCache,
 } from '../services/feedItemsCache';
 import { getFeedItems } from '../services/feeds';
+import { getFeedItemChanges } from '../services/feedItems';
 import type { FeedItem } from '../types';
 import { useFeedItems } from './useFeedItems';
 import { useReviewSession } from './useReviewSession';
@@ -17,6 +18,7 @@ import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 
 vi.mock('../services/feedItemsCache');
 vi.mock('../services/feeds');
+vi.mock('../services/feedItems');
 
 const CREDENTIALS = { username: 'reader', password: 'secret' };
 const REVIEW_PRESENTATION = {
@@ -45,6 +47,39 @@ afterEach(() => {
 });
 
 describe('useFeedItems', () => {
+  it('shows committed change pages and removes confirmed deletions when later changes fail', async () => {
+    stubLocalStorage();
+    vi.mocked(readFeedItemsCache).mockResolvedValue({ items: [DELETED_ITEM], cursor: 'saved' });
+    let finishFirstPage!: (page: Awaited<ReturnType<typeof getFeedItemChanges>>) => void;
+    vi.mocked(getFeedItemChanges)
+      .mockImplementationOnce(() => new Promise((resolve) => { finishFirstPage = resolve; }))
+      .mockRejectedValueOnce(new Error('Later change page failed'));
+    const { result } = renderHook(() => {
+      const loaded = useFeedItems(CREDENTIALS);
+      const session = useReviewSession({
+        loadedItems: loaded.loadedItems,
+        username: CREDENTIALS.username,
+        isSyncComplete: loaded.isSyncComplete,
+        isSnapshotComplete: loaded.isSnapshotComplete,
+        isSyncFailed: loaded.status === 'error',
+        ...REVIEW_PRESENTATION,
+      });
+      return { loaded, session };
+    });
+    await waitFor(() => expect(result.current.session.items).toEqual([DELETED_ITEM]));
+
+    await act(async () => finishFirstPage({
+      upserted: [CURRENT_ITEM], deletedIds: [DELETED_ITEM.id], nextCursor: 'page2', hasMore: true,
+    }));
+
+    await waitFor(() => expect(result.current.loaded.status).toBe('error'));
+    expect(result.current.loaded.isSyncComplete).toBe(false);
+    expect(result.current.loaded.loadedItems).toEqual([CURRENT_ITEM]);
+    expect(result.current.session.items).toEqual([CURRENT_ITEM]);
+    expect(result.current.session.activeReviewIds).toEqual([CURRENT_ITEM.id]);
+    expect(writeFeedItemsCache).toHaveBeenCalledWith('reader', { items: [CURRENT_ITEM], cursor: 'page2' });
+  });
+
   it('uses a fresh cache as an initial snapshot and revalidates in background', async () => {
     vi.mocked(readFeedItemsCache).mockResolvedValue({ items: [DELETED_ITEM, CURRENT_ITEM] });
     let finishRevalidation!: (items: FeedItem[]) => void;

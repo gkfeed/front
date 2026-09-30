@@ -5,6 +5,7 @@ import type { RequestExecutionContext } from '../application/requestExecutionCon
 
 export interface HttpRequestContext extends RequestExecutionContext {
   readonly clientAborted: boolean;
+  startStreaming(): void;
   dispose(): void;
 }
 
@@ -14,7 +15,7 @@ export function createHttpRequestContext(
   timeoutMs = REQUEST_DEADLINE_MS,
 ): HttpRequestContext {
   const controller = new AbortController();
-  const deadline = Date.now() + timeoutMs;
+  let deadline = Date.now() + timeoutMs;
   let clientAborted = false;
   let disposed = false;
 
@@ -38,12 +39,19 @@ export function createHttpRequestContext(
 
   return {
     signal: controller.signal,
-    deadline,
+    get deadline() {
+      return deadline;
+    },
     get clientAborted() {
       return clientAborted;
     },
     remainingMs(maximum = Number.POSITIVE_INFINITY) {
       return Math.max(0, Math.min(maximum, deadline - Date.now()));
+    },
+    startStreaming() {
+      if (disposed || controller.signal.aborted) return;
+      clearTimeout(timeout);
+      deadline = Number.POSITIVE_INFINITY;
     },
     dispose() {
       if (disposed) return;

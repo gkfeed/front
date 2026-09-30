@@ -39,6 +39,7 @@ export function useFeedReader({
     error: loadError,
     isLoading: isFeedLoading,
     isSyncComplete,
+    isSnapshotComplete,
     removeCachedItem,
     retry,
   } = useFeedItems(credentials);
@@ -57,6 +58,7 @@ export function useFeedReader({
     loadedItems,
     username: credentials?.username ?? null,
     isSyncComplete,
+    isSnapshotComplete,
     isSyncFailed: status === 'error',
     itemOrder,
     nsfwMode,

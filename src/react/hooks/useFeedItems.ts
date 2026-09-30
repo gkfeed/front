@@ -8,6 +8,7 @@ type FeedItemsState = {
   status: 'loading' | 'success' | 'error';
   error: Error | null;
   isSyncComplete: boolean;
+  isSnapshotComplete: boolean;
 };
 
 const INITIAL_STATE: FeedItemsState = {
@@ -15,6 +16,7 @@ const INITIAL_STATE: FeedItemsState = {
   status: 'loading',
   error: null,
   isSyncComplete: false,
+  isSnapshotComplete: false,
 };
 const POLL_INTERVAL_MS = 60_000;
 
@@ -43,22 +45,30 @@ export function useFeedItems(credentials: Credentials | null) {
               status: 'success',
               error: null,
               isSyncComplete: false,
+              isSnapshotComplete: false,
             });
           },
-          onProgress: (partialItems) => {
+          onProgress: (partialItems, isSnapshotComplete = false) => {
             if (!active || controller.signal.aborted) return false;
             setState({
               loadedItems: partialItems,
               status: 'success',
               error: null,
               isSyncComplete: false,
+              isSnapshotComplete,
             });
             return true;
           },
         });
         if (!active || controller.signal.aborted) return;
 
-        setState({ loadedItems: items, status: 'success', error: null, isSyncComplete: true });
+        setState({
+          loadedItems: items,
+          status: 'success',
+          error: null,
+          isSyncComplete: true,
+          isSnapshotComplete: true,
+        });
       } catch (error) {
         if (!active || controller.signal.aborted) return;
         const normalizedError = error instanceof Error ? error : new Error(String(error));
@@ -67,6 +77,7 @@ export function useFeedItems(credentials: Credentials | null) {
           status: 'error',
           error: normalizedError,
           isSyncComplete: false,
+          isSnapshotComplete: currentState.isSnapshotComplete,
         }));
       } finally {
         pending = false;

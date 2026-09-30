@@ -13,6 +13,7 @@ export function useReviewSession({
   loadedItems,
   username,
   isSyncComplete,
+  isSnapshotComplete = isSyncComplete,
   isSyncFailed,
   itemOrder,
   nsfwMode,
@@ -22,6 +23,7 @@ export function useReviewSession({
   loadedItems: FeedItem[] | undefined;
   username: string | null;
   isSyncComplete: boolean;
+  isSnapshotComplete?: boolean;
   isSyncFailed: boolean;
 }) {
   const storageKey = username ? getReviewStateStorageKey(username) : null;
@@ -51,8 +53,8 @@ export function useReviewSession({
   }, [storageKey]);
 
   useEffect(() => {
-    dispatch({ type: 'snapshotChanged', items: loadedItems, isComplete: isSyncComplete });
-  }, [isSyncComplete, loadedItems, storageKey]);
+    dispatch({ type: 'snapshotChanged', items: loadedItems, isComplete: isSnapshotComplete });
+  }, [isSnapshotComplete, loadedItems, storageKey]);
 
   useEffect(() => {
     if (isSyncFailed) dispatch({ type: 'syncFailed' });

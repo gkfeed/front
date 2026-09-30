@@ -60,6 +60,21 @@ describe('feed use cases', () => {
     expect(ports.itemsPort.getFeedItemChanges).toHaveBeenCalledWith(credentials, 'sync', undefined);
   });
 
+  it('publishes each committed change snapshot before a later page fails', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [cachedItem], cursor: 'saved' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges)
+      .mockResolvedValueOnce({ upserted: [currentItem], deletedIds: [cachedItem.id], nextCursor: 'page2', hasMore: true })
+      .mockRejectedValueOnce(new Error('Later page failed'));
+    const onProgress = vi.fn();
+
+    await expect(createFeedUseCases(ports).loadFeedItems(credentials, { onProgress }))
+      .rejects.toThrow('Later page failed');
+
+    expect(ports.cachePort.write).toHaveBeenCalledWith('reader', { items: [currentItem], cursor: 'page2' });
+    expect(onProgress).toHaveBeenCalledExactlyOnceWith([currentItem], true);
+  });
+
   it('replays changes after the initial pages using their first sync cursor', async () => {
     const ports = createPorts();
     vi.mocked(ports.itemsPort.syncFeedItems).mockResolvedValue({ items: [cachedItem], cursor: 'first-page' });

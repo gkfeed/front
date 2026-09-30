@@ -35,7 +35,7 @@ export async function fetchSasflixMedia(
   };
   if (range) headers.range = range;
 
-  const media = await requestPublicHttp(url, headers, context).catch((error: unknown) => {
+  const media = await requestPublicHttp(url, headers, context, { streamBody: true }).catch((error: unknown) => {
     throwPublicUrlError(error);
     throw new PreviewError('The Sasflix stream could not be fetched', 'fetch_failed');
   });

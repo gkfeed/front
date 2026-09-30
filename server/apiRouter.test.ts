@@ -1,4 +1,5 @@
 import type { ServerResponse } from 'node:http';
+import { Readable, Writable } from 'node:stream';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -61,6 +62,36 @@ function createUseCases(): PreviewUseCases {
 }
 
 describe('BFF HTTP router', () => {
+  it.each(['vk-video', 'sasflix-media'] as const)('releases the deadline after %s media headers arrive', async (route) => {
+    const useCases = createUseCases();
+    const requestContext = { ...context(new AbortController()), startStreaming: vi.fn() };
+    const chunks: Buffer[] = [];
+    const response = Object.assign(new Writable({
+      write(chunk, _encoding, callback) {
+        chunks.push(Buffer.from(chunk));
+        callback();
+      },
+    }), { writeHead: vi.fn() }) as unknown as ServerResponse;
+    const stream = route === 'vk-video' ? useCases.vkVideoStream : useCases.sasflixMedia;
+    vi.mocked(stream).mockImplementation(async () => {
+      expect(requestContext.startStreaming).not.toHaveBeenCalled();
+      return { body: Readable.from(['video']), status: 200, contentType: 'video/mp4', acceptRanges: 'bytes' };
+    });
+
+    await expect(handleBffRequest(
+      new URL(`http://localhost/bff/${route}?url=https%3A%2F%2Fexample.com`),
+      response,
+      requestContext,
+      useCases,
+      'stream-test',
+      undefined,
+      createBffResultCache(),
+    )).resolves.toBe(true);
+
+    expect(requestContext.startStreaming).toHaveBeenCalledOnce();
+    expect(Buffer.concat(chunks).toString()).toBe('video');
+  });
+
   it('dispatches JSON routes through application use cases', async () => {
     const response = createResponse();
     const useCases = createUseCases();

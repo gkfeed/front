@@ -75,6 +75,7 @@ describe('VK video proxy', () => {
         referer: 'https://vk.ru/',
       }),
       context,
+      { streamBody: true },
     );
   });
 

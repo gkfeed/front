@@ -138,6 +138,7 @@ export async function routeBffRequest(
         useCases.vkVideoSource(input, sharedContext)
       ), { context: requestContext, ttlMs: cacheTtlMs('/bff/vk-video') });
       const video = await useCases.vkVideoStream(source, requestRange, requestContext);
+      requestContext.startStreaming?.();
       await sendPreviewVideo(response, video);
     });
     return true;
@@ -147,6 +148,7 @@ export async function routeBffRequest(
     const input = getRequiredPreviewUrl(requestUrl);
     await sasflixMediaRequestGate.run(clientId, requestContext, async () => {
       const media = await useCases.sasflixMedia(input, requestRange, requestContext);
+      requestContext.startStreaming?.();
       await sendPreviewVideo(response, media);
     });
     return true;
