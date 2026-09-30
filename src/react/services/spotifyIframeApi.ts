@@ -113,10 +113,5 @@ export function loadSpotifyIframeApi(): Promise<SpotifyIframeApi> {
     spotifyIframeApiPromise = null;
   });
 
-  // Cache the resolved API for future synchronous returns after the promise fulfills.
-  void spotifyIframeApiPromise.then((api) => {
-    cachedSpotifyApi = api;
-  });
-
   return spotifyIframeApiPromise;
 }

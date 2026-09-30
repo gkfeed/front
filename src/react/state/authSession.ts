@@ -17,7 +17,7 @@ interface AuthSessionState {
 export function useAuthSession(authUseCases: AuthUseCases): AuthContextValue {
   const [storedCredentials] = useState(readStoredCredentials);
   const restorableCredentials = useRef(storedCredentials);
-  const restorationId = useRef(0);
+  const sessionAttemptId = useRef(0);
   const isMounted = useRef(false);
   const [session, setSession] = useState<AuthSessionState>(() => ({
     credentials: null,
@@ -28,22 +28,24 @@ export function useAuthSession(authUseCases: AuthUseCases): AuthContextValue {
     isMounted.current = true;
     return () => {
       isMounted.current = false;
-      restorationId.current += 1;
+      sessionAttemptId.current += 1;
     };
   }, []);
 
   const retryRestore = useCallback(async (): Promise<boolean> => {
     const saved = restorableCredentials.current;
     if (!saved) return false;
-    const attempt = ++restorationId.current;
+    const attempt = ++sessionAttemptId.current;
     setSession({ credentials: null, status: 'checking' });
     try {
-      const credentials = await authUseCases.restoreAuthentication(saved, removeStoredCredentials);
-      if (!isMounted.current || restorationId.current !== attempt) return false;
+      const credentials = await authUseCases.restoreAuthentication(saved, () => {
+        if (isMounted.current && sessionAttemptId.current === attempt) removeStoredCredentials();
+      });
+      if (!isMounted.current || sessionAttemptId.current !== attempt) return false;
       setSession({ credentials, status: 'authenticated' });
       return true;
     } catch (error) {
-      if (!isMounted.current || restorationId.current !== attempt) return false;
+      if (!isMounted.current || sessionAttemptId.current !== attempt) return false;
       const invalidCredentials = authUseCases.isAuthenticationError(error);
       if (invalidCredentials) restorableCredentials.current = null;
       setSession({
@@ -59,14 +61,23 @@ export function useAuthSession(authUseCases: AuthUseCases): AuthContextValue {
   }, [retryRestore, storedCredentials]);
 
   const authenticate = useCallback(async (credentials: Credentials) => {
-    await authUseCases.authenticateCredentials(credentials, writeStoredCredentials);
-    restorationId.current += 1;
+    const attempt = ++sessionAttemptId.current;
+    const requireCurrentAttempt = () => {
+      if (!isMounted.current || sessionAttemptId.current !== attempt) {
+        throw new DOMException('Authentication attempt superseded', 'AbortError');
+      }
+    };
+    await authUseCases.authenticateCredentials(credentials, (validatedCredentials) => {
+      requireCurrentAttempt();
+      writeStoredCredentials(validatedCredentials);
+    });
+    requireCurrentAttempt();
     restorableCredentials.current = null;
     setSession({ credentials, status: 'authenticated' });
   }, [authUseCases]);
 
   const clearCredentials = useCallback(() => {
-    restorationId.current += 1;
+    sessionAttemptId.current += 1;
     restorableCredentials.current = null;
     removeStoredCredentials();
     setSession({ credentials: null, status: 'anonymous' });

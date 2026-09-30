@@ -377,9 +377,8 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(parameters.get('autoplay')).toBe('1');
     expect(parameters.get('start')).toBe('108');
 
-    const speedToggle = screen.getByRole('button', { name: 'Playback speed: 2x' });
-    speedToggle.focus();
-    fireEvent.keyDown(speedToggle, { key: ' ' });
+    iframe.blur();
+    fireEvent.keyDown(document.body, { key: ' ' });
     expect(postMessage).toHaveBeenCalledWith(
       JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
       '*',
@@ -427,9 +426,8 @@ describe('FeedItemCard YouTube and general states', () => {
 
     const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
     const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
-    const speedToggle = screen.getByRole('button', { name: 'Playback speed: 2x' });
-    speedToggle.focus();
-    fireEvent.keyDown(speedToggle, { key: ' ' });
+    iframe.blur();
+    fireEvent.keyDown(document.body, { key: ' ' });
 
     expect(postMessage).toHaveBeenCalledWith(
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
@@ -723,6 +721,39 @@ describe('FeedItemCard YouTube and general states', () => {
 
     expect(player.seekTo).toHaveBeenNthCalledWith(1, 115, true);
     expect(player.seekTo).toHaveBeenNthCalledWith(2, 125, true);
+  });
+
+  it('preserves Space activation of focused YouTube theater controls', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+
+    for (const name of ['Playback speed: 2x', 'Show YouTube comments', 'Exit theater mode']) {
+      const button = screen.getByRole('button', { name });
+      button.focus();
+      expect(fireEvent.keyDown(button, { key: ' ', code: 'Space' })).toBe(true);
+    }
+    expect(postMessage).not.toHaveBeenCalled();
+  });
+
+  it('keeps Space toggling playback when no theater control has focus', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    iframe.blur();
+
+    expect(fireEvent.keyDown(document.body, { key: ' ', code: 'Space' })).toBe(false);
+    expect(postMessage).toHaveBeenCalledWith(expect.stringContaining('pauseVideo'), '*');
+    fireEvent.keyDown(document.body, { key: ' ', code: 'Space' });
+    expect(postMessage).toHaveBeenLastCalledWith(expect.stringContaining('playVideo'), '*');
   });
 
   it('toggles YouTube playback speed from the default 2x setting', () => {
