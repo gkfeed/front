@@ -29,6 +29,7 @@ export function useReviewShortcuts({
         || event.ctrlKey
         || event.metaKey
         || event.shiftKey
+        || document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]')
         || isTextEntryTarget(event.target)
         || (event.target instanceof Element && event.target.closest('[role="tab"]'))
       ) {

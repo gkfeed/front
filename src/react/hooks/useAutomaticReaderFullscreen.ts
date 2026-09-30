@@ -61,6 +61,8 @@ export function useAutomaticReaderFullscreen({
   useEffect(() => {
     if (shouldEnterAutomatically && isMobileViewport) return;
     if (!isAutomaticFallbackFullscreen() || !isReaderFullscreen()) return;
+    // A viewport-driven exit does not count as a user dismissal.
+    wasFullscreenRef.current = false;
     void exitReaderFullscreen();
   }, [isMobileViewport, shouldEnterAutomatically]);
 

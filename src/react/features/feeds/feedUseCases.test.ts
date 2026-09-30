@@ -178,6 +178,27 @@ describe('feed use cases', () => {
     expect(metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
   });
 
+  it('does not cache a cancelled sync and downloads all pages on the next load', async () => {
+    const ports = createPorts();
+    const controller = new AbortController();
+    vi.mocked(ports.itemsPort.syncFeedItems)
+      .mockImplementationOnce(async () => {
+        controller.abort();
+        return { items: [currentItem], cursor: 'partial' };
+      })
+      .mockResolvedValueOnce({ items: [currentItem, cachedItem], cursor: 'complete' });
+    const useCases = createFeedUseCases(ports);
+
+    await expect(useCases.loadFeedItems(credentials, { signal: controller.signal }))
+      .rejects.toMatchObject({ name: 'AbortError' });
+    expect(ports.cachePort.write).not.toHaveBeenCalled();
+    expect(ports.itemsPort.getFeedItemChanges).not.toHaveBeenCalled();
+
+    await expect(useCases.loadFeedItems(credentials)).resolves.toEqual([currentItem, cachedItem]);
+    expect(ports.itemsPort.syncFeedItems).toHaveBeenCalledTimes(2);
+    expect(ports.itemsPort.getFeedItemChanges).toHaveBeenCalledWith(credentials, 'complete', undefined);
+  });
+
   it('resolves canonical YouTube channel metadata before creation', async () => {
     const preview = createOpenGraphPreview('  Fresh Technologies  ');
     const ports = createPorts(preview);

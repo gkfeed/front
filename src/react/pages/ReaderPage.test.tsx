@@ -367,6 +367,29 @@ describe('ReaderPage', () => {
     expect(deleteFeedItemById).not.toHaveBeenCalled();
   });
 
+  it.each(['a', 'd'])('suspends the %s review shortcut while a theater dialog is open', async (key) => {
+    vi.mocked(getFeedItems).mockResolvedValue([
+      { id: 20, feedId: 4, link: 'https://twitch.tv/some_channel', title: 'Stream', text: '' },
+      ITEMS[1],
+    ]);
+    vi.mocked(deleteFeedItemById).mockResolvedValue();
+    renderReader();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Play some_channel on Twitch' }));
+    const control = screen.getByRole('button', { name: 'Show Twitch chat' });
+    control.focus();
+    fireEvent.keyDown(control, { key });
+
+    expect(screen.getByRole('dialog', { name: 'some_channel Twitch player' })).toBeTruthy();
+    expect(screen.queryByText('Second story')).toBeNull();
+    expect(deleteFeedItemById).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(control, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.keyDown(window, { key });
+    expect(await screen.findByText('Second story')).toBeTruthy();
+  });
+
   it('switches to a continuous view of all feed items', async () => {
     vi.mocked(getFeedItems).mockResolvedValue(ITEMS);
     renderReader('/reader?view=scroll');

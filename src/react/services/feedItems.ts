@@ -36,10 +36,13 @@ export async function syncFeedItems(
       headers,
       ...(signal ? { signal } : {}),
     }, { timeoutMs: ITEMS_REQUEST_TIMEOUT_MS });
+    signal?.throwIfAborted();
     const page = parseItemsSyncPage(response);
     syncCursor ??= page.syncCursor;
     items.push(...page.items);
-    if (onProgress?.([...items]) === false) break;
+    const shouldContinue = onProgress?.([...items]);
+    signal?.throwIfAborted();
+    if (shouldContinue === false) break;
     if (!page.hasMore || (limit !== undefined && items.length >= limit)) break;
     if (!page.nextCursor || seenCursors.has(page.nextCursor)) throw new Error('Invalid API response');
     seenCursors.add(page.nextCursor);

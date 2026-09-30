@@ -170,6 +170,42 @@ describe('feed service', () => {
     expect(fetch).toHaveBeenCalledTimes(11);
   });
 
+  it.each(['response', 'progress'] as const)('rejects cancellation during %s instead of returning a partial snapshot', async (stage) => {
+    const controller = new AbortController();
+    const page = {
+      items: [{ id: 10, feed_id: 2, link: 'https://example.com/10', title: 'Ten', text: '' }],
+      next_cursor: 'page-2', has_more: true, sync_cursor: 'baseline',
+    };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => {
+        if (stage === 'response') controller.abort();
+        return page;
+      },
+    }));
+    const onProgress = vi.fn(() => {
+      if (stage === 'progress') controller.abort();
+      return false;
+    });
+
+    await expect(syncFeedItems(CREDENTIALS, controller.signal, onProgress))
+      .rejects.toMatchObject({ name: 'AbortError' });
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(onProgress).toHaveBeenCalledTimes(stage === 'response' ? 0 : 1);
+  });
+
+  it('allows Live discovery to stop pagination without cancelling the request', async () => {
+    respondWith({
+      items: [{ id: 10, feed_id: 2, link: 'https://example.com/10', title: 'Ten', text: '' }],
+      next_cursor: 'page-2', has_more: true, sync_cursor: 'baseline',
+    });
+
+    await expect(getFeedItems(CREDENTIALS, undefined, undefined, () => false))
+      .resolves.toEqual([{ id: 10, feedId: 2, link: 'https://example.com/10', title: 'Ten', text: '' }]);
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
   it('parses upserts and tombstones from changes', async () => {
     respondWith({
       upserted: [{ id: 12, feed_id: 2, link: 'https://example.com/12', title: 'New', text: '' }],

@@ -126,12 +126,14 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           return;
         }
         const scheduled = scheduleProviderCandidates(provider, providerCandidates, eventsRef.current, lastChecked.current);
+        // Failed attempts must also rotate out of the next dormant batch.
+        const attemptedAt = Date.now();
+        for (const candidate of scheduled) lastChecked.current.set(candidate.key, attemptedAt);
         try {
           const result = await provider.check(scheduled, signal);
           if (signal.aborted) return;
           const checkedAt = Date.now();
           successfulUpdates += result.updates.length;
-          for (const update of result.updates) lastChecked.current.set(update.key, checkedAt);
           setEvents((current) => {
             const next = { ...current };
             for (const update of result.updates) {

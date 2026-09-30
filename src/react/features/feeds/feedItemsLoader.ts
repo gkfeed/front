@@ -70,6 +70,7 @@ export function createFeedItemsLoader(
 
     async function fullSync(retryInvalidCursor: boolean): Promise<FeedItem[]> {
       const initial = await feedPort.syncFeedItems(credentials, signal, onProgress, INITIAL_PAGE_SIZE);
+      signal?.throwIfAborted();
       if (!initial.cursor) return initial.items;
       await commitSnapshot(initial);
       try {
