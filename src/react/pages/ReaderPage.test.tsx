@@ -39,9 +39,11 @@ describe('ReaderPage', () => {
     renderReader();
 
     expect(await screen.findByText('First story')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reset kept items' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
 
     expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Reset kept items' })).toBeTruthy();
     expect(deleteFeedItemById).not.toHaveBeenCalled();
     expect(screen.getByText('1 remaining')).toBeTruthy();
   });
@@ -67,6 +69,30 @@ describe('ReaderPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
 
     expect(await screen.findByText('You’ve reviewed everything')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Reset kept items' })).toBeTruthy();
+  });
+
+  it('waits for synchronization before declaring a partial review complete', async () => {
+    let publishProgress: ((items: typeof ITEMS) => boolean | void) | undefined;
+    let finishLoad: ((items: typeof ITEMS) => void) | undefined;
+    vi.mocked(getFeedItems).mockImplementation((_credentials, _limit, _signal, onProgress) => {
+      publishProgress = onProgress;
+      return new Promise((resolve) => { finishLoad = resolve; });
+    });
+    renderReader();
+
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
+    act(() => publishProgress?.([ITEMS[0]]));
+    expect(await screen.findByText('First story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+
+    act(() => publishProgress?.(ITEMS));
+    expect(screen.queryByText('You’ve reviewed everything')).toBeNull();
+    expect(screen.getByRole('status', { name: 'Loading feed items' })).toBeTruthy();
+
+    await act(async () => finishLoad?.(ITEMS));
+    expect(await screen.findByText('Second story')).toBeTruthy();
   });
 
   it('restores the review queue after the page is reloaded', async () => {
@@ -90,12 +116,12 @@ describe('ReaderPage', () => {
     renderReader();
 
     await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('New story')).toBeTruthy();
+    expect(await screen.findByText('Second story')).toBeTruthy();
     expect(screen.queryByText('First story')).toBeNull();
     expect(screen.getByText('2 remaining')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /keep/i }));
-    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(await screen.findByText('New story')).toBeTruthy();
   });
 
   it('does not add partial snapshot cards to a restored queue', async () => {
@@ -136,10 +162,11 @@ describe('ReaderPage', () => {
     expect(screen.queryByText('Story 110')).toBeNull();
 
     await act(async () => finishLoad?.(allItems));
-    expect(await screen.findByText('Story 110')).toBeTruthy();
+    expect(await screen.findByText('Story 98')).toBeTruthy();
     await waitFor(() => expect(JSON.parse(storage.get(storageKey) ?? '')).toEqual({
       version: 1,
-      pendingIds: [110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95],
+      itemOrder: 'desc',
+      pendingIds: [98, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 97, 96, 95],
       revisitIds: [],
       keptItemIds: [],
     }));
@@ -157,8 +184,10 @@ describe('ReaderPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reset kept items' }));
 
     expect(await screen.findByText('First story')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reset kept items' })).toBeNull();
     expect(JSON.parse(storage.get(getReviewStateStorageKey('reader')) ?? '')).toEqual({
       version: 1,
+      itemOrder: 'desc',
       pendingIds: [11, 10],
       revisitIds: [],
       keptItemIds: [],
@@ -166,7 +195,7 @@ describe('ReaderPage', () => {
     expect(getFeedItems).toHaveBeenCalledOnce();
   });
 
-  it('starts with the newest item when a refresh finds several new items', async () => {
+  it('keeps the current card when a refresh finds several new items', async () => {
     stubLocalStorage();
     const newItems = [
       {
@@ -195,8 +224,10 @@ describe('ReaderPage', () => {
     renderReader();
 
     await waitFor(() => expect(getFeedItems).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText('Newest story')).toBeTruthy();
+    expect(await screen.findByText('First story')).toBeTruthy();
     expect(screen.queryByText('New story')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Newest story')).toBeTruthy();
   });
 
   it('keeps the current item with a', async () => {
@@ -261,7 +292,8 @@ describe('ReaderPage', () => {
     act(() => publishProgress?.(ITEMS));
     expect(screen.queryByText('Second story')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    expect(await screen.findByText('You’ve reviewed everything')).toBeTruthy();
+    expect(screen.queryByText('You’ve reviewed everything')).toBeNull();
+    expect(screen.getByRole('status', { name: 'Loading feed items' })).toBeTruthy();
 
     await act(async () => failLoad?.(new Error('Later page failed')));
 
@@ -335,6 +367,29 @@ describe('ReaderPage', () => {
     expect(screen.getByText('First story')).toBeTruthy();
     expect(screen.queryByText('Second story')).toBeNull();
     expect(deleteFeedItemById).not.toHaveBeenCalled();
+  });
+
+  it.each(['a', 'd'])('suspends the %s review shortcut while a theater dialog is open', async (key) => {
+    vi.mocked(getFeedItems).mockResolvedValue([
+      { id: 20, feedId: 4, link: 'https://twitch.tv/some_channel', title: 'Stream', text: '' },
+      ITEMS[1],
+    ]);
+    vi.mocked(deleteFeedItemById).mockResolvedValue();
+    renderReader();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Play some_channel on Twitch' }));
+    const control = screen.getByRole('button', { name: 'Show Twitch chat' });
+    control.focus();
+    fireEvent.keyDown(control, { key });
+
+    expect(screen.getByRole('dialog', { name: 'some_channel Twitch player' })).toBeTruthy();
+    expect(screen.queryByText('Second story')).toBeNull();
+    expect(deleteFeedItemById).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(control, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.keyDown(window, { key });
+    expect(await screen.findByText('Second story')).toBeTruthy();
   });
 
   it('switches to a continuous view of all feed items', async () => {

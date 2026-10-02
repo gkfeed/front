@@ -25,6 +25,7 @@ export class ApiTimeoutError extends Error {
 }
 
 export const endpoint = (path: string): string => `${API_ROOT}${path}`;
+export const itemsEndpoint = (path: string): string => `${API_ROOT.replace(/\/v1\/$/, '/v2/')}items/${path}`;
 
 export function authorization(credentials: { username: string; password: string }): Record<string, string> {
   const bytes = new TextEncoder().encode(`${credentials.username}:${credentials.password}`);

@@ -1,11 +1,17 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v2/items/changes?**', (route) => route.fulfill({
+    json: { upserted: [], deleted_ids: [], next_cursor: 'sync', has_more: false },
+  }));
+});
+
 test('TikTok player preference selects preview, controls speed, and falls back to embed', async ({ page }) => {
   let playbackRequests = 0;
   await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-  await page.route('**/api/v1/get_items?**', (route) => route.fulfill({ json: {
+  await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({ json: {
     items: [{ id: 20, feed_id: 4, link: 'https://www.tiktok.com/@creator/video/123', title: 'TikTok test', text: '' }],
-    next_cursor: null,
+    next_cursor: '', has_more: false, sync_cursor: 'sync',
   } }));
   await page.route('**/bff/tiktok-comments?**', (route) => route.fulfill({ json: {
     comments: [], description: null, creatorName: null, creatorAvatarUrl: null,

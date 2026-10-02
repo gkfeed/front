@@ -39,10 +39,11 @@ export type ReviewSessionState = {
   nextDeletionOperationId: number;
   hasProgress: boolean;
   progressToPersist: ReviewProgress | null;
+  reorderRestoredProgress: boolean;
 };
 
 export type ReviewSessionEvent =
-  | { type: 'sessionChanged'; storageKey: string | null; restoredProgress: ReviewProgress | null }
+  | { type: 'sessionChanged'; storageKey: string | null; restoredProgress: ReviewProgress | null; restoredItemOrder?: ReaderItemOrder | null }
   | { type: 'snapshotChanged'; items: FeedItem[] | undefined; isComplete: boolean }
   | { type: 'syncFailed' }
   | { type: 'presentationChanged'; presentation: ReviewPresentation }
@@ -69,6 +70,7 @@ export function createReviewSessionState(presentation: ReviewPresentation): Revi
     nextDeletionOperationId: 1,
     hasProgress: false,
     progressToPersist: null,
+    reorderRestoredProgress: false,
   };
 }
 
@@ -92,6 +94,8 @@ export function reviewSessionReducer(
         deletions: [],
         hasProgress: event.restoredProgress !== null,
         progressToPersist: null,
+        reorderRestoredProgress: event.restoredItemOrder != null
+          && event.restoredItemOrder !== state.presentation.itemOrder,
       };
     }
     case 'snapshotChanged':
@@ -169,9 +173,12 @@ function reduceSnapshotChanged(
   const projection = projectSnapshot(snapshot, state.presentation, deletions);
 
   if (isComplete) {
-    const progress = state.hasProgress
+    const reconciledProgress = state.hasProgress
       ? reconcileProgress(state.progress, projection.reviewableIds)
       : createProgress(projection.reviewableIds);
+    const progress = state.reorderRestoredProgress
+      ? reorderProgress(reconciledProgress, projection.reviewableIds)
+      : reconciledProgress;
     return {
       ...state,
       snapshot,
@@ -181,6 +188,7 @@ function reduceSnapshotChanged(
       progress,
       hasProgress: true,
       progressToPersist: progress,
+      reorderRestoredProgress: false,
     };
   }
 
@@ -356,13 +364,28 @@ function mergePartialProgress(progress: ReviewProgress, orderedIds: number[]): R
 
 function reconcileProgress(progress: ReviewProgress, orderedIds: number[]): ReviewProgress {
   const availableIds = new Set(orderedIds);
+  const activeId = progress.pendingIds[0] ?? progress.revisitIds[0];
   const keptItemIds = new Set([...progress.keptItemIds].filter((id) => availableIds.has(id)));
   const pendingIds = new Set(progress.pendingIds.filter((id) => availableIds.has(id)));
   const revisitIds = new Set(progress.revisitIds.filter((id) => availableIds.has(id)));
   const knownIds = new Set([...pendingIds, ...revisitIds, ...keptItemIds]);
+  const nextPending = orderedIds.filter((id) => pendingIds.has(id) || !knownIds.has(id));
+  const nextRevisit = orderedIds.filter((id) => revisitIds.has(id));
+  if (activeId !== undefined && availableIds.has(activeId)) {
+    const activeIsPending = pendingIds.has(activeId);
+    return {
+      pendingIds: activeIsPending
+        ? [activeId, ...nextPending.filter((id) => id !== activeId)]
+        : nextPending,
+      revisitIds: activeIsPending
+        ? nextRevisit
+        : [activeId, ...nextRevisit.filter((id) => id !== activeId)],
+      keptItemIds,
+    };
+  }
   return {
-    pendingIds: orderedIds.filter((id) => pendingIds.has(id) || !knownIds.has(id)),
-    revisitIds: orderedIds.filter((id) => revisitIds.has(id)),
+    pendingIds: nextPending,
+    revisitIds: nextRevisit,
     keptItemIds,
   };
 }

@@ -8,7 +8,7 @@ import type {
 } from '../../shared/previewContracts.js';
 import type { ArticlePreview } from '../../shared/articleContracts.js';
 import type { TikTokCommentsPreview } from '../../shared/tiktokContracts.js';
-import type { YoutubeCommentsPreview } from '../../shared/youtubeContracts.js';
+import type { YoutubeCommentsPreview, YoutubeTimecodesPreview } from '../../shared/youtubeContracts.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
 
 export type {
@@ -48,6 +48,7 @@ export interface PreviewUseCases {
   tiktokPlayback: PreviewUseCase<TikTokPlaybackPreview>;
   tiktokComments: PreviewUseCase<TikTokCommentsPreview>;
   youtubeComments: PreviewUseCase<YoutubeCommentsPreview>;
+  youtubeTimecodes: PreviewUseCase<YoutubeTimecodesPreview>;
   redditPreviewImage: PreviewUseCase<PreviewImage>;
   sasflixMedia: (
     input: string,

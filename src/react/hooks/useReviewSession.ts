@@ -7,12 +7,13 @@ import {
   reviewSessionReducer,
   type ReviewPresentation,
 } from './reviewSession';
-import { getReviewStateStorageKey, readReviewState, writeReviewState } from './reviewStateStorage';
+import { getReviewStateStorageKey, readReviewItemOrder, readReviewState, writeReviewState } from './reviewStateStorage';
 
 export function useReviewSession({
   loadedItems,
   username,
   isSyncComplete,
+  isSnapshotComplete = isSyncComplete,
   isSyncFailed,
   itemOrder,
   nsfwMode,
@@ -22,6 +23,7 @@ export function useReviewSession({
   loadedItems: FeedItem[] | undefined;
   username: string | null;
   isSyncComplete: boolean;
+  isSnapshotComplete?: boolean;
   isSyncFailed: boolean;
 }) {
   const storageKey = username ? getReviewStateStorageKey(username) : null;
@@ -47,12 +49,13 @@ export function useReviewSession({
       type: 'sessionChanged',
       storageKey,
       restoredProgress: readReviewState(storageKey),
+      restoredItemOrder: readReviewItemOrder(storageKey),
     });
   }, [storageKey]);
 
   useEffect(() => {
-    dispatch({ type: 'snapshotChanged', items: loadedItems, isComplete: isSyncComplete });
-  }, [isSyncComplete, loadedItems, storageKey]);
+    dispatch({ type: 'snapshotChanged', items: loadedItems, isComplete: isSnapshotComplete });
+  }, [isSnapshotComplete, loadedItems, storageKey]);
 
   useEffect(() => {
     if (isSyncFailed) dispatch({ type: 'syncFailed' });
@@ -64,9 +67,9 @@ export function useReviewSession({
 
   useEffect(() => {
     if (session.progressToPersist === null) return;
-    writeReviewState(storageKey, session.progressToPersist);
+    writeReviewState(storageKey, session.progressToPersist, session.presentation.itemOrder);
     dispatch({ type: 'persistenceCompleted', progress: session.progressToPersist });
-  }, [session.progressToPersist, storageKey]);
+  }, [session.presentation.itemOrder, session.progressToPersist, storageKey]);
 
   const activeReviewIds = useMemo(() => getActiveReviewIds(session), [session]);
 
@@ -91,6 +94,7 @@ export function useReviewSession({
     items: session.items,
     reviewableIds: session.reviewableIds,
     activeReviewIds,
+    hasKeptItems: session.progress.keptItemIds.size > 0,
     keep,
     deleteItem,
     deletionSucceeded,

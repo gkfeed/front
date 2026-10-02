@@ -39,12 +39,14 @@ export function useFeedReader({
     error: loadError,
     isLoading: isFeedLoading,
     isSyncComplete,
-    invalidateCache,
+    isSnapshotComplete,
+    removeCachedItem,
     retry,
   } = useFeedItems(credentials);
   const {
     items,
     activeReviewIds,
+    hasKeptItems,
     keep,
     deleteItem: startDeletion,
     deletionSucceeded,
@@ -56,6 +58,7 @@ export function useFeedReader({
     loadedItems,
     username: credentials?.username ?? null,
     isSyncComplete,
+    isSnapshotComplete,
     isSyncFailed: status === 'error',
     itemOrder,
     nsfwMode,
@@ -87,11 +90,11 @@ export function useFeedReader({
       void deleteRemoteItem(deletion.itemId)
         .then(() => {
           deletionSucceeded(deletion.itemId, deletion.operationId);
-          invalidateCache();
+          removeCachedItem(deletion.itemId);
         })
         .catch(() => deletionFailed(deletion.itemId, deletion.operationId));
     });
-  }, [deleteRemoteItem, deletionFailed, deletionSucceeded, deletions, invalidateCache]);
+  }, [deleteRemoteItem, deletionFailed, deletionSucceeded, deletions, removeCachedItem]);
 
   const keepItem = useCallback(() => {
     if (!currentItem) return;
@@ -123,6 +126,7 @@ export function useFeedReader({
     items: items ?? [],
     currentItem,
     isLoading,
+    isSyncComplete,
     isItemPending: (itemId: number) => deletions.some((deletion) => (
       deletion.itemId === itemId && deletion.status === 'pending'
     )),
@@ -130,6 +134,7 @@ export function useFeedReader({
     loadError,
     failedDeletions: deletions.filter((deletion) => deletion.status === 'failed'),
     remainingCount: activeReviewIds.length,
+    hasKeptItems,
     keepItem,
     deleteItem: deleteCurrentItem,
     recoverDeletion: recoverFailedDeletion,

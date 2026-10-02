@@ -35,6 +35,7 @@ export function SasflixPreview({
   const { t } = useTranslation();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isTheaterOpen, setIsTheaterOpen] = useState(false);
+  const [hasPlaybackFailed, setHasPlaybackFailed] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const previousVideoSrcRef = useRef(videoSrc);
@@ -44,6 +45,7 @@ export function SasflixPreview({
     if (previousVideoSrcRef.current && previousVideoSrcRef.current !== videoSrc) {
       setIsPlayerOpen(false);
       setIsTheaterOpen(false);
+      setHasPlaybackFailed(false);
       pendingTheaterRef.current = false;
     }
     previousVideoSrcRef.current = videoSrc;
@@ -59,7 +61,7 @@ export function SasflixPreview({
   }, [videoSrc, isPlayerOpen]);
 
   useTheaterDialog({
-    initialFocusSelector: 'video',
+    initialFocusSelector: hasPlaybackFailed ? '.reader-card__media-error button' : 'video',
     isOpen: isTheaterOpen && Boolean(videoSrc) && isPlayerOpen,
     onOpenChange: (isOpen) => {
       if (!isOpen) pendingTheaterRef.current = false;
@@ -69,7 +71,33 @@ export function SasflixPreview({
     triggerRef,
   });
 
+  const toggleTheater = () => {
+    pendingTheaterRef.current = false;
+    setIsTheaterOpen((isOpen) => !isOpen);
+  };
+
   if (isPlayerOpen && videoSrc) {
+    if (hasPlaybackFailed) {
+      return (
+        <TheaterPlayerShell
+          title={t('preview.sasflixPlayer', { title })}
+          isTheaterOpen={isTheaterOpen}
+          onToggleTheater={toggleTheater}
+          shellRef={playerRef}
+        >
+          <div className="reader-card__media-error" role="alert">
+            <strong>{t('preview.mediaUnavailable')}</strong>
+            <span>{t('preview.mediaError')}</span>
+            <button type="button" onClick={() => setHasPlaybackFailed(false)}>
+              {t('live.tryAgain')}
+            </button>
+            <a href={href} target="_blank" rel="noreferrer">
+              {t('preview.open', { hostname: 'sasflix.ru' })}
+            </a>
+          </div>
+        </TheaterPlayerShell>
+      );
+    }
     return (
       <SasflixPlayer
         publicationId={publicationId}
@@ -77,10 +105,8 @@ export function SasflixPreview({
         videoSrc={videoSrc}
         isTheaterOpen={isTheaterOpen}
         shellRef={playerRef}
-        onToggleTheater={() => {
-          pendingTheaterRef.current = false;
-          setIsTheaterOpen((isOpen) => !isOpen);
-        }}
+        onToggleTheater={toggleTheater}
+        onPlaybackError={() => setHasPlaybackFailed(true)}
       />
     );
   }
@@ -131,6 +157,7 @@ type SasflixPlayerProps = {
   videoSrc: string;
   isTheaterOpen: boolean;
   onToggleTheater: () => void;
+  onPlaybackError: () => void;
   shellRef: RefObject<HTMLDivElement | null>;
 };
 
@@ -140,6 +167,7 @@ function SasflixPlayer({
   videoSrc,
   isTheaterOpen,
   onToggleTheater,
+  onPlaybackError,
   shellRef,
 }: SasflixPlayerProps) {
   const { t } = useTranslation();
@@ -153,7 +181,12 @@ function SasflixPlayer({
   const lastPersistedAtRef = useRef(0);
   const playerTitle = t('preview.sasflixPlayer', { title });
   const proxiedVideoSrc = `/bff/sasflix-media?url=${encodeURIComponent(videoSrc)}`;
-  useHlsVideo({ config: SASFLIX_HLS_CONFIG, src: proxiedVideoSrc, videoRef });
+  useHlsVideo({
+    config: SASFLIX_HLS_CONFIG,
+    src: proxiedVideoSrc,
+    videoRef,
+    onFatalError: onPlaybackError,
+  });
 
   useEffect(() => {
     const video = videoRef.current;
@@ -250,6 +283,7 @@ function SasflixPlayer({
         controls
         autoPlay={resumePosition === null}
         playsInline
+        onError={onPlaybackError}
         onDurationChange={(event) => sampleProgress(event.currentTarget)}
         onEnded={() => persistProgress(true)}
         onPause={() => persistProgress(true)}

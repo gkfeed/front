@@ -71,6 +71,17 @@ describe('ReaderPage fullscreen', () => {
     viewportWidth = 1024;
     fireEvent(window, new Event('resize'));
     await waitFor(() => expect(document.documentElement.dataset.readerFullscreen).toBeUndefined());
+
+    viewportWidth = 390;
+    fireEvent(window, new Event('resize'));
+    await waitFor(() => expect(document.documentElement.dataset.readerFullscreen).toBe('true'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Exit Reader fullscreen' }));
+    viewportWidth = 1024;
+    fireEvent(window, new Event('resize'));
+    viewportWidth = 390;
+    fireEvent(window, new Event('resize'));
+    expect(document.documentElement.dataset.readerFullscreen).toBeUndefined();
   });
 
   it('toggles fullscreen with the f keyboard shortcut', async () => {

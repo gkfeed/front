@@ -1,14 +1,20 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v2/items/changes?**', (route) => route.fulfill({
+    json: { upserted: [], deleted_ids: [], next_cursor: 'sync', has_more: false },
+  }));
+});
+
 test('plays a VK wall video without loading its iframe challenge in Reader fullscreen', async ({ page }) => {
   const post = 'https://vk.com/wall-182864292_1336279';
   const video = 'https://vk.ru/video_ext.php?oid=-182864292&id=456257584&hash=2ad8edc0b31dd0da';
   const poster = 'https://example.com/vk-video-poster.jpg';
   await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-  await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+  await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
     json: {
       items: [{ id: 1, feed_id: 567, link: post, title: 'STREAM INSIDE', text: 'Post with a video attachment' }],
-      next_cursor: null,
+      next_cursor: '', has_more: false, sync_cursor: 'sync',
     },
   }));
   await page.route('**/bff/open-graph?**', (route) => route.fulfill({

@@ -28,8 +28,11 @@ test('keeps standalone Settings readable in the dark theme on a narrow screen', 
 
 test('syncs plugin and Reader preferences across tabs without retaining TikTok capabilities', async ({ page, context }) => {
   await context.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-  await context.route('**/api/v1/get_items?**', (route) => route.fulfill({ json: {
-    items: [{ id: 20, feed_id: 4, link: 'https://www.tiktok.com/@creator/video/123', title: 'TikTok test', text: '' }], next_cursor: null,
+  await context.route('**/api/v2/items/sync?**', (route) => route.fulfill({ json: {
+    items: [{ id: 20, feed_id: 4, link: 'https://www.tiktok.com/@creator/video/123', title: 'TikTok test', text: '' }], next_cursor: '', has_more: false, sync_cursor: 'sync',
+  } }));
+  await context.route('**/api/v2/items/changes?**', (route) => route.fulfill({ json: {
+    upserted: [], deleted_ids: [], next_cursor: 'changes', has_more: false,
   } }));
   await context.route('**/bff/open-graph?**', (route) => route.fulfill({ json: {
     url: 'https://www.tiktok.com/@creator/video/123', title: 'TikTok test', description: null,
@@ -61,9 +64,9 @@ test('syncs plugin and Reader preferences across tabs without retaining TikTok c
 test('prunes disabled Live candidates for every account from Settings without scanning', async ({ page }) => {
   let discoveries = 0;
   await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-  await page.route('**/api/v1/get_items?**', (route) => {
+  await page.route('**/api/v2/items/sync?**', (route) => {
     discoveries += 1;
-    return route.fulfill({ json: { items: [], next_cursor: null } });
+    return route.fulfill({ json: { items: [], next_cursor: '', has_more: false, sync_cursor: 'sync' } });
   });
   await page.addInitScript(() => localStorage.setItem('gkfeed.credentials', JSON.stringify({ username: 'automation', password: 'secret' })));
   await page.goto('/settings');

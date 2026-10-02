@@ -11,13 +11,16 @@ import {
   getFeedById,
   getFeedItems,
 } from '../services/feeds';
+import { getFeedItemChanges } from '../services/feedItems';
 import { validateCredentials } from '../services/auth';
 import { isAuthenticationError } from '../domain/requestError';
 import { loadRemotePreview as loadRemotePreviewRequest } from '../services/remotePreview';
 import { getOpenGraphPreview } from '../services/openGraph';
+import { getFeedTypeSuggestion } from '../services/feedTypeSuggestion';
 import { getArticle } from '../services/article';
 import { fetchTikTokComments } from '../services/tiktokComments';
 import { fetchYoutubeComments } from '../services/youtubeComments';
+import { fetchYoutubeTimecodes } from '../services/youtubeTimecodes';
 import { getLiveTwitchItems } from '../services/twitch';
 import {
   deleteFeedItemsCache,
@@ -39,7 +42,11 @@ export function createFeatureComposition() {
         getFeedById,
       },
       itemsPort: {
-        getFeedItems,
+        syncFeedItems: async (credentials, signal, onProgress, initialPageSize) => {
+          const items = await getFeedItems(credentials, undefined, signal, onProgress, initialPageSize);
+          return { items, cursor: items.syncCursor ?? '' };
+        },
+        getFeedItemChanges,
       },
       commandPort: {
         createFeed: createFeedRequest,
@@ -47,7 +54,7 @@ export function createFeatureComposition() {
         deleteFeedById,
         deleteFeedItemById,
       },
-      metadataPort: { getOpenGraphPreview },
+      metadataPort: { getOpenGraphPreview, getFeedTypeSuggestion },
       cachePort: {
         read: readFeedItemsCache,
         write: writeFeedItemsCache,
@@ -61,6 +68,7 @@ export function createFeatureComposition() {
       getArticle,
       fetchTikTokComments,
       fetchYoutubeComments,
+      fetchYoutubeTimecodes,
       getOpenGraphPreview,
       loadRemotePreview: loadRemotePreviewRequest,
     }),

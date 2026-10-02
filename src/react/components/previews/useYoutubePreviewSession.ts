@@ -34,6 +34,9 @@ export function useYoutubePreviewSession(videoId: string) {
   }, []);
   const handleTheaterKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key !== ' ' && event.code !== 'Space') return false;
+    const target = event.target instanceof Element ? event.target : document.activeElement;
+    if (target?.closest('a[href], button, input, select, textarea, [role="button"], [role="textbox"]')
+      || (target instanceof HTMLElement && target.isContentEditable)) return false;
     const iframe = playerRef.current?.querySelector<HTMLIFrameElement>('iframe') ?? null;
     if (document.activeElement === iframe) return false;
     event.preventDefault();

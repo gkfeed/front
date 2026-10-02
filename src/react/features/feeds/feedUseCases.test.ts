@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { OpenGraphPreview } from '../../../../shared/previewContracts';
-import type { FeedItem } from '../../types';
+import type { Feed, FeedItem } from '../../types';
 import type {
   FeedCommandPort,
   FeedItemsPort,
@@ -10,6 +10,7 @@ import type {
   FeedQueryPort,
 } from '../featurePorts';
 import { createFeedUseCases } from './feedUseCases';
+import { ApiError } from '../../services/apiClient';
 
 const credentials = { username: 'reader', password: 'secret' };
 const cachedItem: FeedItem = {
@@ -27,68 +28,150 @@ const currentItem: FeedItem = {
 };
 
 describe('feed use cases', () => {
-  it('owns stale-while-revalidate cache policy for feed items', async () => {
+  it('shows cached items and applies changes without downloading the full list', async () => {
     const ports = createPorts();
     const { itemsPort, cachePort } = ports;
-    vi.mocked(cachePort.read).mockResolvedValue([cachedItem]);
-    vi.mocked(itemsPort.getFeedItems).mockResolvedValue([currentItem]);
+    vi.mocked(cachePort.read).mockResolvedValue({ items: [cachedItem], cursor: 'saved' });
+    vi.mocked(itemsPort.getFeedItemChanges).mockResolvedValue({
+      upserted: [currentItem], deletedIds: [cachedItem.id], nextCursor: 'next', hasMore: false,
+    });
+    const onCached = vi.fn();
+    const useCases = createFeedUseCases(ports);
+
+    await expect(useCases.loadFeedItems(credentials, { onCached })).resolves.toEqual([currentItem]);
+    expect(onCached).toHaveBeenCalledWith([cachedItem]);
+    expect(itemsPort.syncFeedItems).not.toHaveBeenCalled();
+    expect(itemsPort.getFeedItemChanges).toHaveBeenCalledWith(credentials, 'saved', undefined);
+    expect(cachePort.write).toHaveBeenCalledWith('reader', { items: [currentItem], cursor: 'next' });
+  });
+
+  it('upgrades a legacy cache record through a full sync', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [cachedItem] });
+    vi.mocked(ports.itemsPort.syncFeedItems).mockResolvedValue({ items: [currentItem], cursor: 'sync' });
     const onCached = vi.fn();
     const onProgress = vi.fn();
     const useCases = createFeedUseCases(ports);
 
     await expect(useCases.loadFeedItems(credentials, { onCached, onProgress }))
       .resolves.toEqual([currentItem]);
-
-    expect(cachePort.read).toHaveBeenCalledWith('reader', 15_000);
     expect(onCached).toHaveBeenCalledWith([cachedItem]);
-    expect(itemsPort.getFeedItems).toHaveBeenCalledWith(
-      credentials,
-      undefined,
-      undefined,
-      onProgress,
-      10,
-    );
-    expect(cachePort.write).toHaveBeenCalledWith('reader', [currentItem]);
+    expect(ports.itemsPort.syncFeedItems).toHaveBeenCalledWith(credentials, undefined, onProgress, 10);
+    expect(ports.itemsPort.getFeedItemChanges).toHaveBeenCalledWith(credentials, 'sync', undefined);
   });
 
-  it('prevents an invalidated in-flight load from restoring stale cache data', async () => {
+  it('publishes each committed change snapshot before a later page fails', async () => {
     const ports = createPorts();
-    const { itemsPort, cachePort } = ports;
-    let finishLoad!: (items: FeedItem[]) => void;
-    vi.mocked(itemsPort.getFeedItems).mockImplementation(() => new Promise((resolve) => {
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [cachedItem], cursor: 'saved' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges)
+      .mockResolvedValueOnce({ upserted: [currentItem], deletedIds: [cachedItem.id], nextCursor: 'page2', hasMore: true })
+      .mockRejectedValueOnce(new Error('Later page failed'));
+    const onProgress = vi.fn();
+
+    await expect(createFeedUseCases(ports).loadFeedItems(credentials, { onProgress }))
+      .rejects.toThrow('Later page failed');
+
+    expect(ports.cachePort.write).toHaveBeenCalledWith('reader', { items: [currentItem], cursor: 'page2' });
+    expect(onProgress).toHaveBeenCalledExactlyOnceWith([currentItem], true);
+  });
+
+  it('replays changes after the initial pages using their first sync cursor', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.itemsPort.syncFeedItems).mockResolvedValue({ items: [cachedItem], cursor: 'first-page' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges).mockResolvedValue({
+      upserted: [currentItem], deletedIds: [cachedItem.id], nextCursor: 'latest', hasMore: false,
+    });
+
+    await expect(createFeedUseCases(ports).loadFeedItems(credentials)).resolves.toEqual([currentItem]);
+    expect(ports.itemsPort.getFeedItemChanges).toHaveBeenCalledWith(credentials, 'first-page', undefined);
+    expect(ports.cachePort.write).toHaveBeenNthCalledWith(1, 'reader', {
+      items: [cachedItem], cursor: 'first-page',
+    });
+    expect(ports.cachePort.write).toHaveBeenNthCalledWith(2, 'reader', {
+      items: [currentItem], cursor: 'latest',
+    });
+  });
+
+  it('recovers from an invalid saved cursor with a full sync', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [cachedItem], cursor: 'expired' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges)
+      .mockRejectedValueOnce(new ApiError('Invalid cursor', 400))
+      .mockResolvedValue({ upserted: [], deletedIds: [], nextCursor: 'next', hasMore: false });
+    vi.mocked(ports.itemsPort.syncFeedItems).mockResolvedValue({ items: [currentItem], cursor: 'fresh' });
+
+    await expect(createFeedUseCases(ports).loadFeedItems(credentials)).resolves.toEqual([currentItem]);
+    expect(ports.itemsPort.syncFeedItems).toHaveBeenCalledOnce();
+    expect(ports.cachePort.write).toHaveBeenCalledWith('reader', {
+      items: [currentItem], cursor: 'next',
+    });
+  });
+
+  it('restarts a full sync if its cursor expires before changes are read', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.itemsPort.syncFeedItems)
+      .mockResolvedValueOnce({ items: [cachedItem], cursor: 'expired' })
+      .mockResolvedValueOnce({ items: [currentItem], cursor: 'fresh' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges)
+      .mockRejectedValueOnce(new ApiError('Invalid cursor', 400))
+      .mockResolvedValueOnce({ upserted: [], deletedIds: [], nextCursor: 'latest', hasMore: false });
+
+    await expect(createFeedUseCases(ports).loadFeedItems(credentials)).resolves.toEqual([currentItem]);
+    expect(ports.itemsPort.syncFeedItems).toHaveBeenCalledTimes(2);
+  });
+
+  it('persists each change page before requesting the next one', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [cachedItem], cursor: 'saved' });
+    let finishWrite!: () => void;
+    vi.mocked(ports.cachePort.write).mockImplementationOnce(() => new Promise<void>((resolve) => {
+      finishWrite = resolve;
+    }));
+    vi.mocked(ports.itemsPort.getFeedItemChanges)
+      .mockResolvedValueOnce({ upserted: [currentItem], deletedIds: [], nextCursor: 'page2', hasMore: true })
+      .mockResolvedValueOnce({ upserted: [], deletedIds: [cachedItem.id], nextCursor: 'final', hasMore: false });
+    const load = createFeedUseCases(ports).loadFeedItems(credentials);
+    await vi.waitFor(() => expect(ports.cachePort.write).toHaveBeenCalledOnce());
+    expect(ports.itemsPort.getFeedItemChanges).toHaveBeenCalledOnce();
+    finishWrite();
+    await expect(load).resolves.toEqual([currentItem]);
+    expect(ports.itemsPort.getFeedItemChanges).toHaveBeenCalledTimes(2);
+    expect(ports.cachePort.write).toHaveBeenLastCalledWith('reader', {
+      items: [currentItem], cursor: 'final',
+    });
+  });
+
+  it('removes a locally deleted item without discarding the change cursor', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.cachePort.read).mockResolvedValue({
+      items: [currentItem, cachedItem], cursor: 'saved',
+    });
+    const useCases = createFeedUseCases(ports);
+    await useCases.loadFeedItems(credentials);
+
+    useCases.removeFeedItemFromCache(credentials, currentItem.id);
+    await vi.waitFor(() => expect(ports.cachePort.write).toHaveBeenLastCalledWith('reader', {
+      items: [cachedItem], cursor: 'next',
+    }));
+    await expect(useCases.loadFeedItems(credentials)).resolves.toEqual([cachedItem]);
+    expect(ports.itemsPort.syncFeedItems).not.toHaveBeenCalled();
+    expect(ports.cachePort.delete).not.toHaveBeenCalled();
+  });
+
+  it('does not restore an in-flight snapshot after cache invalidation', async () => {
+    const ports = createPorts();
+    let finishLoad!: (snapshot: { items: FeedItem[]; cursor: string }) => void;
+    vi.mocked(ports.itemsPort.syncFeedItems).mockImplementation(() => new Promise((resolve) => {
       finishLoad = resolve;
     }));
     const useCases = createFeedUseCases(ports);
-
     const load = useCases.loadFeedItems(credentials);
-    await vi.waitFor(() => expect(itemsPort.getFeedItems).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(ports.itemsPort.syncFeedItems).toHaveBeenCalledOnce());
     useCases.invalidateFeedItemsCache(credentials);
-    finishLoad([currentItem]);
+    finishLoad({ items: [currentItem], cursor: 'sync' });
     await load;
-
-    expect(cachePort.delete).toHaveBeenCalledWith('reader');
-    expect(cachePort.write).not.toHaveBeenCalled();
-  });
-
-  it('does not publish a cache read that was invalidated before it completed', async () => {
-    const ports = createPorts();
-    const { itemsPort, cachePort } = ports;
-    let finishCacheRead!: (items: FeedItem[]) => void;
-    vi.mocked(cachePort.read).mockImplementation(() => new Promise((resolve) => {
-      finishCacheRead = resolve;
-    }));
-    vi.mocked(itemsPort.getFeedItems).mockResolvedValue([currentItem]);
-    const onCached = vi.fn();
-    const useCases = createFeedUseCases(ports);
-
-    const load = useCases.loadFeedItems(credentials, { onCached });
-    await vi.waitFor(() => expect(cachePort.read).toHaveBeenCalledOnce());
-    useCases.invalidateFeedItemsCache(credentials);
-    finishCacheRead([cachedItem]);
-    await load;
-
-    expect(onCached).not.toHaveBeenCalled();
-    expect(cachePort.write).not.toHaveBeenCalled();
+    expect(ports.cachePort.delete).toHaveBeenCalledWith('reader');
+    expect(ports.cachePort.write).not.toHaveBeenCalled();
   });
 
   it('normalizes URL-only feed creation', async () => {
@@ -108,6 +191,27 @@ describe('feed use cases', () => {
     );
     expect(commandPort.createFeed).not.toHaveBeenCalled();
     expect(metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
+  });
+
+  it('does not cache a cancelled sync and downloads all pages on the next load', async () => {
+    const ports = createPorts();
+    const controller = new AbortController();
+    vi.mocked(ports.itemsPort.syncFeedItems)
+      .mockImplementationOnce(async () => {
+        controller.abort();
+        return { items: [currentItem], cursor: 'partial' };
+      })
+      .mockResolvedValueOnce({ items: [currentItem, cachedItem], cursor: 'complete' });
+    const useCases = createFeedUseCases(ports);
+
+    await expect(useCases.loadFeedItems(credentials, { signal: controller.signal }))
+      .rejects.toMatchObject({ name: 'AbortError' });
+    expect(ports.cachePort.write).not.toHaveBeenCalled();
+    expect(ports.itemsPort.getFeedItemChanges).not.toHaveBeenCalled();
+
+    await expect(useCases.loadFeedItems(credentials)).resolves.toEqual([currentItem, cachedItem]);
+    expect(ports.itemsPort.syncFeedItems).toHaveBeenCalledTimes(2);
+    expect(ports.itemsPort.getFeedItemChanges).toHaveBeenCalledWith(credentials, 'complete', undefined);
   });
 
   it('resolves canonical YouTube channel metadata before creation', async () => {
@@ -150,6 +254,74 @@ describe('feed use cases', () => {
     }, null);
     expect(metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
   });
+
+  it('creates posts and stories feeds from one Instagram profile', async () => {
+    const ports = createPorts();
+    const { commandPort } = ports;
+    const useCases = createFeedUseCases(ports);
+
+    await useCases.saveFeed({
+      title: '  katya.marfaknchov  ',
+      type: '  inst  ',
+      url: '  https://www.instagram.com/katya.marfaknchov?stkn=share  ',
+    }, 'extended', credentials);
+
+    const profileUrl = 'https://www.instagram.com/katya.marfaknchov';
+    expect(commandPort.createFeed).toHaveBeenCalledTimes(2);
+    expect(commandPort.createFeed).toHaveBeenNthCalledWith(1, {
+      title: 'katya.marfaknchov',
+      type: 'inst',
+      url: profileUrl,
+    }, credentials);
+    expect(commandPort.createFeed).toHaveBeenNthCalledWith(2, {
+      title: 'katya.marfaknchov',
+      type: 'stories',
+      url: profileUrl,
+    }, credentials);
+  });
+
+  it('resumes Instagram profile creation after the stories request fails', async () => {
+    const ports = createPorts();
+    const created: Feed[] = [];
+    vi.mocked(ports.queryPort.getAllFeeds).mockImplementation(async () => [...created]);
+    let failStories = true;
+    vi.mocked(ports.commandPort.createFeed).mockImplementation(async (feed) => {
+      if (feed.type === 'stories' && failStories) {
+        failStories = false;
+        throw new Error('Connection lost');
+      }
+      created.push({ ...feed, id: created.length + 1, url: `${feed.url}/` });
+    });
+    const useCases = createFeedUseCases(ports);
+    const input = { title: 'Example', type: 'inst', url: 'https://www.instagram.com/example/' };
+
+    await expect(useCases.saveFeed(input, 'extended', credentials)).rejects.toThrow('Connection lost');
+    await expect(useCases.saveFeed(input, 'extended', credentials)).resolves.toBeUndefined();
+
+    expect(created.map(({ type }) => type)).toEqual(['inst', 'stories']);
+    expect(vi.mocked(ports.commandPort.createFeed).mock.calls.map(([feed]) => feed.type))
+      .toEqual(['inst', 'stories', 'stories']);
+  });
+
+  it('falls back to a readable URL segment when title metadata is unavailable', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.metadataPort.getOpenGraphPreview).mockRejectedValue(new Error('blocked'));
+    const useCases = createFeedUseCases(ports);
+
+    await expect(useCases.suggestFeedTitle(
+      'https://de.pornhub.com/model/aquari',
+    )).resolves.toBe('Aquari');
+  });
+
+  it('uses the Instagram username instead of its generic page metadata', async () => {
+    const ports = createPorts(createOpenGraphPreview('Instagram'));
+    const useCases = createFeedUseCases(ports);
+
+    await expect(useCases.suggestFeedTitle(
+      'https://www.instagram.com/katya.marfaknchov?stkn=ZmJ1bHY0bWZ6eXh2',
+    )).resolves.toBe('katya.marfaknchov');
+    expect(ports.metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
+  });
 });
 
 function createPorts(preview = createOpenGraphPreview('Feed')): {
@@ -165,7 +337,10 @@ function createPorts(preview = createOpenGraphPreview('Feed')): {
       getFeedById: vi.fn().mockResolvedValue(undefined),
     },
     itemsPort: {
-      getFeedItems: vi.fn().mockResolvedValue([]),
+      syncFeedItems: vi.fn().mockResolvedValue({ items: [], cursor: 'sync' }),
+      getFeedItemChanges: vi.fn().mockResolvedValue({
+        upserted: [], deletedIds: [], nextCursor: 'next', hasMore: false,
+      }),
     },
     commandPort: {
       deleteFeedItemById: vi.fn().mockResolvedValue(undefined),
@@ -175,6 +350,7 @@ function createPorts(preview = createOpenGraphPreview('Feed')): {
     },
     metadataPort: {
       getOpenGraphPreview: vi.fn().mockResolvedValue(preview),
+      getFeedTypeSuggestion: vi.fn().mockResolvedValue({ type: 'web', confidence: 1 }),
     },
     cachePort: {
       read: vi.fn().mockResolvedValue(undefined),

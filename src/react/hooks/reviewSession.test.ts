@@ -18,6 +18,60 @@ const presentation: ReviewPresentation = {
 };
 
 describe('review session', () => {
+  it('reorders saved queues after the order changes outside Reader without losing kept decisions', () => {
+    let state = reviewSessionReducer(createReviewSessionState({ ...presentation, itemOrder: 'asc' }), {
+      type: 'sessionChanged',
+      storageKey: 'reader',
+      restoredItemOrder: 'desc',
+      restoredProgress: { pendingIds: [3, 2], revisitIds: [1], keptItemIds: new Set([1]) },
+    });
+    state = snapshot(state, [3, 2, 1], true);
+
+    expect(getActiveReviewIds(state)).toEqual([2, 3]);
+    expect(state.progress.revisitIds).toEqual([1]);
+    expect(state.progress.keptItemIds).toEqual(new Set([1]));
+
+    state = snapshot(state, [4, 3, 2, 1], true);
+    expect(getActiveReviewIds(state)).toEqual([2, 3, 4]);
+  });
+
+  it('keeps the saved current card when reopening with the same order', () => {
+    let state = reviewSessionReducer(createReviewSessionState(presentation), {
+      type: 'sessionChanged',
+      storageKey: 'reader',
+      restoredItemOrder: 'desc',
+      restoredProgress: { pendingIds: [2, 3], revisitIds: [1], keptItemIds: new Set([1]) },
+    });
+    state = snapshot(state, [3, 2, 1], true);
+    expect(getActiveReviewIds(state)).toEqual([2, 3]);
+  });
+
+  it('keeps the active revisit in its queue across an unchanged refresh', () => {
+    let state = snapshot(startSession(null), [1], true);
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+
+    state = snapshot(state, [1], true);
+
+    expect(state.progress.pendingIds).toEqual([]);
+    expect(state.progress.revisitIds).toEqual([1]);
+    expect(getActiveReviewIds(state)).toEqual([1]);
+
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+    expect(getActiveReviewIds(state)).toEqual([]);
+  });
+
+  it('preserves revisits when a refresh adds new pending cards', () => {
+    let state = snapshot(startSession(null), [2, 1], true);
+    state = reviewSessionReducer(state, { type: 'keep', id: 2 });
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+
+    state = snapshot(state, [3, 2, 1], true);
+
+    expect(state.progress).toEqual({
+      pendingIds: [3], revisitIds: [2, 1], keptItemIds: new Set([2, 1]),
+    });
+  });
+
   it('restores progress and waits for a completed reload before adding new cards', () => {
     let state = startSession({
       pendingIds: [3, 2],
@@ -42,9 +96,9 @@ describe('review session', () => {
 
     state = snapshot(state, [5, 4, 3], true);
 
-    expect(getActiveReviewIds(state)).toEqual([5, 4, 3]);
+    expect(getActiveReviewIds(state)).toEqual([3, 5, 4]);
     expect(state.progress).toEqual({
-      pendingIds: [5, 4, 3],
+      pendingIds: [3, 5, 4],
       revisitIds: [],
       keptItemIds: new Set(),
     });
@@ -59,7 +113,7 @@ describe('review session', () => {
     state = snapshot(state, [5, 4, 3, 2, 1], true);
 
     expect(state.progress).toEqual({
-      pendingIds: [5, 4, 2, 1],
+      pendingIds: [1, 5, 4, 2],
       revisitIds: [3],
       keptItemIds: new Set([3]),
     });
@@ -93,9 +147,9 @@ describe('review session', () => {
     state = snapshot(state, [6, 5], false);
     state = reviewSessionReducer(state, { type: 'syncFailed' });
 
-    expect(getActiveReviewIds(state)).toEqual([6, 5]);
+    expect(getActiveReviewIds(state)).toEqual([5, 6]);
     expect(state.progressToPersist).toEqual({
-      pendingIds: [6, 5, 4],
+      pendingIds: [5, 6, 4],
       revisitIds: [3],
       keptItemIds: new Set([3, 2, 1]),
     });
@@ -105,7 +159,7 @@ describe('review session', () => {
     state = snapshot(state, [6, 5, 4, 3, 2], true);
 
     expect(state.progress).toEqual({
-      pendingIds: [6, 5, 4],
+      pendingIds: [5, 6, 4],
       revisitIds: [3],
       keptItemIds: new Set([3, 2]),
     });
@@ -242,7 +296,7 @@ describe('review session', () => {
     state = snapshot(state, [3, 2, 1], true);
 
     expect(state.deletions).toEqual([]);
-    expect(getActiveReviewIds(state)).toEqual([3, 2, 1]);
+    expect(getActiveReviewIds(state)).toEqual([2, 3, 1]);
   });
 });
 

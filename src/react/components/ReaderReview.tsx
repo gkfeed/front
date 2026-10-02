@@ -13,6 +13,7 @@ import { usePluginPreferences } from '../state/usePluginPreferences';
 export function ReaderReview({
   item,
   remainingCount,
+  hasKeptItems,
   isDeleting,
   reviewPanelRef,
   onKeep,
@@ -21,6 +22,7 @@ export function ReaderReview({
 }: {
   item: FeedItem;
   remainingCount: number;
+  hasKeptItems: boolean;
   isDeleting: boolean;
   reviewPanelRef: RefObject<HTMLDivElement | null>;
   onKeep: () => void;
@@ -60,9 +62,11 @@ export function ReaderReview({
       ) : null}
       <ReaderReviewActions {...reviewActions} />
       <div className="reader__count-row">
-        <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={onReset}>
-          {t('reader.reset')}
-        </button>
+        {hasKeptItems ? (
+          <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={onReset}>
+            {t('reader.reset')}
+          </button>
+        ) : null}
         <FeedPriorityControls feedId={item.feedId} />
         <span className="reader__count">{t('reader.remaining', { count: remainingCount })}</span>
       </div>

@@ -24,6 +24,7 @@ describe('preview use cases', () => {
       fetchTikTokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ type: 'tiktok' }),
       fetchYoutubeComments: vi.fn().mockResolvedValue({ type: 'youtube' }),
+      fetchYoutubeTimecodes: vi.fn().mockResolvedValue({ timecodes: [] }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({
         body: new Uint8Array([1, 2, 3]),
         contentType: 'image/jpeg',
@@ -48,6 +49,8 @@ describe('preview use cases', () => {
       .resolves.toEqual({ type: 'tiktok' });
     await expect(useCases.youtubeComments('https://youtube.com/watch?v=video', context))
       .resolves.toEqual({ type: 'youtube' });
+    await expect(useCases.youtubeTimecodes('https://youtube.com/watch?v=video', context))
+      .resolves.toEqual({ timecodes: [] });
     await expect(useCases.redditPreviewImage('https://reddit.com/image', context))
       .resolves.toEqual({ body: new Uint8Array([1, 2, 3]), contentType: 'image/jpeg' });
     await expect(useCases.vkVideoSource('https://vk.ru/video_ext.php?oid=-1&id=2', context))
@@ -59,6 +62,7 @@ describe('preview use cases', () => {
     expect(ports.fetchLiquipediaMatch).toHaveBeenCalledWith('https://liquipedia.net', context);
     expect(ports.fetchTikTokComments).toHaveBeenCalledWith('https://tiktok.com/video', context);
     expect(ports.fetchYoutubeComments).toHaveBeenCalledWith('https://youtube.com/watch?v=video', context);
+    expect(ports.fetchYoutubeTimecodes).toHaveBeenCalledWith('https://youtube.com/watch?v=video', context);
     expect(ports.fetchRedditPreviewImage).toHaveBeenCalledWith('https://reddit.com/image', context);
     expect(ports.fetchVkVideoSource).toHaveBeenCalledWith(
       'https://vk.ru/video_ext.php?oid=-1&id=2',
@@ -75,6 +79,7 @@ describe('preview use cases', () => {
       fetchTikTokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
       fetchYoutubeComments: vi.fn().mockResolvedValue({}),
+      fetchYoutubeTimecodes: vi.fn().mockResolvedValue({ timecodes: [] }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
       fetchSasflixMedia: vi.fn(),
       fetchVkVideoSource: vi.fn().mockResolvedValue({ url: 'https://cdn.example/video.mp4', referer: 'https://vk.ru/' }),
@@ -89,10 +94,11 @@ describe('preview use cases', () => {
     await useCases.liquipediaMatch('https://liquipedia.net', context);
     await useCases.tiktokComments('https://tiktok.com/video', context);
     await useCases.youtubeComments('https://youtube.com/watch?v=video', context);
+    await useCases.youtubeTimecodes('https://youtube.com/watch?v=video', context);
     await useCases.redditPreviewImage('https://reddit.com/image', context);
     await useCases.vkVideoSource('https://vk.ru/video_ext.php?oid=-1&id=2', context);
     await useCases.hltvLiveIndex(context);
 
-    expect(limit).toHaveBeenCalledTimes(8);
+    expect(limit).toHaveBeenCalledTimes(9);
   });
 });

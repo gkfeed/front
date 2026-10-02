@@ -78,6 +78,35 @@ describe('LoginPage', () => {
     expect((await screen.findByText(/Logged in as/)).textContent).toContain('alice');
   });
 
+  it('retries a saved login after a temporary connection failure', async () => {
+    const storage = stubLocalStorage();
+    const saved = JSON.stringify({ username: 'alice', password: 'secret' });
+    storage.set(AUTH_STORAGE_KEY, saved);
+    validateLogin.mockRejectedValueOnce(new Error('Network unavailable')).mockResolvedValueOnce();
+
+    render(<MemoryRouter><AppProviders><LoginPage /></AppProviders></MemoryRouter>);
+
+    expect((await screen.findByRole('alert')).textContent).toContain('Could not check your saved login');
+    expect(storage.get(AUTH_STORAGE_KEY)).toBe(saved);
+    fireEvent.click(screen.getByRole('button', { name: 'Try saved login again' }));
+
+    expect((await screen.findByText(/Logged in as/)).textContent).toContain('alice');
+    expect(validateLogin).toHaveBeenCalledTimes(2);
+  });
+
+  it('lets the user choose another account after saved login verification fails', async () => {
+    const storage = stubLocalStorage();
+    storage.set(AUTH_STORAGE_KEY, JSON.stringify({ username: 'alice', password: 'secret' }));
+    validateLogin.mockRejectedValue(new Error('Network unavailable'));
+
+    render(<MemoryRouter><AppProviders><LoginPage /></AppProviders></MemoryRouter>);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Use another account' }));
+    expect(storage.has(AUTH_STORAGE_KEY)).toBe(false);
+    expect(screen.getByRole('heading', { name: 'Sign in to GKFEED' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
+  });
+
   it('rejects invalid credentials without saving them', async () => {
     const storage = stubLocalStorage();
     validateLogin.mockRejectedValue(new ApiError('Request failed with 401', 401));

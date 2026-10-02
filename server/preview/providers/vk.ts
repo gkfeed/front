@@ -1,10 +1,11 @@
 import { normalizeHostname } from '../../../shared/urlRules.js';
 import { isVkHost, isVkImageHost } from '../../../shared/urlRules.js';
+import { parseHTML } from 'linkedom';
 import { getStringProperty, isRecord } from '../../../shared/valueGuards.js';
 import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
 import { fetchVkHtml } from '../vkFetcher.js';
 import { parseOpenGraph } from '../openGraphParser.js';
-import { resolveHttpUrl } from '../html.js';
+import { decodeHtml, parseAttributes, resolveHttpUrl } from '../html.js';
 import { isVkMissingWallPage } from '../vkPageState.js';
 
 export const vkOpenGraphAdapter: OpenGraphProviderAdapter = {
@@ -25,11 +26,59 @@ function parseVkOpenGraph(html: string, pageUrl: URL) {
     };
   }
   const structuredVideo = parseVkStructuredVideo(html, pageUrl);
+  const images = parseVkPostPhotos(html, pageUrl);
   return {
     ...preview,
-    image: normalizeVkImage(preview.image ?? structuredVideo?.image ?? null),
+    image: normalizeVkImage(preview.image ?? images[0] ?? structuredVideo?.image ?? null),
     video: preview.video ?? structuredVideo?.embedUrl ?? null,
+    ...(images.length > 1 && !preview.video && !structuredVideo
+      ? { providerData: { provider: 'vk', images } as const }
+      : {}),
   };
+}
+
+function parseVkPostPhotos(html: string, pageUrl: URL): string[] {
+  const postId = pageUrl.pathname.match(/^\/wall(-?\d+_\d+)\/?$/i)?.[1];
+  if (postId && html.includes('data-testid="media-grid"')) {
+    const { document } = parseHTML(html);
+    const post = [...document.querySelectorAll('[data-testid="post"]')]
+      .find((element) => element.getAttribute('data-post-id') === postId);
+    const images = [...(post?.querySelectorAll('[data-testid="media-grid"] a[href^="/photo"] img') ?? [])]
+      .map((image) => resolveHttpUrl(decodeHtml(image.getAttribute('src') ?? ''), pageUrl))
+      .filter((image): image is string => Boolean(image))
+      .map((image) => {
+        const url = new URL(image);
+        if (!isVkImageHost(url.hostname)) return null;
+        url.searchParams.delete('cs');
+        return normalizeVkImage(url.href);
+      })
+      .filter((image): image is string => Boolean(image));
+    if (images.length > 1) return [...new Set(images)];
+  }
+  return parseVkImages(html, pageUrl);
+}
+
+function parseVkImages(html: string, pageUrl: URL): string[] {
+  const images: string[] = [];
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+    const attributes = parseAttributes(tag);
+    if (!['og:image', 'og:image:url'].includes(attributes.property?.toLowerCase() ?? '')) continue;
+    const image = normalizeVkImage(resolveHttpUrl(decodeHtml(attributes.content ?? ''), pageUrl));
+    if (image && !images.includes(image)) images.push(image);
+  }
+  for (const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const data: unknown = JSON.parse(match[1] ?? '');
+      if (!isRecord(data) || data['@type'] !== 'SocialMediaPosting') continue;
+      const listed = Array.isArray(data.image) ? data.image : [];
+      for (const entry of listed) {
+        if (typeof entry !== 'string') continue;
+        const image = normalizeVkImage(resolveHttpUrl(entry, pageUrl));
+        if (image && !images.includes(image)) images.push(image);
+      }
+    } catch { /* Ignore malformed structured data. */ }
+  }
+  return images;
 }
 
 function normalizeVkImage(value: string | null): string | null {

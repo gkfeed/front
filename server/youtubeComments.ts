@@ -76,7 +76,7 @@ export function parseYoutubeComments(value: unknown): YoutubeComment[] {
   });
 }
 
-function parseYoutubeVideoId(input: string): string {
+export function parseYoutubeVideoId(input: string): string {
   let url: URL;
   try {
     url = new URL(input);
@@ -114,7 +114,7 @@ function parseYoutubeConfig(html: string): { apiKey: string | null; context: unk
   return { apiKey, context };
 }
 
-function parseAssignedJson(html: string, marker: string): unknown {
+export function parseAssignedJson(html: string, marker: string): unknown {
   const markerIndex = html.indexOf(marker);
   if (markerIndex < 0) return null;
   const start = html.indexOf('{', markerIndex + marker.length);
@@ -183,7 +183,7 @@ function stringValue(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-async function fetchYoutubeText(url: URL, context?: RequestExecutionContext): Promise<string> {
+export async function fetchYoutubeText(url: URL, context?: RequestExecutionContext): Promise<string> {
   const response = await fetch(url, requestInit(context));
   if (!response.ok) throw new Error(`YouTube returned ${response.status}`);
   return response.text();

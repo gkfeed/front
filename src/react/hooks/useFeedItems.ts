@@ -8,6 +8,7 @@ type FeedItemsState = {
   status: 'loading' | 'success' | 'error';
   error: Error | null;
   isSyncComplete: boolean;
+  isSnapshotComplete: boolean;
 };
 
 const INITIAL_STATE: FeedItemsState = {
@@ -15,7 +16,9 @@ const INITIAL_STATE: FeedItemsState = {
   status: 'loading',
   error: null,
   isSyncComplete: false,
+  isSnapshotComplete: false,
 };
+const POLL_INTERVAL_MS = 60_000;
 
 export function useFeedItems(credentials: Credentials | null) {
   const { feeds } = useFeatureUseCases();
@@ -25,8 +28,12 @@ export function useFeedItems(credentials: Credentials | null) {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
+    let pending = false;
 
     const loadSnapshot = async () => {
+      if (pending || !active) return;
+      pending = true;
+      setState((current) => ({ ...current, status: 'loading', error: null }));
       try {
         const items = await feeds.loadFeedItems(credentials, {
           bypassCache: attempt > 0,
@@ -38,22 +45,30 @@ export function useFeedItems(credentials: Credentials | null) {
               status: 'success',
               error: null,
               isSyncComplete: false,
+              isSnapshotComplete: false,
             });
           },
-          onProgress: (partialItems) => {
+          onProgress: (partialItems, isSnapshotComplete = false) => {
             if (!active || controller.signal.aborted) return false;
             setState({
               loadedItems: partialItems,
               status: 'success',
               error: null,
               isSyncComplete: false,
+              isSnapshotComplete,
             });
             return true;
           },
         });
         if (!active || controller.signal.aborted) return;
 
-        setState({ loadedItems: items, status: 'success', error: null, isSyncComplete: true });
+        setState({
+          loadedItems: items,
+          status: 'success',
+          error: null,
+          isSyncComplete: true,
+          isSnapshotComplete: true,
+        });
       } catch (error) {
         if (!active || controller.signal.aborted) return;
         const normalizedError = error instanceof Error ? error : new Error(String(error));
@@ -62,16 +77,28 @@ export function useFeedItems(credentials: Credentials | null) {
           status: 'error',
           error: normalizedError,
           isSyncComplete: false,
+          isSnapshotComplete: currentState.isSnapshotComplete,
         }));
+      } finally {
+        pending = false;
       }
     };
 
     setState(INITIAL_STATE);
     void loadSnapshot();
+    const poll = () => {
+      if (document.visibilityState === 'visible') void loadSnapshot();
+    };
+    const interval = window.setInterval(poll, POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', poll);
+    window.addEventListener('focus', poll);
 
     return () => {
       active = false;
       controller.abort();
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', poll);
+      window.removeEventListener('focus', poll);
     };
   }, [attempt, credentials, feeds]);
 
@@ -84,10 +111,15 @@ export function useFeedItems(credentials: Credentials | null) {
     feeds.invalidateFeedItemsCache(credentials);
   }, [credentials, feeds]);
 
+  const removeCachedItem = useCallback((id: number) => {
+    feeds.removeFeedItemFromCache(credentials, id);
+  }, [credentials, feeds]);
+
   return {
     ...state,
     isLoading: state.loadedItems === undefined && state.status === 'loading',
     invalidateCache,
+    removeCachedItem,
     retry,
   };
 }

@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
 import { handleBffRequest } from './apiRouter.js';
+import { createBffClientAddressResolver } from './bffClientAddress.js';
 import { toHttpErrorResponse } from './httpErrorMapping.js';
 import { sendJson } from './httpResponse.js';
 import { createHttpRequestContext } from './requestContext.js';
@@ -15,6 +16,7 @@ const defaultDependencies: HttpServerDependencies = {
   handleBffRequest,
   serveFrontend,
 };
+const resolveClientAddress = createBffClientAddressResolver(process.env.BFF_TRUSTED_PROXY_CIDRS);
 
 export function createHttpServer(
   dependencies: HttpServerDependencies = defaultDependencies,
@@ -38,7 +40,7 @@ export async function handleHttpRequest(
       response,
       context,
       undefined,
-      request.socket.remoteAddress ?? 'unknown',
+      resolveClientAddress(request),
       undefined,
       undefined,
       request.headers.range,
@@ -51,6 +53,11 @@ export async function handleHttpRequest(
 
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       sendJson(response, 405, { error: { code: 'method_not_allowed', message: 'Method not allowed' } });
+      return;
+    }
+
+    if (requestUrl.pathname === '/bff' || requestUrl.pathname.startsWith('/bff/')) {
+      sendJson(response, 404, { error: { code: 'not_found', message: 'Route not found' } });
       return;
     }
 

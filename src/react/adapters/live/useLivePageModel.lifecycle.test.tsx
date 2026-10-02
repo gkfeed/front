@@ -4,11 +4,11 @@ import type { TFunction } from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LiveCandidate, LiveCheckBatch, LiveProviderRuntime } from '../../domain/liveEvents';
-import { getFeedItems } from '../../services/feeds';
+import { getAllFeeds, getFeedItems } from '../../services/feeds';
 import { readLiveCandidateCatalog, writeLiveCandidateCatalog } from '../../services/liveCandidateCatalog';
 import { useLivePageModel } from './useLivePageModel';
 
-vi.mock('../../services/feeds', () => ({ getFeedItems: vi.fn() }));
+vi.mock('../../services/feeds', () => ({ getFeedItems: vi.fn(), getAllFeeds: vi.fn() }));
 vi.mock('../../services/liveCandidateCatalog', () => ({ readLiveCandidateCatalog: vi.fn(), writeLiveCandidateCatalog: vi.fn() }));
 const credentials = { username: 'user', password: 'secret' };
 vi.mock('../../state/useAuth', () => ({ useAuth: () => ({ credentials }) }));
@@ -25,6 +25,7 @@ const enabled = [provider];
 const disabled: LiveProviderRuntime[] = [];
 
 beforeEach(() => {
+  vi.mocked(getAllFeeds).mockResolvedValue([{ id: 1, title: 'Test', type: 'rss', url: 'https://example.com/feed' }]);
   vi.mocked(readLiveCandidateCatalog).mockResolvedValue({
     candidates: [candidate], newestItemId: item.id, lastReconciledAt: Date.now(), providerIds: ['test'],
   });
@@ -53,6 +54,7 @@ describe('Live plugin lifecycle', () => {
     check.mockImplementation(() => new Promise((done) => { resolve = done; }));
     act(() => result.current.refresh());
     expect(result.current.refreshing).toBe(true);
+    await waitFor(() => expect(resolve).toBeDefined());
     const signal = check.mock.lastCall![1];
     unmount();
     expect(signal.aborted).toBe(true);

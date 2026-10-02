@@ -66,7 +66,14 @@ export const feedPluginUiCatalog = {
   }),
   vk: definePluginUi('vk', async () => {
     const { VkDeletedPreview, VkCopy } = await import('./providerRenderers/vk');
-    return { renderCard: (props) => ({ preview: props.facts.vkStatus === 'deleted' ? <VkDeletedPreview facts={props.facts} /> : <FeedItemMediaPreview {...props} />, copy: <VkCopy {...props} /> }) };
+    const { VkImageCarousel } = await import('../previews/VkImageCarousel');
+    return { renderCard: (props) => ({
+      preview: props.facts.vkStatus === 'deleted' ? <VkDeletedPreview facts={props.facts} />
+        : props.localizedPreview && props.localizedPreview.type === undefined && (props.localizedPreview.imageUrls?.length ?? 0) > 1
+          ? <VkImageCarousel key={props.facts.item.link} href={props.facts.item.link} preview={props.localizedPreview} onPreviewError={props.facts.onPreviewError} />
+          : <FeedItemMediaPreview {...props} />,
+      copy: <VkCopy {...props} />,
+    }) };
   }),
   youtube: definePluginUi('youtube', async () => {
     const { YoutubeVideoPreview, YoutubeCopy } = await import('./providerRenderers/youtube');

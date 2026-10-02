@@ -1,10 +1,16 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v2/items/changes?**', (route) => route.fulfill({
+    json: { upserted: [], deleted_ids: [], next_cursor: 'sync', has_more: false },
+  }));
+});
+
 test('VK media and copy use more of the mobile viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'iphone');
 
   await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-  await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+  await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
     json: {
       items: [{
         id: 20,
@@ -13,7 +19,7 @@ test('VK media and copy use more of the mobile viewport', async ({ page }, testI
         title: 'VK community',
         text: '<img src="https://example.com/vk-card.jpg"><br>Story copy',
       }],
-      next_cursor: null,
+      next_cursor: '', has_more: false, sync_cursor: 'sync',
     },
   }));
   await page.route('**/bff/open-graph?**', (route) => route.fulfill({
@@ -97,7 +103,7 @@ test('authenticated feed shell fits the target viewport', async ({ page }) => {
 test('collapsed TikTok controls stay beside the video in iPad landscape fullscreen', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 683 });
   await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
-  await page.route('**/api/v1/get_items?**', (route) => route.fulfill({
+  await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
     json: {
       items: [{
         id: 20,
@@ -106,7 +112,7 @@ test('collapsed TikTok controls stay beside the video in iPad landscape fullscre
         title: 'Short video',
         text: '',
       }],
-      next_cursor: null,
+      next_cursor: '', has_more: false, sync_cursor: 'sync',
     },
   }));
   await page.route('https://www.tiktok.com/player/**', (route) => route.fulfill({

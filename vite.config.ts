@@ -13,6 +13,10 @@ export default defineConfig({
         target: 'https://feed.gws.freemyip.com',
         changeOrigin: true,
       },
+      '/api/v2': {
+        target: 'https://feed.gws.freemyip.com',
+        changeOrigin: true,
+      },
     },
   },
   test: {

@@ -12,6 +12,23 @@ describe('BFF request gate', () => {
     }
   });
 
+  it('does not start or rate-limit requests already aborted before admission', async () => {
+    const gate = createBffRequestGate({ rateLimit: 1 });
+    const controller = new AbortController();
+    controller.abort();
+    const context = {
+      signal: controller.signal,
+      deadline: Number.POSITIVE_INFINITY,
+      remainingMs: () => Number.POSITIVE_INFINITY,
+    };
+    const load = vi.fn(async () => 'unwanted');
+
+    await expect(gate.run('reader', context, load)).rejects.toThrow('Request aborted');
+    expect(load).not.toHaveBeenCalled();
+    await expect(gate.run('reader', createDetachedRequestExecutionContext(), async () => 'ok'))
+      .resolves.toBe('ok');
+  });
+
   it('limits concurrency per client while letting another client use available capacity', async () => {
     const gate = createBffRequestGate({
       maxActive: 3,

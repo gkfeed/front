@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FeedItem } from '../../types';
@@ -15,7 +15,8 @@ export function TikTokComments({ item }: { item: FeedItem }) {
   const commentsRef = useRef<HTMLElement>(null);
   const isVisible = usePreviewVisibility(commentsRef, '0px');
   const [isExpanded, setIsExpanded] = useTikTokCommentsPreference();
-  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [isMobileReview, setIsMobileReview] = useState(false);
+  const isDialogOpen = isExpanded && isMobileReview;
   const {
     comments,
     remoteDescription,
@@ -28,13 +29,19 @@ export function TikTokComments({ item }: { item: FeedItem }) {
   const description = getFeedItemDescription(item.text, item.title) ?? remoteDescription;
 
   useEffect(() => {
-    if (!isExpanded) {
-      previousFocusRef.current?.focus();
-      previousFocusRef.current = null;
-      return undefined;
-    }
+    const mediaQuery = window.matchMedia?.('(max-width: 640px)');
+    const syncLayout = () => setIsMobileReview(Boolean(
+      mediaQuery?.matches && commentsRef.current?.closest('.reader__item--tiktok'),
+    ));
+    syncLayout();
+    mediaQuery?.addEventListener('change', syncLayout);
+    return () => mediaQuery?.removeEventListener('change', syncLayout);
+  }, []);
 
-    previousFocusRef.current = document.activeElement instanceof HTMLElement
+  useEffect(() => {
+    if (!isDialogOpen) return;
+
+    const previousFocus = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
     commentsRef.current?.focus({ preventScroll: true });
@@ -49,18 +56,27 @@ export function TikTokComments({ item }: { item: FeedItem }) {
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isExpanded, setIsExpanded]);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [isDialogOpen, setIsExpanded]);
 
   return (
     <aside
       ref={commentsRef}
       className="tiktok-comments"
       aria-label={t('comments.label')}
-      role={isExpanded ? 'dialog' : undefined}
-      aria-modal={isExpanded ? 'true' : undefined}
+      role={isDialogOpen ? 'dialog' : undefined}
+      aria-modal={isDialogOpen ? 'true' : undefined}
       aria-labelledby={`tiktok-comments-${item.id}`}
-      tabIndex={isExpanded ? -1 : undefined}
+      tabIndex={isDialogOpen ? -1 : undefined}
+      onKeyDown={(event) => {
+        if (!isExpanded || event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        setIsExpanded(false);
+      }}
     >
       <div className="tiktok-comments__toolbar">
         <h2 id={`tiktok-comments-${item.id}`} className="tiktok-comments__title">

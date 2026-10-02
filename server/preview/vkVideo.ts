@@ -54,7 +54,7 @@ export async function fetchVkVideoStream(
   };
   if (range) headers.range = range;
 
-  const video = await requestPublicHttp(url, headers, context).catch((error: unknown) => {
+  const video = await requestPublicHttp(url, headers, context, { streamBody: true }).catch((error: unknown) => {
     throwPublicUrlError(error);
     throw new PreviewError('The VK video stream could not be fetched', 'fetch_failed');
   });

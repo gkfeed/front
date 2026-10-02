@@ -44,6 +44,82 @@
   object-fit: contain;
 }
 
+.reader-card--vk .reader-card__vk-carousel {
+  position: relative;
+}
+
+.reader-card__vk-carousel-link {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.reader-card__vk-carousel-link:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.reader-card__vk-carousel-controls {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  color: #fff;
+}
+
+.reader-card__vk-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 50%;
+  background: rgb(12 16 24 / 42%);
+  color: inherit;
+  font-size: 30px;
+  line-height: 1;
+  opacity: 0.58;
+  pointer-events: auto;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: opacity 160ms ease, background 160ms ease;
+}
+
+.reader-card__vk-carousel-arrow--previous {
+  left: 12px;
+}
+
+.reader-card__vk-carousel-arrow--next {
+  right: 12px;
+}
+
+.reader-card__vk-carousel-count {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgb(12 16 24 / 42%);
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.76;
+  transform: translateX(-50%);
+}
+
+.reader-card__vk-carousel-arrow:hover,
+.reader-card__vk-carousel-arrow:focus-visible {
+  background: rgb(12 16 24 / 75%);
+  opacity: 1;
+}
+
+.reader-card__vk-carousel-arrow:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 .reader-card--vk .reader-card__copy {
   gap: 10px;
   padding: 16px 20px 18px;

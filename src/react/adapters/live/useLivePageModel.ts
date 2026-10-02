@@ -3,10 +3,10 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
 
 import { getRequestErrorMessage } from '../../presentation/requestErrorMessage';
-import { getFeedItems } from '../../services/feeds';
+import { getAllFeeds, getFeedItems } from '../../services/feeds';
 import { readLiveCandidateCatalog, writeLiveCandidateCatalog } from '../../services/liveCandidateCatalog';
 import { useAuth } from '../../state/useAuth';
-import { catalogCandidates, deduplicateLiveEvents, mergeCandidates } from '../../features/live/liveCatalog';
+import { catalogCandidates, deduplicateLiveEvents, mergeCandidates, retainCandidatesFromFeeds } from '../../features/live/liveCatalog';
 import type { LiveCandidate, LiveEvent, LiveProviderRuntime } from '../../domain/liveEvents';
 
 const REFRESH_INTERVAL_MS = 60_000;
@@ -35,6 +35,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
   const activeController = useRef<AbortController | null>(null);
   const previousUsername = useRef<string | null>(null);
   const scanCyclePending = useRef(false);
+  const manualRefreshPending = useRef(false);
   const initialScanRunning = useRef(true);
   const newestItemIdRef = useRef<number | null>(null);
   const lastReconciledAtRef = useRef<number | null>(null);
@@ -47,6 +48,18 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     candidatesRef.current = next;
     setCandidates(next);
   }, []);
+  const commitCandidates = useCallback((next: LiveCandidate[]) => {
+    setCandidateState(next);
+    const keys = new Set(next.map((candidate) => candidate.key));
+    setEvents((current) => {
+      const retained = Object.fromEntries(Object.entries(current).filter(([key]) => keys.has(key)));
+      eventsRef.current = retained;
+      return retained;
+    });
+    for (const key of lastChecked.current.keys()) {
+      if (!keys.has(key)) lastChecked.current.delete(key);
+    }
+  }, [setCandidateState]);
 
   const runCycle = useCallback(async (signal: AbortSignal) => {
     if (cycleRunning.current === signal || signal.aborted) return;
@@ -77,15 +90,17 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
               || !page.some((item) => item.id === previousNewestItemId);
           }, 100);
           if (signal.aborted) return;
+          const activeFeedIds = new Set((await getAllFeeds(credentials, signal)).map((feed) => feed.id));
+          if (signal.aborted) return;
           const discovered = catalogCandidates(items, providers);
-          const nextCandidates = fullReconciliation
+          const nextCandidates = retainCandidatesFromFeeds(fullReconciliation
             ? discovered
             : mergeIncrementalCandidates(
               discovered,
               candidatesRef.current,
               getNewItemCount(items, previousNewestItemId),
-            );
-          setCandidateState(nextCandidates);
+            ), activeFeedIds);
+          commitCandidates(nextCandidates);
           newestItemIdRef.current = items[0]?.id ?? previousNewestItemId;
           if (fullReconciliation) {
             lastReconciledAtRef.current = Date.now();
@@ -116,18 +131,20 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           return;
         }
         const scheduled = scheduleProviderCandidates(provider, providerCandidates, eventsRef.current, lastChecked.current);
+        // Failed attempts must also rotate out of the next dormant batch.
+        const attemptedAt = Date.now();
+        for (const candidate of scheduled) lastChecked.current.set(candidate.key, attemptedAt);
         try {
           const result = await provider.check(scheduled, signal);
           if (signal.aborted) return;
           const checkedAt = Date.now();
           successfulUpdates += result.updates.length;
-          for (const update of result.updates) lastChecked.current.set(update.key, checkedAt);
           setEvents((current) => {
             if (signal.aborted) return current;
             const next = { ...current };
             for (const update of result.updates) {
               if (update.status === 'live' && update.data) {
-                const candidate = providerCandidates.find((value) => value.key === update.key);
+                const candidate = candidatesRef.current.find((value) => value.key === update.key);
                 if (candidate) next[update.key] = { candidate, data: update.data, checkedAt };
               } else if (provider.preserveEndedPlayback && activePlayback.current.has(update.key) && next[update.key]) {
                 next[update.key] = { ...next[update.key], checkedAt, ended: true };
@@ -152,12 +169,17 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     } finally {
       if (cycleRunning.current === signal) cycleRunning.current = null;
       if (!signal.aborted) setRefreshing(false);
-      if (!signal.aborted && scanCyclePending.current) {
-        scanCyclePending.current = false;
-        queueMicrotask(() => void cycleRef.current(signal));
+      if (!signal.aborted) {
+        const manualRefresh = manualRefreshPending.current;
+        manualRefreshPending.current = false;
+        if (manualRefresh) lastDiscoveryAtRef.current = 0;
+        if (scanCyclePending.current || manualRefresh) {
+          scanCyclePending.current = false;
+          queueMicrotask(() => void cycleRef.current(signal));
+        }
       }
     }
-  }, [credentials, providers, scanComplete, setCandidateState, t, username]);
+  }, [commitCandidates, credentials, providers, scanComplete, t, username]);
   cycleRef.current = runCycle;
 
   useEffect(() => {
@@ -165,6 +187,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     const controller = new AbortController();
     activeController.current = controller;
     const { signal } = controller;
+    manualRefreshPending.current = false;
     const enabledProviderIds = new Set(providers.map((provider) => provider.id));
     const sameAccount = previousUsername.current === username;
     previousUsername.current = username;
@@ -246,14 +269,16 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           return fullReconciliation || newestItemId === null || !page.some((item) => item.id === newestItemId);
         }, 100);
         if (signal.aborted) return;
-        const finalCandidates = fullReconciliation
+        const activeFeedIds = new Set((await getAllFeeds(credentials, signal)).map((feed) => feed.id));
+        if (signal.aborted) return;
+        const finalCandidates = retainCandidatesFromFeeds(fullReconciliation
           ? catalogCandidates(items, providers)
           : mergeIncrementalCandidates(
             catalogCandidates(items, providers),
             cachedCandidates,
             getNewItemCount(items, newestItemId),
-          );
-        setCandidateState(finalCandidates);
+          ), activeFeedIds);
+        commitCandidates(finalCandidates);
         const lastReconciledAt = fullReconciliation ? Date.now() : cached?.lastReconciledAt ?? null;
         await writeLiveCandidateCatalog(username, {
           candidates: finalCandidates,
@@ -303,7 +328,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [credentials, providers, setCandidateState, t, username]);
+  }, [commitCandidates, credentials, providers, setCandidateState, t, username]);
 
   const onPlaybackChange = useCallback((key: string, isOpen: boolean) => {
     if (isOpen) {
@@ -369,7 +394,13 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     refreshing,
     refresh: () => {
       const signal = activeController.current?.signal;
-      if (signal && providers.length > 0) void cycleRef.current(signal);
+      if (!signal || signal.aborted || providers.length === 0) return;
+      if (cycleRunning.current === signal) {
+        manualRefreshPending.current = true;
+        return;
+      }
+      lastDiscoveryAtRef.current = 0;
+      void cycleRef.current(signal);
     },
     onPlaybackChange,
     hasFreshEvents: sections.some((section) => section.events.some((event) => !event.ended)),

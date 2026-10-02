@@ -73,6 +73,28 @@ export function isVkHost(hostname: string): boolean {
   return isHostnameOrSubdomain(hostname, VK_HOSTS);
 }
 
+export function normalizeVkWallPostUrl(source: string): string {
+  let url: URL;
+  try {
+    url = new URL(source);
+  } catch {
+    return source;
+  }
+
+  if (
+    !HTTP_PROTOCOLS.has(url.protocol)
+    || !['vk.ru', 'www.vk.ru', 'm.vk.ru'].includes(url.hostname.toLowerCase())
+    || !/^\/wall-?\d+_\d+\/?$/i.test(url.pathname)
+    || url.username
+    || url.password
+    || url.port
+  ) return source;
+
+  url.protocol = 'https:';
+  url.hostname = 'vk.com';
+  return url.href;
+}
+
 export function isVkImageHost(hostname: string): boolean {
   return isHostnameOrSubdomain(hostname, VK_IMAGE_HOSTS);
 }

@@ -44,6 +44,43 @@ describe('parseOpenGraph: VK provider', () => {
     ).image).toBe('https://sun9-67.vkuserphoto.ru/impg/photo.jpg?size=1170x1560');
   });
 
+  it('keeps multiple VK post images from structured data in order', () => {
+    const html = `
+      <meta property="og:image" content="https://example.com/first.jpg">
+      ${jsonLdScript({
+        '@type': 'SocialMediaPosting',
+        image: ['https://example.com/first.jpg', 'https://example.com/second.jpg'],
+      })}
+    `;
+
+    expect(parseOpenGraph(html, new URL('https://vk.ru/wall-1_2')).providerData).toEqual({
+      provider: 'vk',
+      images: ['https://example.com/first.jpg', 'https://example.com/second.jpg'],
+    });
+  });
+
+  it('extracts the linked post photos without comment images', () => {
+    const html = `
+      <meta property="og:image" content="https://sun9-6.vkuserphoto.ru/first.jpg">
+      <div data-testid="post" data-post-id="-187455013_1261115">
+        <div data-testid="media-grid">
+          <a href="/photo-187455013_1"><img src="https://sun9-6.vkuserphoto.ru/first.jpg?cs=540x0"></a>
+          <a href="/photo-187455013_2"><img src="https://sun9-28.vkuserphoto.ru/second.jpg?cs=540x0"></a>
+          <a href="/photo-187455013_3"><img src="https://sun9-30.vkuserphoto.ru/third.jpg?cs=540x0"></a>
+        </div>
+      </div>
+      <a href="/photo-187455013_4"><img src="https://sun9-87.vkuserphoto.ru/comment.jpg"></a>
+    `;
+    expect(parseOpenGraph(html, new URL('https://vk.ru/wall-187455013_1261115')).providerData).toEqual({
+      provider: 'vk',
+      images: [
+        'https://sun9-6.vkuserphoto.ru/first.jpg',
+        'https://sun9-28.vkuserphoto.ru/second.jpg',
+        'https://sun9-30.vkuserphoto.ru/third.jpg',
+      ],
+    });
+  });
+
   it('extracts a VK video embed and thumbnail from structured data', () => {
     const html = jsonLdScript({
       '@context': 'https://schema.org',

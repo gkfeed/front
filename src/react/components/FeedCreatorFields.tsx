@@ -2,31 +2,30 @@ import { useTranslation } from 'react-i18next';
 
 import type {
   FeedCreatorFieldConfig,
+  FeedTypeDetectionStatus,
 } from '../domain/feedCreator';
 import type { FeedInput } from '../types';
 import { FeedTypePicker } from './FeedTypePicker';
 
 export function FeedCreatorFields({
-  id,
-  labelledBy,
   fields,
   feed,
   submitted,
   isSaving,
+  detectionStatus,
   isFeedFieldValid,
   updateFeed,
 }: {
-  id: string;
-  labelledBy: string;
   fields: readonly FeedCreatorFieldConfig[];
   feed: FeedInput;
   submitted: boolean;
   isSaving: boolean;
+  detectionStatus: FeedTypeDetectionStatus;
   isFeedFieldValid: (field: keyof FeedInput) => boolean;
   updateFeed: (field: keyof FeedInput, value: string) => void;
 }) {
   return (
-    <div id={id} className="creator__fields" role="tabpanel" aria-labelledby={labelledBy}>
+    <div className="creator__fields">
       {fields.map((field) => (
         <FeedCreatorField
           {...field}
@@ -34,6 +33,7 @@ export function FeedCreatorFields({
           value={feed[field.id]}
           invalid={submitted && !isFeedFieldValid(field.id)}
           disabled={isSaving}
+          detectionStatus={detectionStatus}
           onChange={(value) => updateFeed(field.id, value)}
         />
       ))}
@@ -50,11 +50,13 @@ function FeedCreatorField({
   errorKey,
   invalid,
   disabled,
+  detectionStatus,
   onChange,
 }: FeedCreatorFieldConfig & {
   value: string;
   invalid: boolean;
   disabled: boolean;
+  detectionStatus: FeedTypeDetectionStatus;
   onChange: (value: string) => void;
 }) {
   const { t } = useTranslation();
@@ -73,6 +75,7 @@ function FeedCreatorField({
             errorId={errorId}
             onChange={onChange}
           />
+          <FeedTypeDetectionMessage status={detectionStatus} />
         </>
       ) : (
         <>
@@ -96,5 +99,23 @@ function FeedCreatorField({
       )}
       {invalid ? <p id={errorId} className="field__error" role="alert">{t(errorKey)}</p> : null}
     </div>
+  );
+}
+
+function FeedTypeDetectionMessage({ status }: { status: FeedTypeDetectionStatus }) {
+  const { t } = useTranslation();
+  if (status.state === 'idle') return null;
+
+  const message = status.state === 'detecting'
+    ? t('creator.detectingType')
+    : status.state === 'success'
+    ? t('creator.typeDetected', { confidence: Math.round(status.confidence * 100) })
+    : status.state === 'uncertain'
+      ? t('creator.typeUncertain')
+      : t('creator.typeDetectionError');
+  return (
+    <p className={`creator__detection creator__detection--${status.state}`} role="status">
+      {message}
+    </p>
   );
 }

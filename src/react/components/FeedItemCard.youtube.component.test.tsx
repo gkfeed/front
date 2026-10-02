@@ -6,16 +6,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NsfwPreferencesContext } from '../state/nsfwPreferencesContext';
 import type { YoutubePlayer, YoutubePlayerStateChangeEvent } from '../services/youtubeIframeApi';
 import { fetchYoutubeComments } from '../services/youtubeComments';
+import { fetchYoutubeTimecodes } from '../services/youtubeTimecodes';
 import { getPreview, item } from './FeedItemCard.component.testUtils';
 import { FeedItemCard } from './FeedItemCard';
 
 vi.mock('../services/youtubeComments');
+vi.mock('../services/youtubeTimecodes', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../services/youtubeTimecodes')>();
+  return { ...original, fetchYoutubeTimecodes: vi.fn() };
+});
 
 describe('FeedItemCard YouTube and general states', () => {
   const youtubeStorage = new Map<string, string>();
 
   beforeEach(() => {
     vi.mocked(fetchYoutubeComments).mockResolvedValue({ comments: [] });
+    vi.mocked(fetchYoutubeTimecodes).mockResolvedValue({
+      timecodes: [
+        { title: 'Introduction', seconds: 0, thumbnailUrl: null },
+        { title: 'Warmup', seconds: 30, thumbnailUrl: null },
+        {
+          title: 'Opening topic',
+          seconds: 270,
+          thumbnailUrl: 'https://i.ytimg.com/chapter.jpg',
+        },
+      ],
+    });
     youtubeStorage.clear();
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
@@ -154,6 +170,77 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(document.documentElement.classList.contains('reader-theater-open')).toBe(true);
   });
 
+  it('replaces a blocked YouTube embed with a direct watch link', async () => {
+    let errorHandler!: () => void;
+    const player: YoutubePlayer = {
+      getCurrentTime: () => 0,
+      getDuration: () => 0,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: { onError: () => void };
+        }) {
+          errorHandler = options.events.onError;
+          return player;
+        }),
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => errorHandler());
+
+    expect(screen.queryByTitle('Story')).toBeNull();
+    const link = screen.getByRole('link', { name: /Watch on YouTube/ });
+    expect(link.getAttribute('href')).toBe('https://www.youtube.com/watch?v=abc123xyz');
+    expect(link.getAttribute('target')).toBe('_blank');
+  });
+
+  it('replaces a YouTube bot-check embed that never becomes ready', async () => {
+    vi.useFakeTimers();
+    const player: YoutubePlayer = {
+      getCurrentTime: () => 0,
+      getDuration: () => 0,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(() => player),
+      },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(10_000));
+
+    expect(screen.getByRole('link', { name: /Watch on YouTube/ })).toBeTruthy();
+    vi.useRealTimers();
+  });
+
   it('loads YouTube comments on demand from the player toolbar', async () => {
     render(<FeedItemCard item={{
       ...item,
@@ -171,6 +258,72 @@ describe('FeedItemCard YouTube and general states', () => {
       expect.any(AbortSignal),
     );
     expect(screen.getByRole('button', { name: 'Hide YouTube comments' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('loads video timecodes and seeks to the selected chapter', async () => {
+    const player: YoutubePlayer = {
+      getCurrentTime: () => 120,
+      getDuration: () => 3600,
+      setPlaybackRate: vi.fn(),
+      seekTo: vi.fn(),
+      playVideo: vi.fn(),
+      destroy: vi.fn(),
+    };
+    Object.defineProperty(window, 'YT', {
+      configurable: true,
+      value: {
+        Player: vi.fn(function PlayerConstructor(_iframe: HTMLIFrameElement, options: {
+          events: { onReady: (event: { target: YoutubePlayer }) => void };
+        }) {
+          options.events.onReady({ target: player });
+          return player;
+        }),
+      },
+    });
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    expect(fetchYoutubeTimecodes).not.toHaveBeenCalled();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Show video timecodes' }));
+
+    const timecode = await screen.findByRole('button', { name: 'Go to 4:30, Opening topic' });
+    expect(fetchYoutubeTimecodes).toHaveBeenCalledWith(
+      'https://www.youtube.com/watch?v=abc123xyz',
+      expect.any(AbortSignal),
+    );
+    expect(timecode.querySelector('img')?.getAttribute('src')).toBe('https://i.ytimg.com/chapter.jpg');
+    expect(timecode.hasAttribute('disabled')).toBe(false);
+    const pastTimecode = screen.getByRole('button', { name: 'Go to 0:00, Introduction' });
+    expect(pastTimecode.hasAttribute('disabled')).toBe(true);
+    expect(pastTimecode.querySelector('img')?.getAttribute('src'))
+      .toBe('https://i.ytimg.com/vi/abc123xyz/mqdefault.jpg');
+    const currentTimecode = screen.getByRole('button', { name: 'Go to 0:30, Warmup' });
+    expect(currentTimecode.hasAttribute('disabled')).toBe(false);
+    expect(currentTimecode.getAttribute('aria-current')).toBe('true');
+
+    fireEvent.click(timecode);
+    expect(player.seekTo).toHaveBeenCalledWith(270, true);
+  });
+
+  it('uses one side panel for YouTube timecodes and comments', async () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show video timecodes' }));
+    expect(screen.getByRole('complementary', { name: 'Video timecodes' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show YouTube comments' }));
+
+    expect(screen.queryByRole('complementary', { name: 'Video timecodes' })).toBeNull();
+    expect(await screen.findByRole('complementary', { name: 'YouTube comments' })).toBeTruthy();
   });
 
   it('shows saved watch progress on the YouTube preview before the player opens', () => {
@@ -224,9 +377,8 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(parameters.get('autoplay')).toBe('1');
     expect(parameters.get('start')).toBe('108');
 
-    const speedToggle = screen.getByRole('button', { name: 'Playback speed: 2x' });
-    speedToggle.focus();
-    fireEvent.keyDown(speedToggle, { key: ' ' });
+    iframe.blur();
+    fireEvent.keyDown(document.body, { key: ' ' });
     expect(postMessage).toHaveBeenCalledWith(
       JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
       '*',
@@ -274,9 +426,8 @@ describe('FeedItemCard YouTube and general states', () => {
 
     const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
     const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
-    const speedToggle = screen.getByRole('button', { name: 'Playback speed: 2x' });
-    speedToggle.focus();
-    fireEvent.keyDown(speedToggle, { key: ' ' });
+    iframe.blur();
+    fireEvent.keyDown(document.body, { key: ' ' });
 
     expect(postMessage).toHaveBeenCalledWith(
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
@@ -570,6 +721,39 @@ describe('FeedItemCard YouTube and general states', () => {
 
     expect(player.seekTo).toHaveBeenNthCalledWith(1, 115, true);
     expect(player.seekTo).toHaveBeenNthCalledWith(2, 125, true);
+  });
+
+  it('preserves Space activation of focused YouTube theater controls', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+
+    for (const name of ['Playback speed: 2x', 'Show YouTube comments', 'Exit theater mode']) {
+      const button = screen.getByRole('button', { name });
+      button.focus();
+      expect(fireEvent.keyDown(button, { key: ' ', code: 'Space' })).toBe(true);
+    }
+    expect(postMessage).not.toHaveBeenCalled();
+  });
+
+  it('keeps Space toggling playback when no theater control has focus', () => {
+    render(<FeedItemCard item={{
+      ...item,
+      link: 'https://www.youtube.com/watch?v=abc123xyz',
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    const iframe = screen.getByTitle('Story') as HTMLIFrameElement;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    iframe.blur();
+
+    expect(fireEvent.keyDown(document.body, { key: ' ', code: 'Space' })).toBe(false);
+    expect(postMessage).toHaveBeenCalledWith(expect.stringContaining('pauseVideo'), '*');
+    fireEvent.keyDown(document.body, { key: ' ', code: 'Space' });
+    expect(postMessage).toHaveBeenLastCalledWith(expect.stringContaining('playVideo'), '*');
   });
 
   it('toggles YouTube playback speed from the default 2x setting', () => {

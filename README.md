@@ -20,6 +20,8 @@ The dev server listens on `0.0.0.0`, so it is also reachable from your local net
 
 Set `VITE_API_ROOT` at build time to override the API URL. The default is the
 same-origin `/api/v1` proxy in development and the hosted API URL in production.
+Item synchronization uses the corresponding `/api/v2/items` routes. The development
+server proxies both API versions.
 
 ## Build
 
@@ -27,6 +29,18 @@ Run `npm run build` to create a production build in `dist/`.
 
 Run `npm start` after building to serve both the frontend and BFF on port 3000.
 Set `PORT` to use a different port.
+
+Set `OPENROUTER_API_KEY` on the BFF process to enable Jev-assisted feed type detection in the
+manual source form. The key stays on the server. GKFEED sends the source URL and optional title
+to OpenRouter's Decisions API with the `typesafe/jev-1.13` model.
+For local development, put the key in `.env`; the `dev`, `dev:bff`, and `start` scripts load that
+file when it exists. Docker Compose passes the same variable from its environment or `.env` into
+the application container.
+
+If the BFF runs behind a reverse proxy, set `BFF_TRUSTED_PROXY_CIDRS` to the comma-separated
+IP addresses or CIDR ranges of proxies that connect directly to the BFF. The proxy must append
+the client address to `X-Forwarded-For`. Direct connections and requests from unlisted proxies
+ignore that header. Docker Compose passes this setting from its environment or `.env`.
 
 ## Open Graph preview
 
