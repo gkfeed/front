@@ -22,6 +22,11 @@ export function useReviewPreviewPrefetch({
   const { disabledPlugins } = usePluginPreferences();
   const prefetchedImageUrlsRef = useRef<Set<string>>(new Set());
   const prefetchControllersRef = useRef<Map<string, AbortController>>(new Map());
+  // Navigation may retain overlapping work, but a policy change invalidates it.
+  useEffect(() => {
+    const controllers = prefetchControllersRef.current;
+    return () => abortPrefetches(controllers);
+  }, [disabledPlugins, nsfwMode, previewUseCases]);
   const nextItems = useMemo(() => {
     const itemsById = new Map(items.map((item) => [item.id, item]));
     return activeReviewIds

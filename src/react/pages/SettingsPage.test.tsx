@@ -15,7 +15,7 @@ import {
   PluginPreferencesProvider,
 } from '../state/PluginPreferencesProvider';
 import { ReaderItemOrderPreferencesProvider } from '../state/ReaderItemOrderPreferencesProvider';
-import { TikTokPreferencesProvider } from '../state/TikTokPreferencesProvider';
+import { TikTokPreferencesProvider, TIKTOK_PLUGIN_SETTINGS_STORAGE_KEY } from '../state/TikTokPreferencesProvider';
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import { SettingsPage } from './SettingsPage';
 
@@ -25,6 +25,17 @@ afterEach(() => {
 });
 
 describe('SettingsPage', () => {
+  it('disables nested controls without losing values and restores them on re-enable', () => {
+    const storage = stubLocalStorage();
+    renderSettings();
+    fireEvent.click(screen.getByRole('radio', { name: 'Preview' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'TikTok' }));
+    expect((screen.getByRole('radio', { name: 'Preview' }) as HTMLButtonElement).matches(':disabled')).toBe(true);
+    expect(JSON.parse(storage.get(TIKTOK_PLUGIN_SETTINGS_STORAGE_KEY)!).playbackMode).toBe('preview');
+    fireEvent.click(screen.getByRole('button', { name: 'Enable all' }));
+    expect((screen.getByRole('radio', { name: 'Preview' }) as HTMLButtonElement).matches(':disabled')).toBe(false);
+    expect(screen.getByRole('radio', { name: 'Preview' }).getAttribute('aria-checked')).toBe('true');
+  });
   it('renders every built-in plugin and persists a disabled integration', () => {
     const storage = stubLocalStorage();
     renderSettings();

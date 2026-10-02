@@ -20,6 +20,7 @@ import type {
   LiveEvent,
   LiveProviderRuntime,
 } from '../../domain/liveEvents';
+import { feedPluginCatalog, type FeedPluginId } from '../../domain/feedItemProviderPresentation';
 
 export type { LiveCandidate, LiveEvent, LiveEventData } from '../../domain/liveEvents';
 export { catalogCandidates, mergeCandidates } from '../../features/live/liveCatalog';
@@ -52,7 +53,7 @@ const twitchAdapter: LiveProviderAdapter = {
     const settled = await settleInBatches(candidates, 4, async (candidate) => ({
       candidate,
       live: await probeTwitchStreamLive(candidate.item, signal),
-    }));
+    }), signal);
     const updates: LiveCheckUpdate[] = [];
     let failures = 0;
     for (const result of settled) {
@@ -114,7 +115,7 @@ const hltvAdapter: LiveProviderAdapter = {
     const settled = await settleInBatches(liveCandidates, 4, async (candidate) => ({
       candidate,
       preview: await getOpenGraphPreview(candidate.item.link, signal),
-    }));
+    }), signal);
     let failures = 0;
     for (const result of settled) {
       if (result.status === 'rejected') {
@@ -166,7 +167,7 @@ const oneFootballAdapter: LiveProviderAdapter = {
       return snapshot?.normalizedStatus === 'live'
         ? { key: candidate.key, status: 'live', data: { kind: 'onefootball', snapshot } }
         : { key: candidate.key, status: 'offline' };
-    });
+    }, signal);
     return {
       updates: settled.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []),
       failures: settled.filter((result) => result.status === 'rejected').length,
@@ -186,7 +187,16 @@ const oneFootballAdapter: LiveProviderAdapter = {
   },
 };
 
-export const liveProviderRegistry: readonly LiveProviderAdapter[] = [twitchAdapter, hltvAdapter, oneFootballAdapter];
+const liveAdapters: Partial<Record<FeedPluginId, LiveProviderAdapter>> = {
+  twitch: twitchAdapter,
+  hltv: hltvAdapter,
+  onefootball: oneFootballAdapter,
+};
+
+export const liveProviderRegistry: readonly LiveProviderAdapter[] = feedPluginCatalog.flatMap((plugin) => {
+  const adapter = plugin.live ? liveAdapters[plugin.id] : undefined;
+  return adapter ? [adapter] : [];
+});
 
 function candidateFor(
   providerId: string,
@@ -210,9 +220,11 @@ async function settleInBatches<T, R>(
   values: readonly T[],
   batchSize: number,
   load: (value: T) => Promise<R>,
+  signal: AbortSignal,
 ): Promise<PromiseSettledResult<R>[]> {
   const results: PromiseSettledResult<R>[] = [];
   for (let index = 0; index < values.length; index += batchSize) {
+    if (signal.aborted) break;
     results.push(...await Promise.allSettled(values.slice(index, index + batchSize).map(load)));
   }
   return results;

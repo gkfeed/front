@@ -3,12 +3,12 @@ import { getVkVideoPreview } from './vkPreview';
 import { isVkImageHost, parseUrl } from './feedItemUrls';
 import { getShikimoriHighQualityImageUrl } from './shikimoriPreview';
 
-export function getEmbeddedPreview(html: string, title: string): FeedItemPreview | null {
+export function getEmbeddedPreview(html: string, title: string, allowVkEmbed = true): FeedItemPreview | null {
   if (!html || typeof DOMParser === 'undefined') return null;
 
   const document = new DOMParser().parseFromString(html, 'text/html');
   const frameSource = document.querySelector('iframe')?.getAttribute('src');
-  if (frameSource) {
+  if (frameSource && allowVkEmbed) {
     const frameUrl = parseUrl(frameSource);
     const vkVideoPreview = frameUrl ? getVkVideoPreview(frameUrl, title) : null;
     if (vkVideoPreview) return vkVideoPreview;

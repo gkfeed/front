@@ -2,7 +2,7 @@
   width: min(920px, calc(100% - 32px));
   margin: 0 auto;
   padding: 38px 0 72px;
-  color: var(--color-ink-strong);
+  color: var(--color-ink-inverse);
 }
 
 .settings-page__header {
@@ -16,7 +16,7 @@
 
 .settings-page__header p {
   margin: 6px 0 0;
-  color: var(--color-muted);
+  color: color-mix(in oklch, var(--color-ink-inverse) 76%, var(--color-page));
 }
 
 .settings-page__section {
@@ -24,7 +24,7 @@
   grid-template-columns: minmax(150px, 0.32fr) minmax(0, 1fr);
   gap: 24px;
   padding: 24px 0;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid color-mix(in oklch, var(--color-ink-inverse) 20%, var(--color-page));
 }
 
 .settings-page__section h2 {
@@ -42,6 +42,11 @@
   margin-top: 14px;
 }
 
+.settings-page__section-content > .settings-menu__section > .settings-menu__section-title,
+.settings-page__section-content > .settings-menu__section > .settings-menu__content-description {
+  color: color-mix(in oklch, var(--color-ink-inverse) 76%, var(--color-page));
+}
+
 .plugin-settings__enable-all {
   justify-self: end;
 }
@@ -50,6 +55,7 @@
   border: 1px solid var(--color-input-border);
   border-radius: 14px;
   background: var(--color-input-surface);
+  color: var(--color-ink-strong);
 }
 
 .plugin-settings__toggle {

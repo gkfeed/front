@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import '../../styles/settings-page.css';
@@ -8,11 +7,10 @@ import { NsfwPicker } from '../components/NsfwPicker';
 import { ReaderItemOrderPicker } from '../components/ReaderItemOrderPicker';
 import { ReaderModePicker } from '../components/ReaderModePicker';
 import { ThemeOptions } from '../components/ThemeOptions';
-import { TikTokPicker } from '../components/TikTokPicker';
-import { TikTokPlaybackPicker } from '../components/TikTokPlaybackPicker';
+import { PluginSettingsFields } from '../components/PluginSettingsFields';
 import { feedPluginCatalog } from '../domain/feedItemProviderPresentation';
 import {
-  readDefaultReaderMode,
+  useDefaultReaderMode,
   setDefaultReaderMode,
   type ReaderMode,
 } from '../state/readerMode';
@@ -22,12 +20,11 @@ import { useThemePreference } from '../components/useThemePreference';
 
 export function SettingsPage() {
   const { t } = useTranslation();
-  const [readerMode, setReaderMode] = useState(readDefaultReaderMode);
+  const readerMode = useDefaultReaderMode();
   const { itemOrder, setItemOrder } = useReaderItemOrderPreferences();
   const { theme, selectTheme } = useThemePreference();
 
   const updateReaderMode = (mode: ReaderMode) => {
-    setReaderMode(mode);
     setDefaultReaderMode(mode);
   };
 
@@ -97,11 +94,8 @@ function PluginSettings() {
                   onChange={(event) => setPluginEnabled(plugin.id, event.target.checked)}
                 />
               </label>
-              {plugin.id === 'tiktok' ? (
-                <fieldset className="plugin-settings__nested" disabled={!enabled}>
-                  <TikTokPicker />
-                  <TikTokPlaybackPicker />
-                </fieldset>
+              {plugin.settings?.length ? (
+                <PluginSettingsFields pluginId={plugin.id} schema={plugin.settings} disabled={!enabled} />
               ) : null}
             </div>
           );

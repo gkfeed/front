@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { FeedItemCardModel } from './useFeedItemCardModel';
 import { localizeFeedItemPreview } from './previewLocalization';
 import { FeedItemCardProviderContent } from './providers/FeedItemCardProviderContent';
-import { FeedItemMediaPreview, StandardCopy } from './providers/providerRenderers/common';
+import { StandardCopy } from './providers/providerRenderers/common';
 import { PluginRenderBoundary } from './PluginRenderBoundary';
 
 export function FeedItemCardContent({
@@ -19,8 +19,15 @@ export function FeedItemCardContent({
     : null;
 
   const displayHostname = facts.hostname ?? t('feed.item');
-  const genericFacts = { ...facts, provider: 'generic', simpleImage: false } as FeedItemCardModel;
-  const sharedProps = { facts: genericFacts, localizedPreview, displayHostname, onOpenArticle };
+  const genericFacts: FeedItemCardModel = {
+    ...facts,
+    provider: 'generic',
+    simpleImage: false,
+    visiblePreview: null,
+    description: null,
+    canReadArticle: false,
+  };
+  const sharedProps = { facts: genericFacts, localizedPreview: null, displayHostname };
 
   return (
     <PluginRenderBoundary
@@ -28,7 +35,6 @@ export function FeedItemCardContent({
       pluginId={facts.provider}
       fallback={(
         <>
-          <FeedItemMediaPreview {...sharedProps} />
           <StandardCopy {...sharedProps} />
         </>
       )}

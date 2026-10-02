@@ -8,6 +8,7 @@ import { FeedItemCard } from './FeedItemCard';
 import { ReaderReviewActions } from './ReaderReviewActions';
 import { ReaderMobileRail } from './ReaderMobileRail';
 import { FeedPriorityControls } from './FeedPriorityControls';
+import { usePluginPreferences } from '../state/usePluginPreferences';
 
 export function ReaderReview({
   item,
@@ -27,8 +28,9 @@ export function ReaderReview({
   onReset: () => void;
 }) {
   const { t } = useTranslation();
-  const isShortVideo = isShortVideoFeedItem(item);
-  const isTikTok = isTikTokFeedItem(item);
+  const { disabledPlugins } = usePluginPreferences();
+  const isShortVideo = isShortVideoFeedItem(item, disabledPlugins);
+  const isTikTok = isTikTokFeedItem(item, disabledPlugins);
   const isFullscreen = useAutomaticReaderFullscreen({
     itemId: item.id,
     shouldEnterAutomatically: isShortVideo,

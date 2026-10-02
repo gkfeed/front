@@ -31,7 +31,9 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
   const [lastSuccessfulAt, setLastSuccessfulAt] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [clock, setClock] = useState(Date.now());
-  const cycleRunning = useRef(false);
+  const cycleRunning = useRef<AbortSignal | null>(null);
+  const activeController = useRef<AbortController | null>(null);
+  const previousUsername = useRef<string | null>(null);
   const scanCyclePending = useRef(false);
   const initialScanRunning = useRef(true);
   const newestItemIdRef = useRef<number | null>(null);
@@ -39,16 +41,16 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
   const lastDiscoveryAtRef = useRef(0);
   const activePlayback = useRef(new Set<string>());
   const lastChecked = useRef(new Map<string, number>());
-  const cycleRef = useRef<(signal?: AbortSignal) => Promise<void>>(async () => {});
+  const cycleRef = useRef<(signal: AbortSignal) => Promise<void>>(async () => {});
 
   const setCandidateState = useCallback((next: LiveCandidate[]) => {
     candidatesRef.current = next;
     setCandidates(next);
   }, []);
 
-  const runCycle = useCallback(async (signal = new AbortController().signal) => {
-    if (cycleRunning.current || signal.aborted) return;
-    cycleRunning.current = true;
+  const runCycle = useCallback(async (signal: AbortSignal) => {
+    if (cycleRunning.current === signal || signal.aborted) return;
+    cycleRunning.current = signal;
     setRefreshing(true);
     let successfulUpdates = 0;
     try {
@@ -66,6 +68,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           let previousCount = 0;
           if (fullReconciliation) setScanComplete(false);
           const items = await getFeedItems(credentials, undefined, signal, (loadedItems) => {
+            if (signal.aborted) return false;
             const page = loadedItems.slice(previousCount);
             previousCount = loadedItems.length;
             setScannedItems(loadedItems.length);
@@ -92,7 +95,9 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
             candidates: nextCandidates,
             lastReconciledAt: lastReconciledAtRef.current,
             newestItemId: newestItemIdRef.current,
-          });
+            providerIds: providers.map((provider) => provider.id),
+          }, signal);
+          if (signal.aborted) return;
           lastDiscoveryAtRef.current = Date.now();
           setScanError('');
           markEmptyProvidersHealthy(nextCandidates, providers, setProviderStates);
@@ -103,6 +108,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           }
         }
       }
+      if (signal.aborted) return;
       await Promise.all(providers.map(async (provider) => {
         const providerCandidates = candidatesRef.current.filter((candidate) => candidate.providerId === provider.id);
         if (providerCandidates.length === 0) {
@@ -117,6 +123,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           successfulUpdates += result.updates.length;
           for (const update of result.updates) lastChecked.current.set(update.key, checkedAt);
           setEvents((current) => {
+            if (signal.aborted) return current;
             const next = { ...current };
             for (const update of result.updates) {
               if (update.status === 'live' && update.data) {
@@ -143,7 +150,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
       }));
       if (!signal.aborted && successfulUpdates > 0) setLastSuccessfulAt(Date.now());
     } finally {
-      cycleRunning.current = false;
+      if (cycleRunning.current === signal) cycleRunning.current = null;
       if (!signal.aborted) setRefreshing(false);
       if (!signal.aborted && scanCyclePending.current) {
         scanCyclePending.current = false;
@@ -156,24 +163,40 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
   useEffect(() => {
     if (!credentials || !username) return;
     const controller = new AbortController();
+    activeController.current = controller;
     const { signal } = controller;
-    candidatesRef.current = [];
-    eventsRef.current = {};
-    setCandidates([]);
-    setEvents({});
-    setProviderStates(Object.fromEntries(providers.map((provider) => [provider.id, 'loading'])));
+    const enabledProviderIds = new Set(providers.map((provider) => provider.id));
+    const sameAccount = previousUsername.current === username;
+    previousUsername.current = username;
+    const retainedEvents = sameAccount ? Object.fromEntries(Object.entries(eventsRef.current)
+      .filter(([, event]) => enabledProviderIds.has(event.candidate.providerId))) : {};
+    candidatesRef.current = sameAccount
+      ? candidatesRef.current.filter((candidate) => enabledProviderIds.has(candidate.providerId)) : [];
+    eventsRef.current = retainedEvents;
+    setCandidates(candidatesRef.current);
+    setEvents(retainedEvents);
+    setProviderStates((current) => Object.fromEntries(providers.map((provider) => [
+      provider.id, sameAccount ? current[provider.id] ?? 'loading' : 'loading',
+    ])));
     setScannedItems(0);
     setScanComplete(false);
     setScanError('');
     setLastSuccessfulAt(null);
-    activePlayback.current.clear();
-    lastChecked.current.clear();
+    if (!sameAccount) {
+      activePlayback.current.clear();
+      lastChecked.current.clear();
+    } else {
+      for (const key of activePlayback.current) if (!retainedEvents[key]) activePlayback.current.delete(key);
+      const retainedKeys = new Set(candidatesRef.current.map((candidate) => candidate.key));
+      for (const key of lastChecked.current.keys()) if (!retainedKeys.has(key)) lastChecked.current.delete(key);
+    }
     initialScanRunning.current = true;
     newestItemIdRef.current = null;
     lastReconciledAtRef.current = null;
     lastDiscoveryAtRef.current = 0;
+    scanCyclePending.current = false;
+    setRefreshing(false);
 
-    const enabledProviderIds = new Set(providers.map((provider) => provider.id));
     const keepEnabledCandidates = (values: readonly LiveCandidate[]) => (
       values.filter((candidate) => enabledProviderIds.has(candidate.providerId))
     );
@@ -185,26 +208,32 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
         candidates: [],
         lastReconciledAt: Date.now(),
         newestItemId: null,
-      });
-      return undefined;
+        providerIds: [],
+      }, signal);
+      return () => {
+        controller.abort();
+        if (activeController.current === controller) activeController.current = null;
+      };
     }
 
     void (async () => {
       const cached = await readLiveCandidateCatalog(username);
       if (signal.aborted) return;
       newestItemIdRef.current = cached?.newestItemId ?? null;
-      lastReconciledAtRef.current = cached?.lastReconciledAt ?? null;
+      const fullReconciliation = !cached?.lastReconciledAt
+        || Date.now() - cached.lastReconciledAt >= RECONCILE_INTERVAL_MS
+        || providers.some((provider) => !cached.providerIds?.includes(provider.id));
+      lastReconciledAtRef.current = fullReconciliation ? null : cached?.lastReconciledAt ?? null;
       const cachedCandidates = keepEnabledCandidates(cached?.candidates ?? []);
       if (cachedCandidates.length) {
         setCandidateState(cachedCandidates);
         void cycleRef.current(signal);
       }
-      const fullReconciliation = !cached?.lastReconciledAt
-        || Date.now() - cached.lastReconciledAt >= RECONCILE_INTERVAL_MS;
       const newestItemId = cached?.newestItemId ?? null;
       let previousCount = 0;
       try {
         const items = await getFeedItems(credentials, undefined, signal, (loadedItems) => {
+          if (signal.aborted) return false;
           const page = loadedItems.slice(previousCount);
           previousCount = loadedItems.length;
           setScannedItems(loadedItems.length);
@@ -212,7 +241,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
             candidatesRef.current,
             catalogCandidates(page, providers, loadedItems.length - page.length),
           ));
-          if (cycleRunning.current) scanCyclePending.current = true;
+          if (cycleRunning.current === signal) scanCyclePending.current = true;
           else void cycleRef.current(signal);
           return fullReconciliation || newestItemId === null || !page.some((item) => item.id === newestItemId);
         }, 100);
@@ -232,7 +261,8 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
           newestItemId: fullReconciliation
             ? items[0]?.id ?? null
             : items[0]?.id ?? cached?.newestItemId ?? null,
-        });
+          providerIds: providers.map((provider) => provider.id),
+        }, signal);
         if (signal.aborted) return;
         newestItemIdRef.current = fullReconciliation
           ? items[0]?.id ?? null
@@ -242,7 +272,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
         initialScanRunning.current = false;
         setScanComplete(true);
         markEmptyProvidersHealthy(finalCandidates, providers, setProviderStates);
-        if (cycleRunning.current) scanCyclePending.current = true;
+        if (cycleRunning.current === signal) scanCyclePending.current = true;
         else void cycleRef.current(signal);
       } catch (error) {
         if (signal.aborted) return;
@@ -269,6 +299,7 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       controller.abort();
+      if (activeController.current === controller) activeController.current = null;
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
@@ -336,7 +367,10 @@ export function useLivePageModel<Provider extends LiveProviderRuntime>(
     scanError,
     lastSuccessfulAt,
     refreshing,
-    refresh: () => void cycleRef.current(),
+    refresh: () => {
+      const signal = activeController.current?.signal;
+      if (signal && providers.length > 0) void cycleRef.current(signal);
+    },
     onPlaybackChange,
     hasFreshEvents: sections.some((section) => section.events.some((event) => !event.ended)),
   };

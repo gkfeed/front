@@ -29,7 +29,7 @@ function getFeedItemPreviewFromUrl(
   url: URL | null,
   disabledPlugins: ReadonlySet<FeedPluginId>,
 ): FeedItemPreview | null {
-  if (!url) return getEmbeddedPreview(item.text, item.title);
+  if (!url) return getEmbeddedPreview(item.text, item.title, !disabledPlugins.has('vk'));
   const provider = getFeedItemProviderFromUrl(item, url, disabledPlugins);
 
   const vkVideoEmbed = provider === 'vk' ? getVkVideoPreview(url, item.title) : null;
@@ -79,5 +79,5 @@ function getFeedItemPreviewFromUrl(
   const youtubePreview = provider === 'youtube' ? getYoutubePreview(url, item.title) : null;
   if (youtubePreview) return youtubePreview;
 
-  return getEmbeddedPreview(item.text, item.title);
+  return getEmbeddedPreview(item.text, item.title, !disabledPlugins.has('vk'));
 }

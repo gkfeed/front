@@ -12,6 +12,20 @@ vi.mock('../../services/twitch');
 beforeEach(() => vi.resetAllMocks());
 
 describe('live provider registry', () => {
+  it('does not schedule a second candidate batch after cancellation', async () => {
+    const adapter = liveProviderRegistry.find((provider) => provider.id === 'onefootball')!;
+    const candidates = catalogCandidates(Array.from({ length: 8 }, (_, index) => item(index + 1, `https://onefootball.com/en/match/${100 + index}`)), liveProviderRegistry);
+    let resolve!: (value: Awaited<ReturnType<typeof getOpenGraphPreview>>) => void;
+    const pending = new Promise<Awaited<ReturnType<typeof getOpenGraphPreview>>>((done) => { resolve = done; });
+    vi.mocked(getOpenGraphPreview).mockReturnValue(pending);
+    const controller = new AbortController();
+    const result = adapter.check(candidates, controller.signal);
+    expect(getOpenGraphPreview).toHaveBeenCalledTimes(4);
+    controller.abort();
+    resolve({ url: candidates[0]!.item.link, title: null, description: null, image: null, video: null, siteName: null, type: null, providerData: null });
+    await result;
+    expect(getOpenGraphPreview).toHaveBeenCalledTimes(4);
+  });
   it('recognizes both providers, preserves feed order, and deduplicates provider event IDs', () => {
     const items: FeedItem[] = [
       item(1, 'https://www.twitch.tv/Some_Channel'),

@@ -9,14 +9,14 @@ import { TwitchPreview } from './previews/TwitchPreview';
 import { applyTheme } from '../theme';
 
 describe('FeedItemCard Twitch player', () => {
-  it('shows the channel separately from the stream title and highlights mentions and commands', () => {
+  it('shows the channel separately from the stream title and highlights mentions and commands', async () => {
     render(<FeedItemCard item={{
       ...item,
       title: 'leva2k: Пик Ленина @rostislav_999 !tg !donate',
       link: 'https://www.twitch.tv/leva2k',
     }} />);
 
-    expect(screen.getByRole('heading', {
+    expect(await screen.findByRole('heading', {
       name: 'Пик Ленина @rostislav_999 !tg !donate',
     })).toBeTruthy();
     expect(screen.getByText('leva2k').className).toContain('reader-card__channel');
@@ -27,7 +27,7 @@ describe('FeedItemCard Twitch player', () => {
       .toContain('reader-card__title-token--command');
   });
 
-  it('opens a Twitch embed in theater mode when the item is clicked', () => {
+  it('opens a Twitch embed in theater mode when the item is clicked', async () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://www.twitch.tv/some_channel',
@@ -35,7 +35,7 @@ describe('FeedItemCard Twitch player', () => {
 
     expect(screen.getByRole('article').classList.contains('reader-card--twitch')).toBe(true);
     expect(screen.getByRole('article').classList.contains('reader-card--player')).toBe(true);
-    expect(screen.getByRole('heading', { name: 'Story' }).parentElement?.classList
+    expect((await screen.findByRole('heading', { name: 'Story' })).parentElement?.classList
       .contains('reader-card__copy--player')).toBe(true);
     expect(screen.getByRole('heading', { name: 'Story' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Play some_channel on Twitch' })
@@ -68,13 +68,13 @@ describe('FeedItemCard Twitch player', () => {
     expect(getPreview).not.toHaveBeenCalled();
   });
 
-  it('closes the Twitch theater mode with Escape without losing the player', () => {
+  it('closes the Twitch theater mode with Escape without losing the player', async () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://twitch.tv/some_channel',
     }} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Play some_channel on Twitch' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Play some_channel on Twitch' }));
     const player = screen.getByTitle('some_channel Twitch player');
     fireEvent.click(screen.getByRole('button', { name: 'Show Twitch chat' }));
 

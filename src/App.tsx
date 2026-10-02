@@ -10,6 +10,7 @@ import { ReaderItemOrderPreferencesProvider } from './react/state/ReaderItemOrde
 import { TikTokPreferencesProvider } from './react/state/TikTokPreferencesProvider';
 import { PluginPreferencesProvider } from './react/state/PluginPreferencesProvider';
 import { useAuth } from './react/state/useAuth';
+import { usePluginCatalogPolicy } from './react/hooks/usePluginCatalogPolicy';
 
 const FeedListPage = lazy(() => import('./react/pages/FeedListPage').then(({ FeedListPage: page }) => ({ default: page })));
 const CreateFeedPage = lazy(() => import('./react/pages/CreateFeedPage').then(({ CreateFeedPage: page }) => ({ default: page })));
@@ -20,6 +21,7 @@ const ReaderPage = lazy(() => import('./react/pages/ReaderPage').then(({ ReaderP
 const SettingsPage = lazy(() => import('./react/pages/SettingsPage').then(({ SettingsPage: page }) => ({ default: page })));
 
 function RouteEffects() {
+  usePluginCatalogPolicy();
   const { pathname } = useLocation();
   const { status } = useAuth();
   const { t } = useTranslation();

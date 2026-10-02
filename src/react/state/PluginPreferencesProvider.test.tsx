@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
@@ -36,6 +36,15 @@ describe('PluginPreferencesProvider', () => {
 
     expect(screen.getByTestId('disabled').textContent).toContain('youtube');
     expect(screen.getByTestId('disabled').textContent).not.toContain('removed-plugin');
+  });
+
+  it('syncs storage changes and handles clearing preferences from another tab', () => {
+    stubLocalStorage();
+    render(<PluginPreferencesProvider><Probe /></PluginPreferencesProvider>);
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: DISABLED_PLUGINS_STORAGE_KEY, newValue: '["twitch"]' })));
+    expect(screen.getByTestId('disabled').textContent).toBe('twitch');
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: null, newValue: null })));
+    expect(screen.getByTestId('disabled').textContent).toBe('');
   });
 });
 

@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import '../../styles/live.css';
 import '../../styles/reader.css';
 import { useLivePageModel } from '../adapters/live/useLivePageModel';
-import { liveProviderRegistry } from '../components/live/liveProviderRegistry';
+import { liveProviderRegistry, type LiveProviderAdapter } from '../components/live/liveProviderRegistry';
 import { usePluginPreferences } from '../state/usePluginPreferences';
 import { PluginRenderBoundary } from '../components/PluginRenderBoundary';
 
@@ -15,9 +15,12 @@ export function LivePage() {
   const { t, i18n } = useTranslation();
   const { disabledPlugins } = usePluginPreferences();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const enabledProviders = useMemo(() => liveProviderRegistry.filter((provider) => (
+  const enabledProviderKey = liveProviderRegistry.filter((provider) => (
     !disabledPlugins.has(provider.id as 'twitch' | 'hltv' | 'onefootball')
-  )), [disabledPlugins]);
+  )).map((provider) => provider.id).join(',');
+  const enabledProviders = useMemo(() => liveProviderRegistry.filter((provider) => (
+    enabledProviderKey.split(',').includes(provider.id)
+  )), [enabledProviderKey]);
   const model = useLivePageModel(t, enabledProviders);
   const adapters = useMemo(
     () => new Map(model.adapters.map((adapter) => [adapter.id, adapter])),
@@ -66,12 +69,14 @@ export function LivePage() {
                   const adapter = adapters.get(event.candidate.providerId);
                   return adapter ? (
                     <div key={event.candidate.key}>
-                      <PluginRenderBoundary pluginId={adapter.id} fallback={null}>
-                        {adapter.render({
+                      <PluginRenderBoundary pluginId={adapter.id} fallback={(
+                        <a href={event.candidate.item.link} target="_blank" rel="noreferrer">{event.candidate.item.title}</a>
+                      )}>
+                        <LiveProviderContent adapter={adapter} {...{
                           event,
                           t,
                           onPlaybackChange: (isOpen) => model.onPlaybackChange(event.candidate.key, isOpen),
-                        })}
+                        }} />
                       </PluginRenderBoundary>
                     </div>
                   ) : null;
@@ -129,4 +134,11 @@ export function LivePage() {
       </div> : null}
     </section>
   );
+}
+
+// Invoke the extension in a descendant render so the boundary can catch it.
+function LiveProviderContent({ adapter, ...props }: {
+  adapter: LiveProviderAdapter;
+} & Parameters<LiveProviderAdapter['render']>[0]) {
+  return adapter.render(props);
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import {
   feedPluginCatalog,
@@ -12,9 +12,11 @@ const knownPluginIds = new Set<FeedPluginId>(feedPluginCatalog.map((plugin) => p
 
 export function PluginPreferencesProvider({ children }: { children: ReactNode }) {
   const [disabledPlugins, setDisabledPlugins] = useState(readDisabledPlugins);
+  const currentPlugins = useRef(disabledPlugins);
 
   const persist = useCallback((next: ReadonlySet<FeedPluginId>) => {
-    setDisabledPlugins(new Set(next));
+    currentPlugins.current = new Set(next);
+    setDisabledPlugins(currentPlugins.current);
     try {
       window.localStorage.setItem(DISABLED_PLUGINS_STORAGE_KEY, JSON.stringify([...next].sort()));
     } catch {
@@ -23,24 +25,19 @@ export function PluginPreferencesProvider({ children }: { children: ReactNode })
   }, []);
 
   const setPluginEnabled = useCallback((pluginId: FeedPluginId, enabled: boolean) => {
-    setDisabledPlugins((current) => {
-      const next = new Set(current);
-      if (enabled) next.delete(pluginId);
-      else next.add(pluginId);
-      try {
-        window.localStorage.setItem(DISABLED_PLUGINS_STORAGE_KEY, JSON.stringify([...next].sort()));
-      } catch {
-        // Keep preferences usable in memory when storage is unavailable.
-      }
-      return next;
-    });
-  }, []);
+    const next = new Set(currentPlugins.current);
+    if (enabled) next.delete(pluginId);
+    else next.add(pluginId);
+    persist(next);
+  }, [persist]);
 
   const enableAllPlugins = useCallback(() => persist(new Set()), [persist]);
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (event.key === DISABLED_PLUGINS_STORAGE_KEY) setDisabledPlugins(parseDisabledPlugins(event.newValue));
+      if (event.key !== DISABLED_PLUGINS_STORAGE_KEY && event.key !== null) return;
+      currentPlugins.current = parseDisabledPlugins(event.newValue);
+      setDisabledPlugins(currentPlugins.current);
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);

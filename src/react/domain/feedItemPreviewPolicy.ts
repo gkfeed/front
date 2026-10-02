@@ -15,6 +15,7 @@ import type {
 import { isInstagramMediaUrl } from './instagramPreview';
 import { isNsfwLink } from './nsfw';
 import { getTikTokEmbedPreview } from './tiktokPreview';
+import { filterRemotePreviewForProvider } from './remotePreview';
 
 export type FeedItemRemotePreviewRequest = {
   source: Exclude<RemotePreviewSource, 'none'>;
@@ -46,6 +47,7 @@ export function resolveFeedItemPreviewPolicy({
   remotePreview: RemotePreview;
   previewFailures: number;
 }): FeedItemPreviewPolicy {
+  remotePreview = filterRemotePreviewForProvider(remotePreview, providerView.provider);
   const loading = getFeedItemProviderLoadingRules(providerView.provider);
   const isNsfw = isNsfwLink(item.link);
   const shouldBlurNsfw = isNsfw && nsfwMode === 'blur';
@@ -122,7 +124,7 @@ function selectPreview(
   const isRezka = providerView.provider === 'rezka';
   const isReddit = providerView.provider === 'reddit';
   const isVk = providerView.provider === 'vk';
-  const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
+  const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title, providerView.provider);
   const instagramVideoPreview = providerView.provider === 'instagram'
     && remotePreview.openGraphPreview?.type === 'video'
     ? loadedRemotePreview

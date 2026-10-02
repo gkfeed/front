@@ -1,3 +1,4 @@
+import { Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FeedItemCardModel } from '../../useFeedItemCardModel';
@@ -14,7 +15,26 @@ export type FeedItemCardProviderRendererProps = {
   localizedPreview: LocalizedFeedItemPreview | null;
   displayHostname: string;
   onOpenArticle?: () => void;
+  previewPlaceholder?: ReactNode;
 };
+
+export type FeedPluginCardContent = { preview: ReactNode; supplementary?: ReactNode; copy?: ReactNode };
+
+export function FeedPluginCardSlots({ facts, previewPlaceholder, preview, supplementary, copy }: FeedItemCardProviderRendererProps & FeedPluginCardContent) {
+  const hideCopy = facts.provider !== 'vk'
+    && (facts.imagePreview.type !== 'none' || facts.provider === 'instagram' || facts.provider === 'tiktok');
+  return (
+    <Fragment>
+      {facts.isPreviewPending ? previewPlaceholder : preview}
+      {facts.isPreviewPending ? null : supplementary}
+      {facts.isPreviewPending || hideCopy ? null : copy}
+    </Fragment>
+  );
+}
+
+export function GenericCardContent(props: FeedItemCardProviderRendererProps) {
+  return <FeedPluginCardSlots {...props} preview={<FeedItemMediaPreview {...props} />} copy={<StandardCopy {...props} />} />;
+}
 
 export function FeedItemMediaPreview({
   facts,

@@ -18,6 +18,7 @@ import type { FeedItem } from '../types';
 import { getHltvSnapshot } from '../../../shared/providerData/hltv';
 import { getOneFootballSnapshot } from '../../../shared/providerData/oneFootball';
 import { getVkStatus } from '../../../shared/providerData/vk';
+import { filterRemotePreviewForProvider } from './remotePreview';
 
 export type { FeedItemCardPresentation } from './feedItemCardContracts';
 
@@ -38,6 +39,7 @@ export function buildFeedItemCardPresentation({
   remotePreview: RemotePreview;
   previewFailures: number;
 }): FeedItemCardPresentation {
+  remotePreview = filterRemotePreviewForProvider(remotePreview, providerView.provider);
   const previewPolicy = resolveFeedItemPreviewPolicy({
     item,
     providerView,

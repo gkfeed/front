@@ -408,7 +408,7 @@ describe('ReaderPage', () => {
     expect(screen.getByRole('button', { name: 'Delete item' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Scroll view' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Open original' })).toBeNull();
-    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(1);
+    expect(await screen.findAllByRole('button', { name: 'Show comments' })).toHaveLength(1);
   });
 
   it('can reload after reaching the end of the queue', async () => {

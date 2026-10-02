@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 
 import type { ReactNode } from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { FeatureUseCases } from '../application/featureComposition';
 import { FeatureUseCasesContext } from '../state/featureUseCasesContext';
 import type { FeedItem } from '../types';
+import { PluginPreferencesProvider } from '../state/PluginPreferencesProvider';
+import { usePluginPreferences } from '../state/usePluginPreferences';
+import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
 import {
   REVIEW_PREVIEW_PREFETCH_COUNT,
   useReviewPreviewPrefetch,
@@ -17,9 +20,29 @@ const EMPTY_REMOTE_PREVIEW = {
   openGraphPreview: null,
 };
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  restoreLocalStorage();
+});
 
 describe('useReviewPreviewPrefetch', () => {
+  it('aborts pending work on plugin policy changes, even if the fallback uses the same source', async () => {
+    stubLocalStorage();
+    const loadRemotePreview = vi.fn<(url: string, source: string, signal: AbortSignal) => Promise<typeof EMPTY_REMOTE_PREVIEW>>(() => new Promise(() => {}));
+    const items = [createItem(1), { ...createItem(2), link: 'https://www.hltv.org/matches/123/example' }];
+    const Wrapper = createWrapper(loadRemotePreview);
+    const { result } = renderHook(() => {
+      useReviewPreviewPrefetch({ enabled: true, items, activeReviewIds: [1, 2] });
+      return usePluginPreferences();
+    }, { wrapper: ({ children }) => <Wrapper><PluginPreferencesProvider>{children}</PluginPreferencesProvider></Wrapper> });
+
+    await waitFor(() => expect(loadRemotePreview).toHaveBeenCalledOnce());
+    const firstSignal = loadRemotePreview.mock.calls[0]![2] as AbortSignal;
+    act(() => result.current.setPluginEnabled('hltv', false));
+    expect(firstSignal.aborted).toBe(true);
+    await waitFor(() => expect(loadRemotePreview).toHaveBeenCalledTimes(2));
+    expect((loadRemotePreview.mock.calls[1]![2] as AbortSignal).aborted).toBe(false);
+  });
   it('prefetches only the next few remote previews in queue order', async () => {
     const loadRemotePreview = vi.fn().mockResolvedValue(EMPTY_REMOTE_PREVIEW);
     const items = [1, 2, 3, 4, 5].map((id) => createItem(id));

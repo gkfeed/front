@@ -23,12 +23,13 @@ export function useFeedItemCardResource(item: FeedItem) {
     enabled: Boolean(previewPolicy.remoteRequest),
     source: previewPolicy.remoteRequest?.source ?? 'none',
     livePreview: previewPolicy.remoteRequest?.livePreview ?? 'none',
+    scopeKey: providerView.provider,
   });
   const [previewFailures, setPreviewFailures] = useState(0);
 
   useEffect(() => {
     setPreviewFailures(0);
-  }, [item.link]);
+  }, [item.link, providerView.provider]);
 
   return {
     providerView,
