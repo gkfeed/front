@@ -39,10 +39,11 @@ export type ReviewSessionState = {
   nextDeletionOperationId: number;
   hasProgress: boolean;
   progressToPersist: ReviewProgress | null;
+  reorderRestoredProgress: boolean;
 };
 
 export type ReviewSessionEvent =
-  | { type: 'sessionChanged'; storageKey: string | null; restoredProgress: ReviewProgress | null }
+  | { type: 'sessionChanged'; storageKey: string | null; restoredProgress: ReviewProgress | null; restoredItemOrder?: ReaderItemOrder | null }
   | { type: 'snapshotChanged'; items: FeedItem[] | undefined; isComplete: boolean }
   | { type: 'syncFailed' }
   | { type: 'presentationChanged'; presentation: ReviewPresentation }
@@ -69,6 +70,7 @@ export function createReviewSessionState(presentation: ReviewPresentation): Revi
     nextDeletionOperationId: 1,
     hasProgress: false,
     progressToPersist: null,
+    reorderRestoredProgress: false,
   };
 }
 
@@ -92,6 +94,8 @@ export function reviewSessionReducer(
         deletions: [],
         hasProgress: event.restoredProgress !== null,
         progressToPersist: null,
+        reorderRestoredProgress: event.restoredItemOrder != null
+          && event.restoredItemOrder !== state.presentation.itemOrder,
       };
     }
     case 'snapshotChanged':
@@ -169,9 +173,12 @@ function reduceSnapshotChanged(
   const projection = projectSnapshot(snapshot, state.presentation, deletions);
 
   if (isComplete) {
-    const progress = state.hasProgress
+    const reconciledProgress = state.hasProgress
       ? reconcileProgress(state.progress, projection.reviewableIds)
       : createProgress(projection.reviewableIds);
+    const progress = state.reorderRestoredProgress
+      ? reorderProgress(reconciledProgress, projection.reviewableIds)
+      : reconciledProgress;
     return {
       ...state,
       snapshot,
@@ -181,6 +188,7 @@ function reduceSnapshotChanged(
       progress,
       hasProgress: true,
       progressToPersist: progress,
+      reorderRestoredProgress: false,
     };
   }
 

@@ -5,6 +5,7 @@ import type { FeedItemProvider } from './feedItemPreviewTypes';
 import {
   feedItemProviderResources,
   getFeedItemProvider,
+  getFeedItemProviderFromUrl,
   getFeedItemProviderLoadingRules,
 } from './feedItemProviderPresentation';
 
@@ -19,7 +20,10 @@ const providerUrls: ReadonlyArray<[FeedItemProvider, string]> = [
   ['liquipedia', 'https://liquipedia.net/dota2/Match%3AID_example'],
   ['matreshka', 'https://matreshka.tv/video/episode_123'],
   ['onefootball', 'https://onefootball.com/en/match/2700208'],
+  ['reddit', 'https://www.reddit.com/r/example/comments/abc123/story'],
+  ['rezka', 'https://rezka.ag/films/drama/123-story.html'],
   ['sasflix', 'https://sasflix.ru/documentary/630ffde7-febb-4f95-a490-6208d8770dea'],
+  ['spotify', 'https://open.spotify.com/track/11dFghVXANMlKmJXsNCbNl'],
   ['tiktok', 'https://www.tiktok.com/@creator/video/1234567890'],
   ['twitch', 'https://www.twitch.tv/creator'],
   ['vk', 'https://vk.com/wall-1_2'],
@@ -36,7 +40,10 @@ const providerLoadingDecisions: ReadonlyArray<[
   ['liquipedia', { remotePreview: 'liquipedia' }],
   ['matreshka', {}],
   ['onefootball', {}],
+  ['reddit', {}],
+  ['rezka', {}],
   ['sasflix', { loadingPlaceholder: 'none' }],
+  ['spotify', {}],
   ['tiktok', { remotePreview: 'none', previewMode: 'tiktok-embed' }],
   ['twitch', { remotePreview: 'none' }],
   ['vk', { description: 'vk' }],
@@ -64,6 +71,15 @@ describe('feed item provider presentation', () => {
     expect(getFeedItemProvider(item('https://youtu.be/abcdefghi', 'inst: old source')))
       .toBe('youtube');
     expect(getFeedItemProvider(item('not a url', 'inst: creator'))).toBe('instagram');
+  });
+
+  it('resolves the real provider before applying the enabled gate', () => {
+    const youtube = item('https://youtu.be/abcdefghi', 'inst: stale source');
+    expect(getFeedItemProviderFromUrl(
+      youtube,
+      new URL(youtube.link),
+      new Set(['youtube']),
+    )).toBe('generic');
   });
 
   it.each(providerLoadingDecisions)(

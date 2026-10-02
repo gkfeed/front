@@ -50,12 +50,12 @@ export function useHltvLiveRefresh({
   }, [isLoading]);
 
   useEffect(() => {
-    if (!result) return;
+    if (!result || !refreshEnabled) return;
     setPreview((previous) => ({
       liquipediaMatch: null,
       openGraphPreview: mergeHltvLiveData(result, previous.openGraphPreview),
     }));
-  }, [result, setPreview]);
+  }, [refreshEnabled, result, setPreview]);
 
   useEffect(() => {
     if (!refreshEnabled) return undefined;

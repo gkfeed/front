@@ -129,4 +129,23 @@ describe('LivePage', () => {
     expect(screen.getByRole('alert').textContent).toContain('This section could not be updated.');
     expect(refresh).toHaveBeenCalledOnce();
   });
+
+  it('isolates a synchronous adapter render failure and retains the other events', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const broken = { ...streamAdapter, render: () => { throw new Error('broken plugin'); } };
+    useLivePageModel.mockReturnValue(model({
+      adapters: [broken, esportsAdapter],
+      hasFreshEvents: true,
+      sections: [
+        { category: streamAdapter.category, events: [event(1)], providerIds: [broken.id], state: 'healthy' },
+        { category: esportsAdapter.category, events: [event(2, esportsAdapter.id)], providerIds: [esportsAdapter.id], state: 'healthy' },
+      ],
+    }));
+
+    render(<LivePage />);
+
+    expect(screen.getByRole('link', { name: 'Event 1' }).getAttribute('href')).toBe('https://example.com/1');
+    expect(screen.getByText('Event 2')).toBeTruthy();
+    vi.restoreAllMocks();
+  });
 });

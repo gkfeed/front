@@ -69,8 +69,9 @@ test.describe('Reader item order', () => {
     await page.goto('/reader');
     await expect(page.getByRole('heading', { name: 'New item' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Settings' }).click();
-    await page.getByRole('menuitemradio', { name: 'Oldest first' }).click();
+    await page.getByRole('link', { name: 'Settings' }).click();
+    await page.getByRole('radio', { name: 'Oldest first' }).click();
+    await page.getByRole('link', { name: 'Reader' }).click();
 
     await expect(page).toHaveURL(/\/reader$/);
     await expect(page.getByRole('heading', { name: 'Old item' })).toBeVisible();
@@ -78,8 +79,9 @@ test.describe('Reader item order', () => {
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Old item' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Settings' }).click();
-    await page.getByRole('menuitemradio', { name: 'Newest first' }).click();
+    await page.getByRole('link', { name: 'Settings' }).click();
+    await page.getByRole('radio', { name: 'Newest first' }).click();
+    await page.getByRole('link', { name: 'Reader' }).click();
 
     await expect(page).toHaveURL(/\/reader$/);
     await expect(page.getByRole('heading', { name: 'New item' })).toBeVisible();
@@ -916,6 +918,7 @@ test.describe('TikTok player on iPad-sized readers', () => {
     const preview = page.locator('.reader-card--vk .reader-card__preview');
     await expect(preview).toHaveAttribute('data-vk-feed-placeholder', '');
     await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+    await expect(page.locator('#reader-review-panel')).toHaveClass(/reader__item--fullscreen/);
 
     const previewBox = await preview.boundingBox();
     const copyBox = await page.locator('.reader-card--vk .reader-card__copy').boundingBox();

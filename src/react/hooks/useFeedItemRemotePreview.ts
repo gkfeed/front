@@ -23,9 +23,10 @@ export function useFeedItemRemotePreview(
     enabled: boolean;
     source: RemotePreviewSource;
     livePreview: 'none' | 'hltv';
+    scopeKey?: string;
   },
 ) {
-  const { enabled, source, livePreview: livePreviewMode } = options;
+  const { enabled, source, livePreview: livePreviewMode, scopeKey = '' } = options;
   const { preview: previewUseCases } = useFeatureUseCases();
   const cardRef = useRef<HTMLElement>(null);
   const isVisible = usePreviewVisibility(
@@ -45,16 +46,16 @@ export function useFeedItemRemotePreview(
       : previewUseCases.loadRemotePreview(url, source, signal),
     [previewUseCases, source, url],
   );
+  const previewKey = `${url}:${source}:${scopeKey}:${enabled}`;
   const resource = useAsyncResource(load, {
     enabled: enabled && canLoadPreview,
-    key: `${url}:${source}`,
+    key: previewKey,
   });
-  const previewKey = `${url}:${source}`;
   const [livePreview, setLivePreview] = useState<{
     key: string;
     value: RemotePreview;
   } | null>(null);
-  const preview = (livePreview?.key === previewKey ? livePreview.value : null)
+  const preview = !enabled ? EMPTY_REMOTE_PREVIEW : (livePreview?.key === previewKey ? livePreview.value : null)
     ?? resource.result
     ?? EMPTY_REMOTE_PREVIEW;
   const setPreview = useCallback<Dispatch<SetStateAction<RemotePreview>>>((update) => {

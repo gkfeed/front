@@ -43,17 +43,17 @@ function PriorityToggle({
   const { t } = useTranslation();
 
   return (
-    <div className="settings-menu__section" role="group" aria-label={title}>
+    <div className="settings-menu__section">
       <span className="settings-menu__section-title">{title}</span>
       <span className="settings-menu__content-description">{description}</span>
-      <div className="settings-menu__reader-options">
+      <div className="settings-menu__reader-options" role="radiogroup" aria-label={title}>
         {([true, false] as const).map((enabled) => (
           <button
             className="settings-menu__reader-option"
             data-selected={enabled === isEnabled || undefined}
             key={String(enabled)}
             type="button"
-            role="menuitemradio"
+            role="radio"
             aria-checked={enabled === isEnabled}
             onClick={() => onChange(enabled)}
           >

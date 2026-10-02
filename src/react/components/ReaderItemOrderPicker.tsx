@@ -14,7 +14,7 @@ export function ReaderItemOrderPicker({
   return (
     <div className="settings-menu__section">
       <span className="settings-menu__section-title">{t('settings.itemOrder')}</span>
-      <div className="settings-menu__reader-options">
+      <div className="settings-menu__reader-options" role="radiogroup" aria-label={t('settings.itemOrder')}>
         {(['desc', 'asc'] as const).map((order) => {
           const selected = order === itemOrder;
           return (
@@ -23,7 +23,7 @@ export function ReaderItemOrderPicker({
               data-selected={selected || undefined}
               key={order}
               type="button"
-              role="menuitemradio"
+              role="radio"
               aria-checked={selected}
               onClick={() => onItemOrderChange(order)}
             >

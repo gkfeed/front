@@ -17,7 +17,6 @@ function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
     case 'generic':
       return [
         ...(facts.simpleImage ? ['reader-card--simple-image'] : []),
-        ...(getSpotifyEmbed(facts.item.link) ? ['reader-card--spotify'] : []),
       ];
     case 'hltv': return [];
     case 'instagram':
@@ -34,7 +33,16 @@ function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
     ];
     case 'matreshka': return ['reader-card--matreshka', 'reader-card--player', 'reader-card--landscape-media'];
     case 'onefootball': return ['reader-card--onefootball'];
+    case 'reddit': return facts.simpleImage ? ['reader-card--simple-image'] : [];
+    case 'rezka': return [
+      'reader-card--rezka',
+      ...(facts.simpleImage ? ['reader-card--simple-image'] : []),
+    ];
     case 'sasflix': return ['reader-card--sasflix', 'reader-card--player', 'reader-card--landscape-media'];
+    case 'spotify': return [
+      ...(facts.simpleImage ? ['reader-card--simple-image'] : []),
+      ...(getSpotifyEmbed(facts.item.link) ? ['reader-card--spotify'] : []),
+    ];
     case 'tiktok': return ['reader-card--short-video', 'reader-card--tiktok'];
     case 'twitch': return ['reader-card--twitch', 'reader-card--player', 'reader-card--landscape-media'];
     case 'vk': return [

@@ -8,7 +8,7 @@ import {
   exitReaderFullscreen,
   isAutomaticFallbackFullscreen,
 } from '../../platform/readerFullscreen';
-import { getReaderMode } from '../../state/readerMode';
+import { getReaderMode, useDefaultReaderMode } from '../../state/readerMode';
 import { useReaderItemOrderPreferences } from '../../state/useReaderItemOrderPreferences';
 
 export type { FeedItemDeletion } from '../../hooks/reviewSession';
@@ -18,7 +18,7 @@ type Translator = (key: string) => string;
 export function useReaderPageModel(t: Translator) {
   const reviewPanelRef = useRef<HTMLDivElement>(null);
   const { search } = useLocation();
-  const mode = getReaderMode(search);
+  const mode = getReaderMode(search, useDefaultReaderMode());
   const { itemOrder } = useReaderItemOrderPreferences();
 
   useEffect(() => () => {

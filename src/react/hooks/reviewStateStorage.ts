@@ -1,5 +1,6 @@
 import { getObjectProperty } from '../unknownObject';
 import type { ReviewProgress } from './reviewSession';
+import type { ReaderItemOrder } from '../state/readerItemOrder';
 
 const REVIEW_STATE_STORAGE_PREFIX = 'gkfeed.reader-review.v1';
 
@@ -42,13 +43,27 @@ export function readReviewState(
   }
 }
 
-export function writeReviewState(storageKey: string | null, state: ReviewProgress): void {
+export function readReviewItemOrder(storageKey: string | null): ReaderItemOrder | null {
+  const storage = getReviewStorage();
+  if (!storageKey || !storage) return null;
+  try {
+    const parsed: unknown = JSON.parse(storage.getItem(storageKey) ?? 'null');
+    if (getObjectProperty(parsed, 'version') !== 1) return null;
+    const order = getObjectProperty(parsed, 'itemOrder');
+    return order === 'asc' || order === 'desc' ? order : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeReviewState(storageKey: string | null, state: ReviewProgress, itemOrder?: ReaderItemOrder): void {
   const storage = getReviewStorage();
   if (!storageKey || !storage) return;
 
   try {
     storage.setItem(storageKey, JSON.stringify({
       version: 1,
+      itemOrder,
       pendingIds: state.pendingIds,
       revisitIds: state.revisitIds,
       keptItemIds: [...state.keptItemIds],

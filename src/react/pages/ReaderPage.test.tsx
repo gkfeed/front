@@ -165,6 +165,7 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('Story 98')).toBeTruthy();
     await waitFor(() => expect(JSON.parse(storage.get(storageKey) ?? '')).toEqual({
       version: 1,
+      itemOrder: 'desc',
       pendingIds: [98, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 97, 96, 95],
       revisitIds: [],
       keptItemIds: [],
@@ -186,6 +187,7 @@ describe('ReaderPage', () => {
     expect(screen.queryByRole('button', { name: 'Reset kept items' })).toBeNull();
     expect(JSON.parse(storage.get(getReviewStateStorageKey('reader')) ?? '')).toEqual({
       version: 1,
+      itemOrder: 'desc',
       pendingIds: [11, 10],
       revisitIds: [],
       keptItemIds: [],
@@ -461,7 +463,7 @@ describe('ReaderPage', () => {
     expect(screen.getByRole('button', { name: 'Delete item' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Scroll view' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Open original' })).toBeNull();
-    expect(screen.getAllByRole('button', { name: 'Show comments' })).toHaveLength(1);
+    expect(await screen.findAllByRole('button', { name: 'Show comments' })).toHaveLength(1);
   });
 
   it('can reload after reaching the end of the queue', async () => {

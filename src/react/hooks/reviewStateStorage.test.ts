@@ -3,12 +3,24 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { restoreLocalStorage, stubLocalStorage } from '../testUtils';
-import { getReviewStateStorageKey, readReviewState, writeReviewState } from './reviewStateStorage';
+import { getReviewStateStorageKey, readReviewItemOrder, readReviewState, writeReviewState } from './reviewStateStorage';
 import { createReviewSessionState, getActiveReviewIds, reviewSessionReducer } from './reviewSession';
 
 afterEach(restoreLocalStorage);
 
 describe('reviewStateStorage', () => {
+  it('persists the queue order and accepts legacy progress without order metadata', () => {
+    stubLocalStorage();
+    const key = getReviewStateStorageKey('reader');
+    const progress = { pendingIds: [2, 1], revisitIds: [], keptItemIds: new Set<number>() };
+    writeReviewState(key, progress, 'desc');
+    expect(readReviewItemOrder(key)).toBe('desc');
+    expect(readReviewState(key)).toEqual(progress);
+    writeReviewState(key, progress);
+    expect(readReviewItemOrder(key)).toBeNull();
+    expect(readReviewState(key)).toEqual(progress);
+  });
+
   it('restores an active revisit after a background refresh and reload', () => {
     stubLocalStorage();
     const key = getReviewStateStorageKey('reader');

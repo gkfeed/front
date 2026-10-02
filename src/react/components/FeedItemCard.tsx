@@ -5,7 +5,6 @@ import { useFeedItemCardModel } from './useFeedItemCardModel';
 import { ArticleReaderOverlay } from './ArticleReader';
 import { useArticleReader } from '../hooks/useArticleReader';
 import { useTikTokCommentsPreference } from '../hooks/useTikTokCommentsPreference';
-import { isRezkaUrl, parseUrl } from '../domain/feedItemUrls';
 import { getFeedItemCardClassNames } from './providers/feedItemCardClassNames';
 
 export const FeedItemCard = memo(function FeedItemCard({
@@ -27,7 +26,6 @@ export const FeedItemCard = memo(function FeedItemCard({
         'reader-card',
         isPreviewPending ? 'reader-card--preview-pending' : '',
         ...getFeedItemCardClassNames(model),
-        isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}
       data-comments-expanded={model.provider === 'tiktok'

@@ -7,7 +7,7 @@ import {
   reviewSessionReducer,
   type ReviewPresentation,
 } from './reviewSession';
-import { getReviewStateStorageKey, readReviewState, writeReviewState } from './reviewStateStorage';
+import { getReviewStateStorageKey, readReviewItemOrder, readReviewState, writeReviewState } from './reviewStateStorage';
 
 export function useReviewSession({
   loadedItems,
@@ -49,6 +49,7 @@ export function useReviewSession({
       type: 'sessionChanged',
       storageKey,
       restoredProgress: readReviewState(storageKey),
+      restoredItemOrder: readReviewItemOrder(storageKey),
     });
   }, [storageKey]);
 
@@ -66,9 +67,9 @@ export function useReviewSession({
 
   useEffect(() => {
     if (session.progressToPersist === null) return;
-    writeReviewState(storageKey, session.progressToPersist);
+    writeReviewState(storageKey, session.progressToPersist, session.presentation.itemOrder);
     dispatch({ type: 'persistenceCompleted', progress: session.progressToPersist });
-  }, [session.progressToPersist, storageKey]);
+  }, [session.presentation.itemOrder, session.progressToPersist, storageKey]);
 
   const activeReviewIds = useMemo(() => getActiveReviewIds(session), [session]);
 

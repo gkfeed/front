@@ -147,7 +147,7 @@ describe('FeedItemCard media providers', () => {
     expect(preview?.getAttribute('style')).toContain('aspect-ratio: 0.5625');
   });
 
-  it('autoplays muted on iPhone and offers a user gesture to enable sound', () => {
+  it('autoplays muted on iPhone and offers a user gesture to enable sound', async () => {
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
       platform: 'iPhone',
@@ -160,20 +160,20 @@ describe('FeedItemCard media providers', () => {
       title: 'inst: creator',
     }} />);
 
-    const video = screen.getByLabelText('Video preview for inst: creator') as HTMLVideoElement;
+    const video = await screen.findByLabelText('Video preview for inst: creator') as HTMLVideoElement;
     expect(video.autoplay).toBe(true);
     expect(video.muted).toBe(true);
     expect(screen.getByRole('button', { name: 'Tap for sound' })).toBeTruthy();
   });
 
-  it('renders Instagram media as an identified short-video card', () => {
+  it('renders Instagram media as an identified short-video card', async () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://files.catbox.moe/story.mp4',
       title: 'inst: marcian0chka',
     }} />);
 
-    const video = screen.getByLabelText('Video preview for inst: marcian0chka');
+    const video = await screen.findByLabelText('Video preview for inst: marcian0chka');
     const card = video.closest('.reader-card');
     expect(card?.classList.contains('reader-card--short-video')).toBe(true);
     expect(card?.classList.contains('reader-card--instagram')).toBe(true);
@@ -186,7 +186,7 @@ describe('FeedItemCard media providers', () => {
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
-  it('shows the failed media URL when an Instagram preview cannot load', () => {
+  it('shows the failed media URL when an Instagram preview cannot load', async () => {
     const mediaUrl = 'https://files.catbox.moe/story.mp4';
     render(<FeedItemCard item={{
       ...item,
@@ -194,7 +194,7 @@ describe('FeedItemCard media providers', () => {
       title: 'inst: marcian0chka',
     }} />);
 
-    fireEvent.error(screen.getByLabelText('Video preview for inst: marcian0chka'));
+    fireEvent.error(await screen.findByLabelText('Video preview for inst: marcian0chka'));
 
     expect(screen.getByRole('alert').textContent).toContain('Media unavailable');
     const failedMediaLink = screen.getByRole('link', { name: mediaUrl });
@@ -365,7 +365,7 @@ describe('FeedItemCard media providers', () => {
       .toBe('https://scontent.cdninstagram.com/video.mp4?token=example');
   });
 
-  it('renders TikTok’s static player without calling the Open Graph BFF', () => {
+  it('renders TikTok’s static player without calling the Open Graph BFF', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.tiktok.com/@creator/video/123',
       title: 'Creator video',
@@ -382,7 +382,7 @@ describe('FeedItemCard media providers', () => {
       link: 'https://www.tiktok.com/@creator/video/123',
     }} />);
 
-    const player = screen.getByTitle('Video preview for Story');
+    const player = await screen.findByTitle('Video preview for Story');
     expect(player.tagName).toBe('IFRAME');
     expect(player.getAttribute('src')).toContain('/player/v1/123?');
     expect(screen.queryByText('tiktok.com')).toBeNull();
@@ -415,7 +415,7 @@ describe('FeedItemCard media providers', () => {
       link: 'https://www.tiktok.com/@creator/video/456',
     }} />);
 
-    const player = screen.getByTitle('Video preview for Story');
+    const player = await screen.findByTitle('Video preview for Story');
     expect(player.tagName).toBe('IFRAME');
     expect(player.getAttribute('allow')).toContain('autoplay');
     expect(player.getAttribute('src')).toContain('/player/v1/456?');
@@ -423,7 +423,7 @@ describe('FeedItemCard media providers', () => {
     expect(player.getAttribute('src')).toContain('muted=0');
   });
 
-  it('autoplays TikTok on iPhone and offers a user gesture to enable sound', () => {
+  it('autoplays TikTok on iPhone and offers a user gesture to enable sound', async () => {
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
       platform: 'iPhone',
@@ -435,7 +435,7 @@ describe('FeedItemCard media providers', () => {
       link: 'https://www.tiktok.com/@creator/video/789',
     }} />);
 
-    expect(screen.getByTitle('Video preview for Story').getAttribute('src')).toContain('autoplay=1');
+    expect((await screen.findByTitle('Video preview for Story')).getAttribute('src')).toContain('autoplay=1');
     expect(screen.getByRole('button', { name: 'Tap for sound' })).toBeTruthy();
   });
 });

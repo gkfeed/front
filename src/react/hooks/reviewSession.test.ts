@@ -18,6 +18,34 @@ const presentation: ReviewPresentation = {
 };
 
 describe('review session', () => {
+  it('reorders saved queues after the order changes outside Reader without losing kept decisions', () => {
+    let state = reviewSessionReducer(createReviewSessionState({ ...presentation, itemOrder: 'asc' }), {
+      type: 'sessionChanged',
+      storageKey: 'reader',
+      restoredItemOrder: 'desc',
+      restoredProgress: { pendingIds: [3, 2], revisitIds: [1], keptItemIds: new Set([1]) },
+    });
+    state = snapshot(state, [3, 2, 1], true);
+
+    expect(getActiveReviewIds(state)).toEqual([2, 3]);
+    expect(state.progress.revisitIds).toEqual([1]);
+    expect(state.progress.keptItemIds).toEqual(new Set([1]));
+
+    state = snapshot(state, [4, 3, 2, 1], true);
+    expect(getActiveReviewIds(state)).toEqual([2, 3, 4]);
+  });
+
+  it('keeps the saved current card when reopening with the same order', () => {
+    let state = reviewSessionReducer(createReviewSessionState(presentation), {
+      type: 'sessionChanged',
+      storageKey: 'reader',
+      restoredItemOrder: 'desc',
+      restoredProgress: { pendingIds: [2, 3], revisitIds: [1], keptItemIds: new Set([1]) },
+    });
+    state = snapshot(state, [3, 2, 1], true);
+    expect(getActiveReviewIds(state)).toEqual([2, 3]);
+  });
+
   it('keeps the active revisit in its queue across an unchanged refresh', () => {
     let state = snapshot(startSession(null), [1], true);
     state = reviewSessionReducer(state, { type: 'keep', id: 1 });
