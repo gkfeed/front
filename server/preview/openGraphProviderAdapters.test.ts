@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { findOpenGraphProviderAdapter, openGraphProviderAdapters } from './openGraphProviderAdapters.js';
 
 describe('Open Graph provider adapters', () => {
-  it('keeps the nine provider behaviors behind one adapter seam', () => {
-    expect(openGraphProviderAdapters).toHaveLength(9);
+  it('keeps provider behaviors behind one adapter seam', () => {
+    expect(openGraphProviderAdapters).toHaveLength(10);
 
     for (const value of [
       'https://www.hltv.org/matches/123/team-a-vs-team-b',
@@ -16,6 +16,7 @@ describe('Open Graph provider adapters', () => {
       'https://shikimori.one/animes/63347-world-is-dancing',
       'https://vk.ru/wall-1_2',
       'https://www.youtube.com/watch?v=abc123xyz',
+      'https://www.reddit.com/r/omarchy/comments/1wrjlkh/introducing_omaphoto_photo_editor/',
     ]) {
       expect(findOpenGraphProviderAdapter(new URL(value)), value).toBeDefined();
     }

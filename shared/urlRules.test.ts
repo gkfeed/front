@@ -55,6 +55,7 @@ describe('shared URL rules', () => {
   it.each([
     'https://v.redd.it/abc123',
     'https://v.redd.it/abc123/DASH_720.mp4?source=fallback',
+    'https://v.redd.it/abc123/HLSPlaylist.m3u8?a=token&v=1',
   ])('recognizes Reddit video URL %s', (value) => {
     expect(isRedditVideoUrl(url(value))).toBe(true);
   });
@@ -62,6 +63,7 @@ describe('shared URL rules', () => {
   it.each([
     'https://v.redd.it.example.org/abc123',
     'https://v.redd.it/abc123/DASHPlaylist.mpd',
+    'https://v.redd.it/abc123/other.m3u8',
     'ftp://v.redd.it/abc123',
     'https://i.redd.it/abc123.jpg',
   ])('rejects non-video Reddit URL %s', (value) => {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { getPreview, item } from './FeedItemCard.component.testUtils';
@@ -84,7 +84,7 @@ describe('Matreshka player', () => {
     expect(screen.queryByRole('button', { name: /Playback speed/ })).toBeNull();
   });
 
-  it('shows a decoded high-quality stream frame over the Open Graph fallback', () => {
+  it('shows a decoded high-quality stream frame over the Open Graph fallback', async () => {
     vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockReturnValue('maybe');
     const onPreviewError = vi.fn();
     const fallback = 'https://c4-images.cmtv.ru/video/channel/video/user-cover/1280x720.jpg';
@@ -101,7 +101,7 @@ describe('Matreshka player', () => {
     const image = screen.getByAltText('Matreshka video preview');
     expect(image.getAttribute('src')).toBe(fallback);
     const video = container.querySelector('video')!;
-    expect(video.getAttribute('src')).toContain('/master.m3u8');
+    await waitFor(() => expect(video.getAttribute('src')).toContain('/master.m3u8'));
     expect(video.classList.contains('reader-card__matreshka-frame--ready')).toBe(false);
 
     fireEvent.loadedMetadata(video);

@@ -43,7 +43,7 @@ describe('FeedItemCard remote and feed previews', () => {
     );
   });
 
-  it('shows generated Reddit cards without duplicating their content', async () => {
+  it('shows the Reddit post title beneath a generated preview', async () => {
     getPreview.mockResolvedValue({
       url: 'https://www.reddit.com/r/neovim/comments/abc123/post/',
       title: 'Reddit post',
@@ -67,6 +67,9 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(screen.queryByText('reddit.com')).toBeNull();
     expect(screen.queryByText('Feed #2')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Duplicated Reddit title' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Reddit post' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Reddit post' }).getAttribute('href'))
+      .toBe('https://www.reddit.com/r/neovim/comments/abc123/post/');
     expect(screen.queryByText(/read original/i)).toBeNull();
   });
 
@@ -93,6 +96,10 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(video.getAttribute('src')).toBe('https://v.redd.it/video123');
     expect(video.getAttribute('poster')).toBe('/bff/reddit-preview-image?url=encoded');
     expect(video.closest('.reader-card--reddit-preview')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Reddit video' })).toBeTruthy();
+    fireEvent.error(video);
+    expect(screen.getByRole('heading', { name: 'Reddit video' })).toBeTruthy();
+    expect(screen.getByAltText('Video preview for Reddit video')).toBeTruthy();
   });
 
   it('does not call the BFF when the feed content contains an image', () => {

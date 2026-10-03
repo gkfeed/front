@@ -14,6 +14,8 @@ import { TwitchCopy, TwitchVideoPreview } from './providerRenderers/twitch';
 import { VkCopy, VkDeletedPreview } from './providerRenderers/vk';
 import { VkImageCarousel } from '../previews/VkImageCarousel';
 import { YoutubeCopy, YoutubeVideoPreview } from './providerRenderers/youtube';
+import { RedditCopy } from './providerRenderers/reddit';
+import { isRedditUrl } from '../../domain/feedItemUrls';
 
 export function FeedItemCardProviderContent({
   facts,
@@ -48,7 +50,10 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
   const { facts, ...sharedProps } = props;
   switch (facts.provider) {
     case 'generic':
-      return { preview: <FeedItemMediaPreview {...props} />, copy: <StandardCopy {...props} /> };
+      return {
+        preview: <FeedItemMediaPreview {...props} />,
+        copy: isRedditUrl(facts.url) ? <RedditCopy {...props} /> : <StandardCopy {...props} />,
+      };
     case 'hltv':
       return { preview: <HltvPreview {...props} />, supplementary: <HltvSupplementary {...props} />, copy: <StandardCopy {...props} /> };
     case 'instagram':
@@ -89,6 +94,7 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
 
 function shouldHideCopy(facts: FeedItemCardModel): boolean {
   return facts.provider !== 'vk'
+    && !isRedditUrl(facts.url)
     && (facts.imagePreview.type !== 'none'
       || facts.provider === 'instagram'
       || facts.provider === 'tiktok');

@@ -1,5 +1,6 @@
 import type { FeedItemCardModel } from '../useFeedItemCardModel';
 import { getSpotifyEmbed } from '../../domain/spotifyPreview';
+import { isRedditUrl } from '../../domain/feedItemUrls';
 
 export function getFeedItemCardClassNames(facts: FeedItemCardModel): readonly string[] {
   return [
@@ -16,6 +17,7 @@ function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
   switch (facts.provider) {
     case 'generic':
       return [
+        ...(isRedditUrl(facts.url) ? ['reader-card--reddit'] : []),
         ...(facts.simpleImage ? ['reader-card--simple-image'] : []),
         ...(getSpotifyEmbed(facts.item.link) ? ['reader-card--spotify'] : []),
       ];

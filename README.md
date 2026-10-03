@@ -56,6 +56,9 @@ Open Graph/Twitter metadata fallbacks as gkbot. Only public HTTP(S) pages are
 fetched; private/local addresses, non-HTML responses, large pages, and slow
 responses are rejected.
 
+Reddit post previews use Old Reddit's title, video poster, and HLS stream so
+videos play inline with audio. If Old Reddit is unavailable, the crawler page
+provides a fallback preview. Post titles remain visible beneath the media.
 Generated Reddit cards from `share.redd.it` are loaded through
 `/bff/reddit-preview-image`, which applies the same crawler request headers
 as gkbot. That image proxy only accepts Reddit's generated preview URLs.
