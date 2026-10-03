@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PublicHttpResponse } from '../publicHttp.js';
 import { PreviewError } from './errors.js';
+import { createDetachedRequestExecutionContext } from '../application/requestExecutionContext.js';
 
 const fetchPublicResponse = vi.hoisted(() => vi.fn());
 const fetchHltvScorebotSnapshot = vi.hoisted(() => vi.fn());
@@ -24,6 +25,7 @@ vi.mock('node:fs/promises', () => ({ mkdtemp, readFile, rm, stat }));
 vi.mock('node:os', () => ({ tmpdir: () => '/tmp' }));
 
 import { fetchHltvHtml } from './hltvFetcher.js';
+import { fetchHltvLiveIndex } from './hltvLiveIndex.js';
 
 beforeEach(() => {
   fetchPublicResponse.mockReset();
@@ -108,6 +110,36 @@ describe('fetchHltvHtml', () => {
       recursive: true,
       force: true,
     });
+  });
+
+  it('recovers the live match index when HLTV returns HTTP 403', async () => {
+    const context = createDetachedRequestExecutionContext();
+    const html = '<div data-match-id="2398717" live="true"></div>';
+    fetchPublicResponse.mockRejectedValue(new PreviewError(
+      'The HLTV page returned HTTP 403',
+      'upstream_error',
+    ));
+    mkdtemp.mockResolvedValue('/tmp/gkfeed-hltv-index');
+    stat.mockResolvedValue({ size: Buffer.byteLength(html) });
+    readFile.mockResolvedValue(Buffer.from(html));
+    rm.mockResolvedValue(undefined);
+    execFile.mockImplementation((_command, _args, _options, callback) => {
+      callback(null, '', '');
+    });
+
+    await expect(fetchHltvLiveIndex(context)).resolves.toEqual({ eventIds: ['2398717'] });
+
+    expect(execFile).toHaveBeenCalledWith(
+      'aria2c',
+      expect.arrayContaining(['https://www.hltv.org/matches']),
+      expect.objectContaining({ timeout: 8_000, signal: context.signal }),
+      expect.any(Function),
+    );
+    expect(rm).toHaveBeenCalledWith('/tmp/gkfeed-hltv-index', {
+      recursive: true,
+      force: true,
+    });
+    expect(fetchHltvScorebotSnapshot).not.toHaveBeenCalled();
   });
 });
 
