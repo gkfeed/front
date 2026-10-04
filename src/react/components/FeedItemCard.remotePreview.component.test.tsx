@@ -102,6 +102,35 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(screen.getByAltText('Video preview for Reddit video')).toBeTruthy();
   });
 
+  it('replaces stale Reddit feed media with an image-sized deleted-post message without a title', async () => {
+    const link = 'https://www.reddit.com/r/omarchy/comments/abc123/post/';
+    getPreview.mockResolvedValue({
+      url: link,
+      title: null,
+      description: null,
+      image: null,
+      video: null,
+      siteName: 'Reddit',
+      type: null,
+      providerData: { provider: 'reddit', status: 'deleted' },
+    });
+
+    render(<FeedItemCard item={{
+      ...item,
+      link,
+      title: 'Omarchy now enforces Kill sudo?',
+      text: '<img src="https://share.redd.it/preview/post/abc123">',
+    }} />);
+
+    expect((await screen.findByRole('alert')).textContent).toContain('Post deleted');
+    expect(screen.getByRole('link', { name: link }).getAttribute('href')).toBe(link);
+    expect(screen.queryByRole('heading', { name: 'Omarchy now enforces Kill sudo?' })).toBeNull();
+    expect(document.querySelector('.reader-card__copy')).toBeNull();
+    expect(document.querySelector('.reader-card--image-preview.reader-card--reddit-deleted')).toBeTruthy();
+    expect(document.querySelector('.reader-card img, .reader-card video, [data-preview-preloader]')).toBeNull();
+    expect(document.querySelector('.reader-card--reddit-preview')).toBeNull();
+  });
+
   it('does not call the BFF when the feed content contains an image', () => {
     render(<FeedItemCard item={{ ...item, text: '<img src="https://example.com/feed-cover.jpg">' }} />);
 

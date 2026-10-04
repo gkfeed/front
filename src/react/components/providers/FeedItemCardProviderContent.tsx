@@ -14,7 +14,7 @@ import { TwitchCopy, TwitchVideoPreview } from './providerRenderers/twitch';
 import { VkCopy, VkDeletedPreview } from './providerRenderers/vk';
 import { VkImageCarousel } from '../previews/VkImageCarousel';
 import { YoutubeCopy, YoutubeVideoPreview } from './providerRenderers/youtube';
-import { RedditCopy } from './providerRenderers/reddit';
+import { RedditCopy, RedditPreview } from './providerRenderers/reddit';
 import { isRedditUrl } from '../../domain/feedItemUrls';
 
 export function FeedItemCardProviderContent({
@@ -51,7 +51,7 @@ function renderProviderContent(props: FeedItemCardProviderRendererProps): {
   switch (facts.provider) {
     case 'generic':
       return {
-        preview: <FeedItemMediaPreview {...props} />,
+        preview: isRedditUrl(facts.url) ? <RedditPreview {...props} /> : <FeedItemMediaPreview {...props} />,
         copy: isRedditUrl(facts.url) ? <RedditCopy {...props} /> : <StandardCopy {...props} />,
       };
     case 'hltv':

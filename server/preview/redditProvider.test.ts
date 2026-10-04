@@ -46,6 +46,50 @@ describe('Reddit post previews', () => {
     });
   });
 
+  it.each(['[removed]', '[deleted]'])('marks a post with %s content as deleted and clears stale media', (body) => {
+    const html = oldHtml.replace('<a class="title">Introducing OmaPhoto | Photo Editor</a>',
+      `<a class="title">Introducing OmaPhoto | Photo Editor</a><div class="usertext-body"><div class="md"><p>${body}</p></div></div>`);
+    expect(parseOpenGraph(html, postUrl)).toMatchObject({
+      title: 'Introducing OmaPhoto | Photo Editor',
+      image: null,
+      video: null,
+      type: null,
+      providerData: { provider: 'reddit', status: 'deleted' },
+    });
+  });
+
+  it('recognizes a removed link post without self text', () => {
+    expect(parseOpenGraph(oldHtml.replace('data-fullname="t3_1wrjlkh"', 'class="link removed" data-fullname="t3_1wrjlkh"'), postUrl))
+      .toMatchObject({ image: null, video: null, providerData: { provider: 'reddit', status: 'deleted' } });
+  });
+
+  it('recognizes removal in the modern page used by the fetch fallback', () => {
+    expect(parseOpenGraph(`
+      <meta property="og:image" content="https://www.redditstatic.com/reddit-logo.png">
+      <shreddit-post id="t3_1wrjlkh" post-title="Post title" is-removed="true"></shreddit-post>
+    `, postUrl)).toMatchObject({
+      title: 'Post title', image: null, video: null,
+      providerData: { provider: 'reddit', status: 'deleted' },
+    });
+  });
+
+  it('ignores removal of other posts and comments and a deleted author', () => {
+    const html = oldHtml.replace('<a class="title">Related post</a>',
+      '<a class="title">Related post</a><div class="usertext-body">[removed]</div>')
+      + '<div class="comment"><span class="author">[deleted]</span><div class="usertext-body">[deleted]</div></div>';
+    expect(parseOpenGraph(html, postUrl)).toMatchObject({
+      image: 'https://external-preview.redd.it/poster.png',
+      providerData: null,
+    });
+  });
+
+  it('does not mark a discussion about removal as deleted', () => {
+    const html = oldHtml.replace('data-fullname="t3_1wrjlkh"', 'is-removed="false" data-fullname="t3_1wrjlkh"')
+      .replace('<a class="title">Introducing OmaPhoto | Photo Editor</a>',
+        '<a class="title">Introducing OmaPhoto | Photo Editor</a><div class="usertext-body">Why does Reddit show [removed]?</div>');
+    expect(parseOpenGraph(html, postUrl).providerData).toBeNull();
+  });
+
   it.each([
     'https://example.com/video.m3u8',
     'http://127.0.0.1/video.m3u8',

@@ -1,6 +1,7 @@
 import type { FeedItemCardModel } from '../useFeedItemCardModel';
 import { getSpotifyEmbed } from '../../domain/spotifyPreview';
 import { isRedditUrl } from '../../domain/feedItemUrls';
+import { getRedditStatus } from '../../../../shared/providerData/reddit';
 
 export function getFeedItemCardClassNames(facts: FeedItemCardModel): readonly string[] {
   return [
@@ -18,6 +19,9 @@ function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
     case 'generic':
       return [
         ...(isRedditUrl(facts.url) ? ['reader-card--reddit'] : []),
+        ...(isRedditUrl(facts.url) && getRedditStatus(facts.openGraphPreview?.providerData) === 'deleted'
+          ? ['reader-card--reddit-deleted', 'reader-card--image-preview']
+          : []),
         ...(facts.simpleImage ? ['reader-card--simple-image'] : []),
         ...(getSpotifyEmbed(facts.item.link) ? ['reader-card--spotify'] : []),
       ];

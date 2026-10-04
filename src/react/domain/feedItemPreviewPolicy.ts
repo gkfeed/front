@@ -16,6 +16,7 @@ import { isRedditUrl, isRezkaUrl } from './feedItemUrls';
 import { isInstagramMediaUrl } from './instagramPreview';
 import { isNsfwLink } from './nsfw';
 import { getTikTokEmbedPreview } from './tiktokPreview';
+import { getRedditStatus } from '../../../shared/providerData/reddit';
 
 export type FeedItemRemotePreviewRequest = {
   source: Exclude<RemotePreviewSource, 'none'>;
@@ -122,6 +123,9 @@ function selectPreview(
   const localPreviewSource = localPreview?.src;
   const isRezka = isRezkaUrl(providerView.url);
   const isReddit = isRedditUrl(providerView.url);
+  if (isReddit && getRedditStatus(remotePreview.openGraphPreview?.providerData) === 'deleted') {
+    return { preview: null, remoteItemPreview: null, tiktokEmbedPreview: null };
+  }
   const isVk = providerView.provider === 'vk';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title);
   const instagramVideoPreview = providerView.provider === 'instagram'

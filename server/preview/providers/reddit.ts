@@ -41,8 +41,17 @@ function parseRedditOpenGraph(html: string, pageUrl: URL) {
   const preview = parseOpenGraph(html, pageUrl);
   const postId = pageUrl.pathname.match(POST_PATH)?.[1];
   const { document } = parseHTML(html);
-  const post = postId ? document.querySelector(`[data-fullname="t3_${postId}"]`) : null;
-  const title = post?.querySelector('a.title')?.textContent?.trim();
+  const post = postId ? document.querySelector(`[data-fullname="t3_${postId}"], shreddit-post[id="t3_${postId}"]`) : null;
+  const title = post?.querySelector('a.title')?.textContent?.trim()
+    || post?.getAttribute('post-title');
+  const body = post?.querySelector('.usertext-body, [slot="text-body"]')?.textContent?.trim();
+  const isDeleted = Boolean(post && (
+    post.classList.contains('removed')
+    || post.classList.contains('deleted')
+    || ['is-removed', 'is-deleted'].some((attribute) => ['', 'true'].includes(post.getAttribute(attribute) ?? 'false'))
+    || body === '[removed]'
+    || body === '[deleted]'
+  ));
   const player = post?.querySelector('[data-hls-url]');
   const stream = resolveHttpUrl(player?.getAttribute('data-hls-url'), pageUrl);
   const video = stream && isRedditVideoUrl(new URL(stream)) ? stream : preview.video;
@@ -50,8 +59,10 @@ function parseRedditOpenGraph(html: string, pageUrl: URL) {
   return {
     ...preview,
     title: title || preview.title?.replace(/^From the .+? community on Reddit:\s*/i, '') || null,
-    video,
+    image: isDeleted ? null : preview.image,
+    video: isDeleted ? null : video,
     siteName: 'Reddit',
-    type: video ? 'video' : preview.type,
+    type: isDeleted ? null : video ? 'video' : preview.type,
+    providerData: isDeleted ? { provider: 'reddit', status: 'deleted' } as const : null,
   };
 }

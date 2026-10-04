@@ -32,7 +32,24 @@
   text-decoration: underline;
 }
 
+.reader-card__preview--reddit-deleted {
+  --reader-media-aspect-ratio: 1;
+  aspect-ratio: var(--reader-media-aspect-ratio);
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+.reader-card__preview--reddit-deleted .reader-card__media-error {
+  min-height: 0;
+  padding: 32px 24px;
+}
+
 @media (min-width: 641px) {
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--reddit-deleted > .reader-card__preview {
+    height: min(100%, 100cqw);
+  }
+
   .reader__item--fullscreen.reader__item--card-flow
   > .reader-card--reddit:has(> .reader-card__preview--video) {
     height: fit-content;
