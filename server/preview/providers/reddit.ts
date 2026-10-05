@@ -55,11 +55,22 @@ function parseRedditOpenGraph(html: string, pageUrl: URL) {
   const player = post?.querySelector('[data-hls-url]');
   const stream = resolveHttpUrl(player?.getAttribute('data-hls-url'), pageUrl);
   const video = stream && isRedditVideoUrl(new URL(stream)) ? stream : preview.video;
+  // Text posts can link their uploaded image even when og:image is a stale crop.
+  const postBody = post?.querySelector('.usertext-body, [slot="text-body"]');
+  const postImage = Array.from(postBody?.querySelectorAll('img[src], a[href]') ?? [])
+    .map((element) => resolveHttpUrl(element.getAttribute(element.tagName === 'IMG' ? 'src' : 'href'), pageUrl))
+    .find((source) => {
+      if (!source) return false;
+      const url = new URL(source);
+      return url.protocol === 'https:' && !url.username && !url.password && !url.port
+        && ['i.redd.it', 'preview.redd.it', 'external-preview.redd.it'].includes(url.hostname)
+        && /\.(?:jpe?g|png|gif|webp)$/i.test(url.pathname);
+    });
 
   return {
     ...preview,
     title: title || preview.title?.replace(/^From the .+? community on Reddit:\s*/i, '') || null,
-    image: isDeleted ? null : preview.image,
+    image: isDeleted ? null : postImage || preview.image,
     video: isDeleted ? null : video,
     siteName: 'Reddit',
     type: isDeleted ? null : video ? 'video' : preview.type,

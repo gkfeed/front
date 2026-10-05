@@ -66,6 +66,17 @@ const cases: PolicyCase[] = [
     visible: 'https://example.com/video.mp4',
   },
   {
+    name: 'Reddit post image replaces a stale feed crop',
+    item: feedItem({
+      link: 'https://www.reddit.com/r/omarchy/comments/1wtbciv/post/',
+      text: '<img src="https://external-preview.redd.it/stale.jpg">',
+    }),
+    remotePreview: openGraphRemote({ image: 'https://preview.redd.it/p7ddkf7cwgsh1.jpg' }),
+    request: 'open-graph',
+    preview: 'https://preview.redd.it/p7ddkf7cwgsh1.jpg',
+    visible: 'https://preview.redd.it/p7ddkf7cwgsh1.jpg',
+  },
+  {
     name: 'Rezka requests its original despite a local thumbnail',
     item: feedItem({
       link: 'https://hdrezka.me/films/drama/123-story.html',

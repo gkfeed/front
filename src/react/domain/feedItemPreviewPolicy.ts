@@ -132,8 +132,9 @@ function selectPreview(
     && remotePreview.openGraphPreview?.type === 'video'
     ? loadedRemotePreview
     : null;
-  const prefersRemotePreview = isRezka || isVk;
+  const prefersRemotePreview = isRezka || isVk || isReddit;
   const remoteItemPreview = prefersRemotePreview && loadedRemotePreview && localPreviewSource
+    && !isReddit
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
   if (isVk && remoteItemPreview && remoteItemPreview.type === undefined
@@ -149,9 +150,7 @@ function selectPreview(
       ? instagramVideoPreview
       : prefersRemotePreview
         ? remoteItemPreview ?? localPreview
-        : isReddit && remoteItemPreview?.type === 'video'
-          ? remoteItemPreview
-          : localPreview ?? remoteItemPreview;
+        : localPreview ?? remoteItemPreview;
 
   return { preview, remoteItemPreview, tiktokEmbedPreview };
 }

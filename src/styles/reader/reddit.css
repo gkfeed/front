@@ -51,7 +51,9 @@
   }
 
   .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card--reddit:has(> .reader-card__preview--video) {
+  > .reader-card--reddit:has(> .reader-card__copy):has(
+    > :is(.reader-card__preview--video, .reader-card__preview--image)
+  ) {
     height: fit-content;
     grid-template-rows: minmax(0, 1fr) auto;
     align-self: center;

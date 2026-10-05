@@ -5,6 +5,68 @@ const title = 'Introducing OmaPhoto | Photo Editor';
 const stream = 'https://v.redd.it/tma4eya482sh1/HLSPlaylist.m3u8';
 
 for (const width of [390, 1280]) {
+  test(`recovers the Reddit post image after its feed crop fails at ${width}px`, async ({ page }) => {
+    const imagePost = 'https://www.reddit.com/r/omarchy/comments/1wtbciv/i_turned_my_personal_daily_workflow_into_a_tui/';
+    const imageTitle = 'I turned my personal daily workflow into a TUI app enjoy';
+    const staleImage = 'https://external-preview.redd.it/stale.jpg';
+    const postImage = 'https://preview.redd.it/p7ddkf7cwgsh1.jpg';
+    let releaseMetadata!: () => void;
+    const metadataReady = new Promise<void>((resolve) => { releaseMetadata = resolve; });
+    await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({
+      json: {
+        items: [{ id: 1, feed_id: 4, link: imagePost, title: imageTitle, text: `<img src="${staleImage}">` }],
+        next_cursor: '', has_more: false, sync_cursor: 'sync',
+      },
+    }));
+    await page.route('**/api/v2/items/changes?**', (route) => route.fulfill({
+      json: { upserted: [], deleted_ids: [], next_cursor: 'sync', has_more: false },
+    }));
+    await page.route('**/bff/open-graph?**', async (route) => {
+      await metadataReady;
+      await route.fulfill({
+        json: { url: imagePost, title: imageTitle, description: null, image: postImage, video: null,
+          siteName: 'Reddit', type: null, providerData: null },
+      });
+    });
+    await page.route(staleImage, (route) => route.fulfill({ status: 404 }));
+    await page.route(postImage, (route) => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><rect width="1920" height="1080" fill="#202030"/></svg>',
+    }));
+    await page.addInitScript(() => {
+      localStorage.setItem('gkfeed.credentials', JSON.stringify({ username: 'automation', password: 'secret' }));
+    });
+    await page.setViewportSize({ width, height: 844 });
+    try {
+      const failedCrop = page.waitForResponse(staleImage);
+      await page.goto('/reader');
+      await failedCrop;
+      await expect(page.locator('.reader-card img')).toHaveCount(0);
+      releaseMetadata();
+      const image = page.locator('.reader-card img');
+      await expect(image).toHaveAttribute('src', postImage);
+      await expect(image).toBeVisible();
+      await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(1920);
+      await expect(page.getByRole('link', { name: imageTitle, exact: true })).toHaveAttribute('href', imagePost);
+
+      if (width > 640) {
+        await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+        await expect(page.locator('.reader__item')).toHaveClass(/reader__item--fullscreen/);
+        const imageBox = await image.boundingBox();
+        const titleBox = await page.getByRole('heading', { name: imageTitle }).boundingBox();
+        const actionsBox = await page.locator('.reader__actions').boundingBox();
+        expect(titleBox!.y - imageBox!.y - imageBox!.height).toBeGreaterThanOrEqual(0);
+        expect(titleBox!.y - imageBox!.y - imageBox!.height).toBeLessThanOrEqual(24);
+        expect(titleBox!.y + titleBox!.height).toBeLessThanOrEqual(actionsBox!.y);
+        expect(actionsBox!.y + actionsBox!.height).toBeLessThanOrEqual(844);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    } finally {
+      releaseMetadata();
+    }
+  });
+
   test(`shows a deleted Reddit post instead of its stale feed image at ${width}px`, async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
     await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({

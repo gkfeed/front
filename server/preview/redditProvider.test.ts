@@ -46,6 +46,36 @@ describe('Reddit post previews', () => {
     });
   });
 
+  it('uses the requested text post image instead of a stale Open Graph crop', () => {
+    const url = new URL('https://www.reddit.com/r/omarchy/comments/1wtbciv/i_turned_my_personal_daily_workflow_into_a_tui/');
+    const image = 'https://preview.redd.it/p7ddkf7cwgsh1.jpg?width=1920&format=pjpg&auto=webp&s=78c290d1ff0a256f5038978c3441335056287729';
+    expect(parseOpenGraph(`
+      <meta property="og:image" content="https://external-preview.redd.it/stale.jpg">
+      <div data-fullname="t3_related"><div class="usertext-body"><img src="https://i.redd.it/related.jpg"></div></div>
+      <div data-fullname="t3_1wtbciv"><div class="usertext-body"><div class="md">
+        <p><a href="https://github.com/ILDaviz/lyra-tui">GitHub</a></p>
+        <p><a href="${image.replaceAll('&', '&amp;')}">Uploaded image</a></p>
+      </div></div></div>
+    `, url)).toMatchObject({ image, video: null });
+  });
+
+  it('extracts an inline image from the modern post body', () => {
+    expect(parseOpenGraph(`
+      <shreddit-post id="t3_1wrjlkh"><div slot="text-body"><img src="https://i.redd.it/photo.png"></div></shreddit-post>
+    `, postUrl).image).toBe('https://i.redd.it/photo.png');
+  });
+
+  it.each([
+    'https://preview.redd.it.example.org/photo.jpg',
+    'https://example.com/photo.jpg',
+    'http://127.0.0.1/photo.jpg',
+    'https://preview.redd.it/not-an-image',
+  ])('keeps metadata when the post links a non-Reddit image %s', (source) => {
+    expect(parseOpenGraph(oldHtml.replace('<a class="title">Introducing OmaPhoto | Photo Editor</a>',
+      `<a class="title">Introducing OmaPhoto | Photo Editor</a><div class="usertext-body"><a href="${source}">Link</a></div>`), postUrl).image)
+      .toBe('https://external-preview.redd.it/poster.png');
+  });
+
   it.each(['[removed]', '[deleted]'])('marks a post with %s content as deleted and clears stale media', (body) => {
     const html = oldHtml.replace('<a class="title">Introducing OmaPhoto | Photo Editor</a>',
       `<a class="title">Introducing OmaPhoto | Photo Editor</a><div class="usertext-body"><div class="md"><p>${body}</p></div></div>`);
