@@ -9,6 +9,7 @@ export type ReviewProgress = {
   pendingIds: number[];
   revisitIds: number[];
   keptItemIds: Set<number>;
+  keptFeedIds?: Set<number>;
 };
 
 export type ReviewPresentation = {
@@ -16,6 +17,7 @@ export type ReviewPresentation = {
   nsfwMode: NsfwMode;
   hideTikTokItems: boolean;
   feedPriorities: FeedPriorities;
+  interleaveFeeds?: boolean;
 };
 
 export type FeedItemDeletion = {
@@ -47,6 +49,7 @@ export type ReviewSessionEvent =
   | { type: 'syncFailed' }
   | { type: 'presentationChanged'; presentation: ReviewPresentation }
   | { type: 'keep'; id: number }
+  | { type: 'keepFeed'; id: number; feedId: number }
   | { type: 'remove'; id: number }
   | { type: 'delete'; id: number; title: string }
   | { type: 'deletionSucceeded'; id: number; operationId: number }
@@ -102,6 +105,8 @@ export function reviewSessionReducer(
       return reducePresentationChanged(state, event.presentation);
     case 'keep':
       return updateProgress(state, keepItem(state.progress, event.id));
+    case 'keepFeed':
+      return keepFeed(state, event.id, event.feedId);
     case 'remove':
       return updateProgress(state, removeItem(state.progress, event.id));
     case 'delete':
@@ -167,10 +172,11 @@ function reduceSnapshotChanged(
     ? reconcileDeletions(state.deletions, snapshot)
     : state.deletions;
   const projection = projectSnapshot(snapshot, state.presentation, deletions);
+  const groupedProgress = applyKeptFeeds(state.progress, snapshot, deletions);
 
   if (isComplete) {
     const progress = state.hasProgress
-      ? reconcileProgress(state.progress, projection.reviewableIds)
+      ? reconcileProgress(groupedProgress, projection.reviewableIds)
       : createProgress(projection.reviewableIds);
     return {
       ...state,
@@ -185,7 +191,11 @@ function reduceSnapshotChanged(
   }
 
   if (state.hasProgress) {
-    return { ...state, snapshot, isSyncComplete: false, deletions, ...projection };
+    return {
+      ...state, snapshot, isSyncComplete: false, deletions, ...projection,
+      progress: groupedProgress,
+      progressToPersist: groupedProgress === state.progress ? state.progressToPersist : groupedProgress,
+    };
   }
 
   // The first partial page starts the initial session. Later partial pages are
@@ -207,6 +217,7 @@ function reducePresentationChanged(
   presentation: ReviewPresentation,
 ): ReviewSessionState {
   const orderChanged = presentation.itemOrder !== state.presentation.itemOrder
+    || presentation.interleaveFeeds !== state.presentation.interleaveFeeds
     || !prioritiesEqual(presentation.feedPriorities, state.presentation.feedPriorities);
   const projection = projectSnapshot(state.snapshot, presentation, state.deletions);
   if (!orderChanged) return { ...state, presentation, ...projection };
@@ -228,7 +239,9 @@ function projectSnapshot(
 ): Pick<ReviewSessionState, 'items' | 'reviewableIds' | 'visibleItemIds'> {
   if (!snapshot) return { items: undefined, reviewableIds: [], visibleItemIds: new Set() };
 
-  const orderedItems = orderFeedItems(snapshot, presentation.itemOrder, presentation.feedPriorities);
+  const orderedItems = orderFeedItems(
+    snapshot, presentation.itemOrder, presentation.feedPriorities, presentation.interleaveFeeds,
+  );
   const deletedItemIds = new Set(deletions.map(({ itemId }) => itemId));
   const availableItems = orderedItems.filter((item) => !deletedItemIds.has(item.id));
   const items = availableItems.filter((item) => (
@@ -307,6 +320,7 @@ function restoreAsCurrent(progress: ReviewProgress, id: number): ReviewProgress 
   const keptItemIds = new Set(progress.keptItemIds);
   keptItemIds.delete(id);
   return {
+    ...progress,
     pendingIds: [id, ...removeId(progress.pendingIds, id)],
     revisitIds: removeId(progress.revisitIds, id),
     keptItemIds,
@@ -324,6 +338,7 @@ function updateProgress(state: ReviewSessionState, progress: ReviewProgress): Re
 function keepItem(progress: ReviewProgress, id: number): ReviewProgress {
   const isPending = progress.pendingIds.includes(id);
   return {
+    ...progress,
     pendingIds: isPending ? removeId(progress.pendingIds, id) : progress.pendingIds,
     revisitIds: isPending
       ? appendId(progress.revisitIds, id)
@@ -332,10 +347,45 @@ function keepItem(progress: ReviewProgress, id: number): ReviewProgress {
   };
 }
 
+function keepFeed(state: ReviewSessionState, id: number, feedId: number): ReviewSessionState {
+  if (!state.snapshot?.some((item) => item.id === id && item.feedId === feedId)) return state;
+  const grouped = applyKeptFeeds({
+    ...state.progress,
+    keptFeedIds: new Set(state.progress.keptFeedIds).add(feedId),
+  }, state.snapshot, state.deletions);
+  const feedItemIds = new Set(state.snapshot.filter((item) => item.feedId === feedId).map((item) => item.id));
+  const otherRevisits = grouped.revisitIds.filter((itemId) => !feedItemIds.has(itemId));
+  return updateProgress(state, {
+    ...grouped,
+    // Revisit the exact episode chosen by the user, never a different episode.
+    revisitIds: state.progress.pendingIds.includes(id) ? appendId(otherRevisits, id) : otherRevisits,
+  });
+}
+
+function applyKeptFeeds(
+  progress: ReviewProgress,
+  snapshot: FeedItem[],
+  deletions: FeedItemDeletion[],
+): ReviewProgress {
+  const keptFeedIds = progress.keptFeedIds;
+  if (!keptFeedIds?.size) return progress;
+  const deletedIds = new Set(deletions.map(({ itemId }) => itemId));
+  const newlyKept = snapshot.filter((item) => keptFeedIds.has(item.feedId)
+    && !deletedIds.has(item.id) && !progress.keptItemIds.has(item.id));
+  if (newlyKept.length === 0) return progress;
+  const keptItemIds = new Set([...progress.keptItemIds, ...newlyKept.map(({ id }) => id)]);
+  return {
+    ...progress,
+    pendingIds: progress.pendingIds.filter((id) => !keptItemIds.has(id)),
+    keptItemIds,
+  };
+}
+
 function removeItem(progress: ReviewProgress, id: number): ReviewProgress {
   const keptItemIds = new Set(progress.keptItemIds);
   keptItemIds.delete(id);
   return {
+    ...progress,
     pendingIds: removeId(progress.pendingIds, id),
     revisitIds: removeId(progress.revisitIds, id),
     keptItemIds,
@@ -366,6 +416,7 @@ function reconcileProgress(progress: ReviewProgress, orderedIds: number[]): Revi
   if (activeId !== undefined && availableIds.has(activeId)) {
     const activeIsPending = pendingIds.has(activeId);
     return {
+      ...progress,
       pendingIds: activeIsPending
         ? [activeId, ...nextPending.filter((id) => id !== activeId)]
         : nextPending,
@@ -376,6 +427,7 @@ function reconcileProgress(progress: ReviewProgress, orderedIds: number[]): Revi
     };
   }
   return {
+    ...progress,
     pendingIds: nextPending,
     revisitIds: nextRevisit,
     keptItemIds,
@@ -384,6 +436,7 @@ function reconcileProgress(progress: ReviewProgress, orderedIds: number[]): Revi
 
 function reorderProgress(progress: ReviewProgress, orderedIds: number[]): ReviewProgress {
   return {
+    ...progress,
     pendingIds: orderKnownIds(progress.pendingIds, orderedIds),
     revisitIds: orderKnownIds(progress.revisitIds, orderedIds),
     keptItemIds: progress.keptItemIds,

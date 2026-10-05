@@ -38,6 +38,14 @@ describe('recordFeedDecision', () => {
     expect(recordFeedDecision(decisions, decision)).toEqual([...decisions.slice(1), decision]);
     expect(decisions).toHaveLength(MAX_FEED_DECISIONS);
   });
+
+  it('preserves the original timestamp for repeated decisions and dates changed decisions', () => {
+    const first = { ...kept, decidedAt: 1000 };
+    const decisions = [first];
+    expect(recordFeedDecision(decisions, { ...first, decidedAt: 2000 })).toBe(decisions);
+    const changed = { ...first, kept: false, decidedAt: 2000 };
+    expect(recordFeedDecision(decisions, changed)).toEqual([changed]);
+  });
 });
 
 describe('parseFeedDecisions', () => {
@@ -69,5 +77,13 @@ describe('parseFeedDecisions', () => {
     const decisions = createDecisions(MAX_FEED_DECISIONS + 2);
 
     expect(parseFeedDecisions(decisions)).toEqual(decisions.slice(2));
+  });
+
+  it('keeps valid timestamps, accepts legacy decisions, and ignores malformed timestamps', () => {
+    expect(parseFeedDecisions([{ ...kept, decidedAt: 1000 }, deleted]))
+      .toEqual([{ ...kept, decidedAt: 1000 }, deleted]);
+    for (const decidedAt of [null, '1000', 0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+      expect(parseFeedDecisions([{ ...kept, decidedAt }])).toEqual([kept]);
+    }
   });
 });

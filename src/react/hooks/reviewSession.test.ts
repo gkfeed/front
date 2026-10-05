@@ -18,6 +18,53 @@ const presentation: ReviewPresentation = {
 };
 
 describe('review session', () => {
+  it('keeps every episode of a feed and revisits only the episode chosen by the user', () => {
+    let state = reviewSessionReducer(startSession(null), {
+      type: 'snapshotChanged', isComplete: true,
+      items: [item(5), { ...item(4), feedId: 5 }, item(3), { ...item(2), feedId: 5 }, item(1)],
+    });
+    state = reviewSessionReducer(state, { type: 'keepFeed', id: 5, feedId: 5 });
+    expect(state.progress).toEqual({
+      pendingIds: [3, 1], revisitIds: [5], keptItemIds: new Set([5, 4, 2]), keptFeedIds: new Set([5]),
+    });
+    state = reviewSessionReducer(state, { type: 'remove', id: 3 });
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+    expect(getActiveReviewIds(state)).toEqual([5, 1]);
+    state = reviewSessionReducer(state, {
+      type: 'presentationChanged', presentation: { ...presentation, itemOrder: 'asc', interleaveFeeds: true },
+    });
+    expect(getActiveReviewIds(state)).toEqual([1, 5]);
+    expect(state.progress.keptFeedIds).toEqual(new Set([5]));
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+    state = reviewSessionReducer(state, { type: 'keepFeed', id: 5, feedId: 5 });
+    expect(getActiveReviewIds(state)).toEqual([]);
+    expect(state.progress.keptItemIds).toEqual(new Set([5, 4, 2, 1]));
+
+    state = reviewSessionReducer(state, { type: 'reset' });
+    expect(getActiveReviewIds(state)).toEqual([1, 2, 3, 4, 5]);
+    expect(state.progress.keptFeedIds).toBeUndefined();
+  });
+
+  it('keeps later partial and completed episodes without replacing a missing revisit episode', () => {
+    let state = snapshot(startSession(null), [5, 3], false);
+    state = reviewSessionReducer(state, { type: 'keepFeed', id: 5, feedId: 5 });
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', isComplete: false,
+      items: [{ ...item(6), feedId: 5 }, item(5), item(3)],
+    });
+    expect(state.progress.keptItemIds).toEqual(new Set([5, 6]));
+    expect(state.progress.revisitIds).toEqual([5]);
+    expect(getActiveReviewIds(state)).toEqual([3]);
+
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', isComplete: true,
+      items: [{ ...item(7), feedId: 5 }, { ...item(6), feedId: 5 }, item(3)],
+    });
+    expect(state.progress.keptItemIds).toEqual(new Set([6, 7]));
+    expect(state.progress.revisitIds).toEqual([]);
+    expect(getActiveReviewIds(state)).toEqual([3]);
+  });
+
   it('keeps the active revisit in its queue across an unchanged refresh', () => {
     let state = snapshot(startSession(null), [1], true);
     state = reviewSessionReducer(state, { type: 'keep', id: 1 });

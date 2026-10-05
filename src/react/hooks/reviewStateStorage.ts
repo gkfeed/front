@@ -36,6 +36,9 @@ export function readReviewState(
       pendingIds: filteredPendingIds,
       revisitIds: filteredRevisitIds,
       keptItemIds,
+      ...(getObjectProperty(parsed, 'keptFeedIds') === undefined ? {} : {
+        keptFeedIds: new Set((parseIds(getObjectProperty(parsed, 'keptFeedIds')) ?? []).filter((id) => id > 0)),
+      }),
     };
   } catch {
     return null;
@@ -52,6 +55,7 @@ export function writeReviewState(storageKey: string | null, state: ReviewProgres
       pendingIds: state.pendingIds,
       revisitIds: state.revisitIds,
       keptItemIds: [...state.keptItemIds],
+      ...(state.keptFeedIds ? { keptFeedIds: [...state.keptFeedIds] } : {}),
     }));
   } catch {
     // Keep the current review session usable if storage is unavailable.

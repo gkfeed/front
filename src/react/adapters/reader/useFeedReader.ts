@@ -7,6 +7,7 @@ import type { ReaderItemOrder } from '../../state/readerItemOrder';
 import { useFeedItems } from '../../hooks/useFeedItems';
 import { useReviewSession } from '../../hooks/useReviewSession';
 import { useReviewPreviewPrefetch } from '../../hooks/useReviewPreviewPrefetch';
+import { useAsyncLoad } from '../../hooks/useAsyncLoad';
 import { useFeedPriority } from '../../state/useFeedPriority';
 import { useFeedDecisions } from '../../state/useFeedDecisions';
 import { getEffectiveFeedPriorities } from '../../state/feedPriority';
@@ -26,12 +27,14 @@ export function useFeedReader({
   const { hideTikTokItems } = useTikTokPreferences();
   const { isManualEnabled, isAutomaticEnabled, priorities } = useFeedPriority();
   const { decisions, recordDecision } = useFeedDecisions(credentials?.username ?? null);
-  const feedPriorities = useMemo(
-    () => getEffectiveFeedPriorities(
-      isManualEnabled ? priorities : {},
-      isAutomaticEnabled ? decisions : [],
-    ),
-    [decisions, isAutomaticEnabled, isManualEnabled, priorities],
+  const loadSources = useCallback(
+    (signal: AbortSignal) => feeds.loadFeeds(credentials, signal),
+    [credentials, feeds],
+  );
+  const { result: sources = [], error: sourceError, isLoading: isSourcesLoading, retry: retrySources } = useAsyncLoad(loadSources);
+  const groupedFeedIds = useMemo(
+    () => new Set(sources.filter(({ type }) => type.trim().toLowerCase() === 'rezka').map(({ id }) => id)),
+    [sources],
   );
   const {
     loadedItems,
@@ -43,11 +46,19 @@ export function useFeedReader({
     removeCachedItem,
     retry,
   } = useFeedItems(credentials);
+  const feedPriorities = useMemo(
+    () => getEffectiveFeedPriorities(
+      isManualEnabled ? priorities : {},
+      isAutomaticEnabled ? decisions : [],
+    ),
+    [decisions, isAutomaticEnabled, isManualEnabled, priorities],
+  );
   const {
-    items,
+    items: reviewItems,
     activeReviewIds,
     hasKeptItems,
     keep,
+    keepFeed,
     deleteItem: startDeletion,
     deletionSucceeded,
     deletionFailed,
@@ -64,14 +75,16 @@ export function useFeedReader({
     nsfwMode,
     hideTikTokItems,
     feedPriorities,
+    interleaveFeeds: isAutomaticEnabled,
   });
-  const currentItem = items?.find((item) => item.id === activeReviewIds[0]);
+  const items = sourceError ? undefined : reviewItems;
+  const currentItem = isSourcesLoading ? undefined : items?.find((item) => item.id === activeReviewIds[0]);
   const attemptedDeletions = useRef(new Set<string>());
   const deleteRemoteItem = useCallback(
     (itemId: number) => feeds.deleteFeedItem(itemId, credentials),
     [credentials, feeds],
   );
-  const isLoading = isFeedLoading
+  const isLoading = isFeedLoading || isSourcesLoading
     || (status !== 'error' && !isSyncComplete && items?.length === 0);
 
   useReviewPreviewPrefetch({
@@ -99,14 +112,15 @@ export function useFeedReader({
   const keepItem = useCallback(() => {
     if (!currentItem) return;
 
-    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: true });
-    keep(currentItem.id);
-  }, [currentItem, keep, recordDecision]);
+    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: true, decidedAt: Date.now() });
+    if (groupedFeedIds.has(currentItem.feedId)) keepFeed(currentItem.id, currentItem.feedId);
+    else keep(currentItem.id);
+  }, [currentItem, groupedFeedIds, keep, keepFeed, recordDecision]);
 
   const deleteCurrentItem = useCallback(() => {
     if (!currentItem) return;
 
-    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: false });
+    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: false, decidedAt: Date.now() });
     startDeletion(currentItem.id, getItemTitle(currentItem));
   }, [currentItem, recordDecision, startDeletion]);
 
@@ -116,7 +130,8 @@ export function useFeedReader({
 
   const retryLoad = useCallback(() => {
     retry();
-  }, [retry]);
+    retrySources();
+  }, [retry, retrySources]);
 
   const resetReview = useCallback(() => {
     reset();
@@ -130,8 +145,8 @@ export function useFeedReader({
     isItemPending: (itemId: number) => deletions.some((deletion) => (
       deletion.itemId === itemId && deletion.status === 'pending'
     )),
-    loadFailed: status === 'error',
-    loadError,
+    loadFailed: status === 'error' || sourceError !== null,
+    loadError: sourceError ?? loadError,
     failedDeletions: deletions.filter((deletion) => deletion.status === 'failed'),
     remainingCount: activeReviewIds.length,
     hasKeptItems,

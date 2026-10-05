@@ -182,7 +182,7 @@ const ru = {
     manualFeedPrioritization: 'Ручная приоритизация',
     manualFeedPrioritizationDescription: 'Учитывать приоритет, заданный кнопками − и +',
     automaticFeedPrioritization: 'Автоматическая приоритизация',
-    automaticFeedPrioritizationDescription: 'Поднимать фиды, элементы которых вы чаще сохраняете',
+    automaticFeedPrioritizationDescription: 'Чередовать фиды, показывая предпочитаемые первыми и учитывая недавние решения',
     enabled: 'Включена',
     disabled: 'Выключена',
     content: 'Содержимое',

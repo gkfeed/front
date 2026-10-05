@@ -2,6 +2,7 @@ export type FeedDecision = {
   itemId: number;
   feedId: number;
   kept: boolean;
+  decidedAt?: number;
 };
 
 export const MAX_FEED_DECISIONS = 5000;
@@ -21,14 +22,16 @@ export function parseFeedDecisions(value: unknown): readonly FeedDecision[] {
   const decisions = new Map<number, FeedDecision>();
   for (const entry of value.slice(-MAX_FEED_DECISIONS)) {
     if (!entry || typeof entry !== 'object') continue;
-    const { itemId, feedId, kept } = entry;
+    const { itemId, feedId, kept, decidedAt } = entry;
     if (
       !Number.isSafeInteger(itemId) || itemId <= 0
       || !Number.isSafeInteger(feedId) || feedId <= 0
       || typeof kept !== 'boolean'
     ) continue;
     decisions.delete(itemId);
-    decisions.set(itemId, { itemId, feedId, kept });
+    const decision: FeedDecision = { itemId, feedId, kept };
+    if (Number.isSafeInteger(decidedAt) && decidedAt > 0) decision.decidedAt = decidedAt;
+    decisions.set(itemId, decision);
   }
   return [...decisions.values()];
 }

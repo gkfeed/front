@@ -11,7 +11,7 @@ import {
 } from '../state/FeedPriorityProvider';
 import { FEED_PRIORITIES_STORAGE_KEY } from '../state/feedPriority';
 import { getFeedDecisionsStorageKey } from '../state/useFeedDecisions';
-import { getFeedItems } from '../services/feeds';
+import { deleteFeedItemById, getFeedItems } from '../services/feeds';
 import { stubLocalStorage, restoreLocalStorage } from '../testUtils';
 import { ReaderPage } from './ReaderPage';
 
@@ -62,8 +62,39 @@ describe('ReaderPage smart order', () => {
     expect(await screen.findByText('Low keep rate')).toBeTruthy();
 
     await waitFor(() => expect(JSON.parse(storage.get(getFeedDecisionsStorageKey('reader')) ?? '[]')).toContainEqual({
-      itemId: 21, feedId: 6, kept: true,
+      itemId: 21, feedId: 6, kept: true, decidedAt: expect.any(Number),
     }));
+  });
+
+  it('alternates a preferred source with another source after Keep and Delete', async () => {
+    const storage = stubLocalStorage();
+    storage.set(getFeedDecisionsStorageKey('reader'), JSON.stringify(
+      Array.from({ length: 20 }, (_, index) => ({ itemId: index + 1, feedId: 6, kept: true })),
+    ));
+    vi.mocked(getFeedItems).mockResolvedValue([
+      { id: 35, feedId: 6, link: '', title: 'Preferred first', text: '' },
+      { id: 34, feedId: 6, link: '', title: 'Preferred second', text: '' },
+      { id: 33, feedId: 6, link: '', title: 'Preferred third', text: '' },
+      { id: 32, feedId: 5, link: '', title: 'Other first', text: '' },
+      { id: 31, feedId: 5, link: '', title: 'Other second', text: '' },
+    ]);
+    vi.mocked(deleteFeedItemById).mockResolvedValue(undefined);
+    render(
+      <MemoryRouter initialEntries={['/reader']}>
+        <FeedPriorityProvider><ReaderPage /></FeedPriorityProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Preferred first')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Other first')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    expect(await screen.findByText('Preferred second')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    expect(await screen.findByText('Other second')).toBeTruthy();
+
+    await waitFor(() => expect(JSON.parse(storage.get(getFeedDecisionsStorageKey('reader')) ?? '[]'))
+      .toContainEqual({ itemId: 34, feedId: 6, kept: false, decidedAt: expect.any(Number) }));
   });
 
   it('does not use keep rates when automatic prioritization is disabled', async () => {

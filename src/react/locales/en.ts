@@ -176,7 +176,7 @@ const en = {
     manualFeedPrioritization: 'Manual prioritization',
     manualFeedPrioritizationDescription: 'Use the feed priority set with the − and + buttons',
     automaticFeedPrioritization: 'Automatic prioritization',
-    automaticFeedPrioritizationDescription: 'Move feeds up when you keep their items more often',
+    automaticFeedPrioritizationDescription: 'Alternate feeds, showing preferred sources first based on recent decisions',
     enabled: 'Enabled',
     disabled: 'Disabled',
     content: 'Content',
