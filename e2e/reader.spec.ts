@@ -6,9 +6,10 @@ test.beforeEach(async ({ page }) => {
   }));
 });
 
-test('resumes item changes after reload and keeps the current card until it is deleted', async ({ page }) => {
+test('keeps the current card after a background server deletion until the user advances', async ({ page }) => {
   let syncRequests = 0;
   let changeRequests = 0;
+  const deletedIds: number[] = [];
   const item = (id: number) => ({
     id, feed_id: 4, link: `https://example.com/${id}`, title: `Item ${id}`, text: '',
   });
@@ -28,6 +29,10 @@ test('resumes item changes after reload and keeps the current card until it is d
         : { upserted: [], deleted_ids: [20], next_cursor: 'third', has_more: false },
     });
   });
+  await page.route('**/api/v1/items/*', (route) => {
+    deletedIds.push(Number(new URL(route.request().url()).pathname.split('/').at(-1)));
+    return route.fulfill({ status: 200, json: {} });
+  });
   await page.addInitScript(() => {
     window.localStorage.setItem('gkfeed.credentials', JSON.stringify({ username: 'automation', password: 'secret' }));
   });
@@ -42,7 +47,51 @@ test('resumes item changes after reload and keeps the current card until it is d
 
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect.poll(() => changeRequests).toBe(3);
+  await expect(page.getByRole('heading', { name: 'Item 20' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Item 30' })).toHaveCount(0);
+  await page.keyboard.press('d');
   await expect(page.getByRole('heading', { name: 'Item 30' })).toBeVisible();
+  await expect.poll(() => deletedIds).toEqual([20]);
+});
+
+test('keeps the revisited card when background changes add new pending items', async ({ page }) => {
+  let addItem = false;
+  const deletedIds: number[] = [];
+  const item = (id: number) => ({
+    id, feed_id: 4, link: `https://example.com/${id}`, title: `Item ${id}`, text: '',
+  });
+  await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({ json: {
+    items: [item(20), item(10)], next_cursor: '', has_more: false, sync_cursor: 'initial',
+  } }));
+  await page.route('**/api/v2/items/changes?**', (route) => route.fulfill({ json: {
+    upserted: addItem ? [item(30)] : [], deleted_ids: [], next_cursor: 'latest', has_more: false,
+  } }));
+  await page.route('**/api/v1/items/*', (route) => {
+    deletedIds.push(Number(new URL(route.request().url()).pathname.split('/').at(-1)));
+    return route.fulfill({ status: 200, json: {} });
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('gkfeed.credentials', JSON.stringify({ username: 'automation', password: 'secret' }));
+  });
+
+  await page.goto('/reader');
+  await expect(page.getByRole('heading', { name: 'Item 20' })).toBeVisible();
+  await page.keyboard.press('a');
+  await expect(page.getByRole('heading', { name: 'Item 10' })).toBeVisible();
+  await page.keyboard.press('a');
+  await expect(page.getByRole('heading', { name: 'Item 20' })).toBeVisible();
+
+  addItem = true;
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.getByText('2 remaining', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Item 20' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Item 30' })).toHaveCount(0);
+  await page.keyboard.press('d');
+  await expect(page.getByRole('heading', { name: 'Item 30' })).toBeVisible();
+  await expect.poll(() => deletedIds).toEqual([20]);
+  await page.keyboard.press('a');
+  await expect(page.getByRole('heading', { name: 'Item 10' })).toBeVisible();
 });
 
 test.describe('Reader item order', () => {

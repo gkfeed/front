@@ -55,6 +55,7 @@ export function useFeedReader({
   );
   const {
     items: reviewItems,
+    currentItem: reviewCurrentItem,
     activeReviewIds,
     hasKeptItems,
     keep,
@@ -78,14 +79,14 @@ export function useFeedReader({
     interleaveFeeds: isAutomaticEnabled,
   });
   const items = sourceError ? undefined : reviewItems;
-  const currentItem = isSourcesLoading ? undefined : items?.find((item) => item.id === activeReviewIds[0]);
+  const currentItem = isSourcesLoading || sourceError ? undefined : reviewCurrentItem;
   const attemptedDeletions = useRef(new Set<string>());
   const deleteRemoteItem = useCallback(
     (itemId: number) => feeds.deleteFeedItem(itemId, credentials),
     [credentials, feeds],
   );
   const isLoading = isFeedLoading || isSourcesLoading
-    || (status !== 'error' && !isSyncComplete && items?.length === 0);
+    || (status !== 'error' && !isSyncComplete && items?.length === 0 && !currentItem);
 
   useReviewPreviewPrefetch({
     enabled: prefetchNextPreviews,

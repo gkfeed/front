@@ -89,6 +89,82 @@ describe('review session', () => {
     expect(state.progress).toEqual({
       pendingIds: [3], revisitIds: [2, 1], keptItemIds: new Set([2, 1]),
     });
+    expect(getActiveReviewIds(state)).toEqual([2, 3]);
+    state = reviewSessionReducer(state, { type: 'keep', id: 2 });
+    expect(getActiveReviewIds(state)).toEqual([3]);
+    state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
+    expect(getActiveReviewIds(state)).toEqual([1]);
+  });
+
+  it('retains a current card removed by a completed snapshot until the user acts', () => {
+    let state = snapshot(startSession(null), [2, 1], true);
+    const currentItem = state.currentItem;
+    state = snapshot(state, [3, 1], true);
+
+    expect(state.currentItem).toBe(currentItem);
+    expect(state.items?.map(({ id }) => id)).toEqual([3, 1]);
+    expect(getActiveReviewIds(state)).toEqual([2, 3, 1]);
+    state = reviewSessionReducer(state, { type: 'delete', id: 2, title: 'Item 2' });
+    expect(state.deletions[0].itemId).toBe(2);
+    expect(getActiveReviewIds(state)).toEqual([3, 1]);
+  });
+
+  it('retains the rendered card data while newer versions update the snapshot', () => {
+    let state = snapshot(startSession(null), [2, 1], false);
+    const currentItem = state.currentItem;
+    const updated = { ...item(2), link: 'https://example.com/replaced', title: 'Updated item' };
+    for (const isComplete of [false, true]) {
+      state = reviewSessionReducer(state, {
+        type: 'snapshotChanged', items: [item(3), updated, item(1)], isComplete,
+      });
+      expect(state.currentItem).toBe(currentItem);
+      expect(state.snapshot?.find(({ id }) => id === 2)).toEqual(updated);
+    }
+    state = reviewSessionReducer(state, { type: 'keep', id: 2 });
+    expect(state.currentItem?.id).toBe(3);
+  });
+
+  it('keeps a removed and reappearing current card in only one queue', () => {
+    let state = snapshot(startSession(null), [2, 1], true);
+    const currentItem = state.currentItem;
+    state = snapshot(state, [3, 1], true);
+    state = snapshot(state, [3, 2, 1], true);
+
+    expect(state.currentItem).toBe(currentItem);
+    expect(state.progress.pendingIds).toEqual([2, 3, 1]);
+    expect(state.progress.revisitIds).toEqual([]);
+    state = reviewSessionReducer(state, { type: 'keep', id: 2 });
+    expect(state.currentItem?.id).toBe(3);
+    expect(state.progress.revisitIds).toEqual([2]);
+  });
+
+  it('pins the visible card instead of an earlier hidden or unloaded queue entry', () => {
+    let state = startSession({ pendingIds: [5, 4, 3], revisitIds: [], keptItemIds: new Set() });
+    state = reviewSessionReducer(state, {
+      type: 'presentationChanged', presentation: { ...presentation, nsfwMode: 'hide' },
+    });
+    const hidden = item(4, 'https://pornhub.com/video');
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', items: [hidden, item(3)], isComplete: false,
+    });
+    expect(state.currentItem?.id).toBe(3);
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', items: [item(6), item(5), hidden, item(3)], isComplete: true,
+    });
+    expect(getActiveReviewIds(state)).toEqual([3, 6, 5]);
+  });
+
+  it('updates priorities for upcoming cards without replacing the current card', () => {
+    let state = snapshot(startSession(null), [3, 2, 1], true);
+    const currentItem = state.currentItem;
+    state = reviewSessionReducer(state, {
+      type: 'presentationChanged',
+      presentation: { ...presentation, feedPriorities: { 1: 10 }, interleaveFeeds: true },
+    });
+    expect(state.currentItem).toBe(currentItem);
+    expect(getActiveReviewIds(state)).toEqual([3, 1, 2]);
+    state = reviewSessionReducer(state, { type: 'keep', id: 3 });
+    expect(getActiveReviewIds(state)).toEqual([1, 2]);
   });
 
   it('restores progress and waits for a completed reload before adding new cards', () => {

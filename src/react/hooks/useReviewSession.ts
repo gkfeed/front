@@ -95,6 +95,7 @@ export function useReviewSession({
 
   return {
     items: session.items,
+    currentItem: session.currentItem,
     reviewableIds: session.reviewableIds,
     activeReviewIds,
     hasKeptItems: session.progress.keptItemIds.size > 0,

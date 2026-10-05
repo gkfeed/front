@@ -55,7 +55,7 @@ export function ReaderPage() {
             <button type="button" className="ui-button--secondary" onClick={retryLoad}>{t('live.tryAgain')}</button>
           </div>
         ) : null}
-        {hasLoadedContent && items.length === 0 ? (
+        {hasLoadedContent && items.length === 0 && !(mode === 'review' && currentItem) ? (
           <div className="reader__state">
             <span className="reader__done-mark" aria-hidden="true">✓</span>
             <h2>{t('reader.caughtUp')}</h2>

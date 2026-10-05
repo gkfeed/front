@@ -54,7 +54,7 @@ export function useReaderPageModel(t: Translator) {
     itemOrder,
     reviewPanelRef,
     isLoading,
-    hasLoadedContent: !isLoading && (!reader.loadFailed || reader.items.length > 0)
+    hasLoadedContent: !isLoading && (!reader.loadFailed || reader.items.length > 0 || !!reader.currentItem)
       && !(mode === 'review' && !reader.isSyncComplete && reader.remainingCount === 0),
     loadErrorMessage: reader.loadFailed
       ? getRequestErrorMessage(reader.loadError, t, 'reader.loadError')
