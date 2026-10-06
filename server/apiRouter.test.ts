@@ -46,6 +46,10 @@ function createUseCases(): PreviewUseCases {
       creatorAvatarUrl: null,
     }),
     youtubeComments: vi.fn().mockResolvedValue({ comments: [] }),
+    youtubeChannel: vi.fn().mockResolvedValue({
+      channelId: 'UC5TRrMsWLy7flttFTyS-bOA',
+      url: 'https://www.youtube.com/channel/UC5TRrMsWLy7flttFTyS-bOA/videos',
+    }),
     youtubeTimecodes: vi.fn().mockResolvedValue({ timecodes: [] }),
     redditPreviewImage: vi.fn().mockResolvedValue({
       body: new Uint8Array([1, 2]),
@@ -121,6 +125,10 @@ describe('BFF HTTP router', () => {
     }],
     ['/bff/youtube-comments', 'youtubeComments', { comments: [] }],
     ['/bff/youtube-timecodes', 'youtubeTimecodes', { timecodes: [] }],
+    ['/bff/youtube-channel', 'youtubeChannel', {
+      channelId: 'UC5TRrMsWLy7flttFTyS-bOA',
+      url: 'https://www.youtube.com/channel/UC5TRrMsWLy7flttFTyS-bOA/videos',
+    }],
   ] as const)('dispatches %s through its application use case', async (pathname, useCaseName, result) => {
     const response = createResponse();
     const useCases = createUseCases();
@@ -150,6 +158,24 @@ describe('BFF HTTP router', () => {
       kind: 'missing_url',
       status: 400,
     });
+  });
+
+  it('does not cache handle ownership between channel resolution requests', async () => {
+    const useCases = createUseCases();
+    const cache = createBffResultCache();
+    const url = new URL('http://localhost/bff/youtube-channel?url=https%3A%2F%2Fwww.youtube.com%2F%40example%2Fvideos');
+    await handleBffRequest(url, createResponse(), undefined, useCases, 'channel-test', undefined, cache);
+    await handleBffRequest(url, createResponse(), undefined, useCases, 'channel-test', undefined, cache);
+    expect(useCases.youtubeChannel).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects an invalid channel response at the HTTP boundary', async () => {
+    const useCases = createUseCases();
+    vi.mocked(useCases.youtubeChannel).mockResolvedValue({ channelId: 'guess', url: 'https://www.youtube.com/@example' });
+    await expect(handleBffRequest(
+      new URL('http://localhost/bff/youtube-channel?url=https%3A%2F%2Fwww.youtube.com%2F%40example'),
+      createResponse(), undefined, useCases, 'invalid-channel-test', undefined, createBffResultCache(),
+    )).rejects.toThrow('Invalid preview contract');
   });
 
   it('serves the shared HLTV live index without a URL query', async () => {

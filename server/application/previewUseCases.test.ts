@@ -24,6 +24,7 @@ describe('preview use cases', () => {
       fetchTikTokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({ type: 'tiktok' }),
       fetchYoutubeComments: vi.fn().mockResolvedValue({ type: 'youtube' }),
+      resolveYoutubeChannel: vi.fn(),
       fetchYoutubeTimecodes: vi.fn().mockResolvedValue({ timecodes: [] }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({
         body: new Uint8Array([1, 2, 3]),
@@ -79,6 +80,7 @@ describe('preview use cases', () => {
       fetchTikTokPlayback: vi.fn().mockResolvedValue({ videoUrl: 'https://v.tiktokcdn.com/video.mp4' }),
       fetchTikTokComments: vi.fn().mockResolvedValue({}),
       fetchYoutubeComments: vi.fn().mockResolvedValue({}),
+      resolveYoutubeChannel: vi.fn(),
       fetchYoutubeTimecodes: vi.fn().mockResolvedValue({ timecodes: [] }),
       fetchRedditPreviewImage: vi.fn().mockResolvedValue({ body: new Uint8Array(), contentType: 'image/png' }),
       fetchSasflixMedia: vi.fn(),

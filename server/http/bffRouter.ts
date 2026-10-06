@@ -19,6 +19,7 @@ import {
 } from './bffRequestGate.js';
 import { bffResultCache, type BffResultCache } from './bffResultCache.js';
 import { suggestFeedType } from '../feedTypeSuggestion.js';
+import { isYoutubeChannelResolution } from '../../shared/youtubeChannel.js';
 
 // HLS changes quality by overlapping playlist and byte-range requests. Keep
 // these transfers isolated from metadata previews and allow that short burst.
@@ -38,6 +39,7 @@ const CACHE_TTL_MS = {
   '/bff/tiktok-comments': 60_000,
   '/bff/youtube-comments': 60_000,
   '/bff/youtube-timecodes': 5 * 60_000,
+  '/bff/youtube-channel': 0, // Resolve the current owner when saving; handles can be reassigned.
   '/bff/reddit-preview-image': 5 * 60_000,
   '/bff/vk-video': 60_000, // Only the source lookup is cached; video bytes are streamed.
   '/bff/sasflix-media': 0, // Streamed responses cannot be shared or retained.
@@ -50,7 +52,7 @@ function cacheTtlMs(pathname: string, input?: string): number {
   return ttlMs;
 }
 
-type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments' | 'youtubeTimecodes'>;
+type JsonPreviewUseCaseName = keyof Pick<PreviewUseCases, 'article' | 'openGraph' | 'liquipediaMatch' | 'tiktokPlayback' | 'tiktokComments' | 'youtubeComments' | 'youtubeTimecodes' | 'youtubeChannel'>;
 
 const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
   '/bff/article': 'article',
@@ -60,6 +62,7 @@ const JSON_PREVIEW_ROUTES: Record<string, JsonPreviewUseCaseName> = {
   '/bff/tiktok-comments': 'tiktokComments',
   '/bff/youtube-comments': 'youtubeComments',
   '/bff/youtube-timecodes': 'youtubeTimecodes',
+  '/bff/youtube-channel': 'youtubeChannel',
 };
 
 export async function routeBffRequest(
@@ -113,6 +116,8 @@ export async function routeBffRequest(
           ? isYoutubeCommentsPreview
         : useCaseName === 'youtubeTimecodes'
           ? isYoutubeTimecodesPreview
+        : useCaseName === 'youtubeChannel'
+          ? isYoutubeChannelResolution
         : useCaseName === 'article'
           ? isArticlePreview
           : undefined,

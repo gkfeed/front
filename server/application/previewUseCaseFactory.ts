@@ -17,6 +17,7 @@ export function createPreviewUseCases(
     tiktokComments: withLimit(ports.fetchTikTokComments, limit),
     youtubeComments: withLimit(ports.fetchYoutubeComments, limit),
     youtubeTimecodes: withLimit(ports.fetchYoutubeTimecodes, limit),
+    youtubeChannel: withLimit(ports.resolveYoutubeChannel, limit),
     redditPreviewImage: withLimit(ports.fetchRedditPreviewImage, limit),
     sasflixMedia: (input, range, context) => (
       limit(() => ports.fetchSasflixMedia(input, range, context))

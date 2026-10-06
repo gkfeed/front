@@ -13,6 +13,7 @@ import type {
 } from './previewContracts.js';
 import type { YoutubeCommentsPreview, YoutubeTimecodesPreview } from '../../shared/youtubeContracts.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
+import type { YoutubeChannelResolution } from '../../shared/youtubeChannel.js';
 
 export type PreviewPort<TResult> = (
   input: string,
@@ -27,6 +28,7 @@ export interface PreviewPorts {
   fetchTikTokComments: PreviewPort<TikTokCommentsPreview>;
   fetchYoutubeComments: PreviewPort<YoutubeCommentsPreview>;
   fetchYoutubeTimecodes: PreviewPort<YoutubeTimecodesPreview>;
+  resolveYoutubeChannel: PreviewPort<YoutubeChannelResolution>;
   fetchRedditPreviewImage: PreviewPort<PreviewImage>;
   fetchSasflixMedia: (
     input: string,

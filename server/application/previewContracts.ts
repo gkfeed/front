@@ -10,6 +10,7 @@ import type { ArticlePreview } from '../../shared/articleContracts.js';
 import type { TikTokCommentsPreview } from '../../shared/tiktokContracts.js';
 import type { YoutubeCommentsPreview, YoutubeTimecodesPreview } from '../../shared/youtubeContracts.js';
 import type { RequestExecutionContext } from './requestExecutionContext.js';
+import type { YoutubeChannelResolution } from '../../shared/youtubeChannel.js';
 
 export type {
   TikTokComment,
@@ -49,6 +50,7 @@ export interface PreviewUseCases {
   tiktokComments: PreviewUseCase<TikTokCommentsPreview>;
   youtubeComments: PreviewUseCase<YoutubeCommentsPreview>;
   youtubeTimecodes: PreviewUseCase<YoutubeTimecodesPreview>;
+  youtubeChannel: PreviewUseCase<YoutubeChannelResolution>;
   redditPreviewImage: PreviewUseCase<PreviewImage>;
   sasflixMedia: (
     input: string,
