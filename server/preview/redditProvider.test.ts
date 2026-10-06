@@ -65,6 +65,29 @@ describe('Reddit post previews', () => {
     `, postUrl).image).toBe('https://i.redd.it/photo.png');
   });
 
+  it('uses the first full-size gallery image rather than its tile or stale metadata crop', () => {
+    const url = new URL('https://www.reddit.com/r/omarchy/comments/1wtsb6e/recognition_see_whos_home_at_a_glance_from_the/');
+    const image = 'https://preview.redd.it/tuy63fijaksh1.png?width=568&format=png&auto=webp&s=9d51c42e0b0c8ec9c43014a48f3f284f7c5936d0';
+    const html = `
+      <meta property="og:image" content="https://external-preview.redd.it/stale.png">
+      <div data-fullname="t3_related"><a class="gallery-item-thumbnail-link" href="https://i.redd.it/related.png"></a></div>
+      <div data-fullname="t3_1wtsb6e" data-is-gallery="true">
+        <a class="thumbnail"><img src="https://preview.redd.it/tuy63fijaksh1.png?width=140"></a>
+        <div class="media-gallery">
+          <div class="gallery-tiles"><img src="https://preview.redd.it/tuy63fijaksh1.png?width=108"></div>
+          <div class="gallery-preview" style="display: none">
+            <a class="gallery-item-thumbnail-link" href="${image.replaceAll('&', '&amp;')}">
+              <img src="https://preview.redd.it/tuy63fijaksh1.png?width=320">
+            </a>
+          </div>
+          <a class="gallery-item-thumbnail-link" href="https://preview.redd.it/nt0jdeijaksh1.png?width=520"></a>
+        </div>
+      </div>`;
+    expect(parseOpenGraph(html, url)).toMatchObject({ image, video: null });
+    expect(parseOpenGraph(html.replace('data-is-gallery="true"', 'class="removed" data-is-gallery="true"'), url))
+      .toMatchObject({ image: null, providerData: { provider: 'reddit', status: 'deleted' } });
+  });
+
   it.each([
     'https://preview.redd.it.example.org/photo.jpg',
     'https://example.com/photo.jpg',

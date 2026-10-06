@@ -55,9 +55,12 @@ function parseRedditOpenGraph(html: string, pageUrl: URL) {
   const player = post?.querySelector('[data-hls-url]');
   const stream = resolveHttpUrl(player?.getAttribute('data-hls-url'), pageUrl);
   const video = stream && isRedditVideoUrl(new URL(stream)) ? stream : preview.video;
-  // Text posts can link their uploaded image even when og:image is a stale crop.
+  // Gallery links and text posts expose original images even when og:image is a stale crop.
   const postBody = post?.querySelector('.usertext-body, [slot="text-body"]');
-  const postImage = Array.from(postBody?.querySelectorAll('img[src], a[href]') ?? [])
+  const postImage = [
+    ...Array.from(post?.querySelectorAll('.gallery-item-thumbnail-link[href]') ?? []),
+    ...Array.from(postBody?.querySelectorAll('img[src], a[href]') ?? []),
+  ]
     .map((element) => resolveHttpUrl(element.getAttribute(element.tagName === 'IMG' ? 'src' : 'href'), pageUrl))
     .find((source) => {
       if (!source) return false;
