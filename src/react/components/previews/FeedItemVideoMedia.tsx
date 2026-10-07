@@ -30,11 +30,12 @@ export function FeedItemVideoMedia({
   const [duration, setDuration] = useState<number | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [tempfileFallback, setTempfileFallback] = useState<TempfileFallback>('none');
+  const [hlsFallbackSrc, setHlsFallbackSrc] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasAutoAppliedDoubleSpeed = useRef(false);
   const localSoundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
   const soundGesture = sharedSoundGesture ?? localSoundGesture;
-  const isHls = /\.m3u8(?:$|[?#])/i.test(preview.src);
+  const isHls = /\.m3u8(?:$|[?#])/i.test(preview.src) || hlsFallbackSrc === preview.src;
   useHlsVideo({ enabled: isHls, src: preview.src, videoRef, onFatalError: onPreviewError });
 
   useEffect(() => {
@@ -73,6 +74,11 @@ export function FeedItemVideoMedia({
   };
 
   const handlePreviewError = () => {
+    // VK's proxy can return either MP4 or HLS for the same embed URL.
+    if (!isHls && preview.src.startsWith('/bff/vk-video?')) {
+      setHlsFallbackSrc(preview.src);
+      return;
+    }
     if (isTempfileUrl(parseUrl(preview.src))) {
       setTempfileFallback('image');
       return;

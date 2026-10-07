@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FeedItemVideoMedia } from './FeedItemVideoMedia';
@@ -36,5 +36,24 @@ describe('Feed item HLS video playback', () => {
     />);
     expect(screen.getByLabelText('MP4 video').getAttribute('src')).toBe(src);
     expect(vi.mocked(useHlsVideo).mock.calls.at(-1)?.[0].enabled).toBe(false);
+  });
+
+  it('tries HLS for a VK proxy response before falling back to the poster', () => {
+    const src = '/bff/vk-video?url=encoded-embed';
+    const onPreviewError = vi.fn();
+    render(<FeedItemVideoMedia
+      preview={{ type: 'video', src, alt: 'VK recording' }}
+      isShortVideo={false} isTikTok={false} onPreviewError={onPreviewError}
+    />);
+    const video = screen.getByLabelText('VK recording');
+    expect(video.getAttribute('src')).toBe(src);
+    fireEvent.error(video);
+    expect(onPreviewError).not.toHaveBeenCalled();
+    expect(video.getAttribute('src')).toBeNull();
+    const playback = vi.mocked(useHlsVideo).mock.calls.at(-1)?.[0];
+    expect(playback?.enabled).toBe(true);
+    expect(playback?.src).toBe(src);
+    act(() => playback?.onFatalError?.());
+    expect(onPreviewError).toHaveBeenCalledOnce();
   });
 });

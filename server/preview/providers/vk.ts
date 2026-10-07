@@ -107,7 +107,7 @@ export function parseVkStructuredVideo(
 
     const video = findStructuredVideo(data);
     if (!video) continue;
-    const embedUrl = getObjectString(video, 'embedUrl');
+    const embedUrl = getObjectString(video, 'embedUrl') ?? getObjectString(video, 'embeddedUrl');
     if (!embedUrl) continue;
     const resolvedEmbedUrl = resolveHttpUrl(embedUrl, pageUrl);
     if (!resolvedEmbedUrl || !isVkVideoEmbedUrl(resolvedEmbedUrl)) continue;

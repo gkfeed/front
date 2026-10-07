@@ -100,4 +100,15 @@ describe('parseOpenGraph: VK provider', () => {
       video: 'https://vk.ru/video_ext.php?oid=-28905875&id=456404323&hash=secret',
     });
   });
+
+  it('reads the embeddedUrl field used by the reported hockey recording', () => {
+    const video = 'https://vk.ru/video_ext.php?oid=-45277565&id=456244225&hash=33b5252bdb6e927212';
+    const html = jsonLdScript({
+      '@type': 'SocialMediaPosting',
+      video: [{ '@type': 'VideoObject', embeddedUrl: video, thumbnailUrl: 'https://example.com/hockey.jpg' }],
+    });
+    expect(parseOpenGraph(html, new URL('https://vk.ru/wall-45277565_394438'))).toMatchObject({
+      video, image: 'https://example.com/hockey.jpg',
+    });
+  });
 });

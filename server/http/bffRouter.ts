@@ -23,7 +23,7 @@ import { isYoutubeChannelResolution } from '../../shared/youtubeChannel.js';
 
 // HLS changes quality by overlapping playlist and byte-range requests. Keep
 // these transfers isolated from metadata previews and allow that short burst.
-const sasflixMediaRequestGate = createBffRequestGate({
+const hlsMediaRequestGate = createBffRequestGate({
   maxActive: 32,
   maxActivePerClient: 8,
   maxQueuedPerClient: 8,
@@ -138,7 +138,7 @@ export async function routeBffRequest(
 
   if (requestUrl.pathname === '/bff/vk-video') {
     const input = getRequiredPreviewUrl(requestUrl);
-    await requestGate.run(clientId, requestContext, async () => {
+    await hlsMediaRequestGate.run(clientId, requestContext, async () => {
       const source = await resultCache.load(`${requestUrl.pathname}:${input}`, (sharedContext) => (
         useCases.vkVideoSource(input, sharedContext)
       ), { context: requestContext, ttlMs: cacheTtlMs('/bff/vk-video') });
@@ -151,7 +151,7 @@ export async function routeBffRequest(
 
   if (requestUrl.pathname === '/bff/sasflix-media') {
     const input = getRequiredPreviewUrl(requestUrl);
-    await sasflixMediaRequestGate.run(clientId, requestContext, async () => {
+    await hlsMediaRequestGate.run(clientId, requestContext, async () => {
       const media = await useCases.sasflixMedia(input, requestRange, requestContext);
       requestContext.startStreaming?.();
       await sendPreviewVideo(response, media);
