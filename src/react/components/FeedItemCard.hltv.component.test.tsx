@@ -54,7 +54,10 @@ describe('FeedItemCard HLTV previews', () => {
       };
       getPreview.mockResolvedValue(preview);
       const { unmount } = render(<FeedItemCard item={{ ...item, link: preview.url }} />);
-      await act(async () => { intersect(true); });
+      await act(async () => {
+        intersect(true);
+        await vi.dynamicImportSettled();
+      });
       const initialRequests = getPreview.mock.calls.length;
       expect(initialRequests).toBe(2);
       expect(disconnect).not.toHaveBeenCalled();

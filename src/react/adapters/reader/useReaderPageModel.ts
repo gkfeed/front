@@ -45,7 +45,7 @@ export function useReaderPageModel(t: Translator) {
   const waitingForMoreReviewItems = mode === 'review'
     && !reader.isSyncComplete
     && !reader.loadFailed
-    && reader.remainingCount === 0;
+    && !reader.currentItem;
   const isLoading = reader.isLoading || waitingForMoreReviewItems;
 
   return {
@@ -55,7 +55,7 @@ export function useReaderPageModel(t: Translator) {
     reviewPanelRef,
     isLoading,
     hasLoadedContent: !isLoading && (!reader.loadFailed || reader.items.length > 0 || !!reader.currentItem)
-      && !(mode === 'review' && !reader.isSyncComplete && reader.remainingCount === 0),
+      && !(mode === 'review' && !reader.isSyncComplete && !reader.currentItem),
     loadErrorMessage: reader.loadFailed
       ? getRequestErrorMessage(reader.loadError, t, 'reader.loadError')
       : '',

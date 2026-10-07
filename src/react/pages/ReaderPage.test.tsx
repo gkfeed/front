@@ -423,6 +423,33 @@ describe('ReaderPage', () => {
     expect(await screen.findByText('First story')).toBeTruthy();
   });
 
+  it.each(['complete', 'failed'])('waits to apply a changed saved order and resumes after %s synchronization', async (outcome) => {
+    const storage = stubLocalStorage();
+    storage.set(getReviewStateStorageKey('reader'), JSON.stringify({
+      version: 1, itemOrder: 'desc', pendingIds: [11, 10], revisitIds: [], keptItemIds: [],
+    }));
+    let publishProgress!: NonNullable<Parameters<typeof getFeedItems>[3]>;
+    let finish!: (items: typeof ITEMS) => void;
+    let fail!: (error: Error) => void;
+    vi.mocked(getFeedItems).mockImplementation((_credentials, _limit, _signal, onProgress) => {
+      publishProgress = onProgress!;
+      return new Promise((resolve, reject) => { finish = resolve; fail = reject; });
+    });
+    renderReader('/reader', 'show', undefined, 'asc');
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalledOnce());
+    act(() => publishProgress(ITEMS));
+    expect(screen.getByRole('status', { name: 'Loading feed items' })).toBeTruthy();
+    expect(screen.queryByText('You’ve reviewed everything')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'First story' })).toBeNull();
+
+    await act(async () => {
+      if (outcome === 'complete') finish(ITEMS);
+      else fail(new Error('Later page failed'));
+    });
+    expect(await screen.findByRole('heading', { name: 'Second story' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'First story' })).toBeNull();
+  });
+
   it('removes NSFW items from Review and the remaining count in hide mode', async () => {
     vi.mocked(getFeedItems).mockResolvedValue([
       {
