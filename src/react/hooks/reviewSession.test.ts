@@ -25,9 +25,12 @@ describe('review session', () => {
       restoredItemOrder: 'desc',
       restoredProgress: { pendingIds: [3, 2], revisitIds: [1], keptItemIds: new Set([1]) },
     });
+    state = snapshot(state, [3, 2], false);
+    expect(state.currentItem).toBeUndefined();
     state = snapshot(state, [3, 2, 1], true);
 
     expect(getActiveReviewIds(state)).toEqual([2, 3]);
+    expect(state.currentItem?.id).toBe(2);
     expect(state.progress.revisitIds).toEqual([1]);
     expect(state.progress.keptItemIds).toEqual(new Set([1]));
 
@@ -44,6 +47,53 @@ describe('review session', () => {
     });
     state = snapshot(state, [3, 2, 1], true);
     expect(getActiveReviewIds(state)).toEqual([2, 3]);
+  });
+
+  it('keeps every episode of a feed and revisits only the episode chosen by the user', () => {
+    let state = reviewSessionReducer(startSession(null), {
+      type: 'snapshotChanged', isComplete: true,
+      items: [item(5), { ...item(4), feedId: 5 }, item(3), { ...item(2), feedId: 5 }, item(1)],
+    });
+    state = reviewSessionReducer(state, { type: 'keepFeed', id: 5, feedId: 5 });
+    expect(state.progress).toEqual({
+      pendingIds: [3, 1], revisitIds: [5], keptItemIds: new Set([5, 4, 2]), keptFeedIds: new Set([5]),
+    });
+    state = reviewSessionReducer(state, { type: 'remove', id: 3 });
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+    expect(getActiveReviewIds(state)).toEqual([5, 1]);
+    state = reviewSessionReducer(state, {
+      type: 'presentationChanged', presentation: { ...presentation, itemOrder: 'asc', interleaveFeeds: true },
+    });
+    expect(getActiveReviewIds(state)).toEqual([1, 5]);
+    expect(state.progress.keptFeedIds).toEqual(new Set([5]));
+    state = reviewSessionReducer(state, { type: 'keep', id: 1 });
+    state = reviewSessionReducer(state, { type: 'keepFeed', id: 5, feedId: 5 });
+    expect(getActiveReviewIds(state)).toEqual([]);
+    expect(state.progress.keptItemIds).toEqual(new Set([5, 4, 2, 1]));
+
+    state = reviewSessionReducer(state, { type: 'reset' });
+    expect(getActiveReviewIds(state)).toEqual([1, 2, 3, 4, 5]);
+    expect(state.progress.keptFeedIds).toBeUndefined();
+  });
+
+  it('keeps later partial and completed episodes without replacing a missing revisit episode', () => {
+    let state = snapshot(startSession(null), [5, 3], false);
+    state = reviewSessionReducer(state, { type: 'keepFeed', id: 5, feedId: 5 });
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', isComplete: false,
+      items: [{ ...item(6), feedId: 5 }, item(5), item(3)],
+    });
+    expect(state.progress.keptItemIds).toEqual(new Set([5, 6]));
+    expect(state.progress.revisitIds).toEqual([5]);
+    expect(getActiveReviewIds(state)).toEqual([3]);
+
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', isComplete: true,
+      items: [{ ...item(7), feedId: 5 }, { ...item(6), feedId: 5 }, item(3)],
+    });
+    expect(state.progress.keptItemIds).toEqual(new Set([6, 7]));
+    expect(state.progress.revisitIds).toEqual([]);
+    expect(getActiveReviewIds(state)).toEqual([3]);
   });
 
   it('keeps the active revisit in its queue across an unchanged refresh', () => {
@@ -70,6 +120,82 @@ describe('review session', () => {
     expect(state.progress).toEqual({
       pendingIds: [3], revisitIds: [2, 1], keptItemIds: new Set([2, 1]),
     });
+    expect(getActiveReviewIds(state)).toEqual([2, 3]);
+    state = reviewSessionReducer(state, { type: 'keep', id: 2 });
+    expect(getActiveReviewIds(state)).toEqual([3]);
+    state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
+    expect(getActiveReviewIds(state)).toEqual([1]);
+  });
+
+  it('retains a current card removed by a completed snapshot until the user acts', () => {
+    let state = snapshot(startSession(null), [2, 1], true);
+    const currentItem = state.currentItem;
+    state = snapshot(state, [3, 1], true);
+
+    expect(state.currentItem).toBe(currentItem);
+    expect(state.items?.map(({ id }) => id)).toEqual([3, 1]);
+    expect(getActiveReviewIds(state)).toEqual([2, 3, 1]);
+    state = reviewSessionReducer(state, { type: 'delete', id: 2, title: 'Item 2' });
+    expect(state.deletions[0].itemId).toBe(2);
+    expect(getActiveReviewIds(state)).toEqual([3, 1]);
+  });
+
+  it('retains the rendered card data while newer versions update the snapshot', () => {
+    let state = snapshot(startSession(null), [2, 1], false);
+    const currentItem = state.currentItem;
+    const updated = { ...item(2), link: 'https://example.com/replaced', title: 'Updated item' };
+    for (const isComplete of [false, true]) {
+      state = reviewSessionReducer(state, {
+        type: 'snapshotChanged', items: [item(3), updated, item(1)], isComplete,
+      });
+      expect(state.currentItem).toBe(currentItem);
+      expect(state.snapshot?.find(({ id }) => id === 2)).toEqual(updated);
+    }
+    state = reviewSessionReducer(state, { type: 'keep', id: 2 });
+    expect(state.currentItem?.id).toBe(3);
+  });
+
+  it('keeps a removed and reappearing current card in only one queue', () => {
+    let state = snapshot(startSession(null), [2, 1], true);
+    const currentItem = state.currentItem;
+    state = snapshot(state, [3, 1], true);
+    state = snapshot(state, [3, 2, 1], true);
+
+    expect(state.currentItem).toBe(currentItem);
+    expect(state.progress.pendingIds).toEqual([2, 3, 1]);
+    expect(state.progress.revisitIds).toEqual([]);
+    state = reviewSessionReducer(state, { type: 'keep', id: 2 });
+    expect(state.currentItem?.id).toBe(3);
+    expect(state.progress.revisitIds).toEqual([2]);
+  });
+
+  it('pins the visible card instead of an earlier hidden or unloaded queue entry', () => {
+    let state = startSession({ pendingIds: [5, 4, 3], revisitIds: [], keptItemIds: new Set() });
+    state = reviewSessionReducer(state, {
+      type: 'presentationChanged', presentation: { ...presentation, nsfwMode: 'hide' },
+    });
+    const hidden = item(4, 'https://pornhub.com/video');
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', items: [hidden, item(3)], isComplete: false,
+    });
+    expect(state.currentItem?.id).toBe(3);
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', items: [item(6), item(5), hidden, item(3)], isComplete: true,
+    });
+    expect(getActiveReviewIds(state)).toEqual([3, 6, 5]);
+  });
+
+  it('updates priorities for upcoming cards without replacing the current card', () => {
+    let state = snapshot(startSession(null), [3, 2, 1], true);
+    const currentItem = state.currentItem;
+    state = reviewSessionReducer(state, {
+      type: 'presentationChanged',
+      presentation: { ...presentation, feedPriorities: { 1: 10 }, interleaveFeeds: true },
+    });
+    expect(state.currentItem).toBe(currentItem);
+    expect(getActiveReviewIds(state)).toEqual([3, 1, 2]);
+    state = reviewSessionReducer(state, { type: 'keep', id: 3 });
+    expect(getActiveReviewIds(state)).toEqual([1, 2]);
   });
 
   it('restores progress and waits for a completed reload before adding new cards', () => {

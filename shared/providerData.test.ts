@@ -68,4 +68,12 @@ describe('provider-data modules', () => {
     expect(isOpenGraphProviderData(value)).toBe(true);
     expect(getProviderDataImageUrls(value)).toEqual([]);
   });
+
+  it('accepts deleted Reddit post data and rejects invalid statuses', () => {
+    const value = { provider: 'reddit', status: 'deleted' };
+    expect(isOpenGraphProviderData(value)).toBe(true);
+    expect(getProviderDataImageUrls(value)).toEqual([]);
+    expect(isOpenGraphProviderData({ provider: 'reddit', status: 'active' })).toBe(false);
+    expect(isOpenGraphProviderData({ provider: 'reddit' })).toBe(false);
+  });
 });

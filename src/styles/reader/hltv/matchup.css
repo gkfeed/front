@@ -4,6 +4,7 @@
 }
 
 .reader-card__hltv-live-card {
+  container: hltv / inline-size;
   width: 100%;
   overflow: hidden;
   border-radius: 22px;
@@ -41,11 +42,11 @@
 
 .reader-card__hltv-matchup {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px) minmax(0, 1fr);
   min-height: clamp(220px, 52cqw, 360px);
   align-items: center;
-  gap: clamp(14px, 4cqw, 32px);
-  padding: clamp(22px, 7cqw, 52px);
+  gap: clamp(12px, 2cqw, 24px);
+  padding: clamp(22px, 4cqw, 48px);
   background: radial-gradient(circle at 50% 110%, rgb(255 255 255 / 15%), transparent 48%);
   color: #fff;
   text-decoration: none;
@@ -97,9 +98,16 @@
 .reader-card__hltv-score {
   display: grid;
   justify-items: center;
-  gap: 5px;
+  min-width: 0;
+  gap: 20px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.reader-card__hltv-series-score {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
 }
 
 .reader-card__hltv-live-label {
@@ -121,46 +129,70 @@
   box-shadow: 0 0 0 3px rgb(255 77 77 / 20%);
 }
 
-.reader-card__hltv-score > strong {
+.reader-card__hltv-series-score > strong {
   font-size: clamp(1.25rem, 5cqw, 2rem);
   line-height: 1;
 }
 
-.reader-card__hltv-completed-map {
+.reader-card__hltv-maps {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.reader-card__hltv-map-card {
+  position: relative;
+  isolation: isolate;
   display: grid;
+  flex: 0 1 calc((100% - 16px) / 3);
+  max-width: 140px;
+  min-width: 0;
+  min-height: clamp(96px, 12cqw, 126px);
+  align-content: center;
   justify-items: center;
-  gap: 3px;
-  margin-top: 6px;
-  color: rgb(255 255 255 / 68%);
-  line-height: 1;
-}
-
-.reader-card__hltv-completed-map b {
-  max-width: 110px;
+  gap: 12px;
   overflow: hidden;
-  font-size: clamp(0.88rem, 3.2cqw, 1.08rem);
-  text-overflow: ellipsis;
+  padding: 16px 8px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 12px;
+  background: rgb(7 26 41 / 16%);
+  color: #fff;
+  line-height: 1.15;
+  text-shadow: 0 1px 2px rgb(7 26 41 / 30%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
 }
 
-.reader-card__hltv-completed-map .reader-card__hltv-current-map-score {
-  gap: 6px;
-  font-size: clamp(1rem, 3.8cqw, 1.3rem);
+.reader-card__hltv-map-card::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(145deg, rgb(52 95 135 / 40%), rgb(23 56 82 / 72%));
+  content: '';
+}
+
+.reader-card__hltv-map-image {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+  filter: saturate(0.4);
 }
 
 .reader-card__hltv-current-map {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  margin-top: 9px;
-  color: rgb(255 255 255 / 78%);
-  line-height: 1;
+  border-color: rgb(157 206 255 / 60%);
+  box-shadow: inset 0 0 0 1px rgb(157 206 255 / 12%);
 }
 
-.reader-card__hltv-current-map b {
-  max-width: 110px;
+.reader-card__hltv-map-card b {
+  max-width: 100%;
   overflow: hidden;
   color: #fff;
-  font-size: clamp(0.88rem, 3.2cqw, 1.08rem);
+  font-size: clamp(0.88rem, 2.2cqw, 1.15rem);
   text-overflow: ellipsis;
 }
 
@@ -168,7 +200,7 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
-  font-size: clamp(1rem, 3.8cqw, 1.3rem);
+  font-size: clamp(1rem, 2.2cqw, 1.3rem);
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -192,8 +224,59 @@
 }
 
 .reader-card__hltv-current-map-score--loser {
-  color: rgb(255 255 255 / 52%);
+  color: rgb(255 255 255 / 72%);
   font-weight: 650;
 }
 
+@container hltv (max-width: 760px) {
+  .reader-card__hltv-matchup {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 22px 12px;
+    padding: 26px 18px;
+  }
 
+  .reader-card__hltv-score {
+    display: contents;
+  }
+
+  .reader-card__hltv-team {
+    grid-row: 1;
+    gap: 12px;
+  }
+
+  .reader-card__hltv-team:last-child {
+    grid-column: 3;
+  }
+
+  .reader-card__hltv-series-score,
+  .reader-card__hltv-versus {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .reader-card__hltv-maps {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@container hltv (max-width: 360px) {
+  .reader-card__hltv-meta {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+
+  .reader-card__hltv-meta strong {
+    max-width: 100%;
+  }
+
+  .reader-card__hltv-team > img,
+  .reader-card__hltv-monogram {
+    width: 64px;
+    height: 64px;
+  }
+
+  .reader-card__hltv-team > strong {
+    font-size: 0.9rem;
+  }
+}

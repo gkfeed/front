@@ -19,6 +19,7 @@ export function useReviewSession({
   nsfwMode,
   hideTikTokItems,
   feedPriorities,
+  interleaveFeeds = false,
 }: ReviewPresentation & {
   loadedItems: FeedItem[] | undefined;
   username: string | null;
@@ -32,8 +33,10 @@ export function useReviewSession({
     nsfwMode,
     hideTikTokItems,
     feedPriorities,
+    interleaveFeeds,
   }), [
     feedPriorities,
+    interleaveFeeds,
     hideTikTokItems,
     itemOrder,
     nsfwMode,
@@ -74,6 +77,7 @@ export function useReviewSession({
   const activeReviewIds = useMemo(() => getActiveReviewIds(session), [session]);
 
   const keep = useCallback((id: number) => dispatch({ type: 'keep', id }), []);
+  const keepFeed = useCallback((id: number, feedId: number) => dispatch({ type: 'keepFeed', id, feedId }), []);
   const deleteItem = useCallback((id: number, title: string) => {
     dispatch({ type: 'delete', id, title });
   }, []);
@@ -92,10 +96,12 @@ export function useReviewSession({
 
   return {
     items: session.items,
+    currentItem: session.currentItem,
     reviewableIds: session.reviewableIds,
     activeReviewIds,
     hasKeptItems: session.progress.keptItemIds.size > 0,
     keep,
+    keepFeed,
     deleteItem,
     deletionSucceeded,
     deletionFailed,

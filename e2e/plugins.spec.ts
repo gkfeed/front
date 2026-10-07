@@ -49,7 +49,7 @@ test('syncs plugin and Reader preferences across tabs without retaining TikTok c
 
   await page.getByRole('radio', { name: 'Hide TikTok items', exact: true }).click();
   await expect(reader.locator('.reader-card')).toHaveCount(0);
-  await expect(reader.getByRole('heading', { name: 'You’ve reviewed everything' })).toBeVisible();
+  await expect(reader.getByRole('heading', { name: 'You’re all caught up' })).toBeVisible();
   await page.getByRole('checkbox', { name: 'TikTok', exact: true }).uncheck();
   await expect(reader.locator('.reader-card--short-video')).toHaveCount(0);
   await expect(reader.locator('iframe')).toHaveCount(0);

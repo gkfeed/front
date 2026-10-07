@@ -21,6 +21,26 @@ describe('reviewStateStorage', () => {
     expect(readReviewState(key)).toEqual(progress);
   });
 
+  it('restores grouped keeps and suppresses newly loaded episodes after a reload', () => {
+    stubLocalStorage();
+    const key = getReviewStateStorageKey('reader');
+    writeReviewState(key, {
+      pendingIds: [3], revisitIds: [1], keptItemIds: new Set([1, 2]), keptFeedIds: new Set([5]),
+    });
+    const presentation = { itemOrder: 'desc', nsfwMode: 'show', hideTikTokItems: false, feedPriorities: {} } as const;
+    let state = reviewSessionReducer(createReviewSessionState(presentation), {
+      type: 'sessionChanged', storageKey: key, restoredProgress: readReviewState(key),
+    });
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', isComplete: true,
+      items: [1, 2, 3, 4].map((id) => ({ id, feedId: id === 3 ? 6 : 5, link: '', title: `${id}`, text: '' })),
+    });
+    expect(getActiveReviewIds(state)).toEqual([3]);
+    expect(state.progress.revisitIds).toEqual([1]);
+    expect(state.progress.keptItemIds).toEqual(new Set([1, 2, 4]));
+    expect(state.progress.keptFeedIds).toEqual(new Set([5]));
+  });
+
   it('restores an active revisit after a background refresh and reload', () => {
     stubLocalStorage();
     const key = getReviewStateStorageKey('reader');

@@ -47,7 +47,7 @@ afterEach(() => {
 });
 
 describe('useFeedItems', () => {
-  it('shows committed change pages and removes confirmed deletions when later changes fail', async () => {
+  it('commits changes after a later page fails while preserving the current review card', async () => {
     stubLocalStorage();
     vi.mocked(readFeedItemsCache).mockResolvedValue({ items: [DELETED_ITEM], cursor: 'saved' });
     let finishFirstPage!: (page: Awaited<ReturnType<typeof getFeedItemChanges>>) => void;
@@ -76,8 +76,13 @@ describe('useFeedItems', () => {
     expect(result.current.loaded.isSyncComplete).toBe(false);
     expect(result.current.loaded.loadedItems).toEqual([CURRENT_ITEM]);
     expect(result.current.session.items).toEqual([CURRENT_ITEM]);
-    expect(result.current.session.activeReviewIds).toEqual([CURRENT_ITEM.id]);
+    expect(result.current.session.currentItem).toEqual(DELETED_ITEM);
+    expect(result.current.session.activeReviewIds).toEqual([DELETED_ITEM.id, CURRENT_ITEM.id]);
     expect(writeFeedItemsCache).toHaveBeenCalledWith('reader', { items: [CURRENT_ITEM], cursor: 'page2' });
+
+    act(() => result.current.session.keep(DELETED_ITEM.id));
+    expect(result.current.session.currentItem).toEqual(CURRENT_ITEM);
+    expect(result.current.session.activeReviewIds).toEqual([CURRENT_ITEM.id]);
   });
 
   it('uses a fresh cache as an initial snapshot and revalidates in background', async () => {

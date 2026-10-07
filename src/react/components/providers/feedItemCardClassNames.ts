@@ -1,5 +1,6 @@
 import type { FeedItemCardModel } from '../useFeedItemCardModel';
 import { getSpotifyEmbed } from '../../domain/spotifyPreview';
+import { getRedditStatus } from '../../../../shared/providerData/reddit';
 
 export function getFeedItemCardClassNames(facts: FeedItemCardModel): readonly string[] {
   return [
@@ -33,7 +34,12 @@ function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
     ];
     case 'matreshka': return ['reader-card--matreshka', 'reader-card--player', 'reader-card--landscape-media'];
     case 'onefootball': return ['reader-card--onefootball'];
-    case 'reddit': return facts.simpleImage ? ['reader-card--simple-image'] : [];
+    case 'reddit': return [
+      'reader-card--reddit',
+      ...(getRedditStatus(facts.openGraphPreview?.providerData) === 'deleted'
+        ? ['reader-card--reddit-deleted', 'reader-card--image-preview'] : []),
+      ...(facts.simpleImage ? ['reader-card--simple-image'] : []),
+    ];
     case 'rezka': return [
       'reader-card--rezka',
       ...(facts.simpleImage ? ['reader-card--simple-image'] : []),

@@ -1,3 +1,8 @@
+main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
+  font-size: clamp(1.65rem, 5vw, 2.55rem);
+  line-height: 1.08;
+}
+
 /* Review mode is a three-row frame: the card uses the flexible viewport row,
    while decisions and progress always keep their own rows below it. */
 @media (min-width: 641px) {

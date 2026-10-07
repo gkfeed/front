@@ -1,5 +1,6 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
 import type { FeedTypeSuggestion } from '../../../shared/feedTypeSuggestion';
+import type { YoutubeChannelResolution } from '../../../shared/youtubeChannel';
 import type { Credentials, Feed, FeedInput, FeedItem, FeedLazyInput } from '../types';
 import type { ItemSnapshot, ItemChangesPage, CachedFeedItems } from '../domain/itemSync';
 
@@ -34,6 +35,7 @@ export type FeedCommandPort = {
 };
 
 export type FeedMetadataPort = {
+  resolveYoutubeChannel: (url: string, signal?: AbortSignal) => Promise<YoutubeChannelResolution>;
   getOpenGraphPreview: (url: string, signal?: AbortSignal) => Promise<OpenGraphPreview>;
   getFeedTypeSuggestion: (
     url: string,

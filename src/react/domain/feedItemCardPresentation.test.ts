@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { analyzeFeedItem } from './feedItemPreview';
 import { buildFeedItemCardPresentation } from './feedItemCardPresentation';
+import { getFeedItemCardClassNames } from '../components/providers/feedItemCardClassNames';
 import type { FeedItem } from '../types';
 
 function item(overrides: Partial<FeedItem> = {}): FeedItem {
@@ -18,6 +19,24 @@ function item(overrides: Partial<FeedItem> = {}): FeedItem {
 }
 
 describe('feed item card presentation', () => {
+  it('drops Reddit deletion metadata and styling when the plugin is disabled', () => {
+    const post = item({ link: 'https://www.reddit.com/r/example/comments/abc123/story', text: '<img src="https://example.com/local.jpg">' });
+    const result = buildFeedItemCardPresentation({
+      item: post, providerView: analyzeFeedItem(post, new Set(['reddit'])), nsfwMode: 'show', previewFailures: 0,
+      remotePreview: { liquipediaMatch: null, openGraphPreview: {
+        url: post.link, title: null, description: null, image: null, video: null, siteName: 'Reddit', type: null,
+        providerData: { provider: 'reddit', status: 'deleted' },
+      } },
+    });
+    expect(result.openGraphPreview?.providerData).toBeNull();
+    expect(result.visiblePreview?.src).toBe('https://example.com/local.jpg');
+    const classes = getFeedItemCardClassNames({
+      ...result, cardRef: { current: null }, isPreviewPending: false, previewStatus: 'loaded', onPreviewError: () => {},
+    });
+    expect(classes).not.toContain('reader-card--reddit');
+    expect(classes).not.toContain('reader-card--reddit-deleted');
+  });
+
   it('retains extensionless Reddit video previews while the plugin is enabled', () => {
     const video = item({ link: 'https://v.redd.it/abc123' });
     expect(analyzeFeedItem(video).localPreview).toMatchObject({ src: video.link, type: 'video' });

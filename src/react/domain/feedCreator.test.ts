@@ -37,12 +37,12 @@ describe('feed creator domain', () => {
   it('removes share parameters from YouTube channel URLs before lazy creation', () => {
     expect(normalizeLazyFeedUrl(
       ' https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ?si=9ox1NKEtHJ6v3YRg ',
-    )).toBe('https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ');
+    )).toBe('https://www.youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ');
     expect(inferFeedSourceFromLazyUrl(
       'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ?si=9ox1NKEtHJ6v3YRg',
     )).toEqual({
       type: 'yt',
-      url: 'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ',
+      url: 'https://www.youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ',
     });
   });
 

@@ -5,6 +5,7 @@ import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { isAppleMobileDevice } from '../../domain/device';
 import { isTempfileUrl, parseUrl } from '../../domain/feedItemUrls';
 import { type SoundGestureLifecycle, useSoundGesture } from '../../hooks/useSoundGesture';
+import { useHlsVideo } from './useHlsVideo';
 
 type VideoPreview = LocalizedFeedItemPreview & { type: 'video' };
 type TempfileFallback = 'none' | 'image' | 'error';
@@ -33,6 +34,8 @@ export function FeedItemVideoMedia({
   const hasAutoAppliedDoubleSpeed = useRef(false);
   const localSoundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
   const soundGesture = sharedSoundGesture ?? localSoundGesture;
+  const isHls = /\.m3u8(?:$|[?#])/i.test(preview.src);
+  useHlsVideo({ enabled: isHls, src: preview.src, videoRef, onFatalError: onPreviewError });
 
   useEffect(() => {
     setAspectRatio(null);
@@ -119,7 +122,7 @@ export function FeedItemVideoMedia({
         <video
           key={preview.src}
           ref={videoRef}
-          src={preview.src}
+          src={isHls ? undefined : preview.src}
           poster={preview.poster}
           aria-label={preview.alt}
           autoPlay

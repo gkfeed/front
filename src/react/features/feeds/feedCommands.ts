@@ -9,6 +9,7 @@ import {
   type FeedCreatorMode,
 } from '../../domain/feedCreator';
 import type { FeedCommandPort, FeedMetadataPort, FeedQueryPort } from '../featurePorts';
+import { parseYoutubeChannelUrl, permanentYoutubeChannelUrl } from '../../../../shared/youtubeChannel';
 
 export function createFeedCommandUseCases(
   port: FeedCommandPort,
@@ -41,8 +42,14 @@ export function createFeedCommandUseCases(
     mode: FeedCreatorMode,
     credentials: Credentials | null,
   ): Promise<void> {
+    const normalizedFeed = trimFeed(feed);
+    const youtubeChannel = parseYoutubeChannelUrl(normalizedFeed.url);
+    if (youtubeChannel) {
+      normalizedFeed.url = youtubeChannel.channelId
+        ? permanentYoutubeChannelUrl(youtubeChannel.channelId, youtubeChannel.tab)
+        : (await metadataPort.resolveYoutubeChannel(normalizedFeed.url)).url;
+    }
     if (mode === 'extended') {
-      const normalizedFeed = trimFeed(feed);
       const instagramUsername = normalizedFeed.type === 'inst'
         ? inferInstagramFeedTitleFromUrl(normalizedFeed.url)
         : null;
@@ -67,9 +74,9 @@ export function createFeedCommandUseCases(
       return;
     }
 
-    const inferredSource = inferFeedSourceFromLazyUrl(feed.url);
+    const inferredSource = inferFeedSourceFromLazyUrl(normalizedFeed.url);
     if (!inferredSource) {
-      await port.createFeedFromUrl({ url: normalizeLazyFeedUrl(feed.url) }, credentials);
+      await port.createFeedFromUrl({ url: normalizeLazyFeedUrl(normalizedFeed.url) }, credentials);
       return;
     }
 

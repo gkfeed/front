@@ -28,8 +28,9 @@ export function useFeedItemCardResource(item: FeedItem) {
   const [previewFailures, setPreviewFailures] = useState(0);
 
   useEffect(() => {
+    // Loaded metadata can replace a feed thumbnail that has already failed.
     setPreviewFailures(0);
-  }, [item.link, providerView.provider]);
+  }, [item.link, providerView.provider, remotePreview.openGraphPreview]);
 
   return {
     providerView,

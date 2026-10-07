@@ -49,7 +49,10 @@ export const feedPluginUiCatalog = {
     const { OneFootballPreview, OneFootballCopy } = await import('./providerRenderers/onefootball');
     return { renderCard: (props) => ({ preview: <OneFootballPreview {...props} />, copy: <OneFootballCopy {...props} /> }) };
   }),
-  reddit: definePluginUi('reddit', standardUi),
+  reddit: definePluginUi('reddit', async () => {
+    const { RedditPreview, RedditCopy } = await import('./providerRenderers/reddit');
+    return { renderCard: (props) => ({ preview: <RedditPreview {...props} />, copy: <RedditCopy {...props} /> }) };
+  }),
   rezka: definePluginUi('rezka', standardUi),
   sasflix: definePluginUi('sasflix', async () => {
     const { SasflixVideoPreview, SasflixCopy } = await import('./providerRenderers/sasflix');

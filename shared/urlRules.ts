@@ -8,7 +8,7 @@ const HLTV_MATCH_PATH = /^\/matches\/\d+(?:\/|$)/;
 const ONEFOOTBALL_MATCH_PATH = /^\/[^/]+\/(?:match|spiel|partido|partita)\/\d+(?:\/|$)/i;
 const LIQUIPEDIA_MATCH_PATH = /\/Match(?::|%3A)/i;
 const TIKTOK_VIDEO_PATH = /\/(?:video|v)\/\d+(?:\/|$)/;
-const REDDIT_VIDEO_PATH = /^\/[\w-]+(?:\/DASH_[^/]+\.mp4)?\/?$/i;
+const REDDIT_VIDEO_PATH = /^\/[\w-]+(?:\/(?:DASH_[^/]+\.mp4|HLSPlaylist\.m3u8))?\/?$/i;
 const INSTAGRAM_MEDIA_PATH = /^\/(?:p|reel|reels|tv)\/[A-Za-z0-9_-]{1,64}\/?$/i;
 const MATRESHKA_VIDEO_PATH = /^\/(?:video|embed\/video)\/([A-Za-z0-9_-]{1,64})\/?$/i;
 

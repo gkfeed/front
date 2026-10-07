@@ -16,6 +16,7 @@ import { isInstagramMediaUrl } from './instagramPreview';
 import { isNsfwLink } from './nsfw';
 import { getTikTokEmbedPreview } from './tiktokPreview';
 import { filterRemotePreviewForProvider } from './remotePreview';
+import { getRedditStatus } from '../../../shared/providerData/reddit';
 
 export type FeedItemRemotePreviewRequest = {
   source: Exclude<RemotePreviewSource, 'none'>;
@@ -123,14 +124,18 @@ function selectPreview(
   const localPreviewSource = localPreview?.src;
   const isRezka = providerView.provider === 'rezka';
   const isReddit = providerView.provider === 'reddit';
+  if (isReddit && getRedditStatus(remotePreview.openGraphPreview?.providerData) === 'deleted') {
+    return { preview: null, remoteItemPreview: null, tiktokEmbedPreview: null };
+  }
   const isVk = providerView.provider === 'vk';
   const loadedRemotePreview = getRemoteFeedItemPreview(remotePreview.openGraphPreview, item.title, providerView.provider);
   const instagramVideoPreview = providerView.provider === 'instagram'
     && remotePreview.openGraphPreview?.type === 'video'
     ? loadedRemotePreview
     : null;
-  const prefersRemotePreview = isRezka || isVk;
+  const prefersRemotePreview = isRezka || isVk || isReddit;
   const remoteItemPreview = prefersRemotePreview && loadedRemotePreview && localPreviewSource
+    && !isReddit
     ? { ...loadedRemotePreview, fallbackSrc: localPreviewSource }
     : loadedRemotePreview;
   if (isVk && remoteItemPreview && remoteItemPreview.type === undefined
@@ -146,9 +151,7 @@ function selectPreview(
       ? instagramVideoPreview
       : prefersRemotePreview
         ? remoteItemPreview ?? localPreview
-        : isReddit && remoteItemPreview?.type === 'video'
-          ? remoteItemPreview
-          : localPreview ?? remoteItemPreview;
+        : localPreview ?? remoteItemPreview;
 
   return { preview, remoteItemPreview, tiktokEmbedPreview };
 }

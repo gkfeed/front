@@ -22,6 +22,7 @@ export type FeedPluginCardContent = { preview: ReactNode; supplementary?: ReactN
 
 export function FeedPluginCardSlots({ facts, previewPlaceholder, preview, supplementary, copy }: FeedItemCardProviderRendererProps & FeedPluginCardContent) {
   const hideCopy = facts.provider !== 'vk'
+    && facts.provider !== 'reddit'
     && (facts.imagePreview.type !== 'none' || facts.provider === 'instagram' || facts.provider === 'tiktok');
   return (
     <Fragment>

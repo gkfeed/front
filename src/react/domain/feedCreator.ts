@@ -1,5 +1,6 @@
 import type { FeedInput } from '../types';
 import { normalizeHostname } from '../../../shared/urlRules';
+import { parseYoutubeChannelUrl, permanentYoutubeChannelUrl } from '../../../shared/youtubeChannel';
 
 export type FeedCreatorMode = 'lazy' | 'extended';
 
@@ -71,34 +72,14 @@ export function trimFeed(feed: FeedInput): FeedInput {
 
 export function normalizeLazyFeedUrl(value: string): string {
   const trimmed = value.trim();
-
-  try {
-    const url = new URL(trimmed);
-    if (normalizeHostname(url.hostname) === 'youtube.com'
-      && /^\/channel\/[^/]+\/?$/.test(url.pathname)) {
-      url.search = '';
-      url.hash = '';
-      return url.href.replace(/\/$/, '');
-    }
-  } catch {
-    // Validation prevents malformed URLs from reaching lazy creation.
-  }
-
-  return trimmed;
+  const channel = parseYoutubeChannelUrl(trimmed);
+  return channel?.channelId ? permanentYoutubeChannelUrl(channel.channelId, channel.tab) : trimmed;
 }
 
 export function inferFeedSourceFromLazyUrl(value: string): Pick<FeedInput, 'type' | 'url'> | null {
   const url = normalizeLazyFeedUrl(value);
 
-  try {
-    const parsedUrl = new URL(url);
-    if (normalizeHostname(parsedUrl.hostname) !== 'youtube.com') return null;
-
-    const channelId = parsedUrl.pathname.match(/^\/channel\/([^/]+)\/?$/)?.[1];
-    return channelId ? { type: 'yt', url } : null;
-  } catch {
-    return null;
-  }
+  return parseYoutubeChannelUrl(url)?.channelId ? { type: 'yt', url } : null;
 }
 
 export function inferFeedTitleFromUrl(value: string): string | null {

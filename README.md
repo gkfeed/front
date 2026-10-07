@@ -42,6 +42,51 @@ IP addresses or CIDR ranges of proxies that connect directly to the BFF. The pro
 the client address to `X-Forwarded-For`. Direct connections and requests from unlisted proxies
 ignore that header. Docker Compose passes this setting from its environment or `.env`.
 
+## YouTube channel URLs on creation
+
+Before saving a channel feed, `saveFeed` converts handle URLs such as
+`https://www.youtube.com/@sendependa_dio_games/videos` to
+`https://www.youtube.com/channel/UC5TRrMsWLy7flttFTyS-bOA/videos`.
+It preserves the selected channel tab, including `/videos`, `/shorts`, and
+`/streams`, and removes query/share parameters and fragments. Both manual and
+URL-only creation use this conversion. Already permanent URLs need no lookup;
+video and playlist URLs are left unchanged. Existing feeds are not migrated.
+
+The bundled BFF provides the resolver API:
+
+```text
+GET /bff/youtube-channel?url=<encoded YouTube channel URL>
+200 {"channelId":"UC5TRrMsWLy7flttFTyS-bOA","url":"https://www.youtube.com/channel/UC5TRrMsWLy7flttFTyS-bOA/videos"}
+```
+
+Accepted channel addresses use `youtube.com`, `www.youtube.com`, or
+`m.youtube.com` and `/@handle`, `/c/name`, `/user/name`, or `/channel/<ID>`,
+optionally followed by a recognized channel tab. The resolver fetches the
+channel root and reads its explicit canonical, Open Graph URL, RSS link, or
+head `channelId` metadata. It never searches for a similar handle or uses IDs
+from recommended content. Missing or conflicting IDs, non-channel redirects,
+upstream errors, timeouts, and oversized/non-HTML pages fail without saving a
+feed. These failures use the existing BFF error response and the form's existing
+save-error state, preserving entered values for retry.
+
+Errors have the existing shape `{"error":{"code":"...","message":"..."}}`.
+Missing/invalid input returns 400; unresolved or inconsistent channel metadata
+returns 502 with `youtube_channel_unresolved`. Upstream fetch failures use the
+existing provider codes/statuses. No create request is sent after any failure.
+
+Requests use the BFF concurrency/rate limits, public-address validation, and
+deadlines. Channel HTML has a 3 MB limit because YouTube emits page metadata
+after large inline styles/scripts. Completed resolutions are not cached since
+handle ownership can change. The client validates the ID, canonical URL, and
+unchanged tab before sending the existing `/api/v1/add` request.
+
+This frontend depends on the new `/bff/youtube-channel` route in this repository's
+BFF; frontend and BFF must be released together. No external feed API or parser
+change, YouTube API key, or new environment variable is required. YouTube Data
+API [`channels.list`](https://developers.google.com/youtube/v3/docs/channels/list)
+also offers exact `forHandle`/`forUsername` lookup, but this implementation uses
+the available public page metadata without adding a key dependency.
+
 ## Open Graph preview
 
 The BFF exposes the Open Graph metadata route:
@@ -56,6 +101,9 @@ Open Graph/Twitter metadata fallbacks as gkbot. Only public HTTP(S) pages are
 fetched; private/local addresses, non-HTML responses, large pages, and slow
 responses are rejected.
 
+Reddit post previews use Old Reddit's title, video poster, and HLS stream so
+videos play inline with audio. If Old Reddit is unavailable, the crawler page
+provides a fallback preview. Post titles remain visible beneath the media.
 Generated Reddit cards from `share.redd.it` are loaded through
 `/bff/reddit-preview-image`, which applies the same crawler request headers
 as gkbot. That image proxy only accepts Reddit's generated preview URLs.

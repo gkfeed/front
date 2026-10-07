@@ -226,7 +226,7 @@ describe('feed use cases', () => {
       url: 'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ?si=shared',
     }, 'lazy', credentials);
 
-    const canonicalUrl = 'https://youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ';
+    const canonicalUrl = 'https://www.youtube.com/channel/UCSiRS-W-yfPOg3VK1tthlXQ';
     expect(metadataPort.getOpenGraphPreview).toHaveBeenCalledWith(canonicalUrl);
     expect(commandPort.createFeed).toHaveBeenCalledWith({
       title: 'Fresh Technologies',
@@ -234,6 +234,52 @@ describe('feed use cases', () => {
       url: canonicalUrl,
     }, credentials);
     expect(commandPort.createFeedFromUrl).not.toHaveBeenCalled();
+  });
+
+  it.each(['lazy', 'extended'] as const)('resolves handle URLs before %s creation and preserves tabs', async (mode) => {
+    for (const tab of ['', '/videos', '/shorts', '/streams']) {
+      const ports = createPorts(createOpenGraphPreview('Channel title'));
+      const url = `https://www.youtube.com/channel/UC5TRrMsWLy7flttFTyS-bOA${tab}`;
+      vi.mocked(ports.metadataPort.resolveYoutubeChannel).mockResolvedValue({
+        channelId: 'UC5TRrMsWLy7flttFTyS-bOA', url,
+      });
+      await createFeedUseCases(ports).saveFeed({
+        title: 'Manual title', type: 'yt', url: ` https://www.youtube.com/@sendependa_dio_games${tab}?si=share `,
+      }, mode, credentials);
+      expect(ports.commandPort.createFeed).toHaveBeenCalledWith({
+        title: mode === 'lazy' ? 'Channel title' : 'Manual title', type: 'yt', url,
+      }, credentials);
+      expect(ports.commandPort.createFeedFromUrl).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each(['lazy', 'extended'] as const)('does not create anything when %s channel resolution fails', async (mode) => {
+    const ports = createPorts();
+    vi.mocked(ports.metadataPort.resolveYoutubeChannel).mockRejectedValue(new Error('unresolved'));
+    await expect(createFeedUseCases(ports).saveFeed({
+      title: 'Channel', type: 'yt', url: 'https://www.youtube.com/@sendependa_dio/videos',
+    }, mode, credentials)).rejects.toThrow('unresolved');
+    expect(ports.commandPort.createFeed).not.toHaveBeenCalled();
+    expect(ports.commandPort.createFeedFromUrl).not.toHaveBeenCalled();
+  });
+
+  it('normalizes permanent manual URLs without resolving them again', async () => {
+    const ports = createPorts();
+    const url = 'https://www.youtube.com/channel/UC5TRrMsWLy7flttFTyS-bOA/streams';
+    const useCases = createFeedUseCases(ports);
+    await useCases.saveFeed({ title: 'Streams', type: 'yt', url: `${url}/?si=share#top` }, 'extended', credentials);
+    await useCases.saveFeed({ title: 'Streams', type: 'yt', url }, 'extended', credentials);
+    expect(ports.commandPort.createFeed).toHaveBeenNthCalledWith(1, { title: 'Streams', type: 'yt', url }, credentials);
+    expect(ports.commandPort.createFeed).toHaveBeenNthCalledWith(2, { title: 'Streams', type: 'yt', url }, credentials);
+    expect(ports.metadataPort.resolveYoutubeChannel).not.toHaveBeenCalled();
+    expect(ports.metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
+  });
+
+  it.each(['https://www.youtube.com/watch?v=video', 'https://www.youtube.com/playlist?list=PLtest'])('does not resolve non-channel YouTube input %s', async (url) => {
+    const ports = createPorts();
+    await createFeedUseCases(ports).saveFeed({ title: 'Video or playlist', type: 'yt', url }, 'extended', credentials);
+    expect(ports.metadataPort.resolveYoutubeChannel).not.toHaveBeenCalled();
+    expect(ports.commandPort.createFeed).toHaveBeenCalledWith({ title: 'Video or playlist', type: 'yt', url }, credentials);
   });
 
   it('trims manual feed input without loading metadata', async () => {
@@ -349,6 +395,7 @@ function createPorts(preview = createOpenGraphPreview('Feed')): {
       createFeedFromUrl: vi.fn().mockResolvedValue(undefined),
     },
     metadataPort: {
+      resolveYoutubeChannel: vi.fn(),
       getOpenGraphPreview: vi.fn().mockResolvedValue(preview),
       getFeedTypeSuggestion: vi.fn().mockResolvedValue({ type: 'web', confidence: 1 }),
     },

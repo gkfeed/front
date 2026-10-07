@@ -3,6 +3,7 @@ import { hltvOpenGraphAdapter } from './providers/hltv.js';
 import { instagramOpenGraphAdapter } from './providers/instagram.js';
 import { matreshkaOpenGraphAdapter } from './providers/matreshka.js';
 import { oneFootballOpenGraphAdapter } from './providers/oneFootball.js';
+import { redditOpenGraphAdapter } from './providers/reddit.js';
 import { rezkaOpenGraphAdapter } from './providers/rezka.js';
 import { sasflixOpenGraphAdapter } from './providers/sasflix.js';
 import { shikimoriOpenGraphAdapter } from './providers/shikimori.js';
@@ -12,6 +13,7 @@ import { youtubeOpenGraphAdapter } from './providers/youtube.js';
 export const openGraphProviderAdapters: readonly OpenGraphProviderAdapter[] = [
   hltvOpenGraphAdapter,
   oneFootballOpenGraphAdapter,
+  redditOpenGraphAdapter,
   rezkaOpenGraphAdapter,
   instagramOpenGraphAdapter,
   matreshkaOpenGraphAdapter,

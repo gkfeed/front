@@ -4,13 +4,15 @@ import {
   type OneFootballProviderData,
 } from './providerData/oneFootball.js';
 import { vkProviderDataModule, type VkProviderData } from './providerData/vk.js';
+import { redditProviderDataModule, type RedditProviderData } from './providerData/reddit.js';
 
-export type OpenGraphProviderData = HltvProviderData | OneFootballProviderData | VkProviderData | null;
+export type OpenGraphProviderData = HltvProviderData | OneFootballProviderData | VkProviderData | RedditProviderData | null;
 
 const providerDataModules = [
   hltvProviderDataModule,
   oneFootballProviderDataModule,
   vkProviderDataModule,
+  redditProviderDataModule,
 ] as const;
 
 export function isOpenGraphProviderData(value: unknown): value is OpenGraphProviderData {
