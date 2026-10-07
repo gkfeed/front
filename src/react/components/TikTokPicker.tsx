@@ -10,7 +10,7 @@ export function TikTokPicker() {
     <div className="settings-menu__section">
       <span className="settings-menu__section-title">{t('settings.tiktokItems')}</span>
       <span className="settings-menu__content-description">{t('settings.tiktokDescription')}</span>
-      <div className="settings-menu__tiktok-options">
+      <div className="settings-menu__tiktok-options" role="radiogroup" aria-label={t('settings.tiktokItems')}>
         {([
           { hide: false, labelKey: 'settings.showTikTok', icon: '○' },
           { hide: true, labelKey: 'settings.hideTikTok', icon: '⊘' },
@@ -22,7 +22,7 @@ export function TikTokPicker() {
               data-selected={selected || undefined}
               key={String(option.hide)}
               type="button"
-              role="menuitemradio"
+              role="radio"
               aria-checked={selected}
               onClick={() => setHideTikTokItems(option.hide)}
             >

@@ -2,11 +2,29 @@ import type { HltvMatchSnapshot, OpenGraphPreview } from '../../../shared/previe
 import { getHltvSnapshot } from '../../../shared/providerData/hltv';
 
 import type { RemotePreview } from './feedItemCardContracts';
+import type { FeedItemProvider } from './feedItemPreviewTypes';
 
 export const EMPTY_REMOTE_PREVIEW: RemotePreview = {
   liquipediaMatch: null,
   openGraphPreview: null,
 };
+
+/** Cached BFF responses can contain capabilities of a now-disabled provider. */
+export function filterRemotePreviewForProvider(
+  preview: RemotePreview,
+  provider: FeedItemProvider,
+): RemotePreview {
+  const openGraph = preview.openGraphPreview;
+  return {
+    liquipediaMatch: provider === 'liquipedia' ? preview.liquipediaMatch : null,
+    openGraphPreview: openGraph ? {
+      ...openGraph,
+      providerData: openGraph.providerData?.provider === provider ? openGraph.providerData : null,
+      // Provider proxy endpoints are not ordinary Open Graph media.
+      video: provider === 'generic' && openGraph.video?.startsWith('/bff/') ? null : openGraph.video,
+    } : null,
+  };
+}
 
 export function mergeHltvLiveData(
   next: OpenGraphPreview,

@@ -14,7 +14,7 @@ export function ReaderModePicker({
   return (
     <div className="settings-menu__section">
       <span className="settings-menu__section-title">{t('settings.readerView')}</span>
-      <div className="settings-menu__reader-options">
+      <div className="settings-menu__reader-options" role="radiogroup" aria-label={t('settings.readerView')}>
         {(['review', 'scroll'] as const).map((mode) => {
           const selected = mode === readerMode;
           return (
@@ -23,7 +23,7 @@ export function ReaderModePicker({
               data-selected={selected || undefined}
               key={mode}
               type="button"
-              role="menuitemradio"
+              role="radio"
               aria-checked={selected}
               onClick={() => onReaderModeChange(mode)}
             >

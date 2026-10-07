@@ -7,6 +7,8 @@ import type { ReaderItemOrder } from '../state/readerItemOrder';
 import { ReaderItemOrderPreferencesContext } from '../state/readerItemOrderPreferencesContext';
 import { restoreLocalStorage } from '../testUtils';
 import { TikTokPreferencesContext } from '../state/tiktokPreferencesContext';
+import { PluginPreferencesContext } from '../state/pluginPreferencesContext';
+import type { FeedPluginId } from '../domain/feedItemProviderPresentation';
 import { ReaderPage } from './ReaderPage';
 
 export const READER_ITEMS = [
@@ -20,13 +22,16 @@ export function renderReader(
   container?: HTMLElement,
   itemOrder: ReaderItemOrder = 'desc',
   hideTikTokItems = false,
+  disabledPlugins: ReadonlySet<FeedPluginId> = new Set(),
 ) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <NsfwPreferencesContext value={{ nsfwMode, setNsfwMode: vi.fn() }}>
         <TikTokPreferencesContext value={{ playbackMode: 'embed', setPlaybackMode: vi.fn(), hideTikTokItems, setHideTikTokItems: vi.fn() }}>
           <ReaderItemOrderPreferencesContext value={{ itemOrder, setItemOrder: vi.fn() }}>
-            <ReaderPage />
+            <PluginPreferencesContext value={{ disabledPlugins, isPluginEnabled: (id) => !disabledPlugins.has(id), setPluginEnabled: vi.fn(), enableAllPlugins: vi.fn() }}>
+              <ReaderPage />
+            </PluginPreferencesContext>
           </ReaderItemOrderPreferencesContext>
         </TikTokPreferencesContext>
       </NsfwPreferencesContext>

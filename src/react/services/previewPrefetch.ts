@@ -1,9 +1,10 @@
 import { analyzeFeedItem } from '../domain/feedItemAnalysis';
 import { resolveFeedItemPreviewPolicy } from '../domain/feedItemPreviewPolicy';
 import type { NsfwMode, RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
-import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
+import { EMPTY_REMOTE_PREVIEW, filterRemotePreviewForProvider } from '../domain/remotePreview';
 import type { FeedItem } from '../types';
 import { getProviderDataImageUrls } from '../../../shared/providerData';
+import type { FeedPluginId } from '../domain/feedItemProviderPresentation';
 
 type PreviewLoader = {
   loadRemotePreview: (
@@ -19,8 +20,9 @@ export function prefetchFeedItem(
   prefetchedImageUrls: Set<string>,
   prefetchControllers: Map<string, AbortController>,
   nsfwMode: NsfwMode,
+  disabledPlugins: ReadonlySet<FeedPluginId> = new Set(),
 ): void {
-  const providerView = analyzeFeedItem(item);
+  const providerView = analyzeFeedItem(item, disabledPlugins);
   const initialPolicy = resolveFeedItemPreviewPolicy({
     item,
     providerView,
@@ -43,6 +45,7 @@ export function prefetchFeedItem(
     controller.signal,
   )
     .then((remotePreview) => {
+      if (controller.signal.aborted) return;
       const loadedPolicy = resolveFeedItemPreviewPolicy({
         item,
         providerView,
@@ -50,7 +53,11 @@ export function prefetchFeedItem(
         remotePreview,
         previewFailures: 0,
       });
-      prefetchRemotePreviewImages(remotePreview, loadedPolicy.visiblePreview, prefetchedImageUrls);
+      prefetchRemotePreviewImages(
+        filterRemotePreviewForProvider(remotePreview, providerView.provider),
+        loadedPolicy.visiblePreview,
+        prefetchedImageUrls,
+      );
     })
     .catch(() => undefined)
     .finally(() => {

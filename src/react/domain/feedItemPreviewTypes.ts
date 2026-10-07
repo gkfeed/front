@@ -19,14 +19,17 @@ export type FeedItemPreviewAlt =
   | { kind: 'sasflix'; title: string | null }
   | { kind: 'vk'; title: string | null };
 
-type FeedItemProviderIdentity =
+export type FeedItemProviderIdentity =
   | { provider: 'generic'; simpleImage: boolean }
   | { provider: 'hltv' }
   | { provider: 'instagram'; media: 'photo' | 'video' }
   | { provider: 'liquipedia' }
   | { provider: 'matreshka'; videoId: string }
   | { provider: 'onefootball'; simpleImage: boolean }
+  | { provider: 'reddit'; simpleImage: boolean }
+  | { provider: 'rezka'; simpleImage: boolean }
   | { provider: 'sasflix'; publicationId: string }
+  | { provider: 'spotify'; simpleImage: boolean }
   | { provider: 'tiktok' }
   | { provider: 'twitch'; channel: string }
   | { provider: 'vk' }

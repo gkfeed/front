@@ -10,7 +10,7 @@ export function NsfwPicker() {
     <div className="settings-menu__section">
       <span className="settings-menu__section-title">{t('settings.content')}</span>
       <span className="settings-menu__content-description">{t('settings.nsfwDescription')}</span>
-      <div className="settings-menu__nsfw-options">
+      <div className="settings-menu__nsfw-options" role="radiogroup" aria-label={t('settings.nsfwDescription')}>
         {([
           { mode: 'show', labelKey: 'settings.show', icon: '○' },
           { mode: 'blur', labelKey: 'settings.blur', icon: '◉' },
@@ -23,7 +23,7 @@ export function NsfwPicker() {
               data-selected={selected || undefined}
               key={option.mode}
               type="button"
-              role="menuitemradio"
+              role="radio"
               aria-checked={selected}
               onClick={() => setNsfwMode(option.mode)}
             >
