@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { LocalizedFeedItemPreview } from '../previewLocalization';
@@ -37,7 +37,8 @@ export function FeedItemVideoMedia({
   const isHls = /\.m3u8(?:$|[?#])/i.test(preview.src);
   useHlsVideo({ enabled: isHls, src: preview.src, videoRef, onFatalError: onPreviewError });
 
-  useEffect(() => {
+  // Reset before cached media can dispatch metadata for the new source.
+  useLayoutEffect(() => {
     setAspectRatio(null);
     setDuration(null);
     setPlaybackRate(1);

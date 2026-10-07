@@ -8,6 +8,8 @@ export type LiveCandidateCatalog = {
   candidates: LiveCandidate[];
   lastReconciledAt: number | null;
   newestItemId: number | null;
+  /** Providers covered by the scan; legacy catalogs require reconciliation. */
+  providerIds?: string[];
 };
 
 type CatalogRecord = LiveCandidateCatalog & { username: string };
@@ -24,6 +26,7 @@ export async function readLiveCandidateCatalog(username: string): Promise<LiveCa
         candidates: value.candidates,
         lastReconciledAt: value.lastReconciledAt,
         newestItemId: value.newestItemId,
+        providerIds: value.providerIds,
       }
       : undefined;
   } catch {
@@ -36,19 +39,72 @@ export async function readLiveCandidateCatalog(username: string): Promise<LiveCa
 export async function writeLiveCandidateCatalog(
   username: string,
   catalog: LiveCandidateCatalog,
+  signal?: AbortSignal,
 ): Promise<void> {
   const database = await openDatabase();
   if (!database) return;
+  let transaction: IDBTransaction | undefined;
+  const onAbort = () => {
+    try { transaction?.abort(); } catch { /* Already completed. */ }
+  };
   try {
-    await requestValue(database.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME).put({
+    if (signal?.aborted) return;
+    transaction = database.transaction(STORE_NAME, 'readwrite');
+    const activeTransaction = transaction;
+    signal?.addEventListener('abort', onAbort, { once: true });
+    await transactionComplete(activeTransaction, () => activeTransaction.objectStore(STORE_NAME).put({
       username,
       ...catalog,
     } satisfies CatalogRecord));
   } catch {
     // The catalog improves startup, but storage failures must not break the page.
   } finally {
+    signal?.removeEventListener('abort', onAbort);
     database.close();
   }
+}
+
+export async function pruneLiveCandidateCatalogs(disabledProviderIds: ReadonlySet<string>, signal?: AbortSignal): Promise<void> {
+  const database = await openDatabase();
+  if (!database) return;
+  let transaction: IDBTransaction | undefined;
+  const onAbort = () => {
+    try { transaction?.abort(); } catch { /* Already completed. */ }
+  };
+  try {
+    if (signal?.aborted) return;
+    transaction = database.transaction(STORE_NAME, 'readwrite');
+    const activeTransaction = transaction;
+    signal?.addEventListener('abort', onAbort, { once: true });
+    await transactionComplete(activeTransaction, () => {
+      const request = activeTransaction.objectStore(STORE_NAME).openCursor();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        if (isCatalogRecord(cursor.value)) {
+          const value = cursor.value;
+          const candidates = value.candidates.filter((candidate) => !disabledProviderIds.has(candidate.providerId));
+          const providerIds = value.providerIds?.filter((id) => !disabledProviderIds.has(id));
+          cursor.update({ ...value, candidates, providerIds });
+        }
+        cursor.continue();
+      };
+    });
+  } catch {
+    // Optional persistence must not prevent changing preferences.
+  } finally {
+    signal?.removeEventListener('abort', onAbort);
+    database.close();
+  }
+}
+
+function transactionComplete(transaction: IDBTransaction, start: () => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error ?? new Error('IndexedDB transaction aborted'));
+    transaction.onerror = () => reject(transaction.error ?? new Error('IndexedDB transaction failed'));
+    start();
+  });
 }
 
 function openDatabase(): Promise<IDBDatabase | undefined> {
@@ -86,6 +142,8 @@ function isCatalogRecord(value: unknown): value is CatalogRecord {
     && (record.lastReconciledAt === null || typeof record.lastReconciledAt === 'number')
     && (record.newestItemId === null || Number.isSafeInteger(record.newestItemId))
     && Array.isArray(record.candidates)
+    && (record.providerIds === undefined || (Array.isArray(record.providerIds)
+      && record.providerIds.every((id) => typeof id === 'string')))
     && record.candidates.every(isCandidate);
 }
 

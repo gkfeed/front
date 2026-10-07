@@ -1,3 +1,4 @@
+import { Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FeedItemCardModel } from '../../useFeedItemCardModel';
@@ -14,7 +15,27 @@ export type FeedItemCardProviderRendererProps = {
   localizedPreview: LocalizedFeedItemPreview | null;
   displayHostname: string;
   onOpenArticle?: () => void;
+  previewPlaceholder?: ReactNode;
 };
+
+export type FeedPluginCardContent = { preview: ReactNode; supplementary?: ReactNode; copy?: ReactNode };
+
+export function FeedPluginCardSlots({ facts, previewPlaceholder, preview, supplementary, copy }: FeedItemCardProviderRendererProps & FeedPluginCardContent) {
+  const hideCopy = facts.provider !== 'vk'
+    && facts.provider !== 'reddit'
+    && (facts.imagePreview.type !== 'none' || facts.provider === 'instagram' || facts.provider === 'tiktok');
+  return (
+    <Fragment>
+      {facts.isPreviewPending ? previewPlaceholder : preview}
+      {facts.isPreviewPending ? null : supplementary}
+      {facts.isPreviewPending || hideCopy ? null : copy}
+    </Fragment>
+  );
+}
+
+export function GenericCardContent(props: FeedItemCardProviderRendererProps) {
+  return <FeedPluginCardSlots {...props} preview={<FeedItemMediaPreview {...props} />} copy={<StandardCopy {...props} />} />;
+}
 
 export function FeedItemMediaPreview({
   facts,
@@ -40,6 +61,7 @@ export function FeedItemMediaPreview({
       preview={localizedPreview}
       isShortVideo={facts.provider === 'instagram' || facts.provider === 'tiktok'}
       isTikTok={facts.provider === 'tiktok'}
+      isSpotify={facts.provider === 'spotify'}
       hltvImageScore={facts.hltvImageScore}
       onPreviewError={facts.onPreviewError}
       imagePresentation={facts.provider === 'vk' ? 'vk' : 'standard'}
@@ -57,7 +79,11 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
   const { item, description } = facts;
   const title = getCardTitle(facts, displayHostname);
 
-  if ((facts.provider === 'generic' || facts.provider === 'onefootball') && facts.simpleImage) {
+  if ((facts.provider === 'generic'
+    || facts.provider === 'onefootball'
+    || facts.provider === 'reddit'
+    || facts.provider === 'rezka'
+    || facts.provider === 'spotify') && facts.simpleImage) {
     return (
       <div className="reader-card__copy">
         <h2 className="reader-card__title">{title}</h2>
@@ -93,6 +119,7 @@ function formatSpotifyReleaseDate(value: string, language?: string): string {
 }
 
 function getCardTitle(facts: FeedItemCardModel, displayHostname: string): string {
+  if (facts.provider !== 'spotify') return facts.item.title || displayHostname;
   return getSpotifyDisplayTitle({
     url: facts.item.link,
     fallbackTitle: facts.item.title || displayHostname,

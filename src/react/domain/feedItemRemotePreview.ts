@@ -1,19 +1,21 @@
 import type { OpenGraphPreview } from '../../../shared/previewContracts';
+import type { FeedItemPreview, FeedItemProvider } from './feedItemPreviewTypes';
 import { getVkImageUrls } from '../../../shared/providerData/vk';
-import type { FeedItemPreview } from './feedItemPreviewTypes';
 import { getVkVideoPreview } from './vkPreview';
 import { isDirectVideoValue, isRedditVideoUrl, parseUrl } from './feedItemUrls';
 
 export function getRemoteFeedItemPreview(
   preview: OpenGraphPreview | null,
   title: string,
+  provider?: FeedItemProvider,
 ): FeedItemPreview | null {
   if (!preview) return null;
   const altTitle = preview.title || title;
 
   if (preview.video) {
     const videoUrl = parseUrl(preview.video);
-    const vkVideoPreview = videoUrl ? getVkVideoPreview(videoUrl, altTitle) : null;
+    const vkVideoPreview = videoUrl && (provider === undefined || provider === 'vk')
+      ? getVkVideoPreview(videoUrl, altTitle) : null;
     if (videoUrl && vkVideoPreview) {
       return {
         src: `/bff/vk-video?url=${encodeURIComponent(videoUrl.href)}`,

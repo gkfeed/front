@@ -4,6 +4,7 @@ import { abortPrefetches, prefetchFeedItem } from '../services/previewPrefetch';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
+import { usePluginPreferences } from '../state/usePluginPreferences';
 
 export const REVIEW_PREVIEW_PREFETCH_COUNT = 3;
 
@@ -18,8 +19,14 @@ export function useReviewPreviewPrefetch({
 }): void {
   const { preview: previewUseCases } = useFeatureUseCases();
   const { nsfwMode } = useNsfwPreferences();
+  const { disabledPlugins } = usePluginPreferences();
   const prefetchedImageUrlsRef = useRef<Set<string>>(new Set());
   const prefetchControllersRef = useRef<Map<string, AbortController>>(new Map());
+  // Navigation may retain overlapping work, but a policy change invalidates it.
+  useEffect(() => {
+    const controllers = prefetchControllersRef.current;
+    return () => abortPrefetches(controllers);
+  }, [disabledPlugins, nsfwMode, previewUseCases]);
   const nextItems = useMemo(() => {
     const itemsById = new Map(items.map((item) => [item.id, item]));
     return activeReviewIds
@@ -57,12 +64,13 @@ export function useReviewPreviewPrefetch({
           prefetchedImageUrlsRef.current,
           prefetchControllersRef.current,
           nsfwMode,
+          disabledPlugins,
         );
       });
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [activeReviewIds, enabled, items, nextItems, nsfwMode, previewUseCases]);
+  }, [activeReviewIds, disabledPlugins, enabled, items, nextItems, nsfwMode, previewUseCases]);
 
   useEffect(() => () => {
     abortPrefetches(prefetchControllersRef.current);

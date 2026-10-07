@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { getArticlePreview, getPreview, item } from './FeedItemCard.component.testUtils';
@@ -140,7 +140,7 @@ describe('FeedItemCard remote and feed previews', () => {
   });
 
   it('replaces a small Rezka feed image with the original remote cover', async () => {
-    getPreview.mockResolvedValue({
+    const remotePreview = {
       url: 'https://rezka.ag/films/drama/123-story.html',
       title: 'Story',
       description: null,
@@ -149,7 +149,9 @@ describe('FeedItemCard remote and feed previews', () => {
       siteName: 'HDrezka',
       type: 'video.movie',
       providerData: null,
-    });
+    };
+    let resolvePreview!: (value: typeof remotePreview) => void;
+    getPreview.mockReturnValue(new Promise((resolve) => { resolvePreview = resolve; }));
 
     render(<FeedItemCard item={{
       ...item,
@@ -157,8 +159,9 @@ describe('FeedItemCard remote and feed previews', () => {
       text: '<img src="https://static.hdrezka.ac/covers/thumbnail.jpg">',
     }} />);
 
-    expect(screen.getByAltText('Preview for Story').getAttribute('src'))
+    expect((await screen.findByAltText('Preview for Story')).getAttribute('src'))
       .toBe('https://static.hdrezka.ac/covers/thumbnail.jpg');
+    await act(async () => resolvePreview(remotePreview));
     await waitFor(() => expect(document.querySelector('[data-preview-preloader]')).toBeTruthy());
     fireEvent.load(document.querySelector('[data-preview-preloader]')!);
     expect(screen.getByAltText('Preview for Story').getAttribute('src'))
@@ -175,7 +178,7 @@ describe('FeedItemCard remote and feed previews', () => {
   });
 
   it('replaces a cropped VK feed image while keeping the channel and post description', async () => {
-    getPreview.mockResolvedValue({
+    const remotePreview = {
       url: 'https://vk.com/wall-123_456',
       title: 'Рифмы и Панчи',
       description: null,
@@ -184,7 +187,9 @@ describe('FeedItemCard remote and feed previews', () => {
       siteName: 'VK',
       type: 'article',
       providerData: null,
-    });
+    };
+    let resolvePreview!: (value: typeof remotePreview) => void;
+    getPreview.mockReturnValue(new Promise((resolve) => { resolvePreview = resolve; }));
 
     render(<FeedItemCard item={{
       ...item,
@@ -193,9 +198,10 @@ describe('FeedItemCard remote and feed previews', () => {
       text: '<p>Новый пост сообщества</p><img src="https://example.com/vk-cropped.jpg">',
     }} />);
 
-    const visibleImage = screen.getByAltText('Preview for Рифмы и Панчи');
+    const visibleImage = await screen.findByAltText('Preview for Рифмы и Панчи');
     expect(visibleImage.getAttribute('src'))
       .toBe('https://example.com/vk-cropped.jpg');
+    await act(async () => resolvePreview(remotePreview));
     await waitFor(() => expect(document.querySelector('[data-preview-preloader]')).toBeTruthy());
     expect(screen.getByAltText('Preview for Рифмы и Панчи')).toBe(visibleImage);
     expect(visibleImage.getAttribute('src')).toBe('https://example.com/vk-cropped.jpg');

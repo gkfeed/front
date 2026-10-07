@@ -14,6 +14,7 @@ type FeedItemMediaProps = {
   preview: LocalizedFeedItemPreview;
   isShortVideo: boolean;
   isTikTok: boolean;
+  isSpotify?: boolean;
   hltvImageScore: [string, string] | null;
   onPreviewError: () => void;
   overlay?: ReactNode;
@@ -33,6 +34,7 @@ export function FeedItemMedia({
   preview,
   isShortVideo,
   isTikTok,
+  isSpotify = false,
   hltvImageScore,
   onPreviewError,
   overlay,
@@ -63,7 +65,7 @@ export function FeedItemMedia({
     );
   }
 
-  const spotifyEmbed = getSpotifyEmbed(href);
+  const spotifyEmbed = isSpotify ? getSpotifyEmbed(href) : null;
   if (spotifyEmbed) {
     return (
       <SpotifyPlaylistPreview

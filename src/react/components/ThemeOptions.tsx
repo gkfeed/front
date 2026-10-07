@@ -46,7 +46,7 @@ export function ThemeOptions({
   return (
     <div className="settings-menu__section">
       <span className="settings-menu__section-title">{t('settings.appearance')}</span>
-      <div className="settings-menu__options">
+      <div className="settings-menu__options" role="radiogroup" aria-label={t('settings.appearance')}>
         {themePreferences.map((option) => {
           const selected = option.value === theme;
           return (
@@ -56,7 +56,7 @@ export function ThemeOptions({
               data-selected={selected || undefined}
               key={option.value}
               type="button"
-              role="menuitemradio"
+              role="radio"
               aria-checked={selected}
               aria-label={t('settings.theme', { theme: t(themeAriaLabelKeys[option.value]) })}
               onClick={() => {

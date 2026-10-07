@@ -42,10 +42,11 @@ export type ReviewSessionState = {
   nextDeletionOperationId: number;
   hasProgress: boolean;
   progressToPersist: ReviewProgress | null;
+  reorderRestoredProgress: boolean;
 };
 
 export type ReviewSessionEvent =
-  | { type: 'sessionChanged'; storageKey: string | null; restoredProgress: ReviewProgress | null }
+  | { type: 'sessionChanged'; storageKey: string | null; restoredProgress: ReviewProgress | null; restoredItemOrder?: ReaderItemOrder | null }
   | { type: 'snapshotChanged'; items: FeedItem[] | undefined; isComplete: boolean }
   | { type: 'syncFailed' }
   | { type: 'presentationChanged'; presentation: ReviewPresentation }
@@ -74,6 +75,7 @@ export function createReviewSessionState(presentation: ReviewPresentation): Revi
     nextDeletionOperationId: 1,
     hasProgress: false,
     progressToPersist: null,
+    reorderRestoredProgress: false,
   };
 }
 
@@ -87,9 +89,13 @@ export function reviewSessionReducer(
   // Background data and priority updates may change the queue, but the card
   // already on screen remains the target of Keep and Delete until user action.
   const nextId = getQueuedReviewIds(next)[0];
-  const currentItem = state.currentItem && preservesCurrentItem(state, event)
-    ? state.currentItem
-    : next.items?.find(({ id }) => id === nextId);
+  // A restored queue with a newly selected order needs the initial snapshot
+  // before choosing a card. Once chosen, background updates keep it stable.
+  const currentItem = next.reorderRestoredProgress
+    ? undefined
+    : state.currentItem && preservesCurrentItem(state, event)
+      ? state.currentItem
+      : next.items?.find(({ id }) => id === nextId);
   return { ...next, currentItem };
 }
 
@@ -137,6 +143,8 @@ function reduceReviewSession(
         deletions: [],
         hasProgress: event.restoredProgress !== null,
         progressToPersist: null,
+        reorderRestoredProgress: event.restoredItemOrder != null
+          && event.restoredItemOrder !== state.presentation.itemOrder,
       };
     }
     case 'snapshotChanged':
@@ -179,9 +187,12 @@ function reduceSyncFailed(state: ReviewSessionState): ReviewSessionState {
   if (!state.snapshot) return state;
 
   const projection = projectSnapshot(state.snapshot, state.presentation, state.deletions);
-  const progress = state.hasProgress
+  const reconciledProgress = state.hasProgress
     ? mergePartialProgress(state.progress, projection.reviewableIds)
     : createProgress(projection.reviewableIds);
+  const progress = state.reorderRestoredProgress
+    ? reorderProgress(reconciledProgress, projection.reviewableIds)
+    : reconciledProgress;
   return {
     ...state,
     isSyncComplete: false,
@@ -189,6 +200,7 @@ function reduceSyncFailed(state: ReviewSessionState): ReviewSessionState {
     progress,
     hasProgress: true,
     progressToPersist: progress,
+    reorderRestoredProgress: false,
   };
 }
 
@@ -225,9 +237,12 @@ function reduceSnapshotChanged(
   const groupedProgress = applyKeptFeeds(state.progress, snapshot, deletions);
 
   if (isComplete) {
-    const progress = state.hasProgress
+    const reconciledProgress = state.hasProgress
       ? reconcileProgress(groupedProgress, projection.reviewableIds, state.currentItem?.id)
       : createProgress(projection.reviewableIds);
+    const progress = state.reorderRestoredProgress
+      ? reorderProgress(reconciledProgress, projection.reviewableIds)
+      : reconciledProgress;
     return {
       ...state,
       snapshot,
@@ -237,6 +252,7 @@ function reduceSnapshotChanged(
       progress,
       hasProgress: true,
       progressToPersist: progress,
+      reorderRestoredProgress: false,
     };
   }
 

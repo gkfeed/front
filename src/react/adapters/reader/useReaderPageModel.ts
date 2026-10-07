@@ -8,7 +8,7 @@ import {
   exitReaderFullscreen,
   isAutomaticFallbackFullscreen,
 } from '../../platform/readerFullscreen';
-import { getReaderMode } from '../../state/readerMode';
+import { getReaderMode, useDefaultReaderMode } from '../../state/readerMode';
 import { useReaderItemOrderPreferences } from '../../state/useReaderItemOrderPreferences';
 
 export type { FeedItemDeletion } from '../../hooks/reviewSession';
@@ -18,7 +18,7 @@ type Translator = (key: string) => string;
 export function useReaderPageModel(t: Translator) {
   const reviewPanelRef = useRef<HTMLDivElement>(null);
   const { search } = useLocation();
-  const mode = getReaderMode(search);
+  const mode = getReaderMode(search, useDefaultReaderMode());
   const { itemOrder } = useReaderItemOrderPreferences();
 
   useEffect(() => () => {
@@ -45,7 +45,7 @@ export function useReaderPageModel(t: Translator) {
   const waitingForMoreReviewItems = mode === 'review'
     && !reader.isSyncComplete
     && !reader.loadFailed
-    && reader.remainingCount === 0;
+    && !reader.currentItem;
   const isLoading = reader.isLoading || waitingForMoreReviewItems;
 
   return {
@@ -55,7 +55,7 @@ export function useReaderPageModel(t: Translator) {
     reviewPanelRef,
     isLoading,
     hasLoadedContent: !isLoading && (!reader.loadFailed || reader.items.length > 0 || !!reader.currentItem)
-      && !(mode === 'review' && !reader.isSyncComplete && reader.remainingCount === 0),
+      && !(mode === 'review' && !reader.isSyncComplete && !reader.currentItem),
     loadErrorMessage: reader.loadFailed
       ? getRequestErrorMessage(reader.loadError, t, 'reader.loadError')
       : '',

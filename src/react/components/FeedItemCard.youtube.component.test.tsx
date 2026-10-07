@@ -86,13 +86,13 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(getPreview).not.toHaveBeenCalled();
   });
 
-  it('uses a max-resolution YouTube thumbnail with a 16:9 fallback', () => {
+  it('uses a max-resolution YouTube thumbnail with a 16:9 fallback', async () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://www.youtube.com/watch?v=abc123xyz',
     }} />);
 
-    const image = screen.getByAltText('Preview for Story');
+    const image = await screen.findByAltText('Preview for Story');
     expect(image.getAttribute('src')).toBe('https://i.ytimg.com/vi/abc123xyz/maxresdefault.jpg');
 
     fireEvent.error(image);
