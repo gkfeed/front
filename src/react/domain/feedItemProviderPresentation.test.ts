@@ -82,6 +82,12 @@ describe('feed item provider presentation', () => {
     )).toBe('generic');
   });
 
+  it('recognizes Reddit video links before stale legacy markers and the enabled gate', () => {
+    const video = item('https://v.redd.it/abc123', 'inst: old source');
+    expect(getFeedItemProvider(video)).toBe('reddit');
+    expect(getFeedItemProvider(video, new Set(['reddit']))).toBe('generic');
+  });
+
   it.each(providerLoadingDecisions)(
     'owns the resource loading decisions for %s',
     (provider, loading) => {

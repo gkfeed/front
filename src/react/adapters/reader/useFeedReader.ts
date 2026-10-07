@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useNsfwPreferences } from '../../state/useNsfwPreferences';
 import { useTikTokPreferences } from '../../state/useTikTokPreferences';
+import { usePluginPreferences } from '../../state/usePluginPreferences';
 import { useAuth } from '../../state/useAuth';
 import type { ReaderItemOrder } from '../../state/readerItemOrder';
 import { useFeedItems } from '../../hooks/useFeedItems';
@@ -24,6 +25,7 @@ export function useFeedReader({
   const { feeds } = useFeatureUseCases();
   const { nsfwMode } = useNsfwPreferences();
   const { hideTikTokItems } = useTikTokPreferences();
+  const { disabledPlugins } = usePluginPreferences();
   const { isManualEnabled, isAutomaticEnabled, priorities } = useFeedPriority();
   const { decisions, recordDecision } = useFeedDecisions(credentials?.username ?? null);
   const feedPriorities = useMemo(
@@ -62,7 +64,7 @@ export function useFeedReader({
     isSyncFailed: status === 'error',
     itemOrder,
     nsfwMode,
-    hideTikTokItems,
+    hideTikTokItems: hideTikTokItems && !disabledPlugins.has('tiktok'),
     feedPriorities,
   });
   const currentItem = items?.find((item) => item.id === activeReviewIds[0]);

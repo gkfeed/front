@@ -21,6 +21,18 @@ afterEach(() => {
 });
 
 describe('ReaderPage', () => {
+  it.each(['review', 'scroll'])('ignores the retained TikTok hide setting when its plugin is disabled in %s mode', async (view) => {
+    vi.mocked(getFeedItems).mockResolvedValue([
+      ...ITEMS,
+      { id: 12, feedId: 4, link: 'https://www.tiktok.com/@creator/video/123', title: 'Disabled TikTok', text: '' },
+    ]);
+    renderReader(`/reader?view=${view}`, 'show', undefined, 'desc', true, new Set(['tiktok']));
+
+    expect(await screen.findByRole('heading', { name: 'Disabled TikTok' })).toBeTruthy();
+    expect(document.querySelector('iframe')).toBeNull();
+    if (view === 'review') expect(screen.getByText('3 remaining')).toBeTruthy();
+  });
+
   it('shows the shared authentication message and keeps retry for 403', async () => {
     vi.mocked(getFeedItems)
       .mockRejectedValueOnce(createStatusError('forbidden', 403))

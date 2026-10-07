@@ -47,11 +47,15 @@ test('syncs plugin and Reader preferences across tabs without retaining TikTok c
   await expect(reader.locator('iframe[src*="tiktok.com/player"]')).toHaveCount(1);
   await expect(reader.locator('html')).toHaveAttribute('data-reader-fullscreen', 'true');
 
+  await page.getByRole('radio', { name: 'Hide TikTok items', exact: true }).click();
+  await expect(reader.locator('.reader-card')).toHaveCount(0);
+  await expect(reader.getByRole('heading', { name: 'You’ve reviewed everything' })).toBeVisible();
   await page.getByRole('checkbox', { name: 'TikTok', exact: true }).uncheck();
   await expect(reader.locator('.reader-card--short-video')).toHaveCount(0);
   await expect(reader.locator('iframe')).toHaveCount(0);
   await expect(reader.locator('html')).not.toHaveAttribute('data-reader-fullscreen', 'true');
   await expect(reader.getByRole('heading', { name: 'TikTok test' })).toBeVisible();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('gkfeed.pluginSettings.tiktok.v1')!).hideItems)).toBe(true);
 
   await page.getByRole('radio', { name: 'Scroll', exact: true }).click();
   await expect(reader.getByRole('region', { name: 'Scroll view' })).toBeVisible();

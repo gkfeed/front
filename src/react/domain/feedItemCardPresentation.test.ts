@@ -18,6 +18,14 @@ function item(overrides: Partial<FeedItem> = {}): FeedItem {
 }
 
 describe('feed item card presentation', () => {
+  it('retains extensionless Reddit video previews while the plugin is enabled', () => {
+    const video = item({ link: 'https://v.redd.it/abc123' });
+    expect(analyzeFeedItem(video).localPreview).toMatchObject({ src: video.link, type: 'video' });
+    const disabled = analyzeFeedItem(video, new Set(['reddit']));
+    expect(disabled.provider).toBe('generic');
+    expect(disabled.localPreview).toBeNull();
+  });
+
   it('does not use a disabled provider snapshot from a cached Open Graph response', () => {
     const match = item({ link: 'https://www.hltv.org/matches/123/example' });
     const result = buildFeedItemCardPresentation({

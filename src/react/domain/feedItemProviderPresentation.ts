@@ -2,6 +2,7 @@ import {
   isHltvMatchUrl,
   isLiquipediaMatchUrl,
   isOneFootballMatchUrl,
+  isRedditVideoUrl,
   isTikTokVideoUrl,
   isVkHost,
 } from '../../../shared/urlRules';
@@ -132,7 +133,7 @@ export const feedItemProviderResources = {
   }),
   reddit: defineFeedPlugin('reddit', 'Reddit', {
     analyze: () => ({ provider: 'reddit', simpleImage: false }),
-    matches: (_item, url) => isRedditUrl(url),
+    matches: (_item, url) => isRedditUrl(url) || Boolean(url && isRedditVideoUrl(url)),
   }),
   rezka: defineFeedPlugin('rezka', 'Rezka', {
     analyze: () => ({ provider: 'rezka', simpleImage: false }),

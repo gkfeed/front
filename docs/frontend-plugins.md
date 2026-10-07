@@ -39,7 +39,8 @@ open-ended payload type are intentionally not supported.
   only after a successful write. Values remain usable when storage fails.
 - `PluginSettingsFields` provides schema controls and allows custom React
   controls receiving `value`, `setValue`, `disabled`, and `t`. Nested settings
-  remain visible but disabled when the plugin is off. TikTok's existing player
+  remain visible but disabled when the plugin is off. TikTok's hide setting is
+  retained but stops filtering Reader items while the plugin is disabled. Its existing player
   and filter hooks are compatibility facades over the generic settings store.
 - `/settings` requires authentication. Reader defaults persist separately;
   explicit `?view=review`/`?view=scroll` overrides them.
