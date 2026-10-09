@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "id": 1005,
+      "feed_id": 1,
+      "title": "Instagram portrait fixture",
+      "link": "https://www.instagram.com/p/verification-fixture/",
+      "text": ""
+    }
+  ],
+  "previews": {
+    "https://www.instagram.com/p/verification-fixture/": {
+      "url": "https://www.instagram.com/p/verification-fixture/",
+      "title": "Instagram portrait fixture",
+      "description": "Portrait image with provider identity and a visible white frame.",
+      "image": "{{origin}}/__fixtures/assets/portrait.svg",
+      "video": null,
+      "siteName": "Instagram",
+      "type": "article",
+      "providerData": null
+    }
+  }
+}

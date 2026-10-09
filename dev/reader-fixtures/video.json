@@ -1,0 +1,7 @@
+{
+  "id": 1003,
+  "feed_id": 1,
+  "title": "Local video fixture",
+  "link": "https://example.com/verification/video",
+  "text": "<video poster=\"{{origin}}/__fixtures/assets/landscape.svg\"><source src=\"{{origin}}/__fixtures/assets/sample.webm\" type=\"video/webm\"></video><p>A local three-second video. Check playback, controls and fullscreen.</p>"
+}

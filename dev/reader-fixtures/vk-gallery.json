@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "id": 1004,
+      "feed_id": 1,
+      "title": "VK gallery fixture",
+      "link": "https://vk.com/wall-187455013_1261115",
+      "text": "<img src=\"{{origin}}/__fixtures/assets/square-1.svg\"><br>Three local photos. Switch slides and check the counter in normal and fullscreen views."
+    }
+  ],
+  "previews": {
+    "https://vk.com/wall-187455013_1261115": {
+      "url": "https://vk.com/wall-187455013_1261115",
+      "title": "VK gallery fixture",
+      "description": "Three local photos. Switch slides and check the counter in normal and fullscreen views.",
+      "image": "{{origin}}/__fixtures/assets/square-1.svg",
+      "video": null,
+      "siteName": "VK",
+      "type": "article",
+      "providerData": {
+        "provider": "vk",
+        "images": [
+          "{{origin}}/__fixtures/assets/square-1.svg",
+          "{{origin}}/__fixtures/assets/square-2.svg",
+          "{{origin}}/__fixtures/assets/square-3.svg"
+        ]
+      }
+    }
+  }
+}
