@@ -42,7 +42,7 @@ function RouteEffects() {
   return null;
 }
 
-export function App() {
+export function App({ basename }: { basename?: string } = {}) {
   const { i18n, t } = useTranslation();
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export function App() {
   }, [i18n, i18n.language]);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <AppProviders>
         <NsfwPreferencesProvider>
           <PluginPreferencesProvider>

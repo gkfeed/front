@@ -1,0 +1,7 @@
+{
+  "id": 1001,
+  "feed_id": 1,
+  "title": "Reader text fixture",
+  "link": "https://vk.com/wall-1_1001",
+  "text": "<p>A text-only item for checking description truncation, title wrapping and reader actions.</p>\n<p>Additional text for checking the description on desktop, laptop and mobile. <a href=\"https://example.com/reference\">Reference link</a></p>"
+}

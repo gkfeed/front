@@ -9,3 +9,5 @@ test-results
 *.local
 *.log
 .DS_Store
+.verification/
+dev/reader-fixtures/*.local.json

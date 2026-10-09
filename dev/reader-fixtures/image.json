@@ -1,0 +1,7 @@
+{
+  "id": 1002,
+  "feed_id": 1,
+  "title": "Landscape image fixture",
+  "link": "https://example.com/verification/image",
+  "text": "<img src=\"{{origin}}/__fixtures/assets/landscape.svg\"><p>The white frame and circle make cropping and distortion visible.</p>"
+}
