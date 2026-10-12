@@ -2,6 +2,8 @@ import { PublicHttpError, discardResponseBody, requestPublicHttp } from './publi
 import type { RequestExecutionContext } from './application/requestExecutionContext.js';
 import { readLimitedJson } from './preview/bodyAdapters.js';
 import { PreviewError } from './preview/errors.js';
+import { isRecord } from '../shared/valueGuards.js';
+import { scheduleTikwmRequest } from './tikwmRequestScheduler.js';
 
 const TIKTOK_HEADERS = {
   accept: 'application/json',
@@ -52,19 +54,29 @@ export async function fetchTikTokJson(
   source: TikTokJsonSource,
   context?: RequestExecutionContext,
 ): Promise<TikTokJsonResult | null> {
-  const response = await requestPublicHttp(upstream, TIKTOK_HEADERS, context);
-  if (response.status < 200 || response.status >= 300) {
-    discardResponseBody(response.body);
-    return null;
-  }
+  const isTikwm = upstream.origin === 'https://www.tikwm.com' && upstream.pathname.startsWith('/api/');
+  const attempts = isTikwm ? 2 : 1;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (isTikwm) await scheduleTikwmRequest(context);
+    const response = await requestPublicHttp(upstream, TIKTOK_HEADERS, context);
+    if (response.status < 200 || response.status >= 300) {
+      discardResponseBody(response.body);
+      if (isTikwm && response.status === 429 && attempt + 1 < attempts) continue;
+      return null;
+    }
 
-  return {
-    value: await readLimitedJson(response, {
+    const value = await readLimitedJson(response, {
       maximumBytes: 1_000_000,
       ...TIKTOK_JSON_ERRORS[source],
       context,
-    }),
-  };
+    });
+    // TikWM also reports throttling inside a successful HTTP response.
+    if (isTikwm && isRecord(value) && value.code === -1
+      && typeof value.msg === 'string' && value.msg.startsWith('Free Api Limit:')
+      && attempt + 1 < attempts) continue;
+    return { value };
+  }
+  return null;
 }
 
 export function isRetryableTikTokRequestError(error: unknown): boolean {

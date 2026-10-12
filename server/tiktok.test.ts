@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const requestPublicHttp = vi.hoisted(() => vi.fn());
 
+vi.mock('./tikwmRequestScheduler.js', () => ({ scheduleTikwmRequest: vi.fn().mockResolvedValue(undefined) }));
+
 vi.mock('./publicHttp.js', async (importOriginal) => ({
   ...await importOriginal<typeof import('./publicHttp.js')>(),
   requestPublicHttp,
