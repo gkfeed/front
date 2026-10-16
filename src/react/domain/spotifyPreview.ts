@@ -48,7 +48,8 @@ export function getSpotifyDisplayTitle({
   if (embed?.type !== 'track' && embed?.type !== 'album') return fallbackTitle;
 
   const track = previewTitle
-    ?.replace(/\s+-\s+(?:single|album|song)\s+by\s+.+?\s+\|\s+spotify$/i, '')
+    ?.replace(/^\s*listen\s+to\s+/i, '')
+    .replace(/\s+-\s+(?:single|album|song)\s+by\s+.+?\s+\|\s+spotify$/i, '')
     .trim();
   const artists = previewDescription?.split('·', 1)[0]?.trim();
   return track && artists ? `${artists} - ${track}` : fallbackTitle;
