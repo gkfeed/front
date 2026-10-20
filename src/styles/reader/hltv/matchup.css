@@ -92,6 +92,7 @@
 .reader-card__hltv-versus {
   color: rgb(255 255 255 / 72%);
   font-size: clamp(1rem, 4cqw, 1.45rem);
+  text-align: center;
   text-transform: uppercase;
 }
 
