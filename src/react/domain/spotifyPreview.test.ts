@@ -71,6 +71,15 @@ describe('getSpotifyDisplayTitle', () => {
     })).toBe('JISOO - CLICK');
   });
 
+  it.each(['EP', 'ep'])('removes the %s suffix before adding the artist', (releaseType) => {
+    expect(getSpotifyDisplayTitle({
+      url: 'https://open.spotify.com/album/5n9oHQlYB2XRQZqFrJILxx',
+      fallbackTitle: 'mafanya - EXTRAAASLAY',
+      previewTitle: `EXTRAAASLAY - ${releaseType} by mafanya | Spotify`,
+      previewDescription: 'mafanya · EP · 2026 · 6 songs',
+    })).toBe('mafanya - EXTRAAASLAY');
+  });
+
   it('keeps the item title when complete track metadata is unavailable', () => {
     expect(getSpotifyDisplayTitle({
       url: 'https://open.spotify.com/track/11dFghVXANMlKmJXsNCbNl',
