@@ -12,12 +12,45 @@ import {
   isTikTokVideoUrl,
   isVkHost,
   isYoutubeVideoUrl,
+  normalizeShikimoriAnimeUrl,
   normalizeVkWallPostUrl,
 } from './urlRules.js';
 
 const url = (value: string) => new URL(value);
 
 describe('shared URL rules', () => {
+  it.each([
+    '/animes/59135-class-no-daikirai?episode=6#news',
+    'https://shikimori.one/animes/59135-class-no-daikirai?episode=6#news',
+    'http://www.shikimori.one/animes/59135-class-no-daikirai?episode=6#news',
+    'https://shikimori.io/animes/59135-class-no-daikirai?episode=6#news',
+  ])('uses the current Shikimori host for anime URL %s', (value) => {
+    expect(normalizeShikimoriAnimeUrl(value))
+      .toBe('https://shikimori.io/animes/59135-class-no-daikirai?episode=6#news');
+  });
+
+  it.each([
+    '/animes/59135',
+    '/animes/59135?episode=6',
+    '/animes/59135#news',
+  ])('resolves a relative Shikimori anime URL %s', (value) => {
+    expect(normalizeShikimoriAnimeUrl(value)).toBe(`https://shikimori.io${value}`);
+  });
+
+  it.each([
+    'not a URL',
+    '/animes/not-an-id',
+    '//example.com/animes/59135',
+    'https://example.com/animes/59135',
+    'https://shikimori.one.example.com/animes/59135',
+    'https://shikimori.one/mangas/59135',
+    'ftp://shikimori.one/animes/59135',
+    'https://user:password@shikimori.one/animes/59135',
+    'https://shikimori.one:8080/animes/59135',
+  ])('leaves unrelated or unsupported Shikimori URL %s unchanged', (value) => {
+    expect(normalizeShikimoriAnimeUrl(value)).toBe(value);
+  });
+
   it.each([
     ['https://youtu.be/abc123xyz', 'abc123xyz'],
     ['https://www.youtube.com/watch?v=abc123xyz', 'abc123xyz'],

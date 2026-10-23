@@ -126,6 +126,22 @@ describe('feed service', () => {
     });
   });
 
+  it('loads relative and legacy Shikimori anime links using the current host', async () => {
+    respondWith({
+      items: [
+        { id: 1057, feed_id: 2, link: '/animes/59135-class-no-daikirai', title: 'Вышел 6 эпизод', text: '' },
+        { id: 1058, feed_id: 2, link: 'https://shikimori.one/animes/59135-class-no-daikirai', title: 'Вышел 7 эпизод', text: '' },
+      ],
+      next_cursor: '', has_more: false, sync_cursor: 'sync-shiki',
+    });
+
+    const items = await getFeedItems(CREDENTIALS);
+    expect(items.map((item) => item.link)).toEqual([
+      'https://shikimori.io/animes/59135-class-no-daikirai',
+      'https://shikimori.io/animes/59135-class-no-daikirai',
+    ]);
+  });
+
   it('follows opaque page cursors and preserves the first sync cursor', async () => {
     const onProgress = vi.fn();
     vi.stubGlobal('fetch', vi.fn()

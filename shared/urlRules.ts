@@ -95,6 +95,31 @@ export function normalizeVkWallPostUrl(source: string): string {
   return url.href;
 }
 
+export function normalizeShikimoriAnimeUrl(source: string): string {
+  let url: URL;
+  try {
+    url = new URL(source, /^\/animes\/\d+(?:[-/?#]|$)/i.test(source)
+      ? 'https://shikimori.io'
+      : undefined);
+  } catch {
+    return source;
+  }
+
+  if (
+    !HTTP_PROTOCOLS.has(url.protocol)
+    || !['shikimori.io', 'shikimori.one'].includes(normalizeHostname(url.hostname))
+    || !/^\/animes\/\d+(?:[-/]|$)/i.test(url.pathname)
+    || url.username
+    || url.password
+    || url.port
+  ) return source;
+
+  // The legacy .one host can time out instead of redirecting to the current site.
+  url.protocol = 'https:';
+  url.hostname = 'shikimori.io';
+  return url.href;
+}
+
 export function isVkImageHost(hostname: string): boolean {
   return isHostnameOrSubdomain(hostname, VK_IMAGE_HOSTS);
 }

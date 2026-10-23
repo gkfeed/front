@@ -1,4 +1,4 @@
-import { normalizeHostname } from '../../../shared/urlRules.js';
+import { normalizeHostname, normalizeShikimoriAnimeUrl } from '../../../shared/urlRules.js';
 import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
 import { fetchHtml } from '../pageFetcher.js';
 import { parseOpenGraph } from '../openGraphParser.js';
@@ -11,7 +11,8 @@ export const shikimoriOpenGraphAdapter: OpenGraphProviderAdapter = {
       && /^\/animes\/\d+(?:[-/]|$)/i.test(url.pathname);
   },
   async fetch(requestedUrl, context) {
-    const page = await fetchHtml(requestedUrl, TWITTERBOT_USER_AGENT, {}, context);
+    const previewUrl = new URL(normalizeShikimoriAnimeUrl(requestedUrl.href));
+    const page = await fetchHtml(previewUrl, TWITTERBOT_USER_AGENT, {}, context);
     return parseShikimoriOpenGraph(page.html, page.url);
   },
   parse: parseShikimoriOpenGraph,
