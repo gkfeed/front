@@ -1,6 +1,7 @@
 # Перевести авторизацию на серверную сессию
 
-Status: proposed. Перед реализацией нужно согласовать контракт с upstream API.
+Status: blocked by deployment. Контракт согласован, API и миграция merged;
+рабочие API/БД пока не готовы. См. [проверку deployment](../docs/browser-session-readiness.md).
 
 Priority: P2
 
@@ -10,12 +11,11 @@ Priority: P2
 
 ## Что сделать
 
-- Описать серверный поток входа, восстановления сессии и выхода.
-- Хранить upstream credentials или полученный token на сервере.
-- Выдавать браузеру сессионную cookie с `HttpOnly`, `Secure` и подходящим `SameSite`.
-- Проксировать защищённые API-запросы через BFF.
-- Определить защиту изменяющих запросов от CSRF.
-- Удалить сохранённый ключ `gkfeed.credentials` после миграции.
+- После подтверждённого deployment подключить согласованные v2 password/passkey login, `/me` и DELETE logout.
+- Хранить сессии в Go API и PostgreSQL; браузер получает `HttpOnly`, `Secure`, `SameSite=Lax` cookie. Node BFF не хранит credentials или токены пользователя.
+- Обращаться к `/api/...` на публичном origin через reverse proxy, сохраняя Origin для серверной CSRF-проверки.
+- В dev-прокси адаптировать только Secure для локального HTTP, сохраняя простой `make dev`.
+- Удалить `gkfeed.credentials`, потребовать один повторный вход, убрать Basic Auth и пароль из состояния.
 
 ## Критерии приёмки
 
