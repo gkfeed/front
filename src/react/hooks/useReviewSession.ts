@@ -20,6 +20,7 @@ export function useReviewSession({
   hideTikTokItems,
   feedPriorities,
   interleaveFeeds = false,
+  priorityItemIds,
 }: ReviewPresentation & {
   loadedItems: FeedItem[] | undefined;
   username: string | null;
@@ -34,9 +35,11 @@ export function useReviewSession({
     hideTikTokItems,
     feedPriorities,
     interleaveFeeds,
+    priorityItemIds,
   }), [
     feedPriorities,
     interleaveFeeds,
+    priorityItemIds,
     hideTikTokItems,
     itemOrder,
     nsfwMode,
@@ -56,6 +59,11 @@ export function useReviewSession({
     });
   }, [storageKey]);
 
+  // Apply priorities before a snapshot can choose its first current card.
+  useEffect(() => {
+    dispatch({ type: 'presentationChanged', presentation });
+  }, [presentation]);
+
   useEffect(() => {
     dispatch({ type: 'snapshotChanged', items: loadedItems, isComplete: isSnapshotComplete });
   }, [isSnapshotComplete, loadedItems, storageKey]);
@@ -63,10 +71,6 @@ export function useReviewSession({
   useEffect(() => {
     if (isSyncFailed) dispatch({ type: 'syncFailed' });
   }, [isSyncFailed, storageKey]);
-
-  useEffect(() => {
-    dispatch({ type: 'presentationChanged', presentation });
-  }, [presentation]);
 
   useEffect(() => {
     if (session.progressToPersist === null) return;

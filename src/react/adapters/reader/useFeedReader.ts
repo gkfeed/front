@@ -13,6 +13,10 @@ import { useFeedPriority } from '../../state/useFeedPriority';
 import { useFeedDecisions } from '../../state/useFeedDecisions';
 import { getEffectiveFeedPriorities } from '../../state/feedPriority';
 import { useFeatureUseCases } from '../../state/useFeatureUseCases';
+import { getPriorityReaderItemIds } from '../../features/reader/readerItemPriority';
+import type { Feed } from '../../types';
+
+const EMPTY_SOURCES: Feed[] = [];
 
 /** Connects the Reader transaction model to loading, deletion, and cache I/O. */
 export function useFeedReader({
@@ -33,7 +37,7 @@ export function useFeedReader({
     (signal: AbortSignal) => feeds.loadFeeds(credentials, signal),
     [credentials, feeds],
   );
-  const { result: sources = [], error: sourceError, isLoading: isSourcesLoading, retry: retrySources } = useAsyncLoad(loadSources);
+  const { result: sources = EMPTY_SOURCES, error: sourceError, isLoading: isSourcesLoading, retry: retrySources } = useAsyncLoad(loadSources);
   const groupedFeedIds = useMemo(
     () => new Set(sources.filter(({ type }) => type.trim().toLowerCase() === 'rezka').map(({ id }) => id)),
     [sources],
@@ -55,6 +59,10 @@ export function useFeedReader({
     ),
     [decisions, isAutomaticEnabled, isManualEnabled, priorities],
   );
+  const priorityItemIds = useMemo(
+    () => getPriorityReaderItemIds(loadedItems ?? [], sources),
+    [loadedItems, sources],
+  );
   const {
     items: reviewItems,
     currentItem: reviewCurrentItem,
@@ -69,7 +77,7 @@ export function useFeedReader({
     deletions,
     reset,
   } = useReviewSession({
-    loadedItems,
+    loadedItems: isSourcesLoading || sourceError ? undefined : loadedItems,
     username: credentials?.username ?? null,
     isSyncComplete,
     isSnapshotComplete,
@@ -79,6 +87,7 @@ export function useFeedReader({
     hideTikTokItems: hideTikTokItems && !disabledPlugins.has('tiktok'),
     feedPriorities,
     interleaveFeeds: isAutomaticEnabled,
+    priorityItemIds,
   });
   const items = sourceError ? undefined : reviewItems;
   const currentItem = isSourcesLoading || sourceError ? undefined : reviewCurrentItem;

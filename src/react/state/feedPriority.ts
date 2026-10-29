@@ -67,8 +67,12 @@ export function orderFeedItems(
   itemOrder: 'asc' | 'desc',
   priorities: FeedPriorities,
   interleaveFeeds = false,
+  priorityItemIds: ReadonlySet<number> = new Set(),
 ): FeedItem[] {
   const ordered = [...items].sort((left, right) => {
+    // Time-sensitive items precede ordinary items regardless of source weights.
+    const urgencyDifference = Number(priorityItemIds.has(right.id)) - Number(priorityItemIds.has(left.id));
+    if (urgencyDifference !== 0) return urgencyDifference;
     const leftPriority = getFeedPriority(priorities, left.feedId);
     const rightPriority = getFeedPriority(priorities, right.feedId);
     const manualDifference = Math.round(rightPriority) - Math.round(leftPriority);
@@ -84,10 +88,11 @@ export function orderFeedItems(
   if (!interleaveFeeds) return ordered;
 
   // The automatic adjustment is strictly between -0.5 and 0.5, so rounding
-  // recovers the manual tier. Never interleave across those tiers.
-  const tiers = new Map<number, Map<number, FeedItem[]>>();
+  // recovers the manual tier. Keep time-sensitive and ordinary queues separate,
+  // including when they contain items from the same feed.
+  const tiers = new Map<string, Map<number, FeedItem[]>>();
   for (const item of ordered) {
-    const tier = Math.round(getFeedPriority(priorities, item.feedId));
+    const tier = `${Number(priorityItemIds.has(item.id))}:${Math.round(getFeedPriority(priorities, item.feedId))}`;
     const feeds = tiers.get(tier) ?? new Map<number, FeedItem[]>();
     const queue = feeds.get(item.feedId) ?? [];
     queue.push(item);

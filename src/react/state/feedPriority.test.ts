@@ -88,6 +88,35 @@ describe('feed priority', () => {
     expect(parseFeedPriorities({ 42: -2, nope: 3, 7: 100, 8: 0 })).toEqual({ 42: -2 });
   });
 
+  it.each(['asc', 'desc'] as const)('boosts time-sensitive items within %s order and preserves feed interleaving', (order) => {
+    const items = [item(8, 1), item(7, 2), item(6, 3), item(5, 2), item(4, 3), item(3, 1)];
+    const boosted = new Set([7, 6, 5, 4]);
+    const priorities = { 1: 0.3, 2: -0.3, 3: -0.4 };
+
+    expect(orderFeedItems(items, order, priorities, true, boosted).map(({ id }) => id))
+      .toEqual(order === 'desc' ? [7, 6, 5, 4, 8, 3] : [5, 4, 7, 6, 3, 8]);
+    expect(orderFeedItems(items, order, { 1: 99, 2: -99, 3: -99 }, true, boosted).slice(0, 4).map(({ id }) => id))
+      .toEqual(order === 'desc' ? [7, 6, 5, 4] : [4, 5, 6, 7]);
+    expect(orderFeedItems(items, order, {}, false, boosted).map(({ id }) => id))
+      .toEqual(order === 'desc' ? [7, 6, 5, 4, 8, 3] : [4, 5, 6, 7, 3, 8]);
+  });
+
+  it.each([
+    { order: 'asc', interleave: true },
+    { order: 'desc', interleave: true },
+    { order: 'asc', interleave: false },
+    { order: 'desc', interleave: false },
+  ] as const)('puts urgent items ahead of 3,000 ordinary items: %o', ({ order, interleave }) => {
+    const ordinary = Array.from({ length: 3000 }, (_, index) => item(index + 10, 1));
+    const items = [...ordinary, item(3, 1), item(2, 2), item(1, 2)];
+    const ordered = orderFeedItems(items, order, { 1: 99.4, 2: -99.4 }, interleave, new Set([1, 2, 3]));
+
+    expect(ordered.slice(0, 3).map(({ id }) => id)).toEqual(order === 'asc' ? [3, 1, 2] : [3, 2, 1]);
+    expect(ordered.slice(3).map(({ id }) => id))
+      .toEqual(order === 'asc' ? ordinary.map(({ id }) => id) : ordinary.map(({ id }) => id).reverse());
+    expect(new Set(ordered.map(({ id }) => id)).size).toBe(items.length);
+  });
+
   it.each(['asc', 'desc'] as const)('interleaves uneven sources without losing %s order within a source', (order) => {
     const items = [item(8, 1), item(7, 1), item(6, 1), item(5, 2), item(4, 2), item(3, 3)];
     const priorities = { 1: 0.3, 2: 0.1, 3: -0.2 };

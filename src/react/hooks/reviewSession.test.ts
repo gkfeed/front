@@ -18,6 +18,38 @@ const presentation: ReviewPresentation = {
 };
 
 describe('review session', () => {
+  it('promotes urgent items in a saved 3,000-item queue while preserving the current card and kept decisions', () => {
+    const ordinaryIds = Array.from({ length: 3000 }, (_, index) => 4000 - index);
+    let state = reviewSessionReducer(createReviewSessionState({
+      ...presentation,
+      feedPriorities: { 1: 99, 2: -99 },
+      priorityItemIds: new Set([10, 9, 8]),
+      interleaveFeeds: true,
+    }), {
+      type: 'sessionChanged', storageKey: 'reader', restoredItemOrder: 'desc',
+      restoredProgress: {
+        pendingIds: [...ordinaryIds, 10, 9], revisitIds: [8], keptItemIds: new Set([8]),
+      },
+    });
+    state = reviewSessionReducer(state, {
+      type: 'snapshotChanged', isComplete: true,
+      items: [
+        ...ordinaryIds.map((id) => ({ ...item(id), feedId: 1 })),
+        ...[10, 9, 8].map((id) => ({ ...item(id), feedId: 2 })),
+      ],
+    });
+
+    expect(getActiveReviewIds(state).slice(0, 4)).toEqual([4000, 10, 9, 3999]);
+    state = reviewSessionReducer(state, { type: 'keep', id: 4000 });
+    expect(state.currentItem?.id).toBe(10);
+    state = reviewSessionReducer(state, { type: 'keep', id: 10 });
+    expect(state.currentItem?.id).toBe(9);
+    state = reviewSessionReducer(state, { type: 'delete', id: 9, title: 'Item 9' });
+    expect(state.currentItem?.id).toBe(3999);
+    expect(state.progress.keptItemIds).toEqual(new Set([8, 4000, 10]));
+    expect(state.progress.revisitIds).toEqual([8, 4000, 10]);
+  });
+
   it('reorders saved queues after the order changes outside Reader without losing kept decisions', () => {
     let state = reviewSessionReducer(createReviewSessionState({ ...presentation, itemOrder: 'asc' }), {
       type: 'sessionChanged',
@@ -185,12 +217,15 @@ describe('review session', () => {
     expect(getActiveReviewIds(state)).toEqual([3, 6, 5]);
   });
 
-  it('updates priorities for upcoming cards without replacing the current card', () => {
+  it.each([
+    { feedPriorities: { 1: 10 } },
+    { priorityItemIds: new Set([1]) },
+  ])('updates priorities for upcoming cards without replacing the current card: %o', (priorities) => {
     let state = snapshot(startSession(null), [3, 2, 1], true);
     const currentItem = state.currentItem;
     state = reviewSessionReducer(state, {
       type: 'presentationChanged',
-      presentation: { ...presentation, feedPriorities: { 1: 10 }, interleaveFeeds: true },
+      presentation: { ...presentation, ...priorities, interleaveFeeds: true },
     });
     expect(state.currentItem).toBe(currentItem);
     expect(getActiveReviewIds(state)).toEqual([3, 1, 2]);

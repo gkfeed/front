@@ -11,7 +11,7 @@ import {
 } from '../state/FeedPriorityProvider';
 import { FEED_PRIORITIES_STORAGE_KEY } from '../state/feedPriority';
 import { getFeedDecisionsStorageKey } from '../state/useFeedDecisions';
-import { deleteFeedItemById, getFeedItems } from '../services/feeds';
+import { deleteFeedItemById, getAllFeeds, getFeedItems } from '../services/feeds';
 import { stubLocalStorage, restoreLocalStorage } from '../testUtils';
 import { ReaderPage } from './ReaderPage';
 
@@ -31,6 +31,30 @@ afterEach(() => {
 });
 
 describe('ReaderPage smart order', () => {
+  it('waits for source types and reviews older stories and live events before regular posts', async () => {
+    let resolveFeeds!: (feeds: Awaited<ReturnType<typeof getAllFeeds>>) => void;
+    vi.mocked(getAllFeeds).mockReturnValue(new Promise((resolve) => { resolveFeeds = resolve; }));
+    vi.mocked(getFeedItems).mockResolvedValue([
+      { id: 30, feedId: 1, link: '', title: 'Regular post', text: '' },
+      { id: 20, feedId: 2, link: '', title: 'Expiring story', text: '' },
+      { id: 10, feedId: 1, link: 'https://www.twitch.tv/channel', title: 'Live stream', text: '' },
+    ]);
+    render(
+      <MemoryRouter initialEntries={['/reader']}>
+        <FeedPriorityProvider><ReaderPage /></FeedPriorityProvider>
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(getFeedItems).toHaveBeenCalled());
+    expect(screen.queryByRole('button', { name: /keep/i })).toBeNull();
+    resolveFeeds([{ id: 2, type: 'stories', title: 'Stories', url: '' }]);
+
+    expect(await screen.findByText('Expiring story')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Live stream')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Regular post')).toBeTruthy();
+  });
+
   it('orders review items by the keep rate of their feeds', async () => {
     const storage = stubLocalStorage();
     const items = [

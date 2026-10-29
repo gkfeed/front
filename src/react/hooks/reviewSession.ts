@@ -18,6 +18,7 @@ export type ReviewPresentation = {
   hideTikTokItems: boolean;
   feedPriorities: FeedPriorities;
   interleaveFeeds?: boolean;
+  priorityItemIds?: ReadonlySet<number>;
 };
 
 export type FeedItemDeletion = {
@@ -284,6 +285,7 @@ function reducePresentationChanged(
 ): ReviewSessionState {
   const orderChanged = presentation.itemOrder !== state.presentation.itemOrder
     || presentation.interleaveFeeds !== state.presentation.interleaveFeeds
+    || !setsEqual(presentation.priorityItemIds, state.presentation.priorityItemIds)
     || !prioritiesEqual(presentation.feedPriorities, state.presentation.feedPriorities);
   const projection = projectSnapshot(state.snapshot, presentation, state.deletions);
   if (!orderChanged) return { ...state, presentation, ...projection };
@@ -307,6 +309,7 @@ function projectSnapshot(
 
   const orderedItems = orderFeedItems(
     snapshot, presentation.itemOrder, presentation.feedPriorities, presentation.interleaveFeeds,
+    presentation.priorityItemIds,
   );
   const deletedItemIds = new Set(deletions.map(({ itemId }) => itemId));
   const availableItems = orderedItems.filter((item) => !deletedItemIds.has(item.id));
@@ -533,6 +536,11 @@ function mergePartialSnapshot(
   if (!currentItems) return [...incomingItems];
   const incomingIds = new Set(incomingItems.map((item) => item.id));
   return [...incomingItems, ...currentItems.filter((item) => !incomingIds.has(item.id))];
+}
+
+function setsEqual(left?: ReadonlySet<number>, right?: ReadonlySet<number>): boolean {
+  return (left?.size ?? 0) === (right?.size ?? 0)
+    && [...left ?? []].every((id) => right?.has(id));
 }
 
 function prioritiesEqual(left: FeedPriorities, right: FeedPriorities): boolean {
