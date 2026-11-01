@@ -50,6 +50,29 @@ describe('review session', () => {
     expect(state.progress.revisitIds).toEqual([8, 4000, 10]);
   });
 
+  it('finishes the active urgent source across score changes and refreshed snapshots', () => {
+    const urgentPresentation = { ...presentation, interleaveFeeds: true, priorityItemIds: new Set([5, 4, 3, 2]) };
+    let state = reviewSessionReducer(createReviewSessionState(urgentPresentation), {
+      type: 'snapshotChanged', isComplete: true,
+      items: [
+        { ...item(5), feedId: 1 }, { ...item(4), feedId: 2 },
+        { ...item(3), feedId: 1 }, { ...item(2), feedId: 2 },
+        { ...item(1), feedId: 1 },
+      ],
+    });
+    expect(getActiveReviewIds(state)).toEqual([5, 3, 4, 2, 1]);
+    state = reviewSessionReducer(state, {
+      type: 'presentationChanged', presentation: { ...urgentPresentation, feedPriorities: { 2: 0.3 } },
+    });
+    expect(getActiveReviewIds(state)).toEqual([5, 3, 4, 2, 1]);
+    state = reviewSessionReducer(state, { type: 'snapshotChanged', isComplete: true, items: state.snapshot });
+    expect(getActiveReviewIds(state)).toEqual([5, 3, 4, 2, 1]);
+    state = reviewSessionReducer(state, { type: 'delete', id: 5, title: 'Story' });
+    expect(state.currentItem?.id).toBe(3);
+    state = reviewSessionReducer(state, { type: 'keep', id: 3 });
+    expect(state.currentItem?.id).toBe(4);
+  });
+
   it('reorders saved queues after the order changes outside Reader without losing kept decisions', () => {
     let state = reviewSessionReducer(createReviewSessionState({ ...presentation, itemOrder: 'asc' }), {
       type: 'sessionChanged',

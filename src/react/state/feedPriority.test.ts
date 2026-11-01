@@ -88,17 +88,17 @@ describe('feed priority', () => {
     expect(parseFeedPriorities({ 42: -2, nope: 3, 7: 100, 8: 0 })).toEqual({ 42: -2 });
   });
 
-  it.each(['asc', 'desc'] as const)('boosts time-sensitive items within %s order and preserves feed interleaving', (order) => {
+  it.each(['asc', 'desc'] as const)('groups time-sensitive items by source within %s order', (order) => {
     const items = [item(8, 1), item(7, 2), item(6, 3), item(5, 2), item(4, 3), item(3, 1)];
     const boosted = new Set([7, 6, 5, 4]);
     const priorities = { 1: 0.3, 2: -0.3, 3: -0.4 };
 
     expect(orderFeedItems(items, order, priorities, true, boosted).map(({ id }) => id))
-      .toEqual(order === 'desc' ? [7, 6, 5, 4, 8, 3] : [5, 4, 7, 6, 3, 8]);
+      .toEqual(order === 'desc' ? [7, 5, 6, 4, 8, 3] : [5, 7, 4, 6, 3, 8]);
     expect(orderFeedItems(items, order, { 1: 99, 2: -99, 3: -99 }, true, boosted).slice(0, 4).map(({ id }) => id))
-      .toEqual(order === 'desc' ? [7, 6, 5, 4] : [4, 5, 6, 7]);
+      .toEqual(order === 'desc' ? [7, 5, 6, 4] : [4, 6, 5, 7]);
     expect(orderFeedItems(items, order, {}, false, boosted).map(({ id }) => id))
-      .toEqual(order === 'desc' ? [7, 6, 5, 4, 8, 3] : [4, 5, 6, 7, 3, 8]);
+      .toEqual(order === 'desc' ? [7, 5, 6, 4, 8, 3] : [4, 6, 5, 7, 3, 8]);
   });
 
   it.each([

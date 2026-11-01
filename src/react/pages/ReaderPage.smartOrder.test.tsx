@@ -55,6 +55,38 @@ describe('ReaderPage smart order', () => {
     expect(await screen.findByText('Regular post')).toBeTruthy();
   });
 
+  it.each([true, false])('finishes each live source after Delete and Keep with automatic ordering %s', async (automatic) => {
+    const storage = stubLocalStorage();
+    storage.set(AUTOMATIC_FEED_PRIORITIZATION_ENABLED_STORAGE_KEY, String(automatic));
+    vi.mocked(getAllFeeds).mockResolvedValue([
+      { id: 1, type: 'stories', title: 'First user', url: '' },
+      { id: 2, type: 'stories', title: 'Second user', url: '' },
+    ]);
+    vi.mocked(getFeedItems).mockResolvedValue([
+      { id: 35, feedId: 1, link: '', title: 'First user story one', text: '' },
+      { id: 34, feedId: 2, link: '', title: 'Second user story one', text: '' },
+      { id: 33, feedId: 3, link: '', title: 'Regular post', text: '' },
+      { id: 32, feedId: 1, link: '', title: 'First user story two', text: '' },
+      { id: 31, feedId: 2, link: '', title: 'Second user story two', text: '' },
+    ]);
+    vi.mocked(deleteFeedItemById).mockResolvedValue(undefined);
+    render(
+      <MemoryRouter initialEntries={['/reader']}>
+        <FeedPriorityProvider><ReaderPage /></FeedPriorityProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('First user story one')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    expect(await screen.findByText('First user story two')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Second user story one')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Second user story two')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /keep/i }));
+    expect(await screen.findByText('Regular post')).toBeTruthy();
+  });
+
   it('orders review items by the keep rate of their feeds', async () => {
     const storage = stubLocalStorage();
     const items = [

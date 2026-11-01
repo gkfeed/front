@@ -85,14 +85,27 @@ export function orderFeedItems(
       ? (left.id < right.id ? -1 : 1)
       : (left.id > right.id ? -1 : 1);
   });
-  if (!interleaveFeeds) return ordered;
+  // Review a source's time-sensitive items together, even with automatic
+  // prioritization disabled. Ordinary posts from that source stay in their queue.
+  const urgentFeeds = new Map<number, FeedItem[]>();
+  const ordinary: FeedItem[] = [];
+  for (const item of ordered) {
+    if (!priorityItemIds.has(item.id)) {
+      ordinary.push(item);
+      continue;
+    }
+    const queue = urgentFeeds.get(item.feedId) ?? [];
+    queue.push(item);
+    urgentFeeds.set(item.feedId, queue);
+  }
+  const urgent = [...urgentFeeds.values()].flat();
+  if (!interleaveFeeds) return [...urgent, ...ordinary];
 
   // The automatic adjustment is strictly between -0.5 and 0.5, so rounding
-  // recovers the manual tier. Keep time-sensitive and ordinary queues separate,
-  // including when they contain items from the same feed.
+  // recovers the manual tier. Only ordinary items alternate between sources.
   const tiers = new Map<string, Map<number, FeedItem[]>>();
-  for (const item of ordered) {
-    const tier = `${Number(priorityItemIds.has(item.id))}:${Math.round(getFeedPriority(priorities, item.feedId))}`;
+  for (const item of ordinary) {
+    const tier = `${Math.round(getFeedPriority(priorities, item.feedId))}`;
     const feeds = tiers.get(tier) ?? new Map<number, FeedItem[]>();
     const queue = feeds.get(item.feedId) ?? [];
     queue.push(item);
@@ -100,7 +113,7 @@ export function orderFeedItems(
     tiers.set(tier, feeds);
   }
 
-  const result: FeedItem[] = [];
+  const result: FeedItem[] = [...urgent];
   for (const feeds of tiers.values()) {
     let queues = [...feeds.values()];
     let round = 0;

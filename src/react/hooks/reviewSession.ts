@@ -84,8 +84,10 @@ export function reviewSessionReducer(
   state: ReviewSessionState,
   event: ReviewSessionEvent,
 ): ReviewSessionState {
-  const next = reduceReviewSession(state, event);
+  let next = reduceReviewSession(state, event);
   if (next === state) return state;
+
+  next = continueUrgentFeed(state, next, event);
 
   // Background data and priority updates may change the queue, but the card
   // already on screen remains the target of Keep and Delete until user action.
@@ -98,6 +100,29 @@ export function reviewSessionReducer(
       ? state.currentItem
       : next.items?.find(({ id }) => id === nextId);
   return { ...next, currentItem };
+}
+
+// Priority scores can change after each decision. Finish the current live
+// source before switching to a source whose score has just overtaken it.
+function continueUrgentFeed(
+  previous: ReviewSessionState,
+  next: ReviewSessionState,
+  event: ReviewSessionEvent,
+): ReviewSessionState {
+  const current = previous.currentItem;
+  if (!current || !next.presentation.priorityItemIds?.has(current.id)
+    || event.type === 'sessionChanged' || event.type === 'reset' || event.type === 'recoverDeletion'
+    || (event.type === 'presentationChanged' && event.presentation.itemOrder !== previous.presentation.itemOrder)) {
+    return next;
+  }
+  const queueKey = previous.progress.pendingIds.includes(current.id) ? 'pendingIds' : 'revisitIds';
+  const queue = next.progress[queueKey];
+  const sameFeedIds = new Set(next.items?.filter((item) => item.feedId === current.feedId
+    && next.presentation.priorityItemIds?.has(item.id)).map(({ id }) => id));
+  const grouped = [...queue.filter((id) => sameFeedIds.has(id)), ...queue.filter((id) => !sameFeedIds.has(id))];
+  if (grouped.every((id, index) => id === queue[index])) return next;
+  const progress = { ...next.progress, [queueKey]: grouped };
+  return { ...next, progress, progressToPersist: next.hasProgress ? progress : null };
 }
 
 function preservesCurrentItem(state: ReviewSessionState, event: ReviewSessionEvent): boolean {
