@@ -21,6 +21,7 @@ export function OneFootballMatch({
   const score = snapshot.score;
   const center = getMatchCenter(snapshot, i18n.language, t);
   const showGoals = snapshot.normalizedStatus === 'live' || snapshot.normalizedStatus === 'over';
+  const matchDate = showGoals ? formatKickoff(snapshot.startsAt, i18n.language)?.date : null;
   const label = score
     ? `${homeTeam.name} ${score[0]}–${score[1]} ${awayTeam.name}`
     : `${homeTeam.name} / ${awayTeam.name}`;
@@ -45,6 +46,11 @@ export function OneFootballMatch({
         <span className={`reader-card__onefootball-result reader-card__onefootball-result--${snapshot.normalizedStatus ?? 'unknown'}`}>
           {center.top ? <span>{center.top}</span> : null}
           <strong>{center.main}</strong>
+          {matchDate ? (
+            <time className="reader-card__onefootball-date" dateTime={snapshot.startsAt ?? undefined}>
+              {matchDate}
+            </time>
+          ) : null}
         </span>
         <MatchLogo key={awayTeam.logo ?? 'away'} src={awayTeam.logo} size="team" side="away" />
         <strong className="reader-card__onefootball-team-name reader-card__onefootball-team-name--home">
