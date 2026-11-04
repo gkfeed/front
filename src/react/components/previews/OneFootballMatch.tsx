@@ -21,6 +21,7 @@ export function OneFootballMatch({
   const score = snapshot.score;
   const center = getMatchCenter(snapshot, i18n.language, t);
   const showGoals = snapshot.normalizedStatus === 'live' || snapshot.normalizedStatus === 'over';
+  const matchDate = showGoals ? formatKickoff(snapshot.startsAt, i18n.language)?.date : null;
   const label = score
     ? `${homeTeam.name} ${score[0]}–${score[1]} ${awayTeam.name}`
     : `${homeTeam.name} / ${awayTeam.name}`;
@@ -33,10 +34,19 @@ export function OneFootballMatch({
       rel="noreferrer"
       aria-label={externalLinkHint ? `${label}, ${externalLinkHint}` : label}
     >
-      {snapshot.competition || snapshot.competitionLogo ? (
-        <span className="reader-card__onefootball-competition">
-          <MatchLogo key={snapshot.competitionLogo ?? 'competition'} src={snapshot.competitionLogo} size="competition" />
-          {snapshot.competition ? <strong>{snapshot.competition}</strong> : null}
+      {snapshot.competition || snapshot.competitionLogo || matchDate ? (
+        <span className="reader-card__onefootball-meta">
+          {snapshot.competition || snapshot.competitionLogo ? (
+            <span className="reader-card__onefootball-competition">
+              <MatchLogo key={snapshot.competitionLogo ?? 'competition'} src={snapshot.competitionLogo} size="competition" />
+              {snapshot.competition ? <strong>{snapshot.competition}</strong> : null}
+            </span>
+          ) : null}
+          {matchDate ? (
+            <time className="reader-card__onefootball-date" dateTime={snapshot.startsAt ?? undefined}>
+              {matchDate}
+            </time>
+          ) : null}
         </span>
       ) : null}
 
