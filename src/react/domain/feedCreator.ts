@@ -79,7 +79,19 @@ export function normalizeLazyFeedUrl(value: string): string {
 export function inferFeedSourceFromLazyUrl(value: string): Pick<FeedInput, 'type' | 'url'> | null {
   const url = normalizeLazyFeedUrl(value);
 
-  return parseYoutubeChannelUrl(url)?.channelId ? { type: 'yt', url } : null;
+  if (parseYoutubeChannelUrl(url)?.channelId) return { type: 'yt', url };
+  try {
+    const parsed = new URL(url);
+    if (VALID_URL_PROTOCOLS.has(parsed.protocol)
+      && normalizeHostname(parsed.hostname) === 'liveball.sx'
+      && !parsed.username && !parsed.password && !parsed.port
+      && parsed.pathname === '/') {
+      return { type: 'liveball', url: 'https://liveball.sx/' };
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 export function inferFeedTitleFromUrl(value: string): string | null {

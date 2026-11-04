@@ -26,6 +26,7 @@ export const FEED_TYPE_OPTIONS = [
   { value: 'x', label: 'X', display: 'icon', description: 'An X or Twitter profile feed.' },
   { value: 'spoti:playlist', label: 'Spotify playlist', display: 'initials', description: 'A Spotify playlist.' },
   { value: 'onefootball', label: 'OneFootball', display: 'initials', description: 'A OneFootball team, competition or match source.' },
+  { value: 'liveball', label: 'Liveball', display: 'initials', description: 'The featured football match from the Liveball homepage at liveball.sx.' },
   { value: 'rtl', label: 'RTL', display: 'initials', description: 'An RTL source.' },
   { value: 'rezka:collection', label: 'Rezka collection', display: 'initials', description: 'A Rezka collection rather than one movie or TV title.' },
   { value: 'matreshka', label: 'Matreshka', display: 'initials', description: 'A Matreshka video source.' },

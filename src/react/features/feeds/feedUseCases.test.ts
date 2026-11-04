@@ -236,6 +236,19 @@ describe('feed use cases', () => {
     expect(commandPort.createFeedFromUrl).not.toHaveBeenCalled();
   });
 
+  it('creates the Liveball homepage directly without relying on lazy API detection or page metadata', async () => {
+    const ports = createPorts();
+    await createFeedUseCases(ports).saveFeed({
+      title: '', type: 'web', url: 'https://www.liveball.sx/?ref=share',
+    }, 'lazy', credentials);
+
+    expect(ports.commandPort.createFeed).toHaveBeenCalledWith({
+      title: 'Liveball', type: 'liveball', url: 'https://liveball.sx/',
+    }, credentials);
+    expect(ports.commandPort.createFeedFromUrl).not.toHaveBeenCalled();
+    expect(ports.metadataPort.getOpenGraphPreview).not.toHaveBeenCalled();
+  });
+
   it.each(['lazy', 'extended'] as const)('resolves handle URLs before %s creation and preserves tabs', async (mode) => {
     for (const tab of ['', '/videos', '/shorts', '/streams']) {
       const ports = createPorts(createOpenGraphPreview('Channel title'));
