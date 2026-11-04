@@ -56,6 +56,19 @@ describe('Jev feed type suggestion', () => {
     )).rejects.toThrow('invalid feed type');
   });
 
+  it('offers Liveball to detection and accepts its response', async () => {
+    const fetchImplementation = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      answers: { feed_type: { type: 'choice', choice: 'liveball', confidence: 0.9 } },
+    }), { status: 200 }));
+
+    await expect(suggestFeedType(
+      { url: 'https://liveball.sx/' }, createDetachedRequestExecutionContext(),
+      'temporary-test-key', fetchImplementation,
+    )).resolves.toEqual({ type: 'liveball', confidence: 0.9 });
+    const [, init] = fetchImplementation.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body)).questions.feed_type.criteria.liveball).toContain('liveball.sx');
+  });
+
   it('reports missing server configuration without making a request', async () => {
     const fetchImplementation = vi.fn();
     await expect(suggestFeedType(

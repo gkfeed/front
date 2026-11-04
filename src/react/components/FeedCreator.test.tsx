@@ -143,6 +143,26 @@ describe('CreateFeedPage', () => {
     );
   });
 
+  it('allows selecting and saving Liveball manually', async () => {
+    render(<AppProviders><CreateFeedPage /></AppProviders>);
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Football' } });
+    fireEvent.change(screen.getByLabelText('URL'), { target: { value: 'https://liveball.sx/' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Type Web' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Liveball' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add feed' }));
+    expect(await screen.findByText('Feed source saved.')).toBeTruthy();
+    expect(create).toHaveBeenCalledWith({
+      title: 'Football', type: 'liveball', url: 'https://liveball.sx/',
+    }, null);
+  });
+
+  it('shows Liveball when the detector suggests it', async () => {
+    detectType.mockResolvedValueOnce({ type: 'liveball', confidence: 0.9 });
+    render(<AppProviders><CreateFeedPage /></AppProviders>);
+    fireEvent.change(screen.getByLabelText('URL'), { target: { value: 'https://liveball.sx/' } });
+    expect(await screen.findByRole('button', { name: 'Type Liveball' })).toBeTruthy();
+  });
+
   it('does not replace a title entered by the user', async () => {
     detectType.mockResolvedValueOnce({ type: 'twitch', confidence: 0.91 });
     getPreview.mockResolvedValueOnce(preview('Generated channel name'));

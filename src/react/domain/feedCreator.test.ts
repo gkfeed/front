@@ -54,6 +54,25 @@ describe('feed creator domain', () => {
     expect(inferFeedSourceFromLazyUrl('https://youtube.com/watch?v=video&si=share')).toBeNull();
   });
 
+  it.each([
+    'https://liveball.sx',
+    ' http://www.liveball.sx/?ref=share#top ',
+  ])('recognizes the Liveball homepage for URL-only creation: %s', (url) => {
+    expect(inferFeedSourceFromLazyUrl(url)).toEqual({ type: 'liveball', url: 'https://liveball.sx/' });
+  });
+
+  it.each([
+    'https://liveball.sx.example.org/',
+    'https://other.liveball.sx/',
+    'https://liveball.sx/match/123',
+    'https://user:pass@liveball.sx/',
+    'https://liveball.sx:8443/',
+    'ftp://liveball.sx/',
+    'not a url',
+  ])('does not infer Liveball from %s', (url) => {
+    expect(inferFeedSourceFromLazyUrl(url)).toBeNull();
+  });
+
   it('uses the Instagram profile username as its title', () => {
     const url = 'https://www.instagram.com/katya.marfaknchov?stkn=ZmJ1bHY0bWZ6eXh2';
 
