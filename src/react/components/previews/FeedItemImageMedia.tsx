@@ -36,6 +36,7 @@ export function FeedItemImageMedia({
 }) {
   const { t } = useTranslation();
   const [imageMetrics, setImageMetrics] = useState<ImagePresentationMetrics | null>(null);
+  const [readySource, setReadySource] = useState<string | null>(null);
   const [displayedImage, setDisplayedImage] = useState<ImagePreview>(preview);
   const waitsForRemoteImage = Boolean(
     preview.fallbackSrc
@@ -55,6 +56,7 @@ export function FeedItemImageMedia({
       onLoad={(event) => {
         const metrics = readImagePresentationMetrics(event.currentTarget, visibleImage.src);
         if (metrics) setImageMetrics(metrics);
+        setReadySource(visibleImage.src);
       }}
       onError={onPreviewError}
     />
@@ -75,6 +77,7 @@ export function FeedItemImageMedia({
         ? t('preview.openScore', { hostname, first: hltvImageScore[0], second: hltvImageScore[1] })
         : t('preview.open', { hostname })}
       data-media-orientation={presentation.orientation}
+      data-media-ready={readySource === visibleImage.src}
       data-vk-feed-placeholder={presentation.isPlaceholder ? '' : undefined}
       data-image-presentation={presentationProfile}
       style={presentation.style}
@@ -97,6 +100,7 @@ export function FeedItemImageMedia({
             const metrics = readImagePresentationMetrics(event.currentTarget, preview.src);
             if (metrics) setImageMetrics(metrics);
             setDisplayedImage(preview);
+            setReadySource(preview.src);
           }}
           onError={onPreviewError}
         />

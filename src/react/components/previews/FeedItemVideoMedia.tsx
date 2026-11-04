@@ -29,6 +29,7 @@ export function FeedItemVideoMedia({
   const [duration, setDuration] = useState<number | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [tempfileFallback, setTempfileFallback] = useState<TempfileFallback>('none');
+  const [readySource, setReadySource] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasAutoAppliedDoubleSpeed = useRef(false);
   const localSoundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
@@ -82,12 +83,13 @@ export function FeedItemVideoMedia({
       className={[
         'reader-card__preview',
         'reader-card__preview--video',
-        aspectRatio ? 'reader-card__preview--video-adaptive' : '',
+        aspectRatio && !isShortVideo ? 'reader-card__preview--video-adaptive' : '',
         isShortVideo ? 'reader-card__preview--short-video' : '',
         isTikTok ? 'reader-card__preview--tiktok' : '',
         tempfileFallback === 'image' ? 'reader-card__preview--tempfile-image' : '',
       ].filter(Boolean).join(' ')}
-      style={aspectRatio ? {
+      data-media-ready={readySource === preview.src}
+      style={aspectRatio && !isShortVideo ? {
         '--reader-video-aspect-ratio': aspectRatio,
         aspectRatio,
       } as CSSProperties : undefined}
@@ -109,9 +111,11 @@ export function FeedItemVideoMedia({
         <img
           src={preview.src}
           alt={t('preview.tempfileImage')}
+          referrerPolicy="no-referrer"
           onLoad={(event) => {
             const { naturalHeight, naturalWidth } = event.currentTarget;
             if (naturalHeight > 0 && naturalWidth > 0) setAspectRatio(naturalWidth / naturalHeight);
+            setReadySource(preview.src);
           }}
           onError={() => setTempfileFallback('error')}
         />
@@ -128,6 +132,8 @@ export function FeedItemVideoMedia({
           muted={soundGesture.isMuted}
           playsInline
           preload="auto"
+          onLoadedData={() => setReadySource(preview.src)}
+          onPlaying={() => setReadySource(preview.src)}
           onLoadedMetadata={(event) => {
             updateDuration(event.currentTarget);
             const { videoHeight, videoWidth } = event.currentTarget;
