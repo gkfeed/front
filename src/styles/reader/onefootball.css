@@ -52,23 +52,11 @@
   border-radius: 16px;
 }
 
-.reader-card__onefootball-meta {
+.reader-card__onefootball-competition {
   position: absolute;
   inset: clamp(18px, 3cqw, 28px) auto auto clamp(18px, 3cqw, 28px);
-  display: grid;
-  max-width: calc(100% - clamp(36px, 6cqw, 56px));
-  min-width: 0;
-  gap: 4px;
-}
-
-.reader-card__onefootball-date {
-  color: #d7e7dc;
-  font-size: clamp(.75rem, 2.4cqw, .95rem);
-  line-height: 1.25;
-}
-
-.reader-card__onefootball-competition {
   display: flex;
+  max-width: calc(100% - clamp(36px, 6cqw, 56px));
   min-width: 0;
   align-items: center;
   gap: 10px;
@@ -163,6 +151,13 @@
   line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.reader-card__onefootball-date {
+  max-width: 100%;
+  color: #d7e7dc;
+  font-size: clamp(.75rem, 2.4cqw, .95rem);
+  line-height: 1.25;
 }
 
 .reader-card__onefootball-result--scheduled strong,
