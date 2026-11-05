@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BrandMark } from '../Icons';
 import type { FeedItem } from '../../types';
 import type { parseLiveballMatch } from '../../domain/liveballMatch';
 import type { OneFootballMatchSnapshot } from '../../../../shared/previewContracts';
@@ -18,7 +17,7 @@ export function LiveballMatch({ item, match, snapshot = null }: {
     <a className="liveball-match" href={item.link} target="_blank" rel="noreferrer">
       <span className="liveball-match__header">
         <span className="liveball-match__competition">{snapshot?.competition || match.competition}</span>
-        <span className="liveball-match__brand"><BrandMark /></span>
+        <img className="liveball-match__brand" src="/liveball-logo.png" alt="LiveBall" />
       </span>
       {date && <span className="liveball-match__date">{date}</span>}
       <span className="liveball-match__teams">

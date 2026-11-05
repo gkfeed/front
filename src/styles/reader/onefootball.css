@@ -236,11 +236,12 @@
 
 .reader-card.reader-card--liveball {
   padding: 0;
+  min-height: 0;
 }
 
 .liveball-match {
   display: grid;
-  align-content: center;
+  align-content: start;
   gap: 8px;
   min-height: 100%;
   padding: clamp(18px, 4vw, 28px);
@@ -268,15 +269,13 @@
 }
 
 .liveball-match__brand {
-  flex: none;
-  color: var(--color-muted);
-  opacity: .65;
-}
-
-.liveball-match__brand svg {
   display: block;
-  width: 22px;
-  height: 22px;
+  flex: none;
+  width: 96px;
+  height: auto;
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: #252735;
 }
 
 .liveball-match__date {

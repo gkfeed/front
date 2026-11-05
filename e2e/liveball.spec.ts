@@ -22,5 +22,5 @@ test('shows a LiveBall match preview', async ({ page }) => {
   await expect(page.getByText('2 : 3', { exact: true })).toBeVisible();
   await expect(page.locator('.liveball-match__crest img')).toHaveCount(2);
   await expect(page.locator('.liveball-match')).toHaveAttribute('href', 'https://liveball.sx/match/1635710');
-  await expect(page.getByText('LIVEBALL', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('img', { name: 'LiveBall' })).toBeVisible();
 });
