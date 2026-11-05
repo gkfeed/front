@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { getLiveballSnapshot } from '../../../shared/providerData/liveball';
 import { LiveballMatch } from './previews/LiveballMatch';
 import { parseLiveballMatch } from '../domain/liveballMatch';
 
@@ -15,7 +16,7 @@ export function FeedItemCardContent({
 }) {
   const { t } = useTranslation();
   const liveballMatch = parseLiveballMatch(facts.item);
-  if (liveballMatch) return <LiveballMatch item={facts.item} match={liveballMatch} />;
+  if (liveballMatch) return <LiveballMatch item={facts.item} match={liveballMatch} snapshot={getLiveballSnapshot(facts.openGraphPreview?.providerData)} />;
   const localizedPreview = facts.visiblePreview
     ? localizeFeedItemPreview(facts.visiblePreview, t)
     : null;

@@ -1,17 +1,38 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FeedItem } from '../../types';
 import type { parseLiveballMatch } from '../../domain/liveballMatch';
+import type { OneFootballMatchSnapshot } from '../../../../shared/previewContracts';
 
-export function LiveballMatch({ item, match }: { item: FeedItem; match: NonNullable<ReturnType<typeof parseLiveballMatch>> }) {
+export function LiveballMatch({ item, match, snapshot = null }: {
+  item: FeedItem;
+  match: NonNullable<ReturnType<typeof parseLiveballMatch>>;
+  snapshot?: OneFootballMatchSnapshot | null;
+}) {
+  const { i18n } = useTranslation();
+  const teams = snapshot?.teams ?? [{ name: match.home, logo: null }, { name: match.away, logo: null }];
+  const date = snapshot?.startsAt && !Number.isNaN(Date.parse(snapshot.startsAt))
+    ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(snapshot.startsAt)) : null;
   return (
-    <a className="reader-card__onefootball-match reader-card__liveball-match" href={item.link} target="_blank" rel="noreferrer">
-      {match.competition && <span className="reader-card__onefootball-competition"><strong>{match.competition}</strong></span>}
-      <span className="reader-card__onefootball-matchup">
-        <span className="reader-card__onefootball-logo reader-card__onefootball-logo--team reader-card__onefootball-logo--home" aria-hidden="true">⚽</span>
-        <span className="reader-card__onefootball-result"><strong>VS</strong></span>
-        <span className="reader-card__onefootball-logo reader-card__onefootball-logo--team reader-card__onefootball-logo--away" aria-hidden="true">⚽</span>
-        <strong className="reader-card__onefootball-team-name reader-card__onefootball-team-name--home">{match.home}</strong>
-        <strong className="reader-card__onefootball-team-name reader-card__onefootball-team-name--away">{match.away}</strong>
+    <a className="liveball-match" href={item.link} target="_blank" rel="noreferrer">
+      <span className="liveball-match__header"><span>LIVEBALL <span aria-hidden="true">↗</span></span><span>{date}</span></span>
+      <span className="liveball-match__competition">{snapshot?.competition || match.competition}</span>
+      <span className="liveball-match__teams">
+        {teams.map((team, index) => (
+          <span className="liveball-match__team" key={index}>
+            <TeamCrest name={team.name} logo={team.logo} />
+            <strong>{team.name}</strong>
+          </span>
+        ))}
+        <span className="liveball-match__result"><strong>{snapshot?.score ? `${snapshot.score[0]} : ${snapshot.score[1]}` : 'VS'}</strong><span>{snapshot?.status}</span></span>
       </span>
     </a>
   );
+}
+
+function TeamCrest({ name, logo }: { name: string; logo: string | null }) {
+  const [failedLogo, setFailedLogo] = useState<string | null>(null);
+  return <span className="liveball-match__crest">{logo && logo !== failedLogo
+    ? <img src={logo} alt="" onError={() => setFailedLogo(logo)} />
+    : <span aria-hidden="true">{name.slice(0, 1)}</span>}</span>;
 }

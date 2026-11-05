@@ -28,7 +28,7 @@ export const FeedItemCard = memo(function FeedItemCard({
       className={[
         'reader-card',
         isPreviewPending && !isLiveballMatch ? 'reader-card--preview-pending' : '',
-        isLiveballMatch ? 'reader-card--onefootball' : '',
+        isLiveballMatch ? 'reader-card--liveball' : '',
         ...getFeedItemCardClassNames(model),
         isRezkaUrl(parseUrl(item.link)) ? 'reader-card--rezka' : '',
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',

@@ -1,3 +1,4 @@
+import { liveballOpenGraphAdapter } from './providers/liveball.js';
 import type { OpenGraphProviderAdapter } from './openGraphProviderAdapter.js';
 import { hltvOpenGraphAdapter } from './providers/hltv.js';
 import { instagramOpenGraphAdapter } from './providers/instagram.js';
@@ -8,6 +9,7 @@ import { sasflixOpenGraphAdapter } from './providers/sasflix.js';
 import { vkOpenGraphAdapter } from './providers/vk.js';
 
 export const openGraphProviderAdapters: readonly OpenGraphProviderAdapter[] = [
+  liveballOpenGraphAdapter,
   hltvOpenGraphAdapter,
   oneFootballOpenGraphAdapter,
   rezkaOpenGraphAdapter,
