@@ -20,6 +20,7 @@ test('shows a LiveBall match preview', async ({ page }) => {
   await expect(page.getByText('РБ Лейпциг', { exact: true })).toBeVisible();
   await expect(page.getByText('Манчестер Сити', { exact: true })).toBeVisible();
   await expect(page.getByText('2 : 3', { exact: true })).toBeVisible();
+  await expect(page.locator('.liveball-match__result .liveball-match__date')).toBeVisible();
   await expect(page.locator('.liveball-match__crest img')).toHaveCount(2);
   await expect(page.locator('.liveball-match')).toHaveAttribute('href', 'https://liveball.sx/match/1635710');
   await expect(page.getByRole('img', { name: 'LiveBall' })).toBeVisible();

@@ -19,7 +19,6 @@ export function LiveballMatch({ item, match, snapshot = null }: {
         <span className="liveball-match__competition">{snapshot?.competition || match.competition}</span>
         <img className="liveball-match__brand" src="/liveball-logo.png" alt="LiveBall" />
       </span>
-      {date && <span className="liveball-match__date">{date}</span>}
       <span className="liveball-match__teams">
         {teams.map((team, index) => (
           <span className="liveball-match__team" key={index}>
@@ -27,7 +26,7 @@ export function LiveballMatch({ item, match, snapshot = null }: {
             <strong>{team.name}</strong>
           </span>
         ))}
-        <span className="liveball-match__result"><strong>{snapshot?.score ? `${snapshot.score[0]} : ${snapshot.score[1]}` : 'VS'}</strong><span>{snapshot?.status}</span></span>
+        <span className="liveball-match__result">{date && <span className="liveball-match__date">{date}</span>}<strong>{snapshot?.score ? `${snapshot.score[0]} : ${snapshot.score[1]}` : 'VS'}</strong><span>{snapshot?.status}</span></span>
       </span>
     </a>
   );
