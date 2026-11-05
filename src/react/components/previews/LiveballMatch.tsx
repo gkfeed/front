@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BrandMark } from '../Icons';
 import type { FeedItem } from '../../types';
 import type { parseLiveballMatch } from '../../domain/liveballMatch';
 import type { OneFootballMatchSnapshot } from '../../../../shared/previewContracts';
@@ -15,8 +16,11 @@ export function LiveballMatch({ item, match, snapshot = null }: {
     ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(snapshot.startsAt)) : null;
   return (
     <a className="liveball-match" href={item.link} target="_blank" rel="noreferrer">
-      <span className="liveball-match__header"><span>LIVEBALL <span aria-hidden="true">↗</span></span><span>{date}</span></span>
-      <span className="liveball-match__competition">{snapshot?.competition || match.competition}</span>
+      <span className="liveball-match__header">
+        <span className="liveball-match__competition">{snapshot?.competition || match.competition}</span>
+        <span className="liveball-match__brand"><BrandMark /></span>
+      </span>
+      {date && <span className="liveball-match__date">{date}</span>}
       <span className="liveball-match__teams">
         {teams.map((team, index) => (
           <span className="liveball-match__team" key={index}>

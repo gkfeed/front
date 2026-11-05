@@ -235,43 +235,82 @@
 }
 
 .reader-card.reader-card--liveball {
-  background: var(--color-card);
-  border-color: var(--color-card-border);
+  padding: 0;
 }
+
 .liveball-match {
   display: grid;
-  gap: 18px;
-  padding: clamp(22px, 5cqw, 38px);
+  align-content: center;
+  gap: 8px;
+  min-height: 100%;
+  padding: clamp(18px, 4vw, 28px);
   color: var(--color-ink);
   text-decoration: none;
+  border-radius: inherit;
 }
-.liveball-match:focus-visible { outline: 3px solid var(--color-focus); outline-offset: -4px; }
+
+.liveball-match:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
 .liveball-match__header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  color: var(--color-muted);
-  font-size: .75rem;
-  font-weight: 700;
-  letter-spacing: .08em;
+  gap: 16px;
 }
-.liveball-match__header span:first-child { color: var(--color-accent); }
-.liveball-match__competition { color: var(--color-ink-strong); font-size: 1rem; font-weight: 700; }
+
+.liveball-match__competition {
+  color: var(--color-ink-strong);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.liveball-match__brand {
+  flex: none;
+  color: var(--color-muted);
+  opacity: .65;
+}
+
+.liveball-match__brand svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.liveball-match__date {
+  color: var(--color-muted);
+  font-size: .78rem;
+}
+
 .liveball-match__teams {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(75px, .6fr) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   padding: 22px 0 8px;
-  border-top: 1px solid var(--color-card-border);
 }
-.liveball-match__team { display: grid; justify-items: center; gap: 14px; text-align: center; overflow-wrap: anywhere; }
+
+.liveball-match__team {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .liveball-match__team:nth-child(2) { grid-column: 3; grid-row: 1; }
 .liveball-match__crest {
-  display: grid; place-items: center; width: clamp(60px, 13cqw, 96px); aspect-ratio: 1;
-  border-radius: 24px; background: var(--color-surface-muted); font-size: 2rem; font-weight: 800;
+  display: grid;
+  place-items: center;
+  width: clamp(54px, 11cqw, 80px);
+  aspect-ratio: 1;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-muted);
 }
-.liveball-match__crest img { width: 72%; height: 72%; object-fit: contain; }
+.liveball-match__crest img { width: 100%; height: 100%; object-fit: contain; }
 .liveball-match__result { grid-column: 2; grid-row: 1; display: grid; justify-items: center; gap: 8px; text-align: center; }
 .liveball-match__result strong { color: var(--color-ink-strong); font-size: clamp(1.4rem, 5cqw, 2.4rem); white-space: nowrap; }
 .liveball-match__result span { color: var(--color-muted); font-size: .75rem; }
