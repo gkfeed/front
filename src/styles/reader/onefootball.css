@@ -233,3 +233,8 @@
     animation: none;
   }
 }
+
+.reader-card__liveball-match .reader-card__onefootball-team-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
