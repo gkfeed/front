@@ -43,6 +43,27 @@ describe('useReviewPreviewPrefetch', () => {
     await waitFor(() => expect(loadRemotePreview).toHaveBeenCalledTimes(2));
     expect((loadRemotePreview.mock.calls[1]![2] as AbortSignal).aborted).toBe(false);
   });
+
+  it('buffers only the next story video and releases it when disabled', async () => {
+    const createElement = vi.spyOn(document, 'createElement');
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined);
+    const loadRemotePreview = vi.fn().mockResolvedValue(EMPTY_REMOTE_PREVIEW);
+    const items = [1, 2, 3].map((id) => ({
+      ...createItem(id), title: 'inst: author', link: `https://example.com/${id}.mp4`,
+    }));
+    const { rerender } = renderHook(({ enabled }) => useReviewPreviewPrefetch({
+      enabled, items, activeReviewIds: [1, 2, 3],
+    }), { initialProps: { enabled: true }, wrapper: createWrapper(loadRemotePreview) });
+
+    const videos = () => createElement.mock.results
+      .map((result) => result.value as HTMLElement)
+      .filter((element) => element.tagName === 'VIDEO') as HTMLVideoElement[];
+    await waitFor(() => expect(videos()).toHaveLength(1));
+    expect(videos()[0]!.src).toBe(items[1]!.link);
+    rerender({ enabled: false });
+    expect(videos()[0]!.hasAttribute('src')).toBe(false);
+  });
+
   it('prefetches only the next few remote previews in queue order', async () => {
     const loadRemotePreview = vi.fn().mockResolvedValue(EMPTY_REMOTE_PREVIEW);
     const items = [1, 2, 3, 4, 5].map((id) => createItem(id));

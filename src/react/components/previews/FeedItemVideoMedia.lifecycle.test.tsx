@@ -18,7 +18,7 @@ function CachedVideo({ src, duration, width, height }: { src: string; duration: 
     });
     video.dispatchEvent(new Event('loadedmetadata', { bubbles: true }));
   }, [duration, height, src, width]);
-  return <FeedItemVideoMedia preview={{ type: 'video', src, alt: 'Cached video' }} isShortVideo isTikTok onPreviewError={vi.fn()} />;
+  return <FeedItemVideoMedia preview={{ type: 'video', src, alt: 'Cached video' }} isShortVideo={false} isTikTok onPreviewError={vi.fn()} />;
 }
 
 describe('video metadata lifecycle', () => {

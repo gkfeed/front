@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 
 import { abortPrefetches, prefetchFeedItem } from '../services/previewPrefetch';
+import { prefetchStoryVideo } from '../services/storyVideoPrefetch';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
@@ -36,6 +37,20 @@ export function useReviewPreviewPrefetch({
         return item ? [item] : [];
       });
   }, [activeReviewIds, items]);
+  const nextItem = nextItems[0];
+
+  useEffect(() => {
+    if (!enabled || !nextItem) return;
+    // Start after the visible card has had a chance to request its media.
+    let dispose: (() => void) | undefined;
+    const timeoutId = window.setTimeout(() => {
+      dispose = prefetchStoryVideo(nextItem, previewUseCases, nsfwMode);
+    }, 0);
+    return () => {
+      window.clearTimeout(timeoutId);
+      dispose?.();
+    };
+  }, [enabled, nextItem, nsfwMode, previewUseCases]);
 
   useEffect(() => {
     if (!enabled) {
