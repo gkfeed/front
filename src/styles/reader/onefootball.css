@@ -237,6 +237,10 @@
 .reader-card.reader-card--liveball {
   padding: 0;
   min-height: 0;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgb(76 203 0 / 13%), transparent 48%),
+    radial-gradient(ellipse at 0% 100%, rgb(76 203 0 / 7%), transparent 50%),
+    linear-gradient(160deg, var(--color-card-hover), var(--color-card));
 }
 
 .liveball-match {
