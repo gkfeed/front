@@ -1,3 +1,4 @@
+import { isLiveballMatchUrl } from '../../../shared/urlRules';
 import type { FeedItem } from '../types';
 import type {
   NsfwMode,
@@ -98,7 +99,8 @@ function shouldRequestRemotePreview(
     : null;
 
   return !shouldHideNsfw
-    && (isRedditUrl(url)
+    && ((url && isLiveballMatchUrl(url))
+      || isRedditUrl(url)
       || providerView.provider === 'vk'
       || isRezkaUrl(url)
       || (providerView.provider === 'instagram' && Boolean(url && isInstagramMediaUrl(url)))
