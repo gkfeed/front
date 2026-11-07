@@ -140,6 +140,7 @@ function resolveProviderViewModel(
       return { ...providerView, media: isImagePreview(visiblePreview) ? 'photo' : 'video' };
     case 'hltv':
     case 'liquipedia':
+    case 'liveball':
     case 'matreshka':
     case 'sasflix':
     case 'tiktok':

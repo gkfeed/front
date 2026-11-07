@@ -24,6 +24,7 @@ export type FeedItemProviderIdentity =
   | { provider: 'hltv' }
   | { provider: 'instagram'; media: 'photo' | 'video' }
   | { provider: 'liquipedia' }
+  | { provider: 'liveball' }
   | { provider: 'matreshka'; videoId: string }
   | { provider: 'onefootball'; simpleImage: boolean }
   | { provider: 'reddit'; simpleImage: boolean }

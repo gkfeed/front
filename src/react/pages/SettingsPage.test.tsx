@@ -41,7 +41,7 @@ describe('SettingsPage', () => {
     renderSettings();
 
     expect(screen.getByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
-    expect(screen.getAllByRole('checkbox')).toHaveLength(13);
+    expect(screen.getAllByRole('checkbox')).toHaveLength(14);
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Twitch' }));
 

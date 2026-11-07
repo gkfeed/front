@@ -101,6 +101,7 @@ function shouldRequestRemotePreview(
 
   return !shouldHideNsfw
     && (providerView.provider === 'reddit'
+      || providerView.provider === 'liveball'
       || providerView.provider === 'vk'
       || providerView.provider === 'rezka'
       || (providerView.provider === 'instagram' && Boolean(url && isInstagramMediaUrl(url)))

@@ -120,6 +120,16 @@ const cases: PolicyCase[] = [
     visible: 'https://example.com/match.jpg',
   },
   {
+    name: 'Liveball requests match data despite a local image',
+    item: feedItem({
+      link: 'https://liveball.sx/match/1635710',
+      text: '<img src="https://example.com/match.jpg">',
+    }),
+    request: 'open-graph',
+    preview: 'https://example.com/match.jpg',
+    visible: 'https://example.com/match.jpg',
+  },
+  {
     name: 'YouTube requests the original title despite a local thumbnail',
     item: feedItem({
       link: 'https://www.youtube.com/watch?v=abc123xyz',

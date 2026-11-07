@@ -32,6 +32,7 @@ function getProviderClassNames(facts: FeedItemCardModel): readonly string[] {
       'reader-card--liquipedia',
       ...(facts.liquipediaMatch ? ['reader-card--liquipedia-widget'] : []),
     ];
+    case 'liveball': return [];
     case 'matreshka': return ['reader-card--matreshka', 'reader-card--player', 'reader-card--landscape-media'];
     case 'onefootball': return ['reader-card--onefootball'];
     case 'reddit': return [

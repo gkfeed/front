@@ -1,6 +1,7 @@
 import {
   isHltvMatchUrl,
   isLiquipediaMatchUrl,
+  isLiveballMatchUrl,
   isOneFootballMatchUrl,
   isRedditVideoUrl,
   isTikTokVideoUrl,
@@ -121,6 +122,10 @@ export const feedItemProviderResources = {
     matches: (_item, url) => Boolean(url && isLiquipediaMatchUrl(url)),
     loading: { remotePreview: 'liquipedia' },
   }),
+  liveball: defineFeedPlugin('liveball', 'LiveBall', {
+    analyze: () => ({ provider: 'liveball' }),
+    matches: (_item, url) => Boolean(url && isLiveballMatchUrl(url)),
+  }),
   matreshka: defineFeedPlugin('matreshka', 'Matreshka', {
     analyze: (_item, url) => ({ provider: 'matreshka', videoId: requirePayload(url && getMatreshkaVideoId(url), 'matreshka') }),
     matches: (_item, url) => Boolean(url && getMatreshkaVideoId(url)),
@@ -205,6 +210,7 @@ const detectedProviders: readonly FeedPluginId[] = [
   'vk',
   'hltv',
   'onefootball',
+  'liveball',
   'liquipedia',
   'reddit',
   'rezka',

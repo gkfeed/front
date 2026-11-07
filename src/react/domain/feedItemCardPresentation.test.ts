@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { analyzeFeedItem } from './feedItemPreview';
 import { buildFeedItemCardPresentation } from './feedItemCardPresentation';
 import { getFeedItemCardClassNames } from '../components/providers/feedItemCardClassNames';
+import type { LiveballProviderData } from '../../../shared/providerData/liveball';
 import type { FeedItem } from '../types';
 
 function item(overrides: Partial<FeedItem> = {}): FeedItem {
@@ -19,6 +20,26 @@ function item(overrides: Partial<FeedItem> = {}): FeedItem {
 }
 
 describe('feed item card presentation', () => {
+  it('retains Liveball match data only while the plugin is enabled', () => {
+    const match = item({ link: 'https://liveball.sx/match/1635710' });
+    const providerData: LiveballProviderData = {
+      provider: 'liveball',
+      snapshot: {
+        competition: null, competitionLogo: null,
+        teams: [{ name: 'Home', logo: null }, { name: 'Away', logo: null }],
+        score: ['2', '3'], status: 'Full time', normalizedStatus: 'over', startsAt: null,
+      },
+    };
+    const remotePreview = { liquipediaMatch: null, openGraphPreview: {
+      url: match.link, title: null, description: null, image: null, video: null, siteName: 'Liveball', type: null, providerData,
+    } };
+    const present = (disabled: boolean) => buildFeedItemCardPresentation({
+      item: match, providerView: analyzeFeedItem(match, disabled ? new Set(['liveball']) : new Set()),
+      nsfwMode: 'show', previewFailures: 0, remotePreview,
+    });
+    expect(present(false).openGraphPreview?.providerData).toEqual(providerData);
+    expect(present(true).openGraphPreview?.providerData).toBeNull();
+  });
   it('drops Reddit deletion metadata and styling when the plugin is disabled', () => {
     const post = item({ link: 'https://www.reddit.com/r/example/comments/abc123/story', text: '<img src="https://example.com/local.jpg">' });
     const result = buildFeedItemCardPresentation({

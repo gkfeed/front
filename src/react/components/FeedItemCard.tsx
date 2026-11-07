@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { parseLiveballMatch } from '../domain/liveballMatch';
 import { useTranslation } from 'react-i18next';
 import { FeedItemCardContent } from './FeedItemCardContent';
 import { useFeedItemCardModel } from './useFeedItemCardModel';
@@ -18,13 +19,15 @@ export const FeedItemCard = memo(function FeedItemCard({
   const articleReader = useArticleReader(item.link);
   const { cardRef, isPreviewPending, shouldBlurNsfw, shouldHideNsfw } = model;
   if (shouldHideNsfw) return null;
+  const isLiveballMatch = model.provider === 'liveball' && Boolean(parseLiveballMatch(item));
 
   return (
     <article
       ref={cardRef}
       className={[
         'reader-card',
-        isPreviewPending ? 'reader-card--preview-pending' : '',
+        isPreviewPending && !isLiveballMatch ? 'reader-card--preview-pending' : '',
+        isLiveballMatch ? 'reader-card--liveball' : '',
         ...getFeedItemCardClassNames(model),
         shouldBlurNsfw ? 'reader-card--nsfw-blurred' : '',
       ].filter(Boolean).join(' ')}

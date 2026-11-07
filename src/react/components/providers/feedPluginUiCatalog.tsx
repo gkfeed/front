@@ -41,6 +41,7 @@ export const feedPluginUiCatalog = {
     const { LiquipediaPreview } = await import('./providerRenderers/liquipedia');
     return { renderCard: (props) => ({ preview: <LiquipediaPreview {...props} />, copy: props.facts.liquipediaMatch ? null : <StandardCopy {...props} /> }) };
   }),
+  liveball: definePluginUi('liveball', standardUi),
   matreshka: definePluginUi('matreshka', async () => {
     const { MatreshkaVideoPreview, MatreshkaCopy } = await import('./providerRenderers/matreshka');
     return { renderCard: (props) => ({ preview: <MatreshkaVideoPreview {...props} />, copy: <MatreshkaCopy {...props} /> }) };

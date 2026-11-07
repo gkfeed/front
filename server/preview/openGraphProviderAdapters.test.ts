@@ -4,11 +4,12 @@ import { findOpenGraphProviderAdapter, openGraphProviderAdapters } from './openG
 
 describe('Open Graph provider adapters', () => {
   it('keeps provider behaviors behind one adapter seam', () => {
-    expect(openGraphProviderAdapters).toHaveLength(10);
+    expect(openGraphProviderAdapters).toHaveLength(11);
 
     for (const value of [
       'https://www.hltv.org/matches/123/team-a-vs-team-b',
       'https://onefootball.com/en/match/2700208',
+      'https://liveball.sx/match/1635710',
       'https://hdrezka.me/films/drama/123-story.html',
       'https://www.instagram.com/reel/ABC123/',
       'https://matreshka.tv/video/channel/',

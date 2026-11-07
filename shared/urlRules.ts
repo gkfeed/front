@@ -163,3 +163,8 @@ export function getSasflixPublicationIdFromUrl(url: URL): string | null {
   if (!isSasflixPublicationUrl(url)) return null;
   return url.pathname.match(SASFLIX_PUBLICATION_PATH)?.[0].split('/').filter(Boolean).at(-1) ?? null;
 }
+
+export function isLiveballMatchUrl(url: URL): boolean {
+  return HTTP_PROTOCOLS.has(url.protocol) && normalizeHostname(url.hostname) === 'liveball.sx'
+    && /^\/match\/\d+\/?$/.test(url.pathname);
+}
