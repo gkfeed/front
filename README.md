@@ -23,6 +23,15 @@ same-origin `/api/v1` proxy in development and the hosted API URL in production.
 Item synchronization uses the corresponding `/api/v2/items` routes. The development
 server proxies both API versions.
 
+The development proxy preserves `Origin`. On local HTTP it removes only `Secure`
+from the upstream `gkfeed.session` cookie, including its logout clearing response.
+It retains `HttpOnly`, `SameSite`, path and expiry, and leaves other cookies and
+HTTPS responses unchanged. The hosted API must explicitly allow each development
+origin. No local Go API, certificates or additional setup are required.
+
+The cookie auth rollout is currently blocked by the deployed API and database.
+See [deployment evidence and remaining work](docs/browser-session-readiness.md).
+
 ## Build
 
 Run `npm run build` to create a production build in `dist/`.
