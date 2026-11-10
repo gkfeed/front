@@ -121,3 +121,9 @@
 .reader-card--telegram .reader-card__image-surface {
   display: block;
 }
+
+.telegram-post__content a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
