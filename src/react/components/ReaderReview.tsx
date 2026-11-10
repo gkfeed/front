@@ -12,6 +12,7 @@ import { usePluginPreferences } from '../state/usePluginPreferences';
 
 export function ReaderReview({
   item,
+  sourceTitle,
   remainingCount,
   hasKeptItems,
   isDeleting,
@@ -21,6 +22,7 @@ export function ReaderReview({
   onReset,
 }: {
   item: FeedItem;
+  sourceTitle?: string;
   remainingCount: number;
   hasKeptItems: boolean;
   isDeleting: boolean;
@@ -53,7 +55,7 @@ export function ReaderReview({
       role="region"
       aria-label={t('reader.reviewView')}
     >
-      <FeedItemCard key={item.id} item={item} />
+      <FeedItemCard key={item.id} item={item} sourceTitle={sourceTitle} />
       {isShortVideo ? (
         <ReaderMobileRail
           {...reviewActions}

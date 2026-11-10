@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { FeedItem } from '../types';
+import type { Feed, FeedItem } from '../types';
 import { FeedItemCard } from './FeedItemCard';
 import { FeedPriorityControls } from './FeedPriorityControls';
 
 const PAGE_SIZE = 20;
 
-export function ReaderScroll({ items }: { items: FeedItem[] }) {
+export function ReaderScroll({ items, sources = [] }: { items: FeedItem[]; sources?: Feed[] }) {
   const { t } = useTranslation();
   const [pageStart, setPageStart] = useState(0);
   const lastPageStart = Math.max(0, Math.floor((items.length - 1) / PAGE_SIZE) * PAGE_SIZE);
@@ -28,7 +28,7 @@ export function ReaderScroll({ items }: { items: FeedItem[] }) {
       <div className="reader__stream">
         {items.slice(safePageStart, pageEnd).map((item) => (
           <div className="reader__scroll-item" key={item.id}>
-            <FeedItemCard item={item} />
+            <FeedItemCard item={item} sourceTitle={sources.find((source) => source.id === item.feedId)?.title} />
             <FeedPriorityControls feedId={item.feedId} />
           </div>
         ))}

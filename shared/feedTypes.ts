@@ -7,6 +7,7 @@ export interface FeedTypeOption {
 
 export const FEED_TYPE_OPTIONS = [
   { value: 'web', label: 'Web', display: 'icon', description: 'A general website, RSS or Atom feed that does not match a more specific type.' },
+  { value: 'telegram', label: 'Telegram', display: 'initials', description: 'A public Telegram channel at t.me.' },
   { value: 'tiktok', label: 'TikTok', display: 'icon', description: 'A TikTok creator or feed.' },
   { value: 'kinogo', label: 'Kinogo', display: 'initials', description: 'A Kinogo movie or TV source.' },
   { value: 'twitch', label: 'Twitch', display: 'initials', description: 'A Twitch channel.' },

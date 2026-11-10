@@ -11,7 +11,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('./FeedItemCard', () => ({
-  FeedItemCard: ({ item }: { item: FeedItem }) => <div data-testid="feed-item">{item.title}</div>,
+  FeedItemCard: ({ item, sourceTitle }: { item: FeedItem; sourceTitle?: string }) => <div data-testid="feed-item" data-source-title={sourceTitle}>{item.title}</div>,
 }));
 
 afterEach(() => {
@@ -27,6 +27,11 @@ const items = Array.from({ length: 1_000 }, (_, index): FeedItem => ({
 }));
 
 describe('ReaderScroll', () => {
+  it('passes the matching source title to each card', () => {
+    render(<ReaderScroll items={[items[0]]} sources={[{ id: 1, title: 'Мой канал', type: 'telegram', url: 'https://t.me/channel' }]} />);
+    expect(screen.getByTestId('feed-item').getAttribute('data-source-title')).toBe('Мой канал');
+  });
+
   it('keeps a bounded card window while paging forward and backward', () => {
     render(<ReaderScroll items={items} />);
 

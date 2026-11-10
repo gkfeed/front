@@ -82,6 +82,11 @@ export function inferFeedSourceFromLazyUrl(value: string): Pick<FeedInput, 'type
   if (parseYoutubeChannelUrl(url)?.channelId) return { type: 'yt', url };
   try {
     const parsed = new URL(url);
+    if (VALID_URL_PROTOCOLS.has(parsed.protocol) && parsed.hostname.toLowerCase() === 't.me'
+      && !parsed.username && !parsed.password && !parsed.port
+      && /^\/[a-z0-9_]{5,32}\/?$/i.test(parsed.pathname)) {
+      return { type: 'telegram', url };
+    }
     if (VALID_URL_PROTOCOLS.has(parsed.protocol)
       && normalizeHostname(parsed.hostname) === 'liveball.sx'
       && !parsed.username && !parsed.password && !parsed.port

@@ -13,6 +13,7 @@ export function ReaderPage() {
   const { t } = useTranslation();
   const {
     items,
+    sources,
     currentItem,
     isLoading,
     isItemPending,
@@ -67,6 +68,7 @@ export function ReaderPage() {
           <ReaderReview
             key={currentItem.id}
             item={currentItem}
+            sourceTitle={sources.find((source) => source.id === currentItem.feedId)?.title}
             remainingCount={remainingCount}
             hasKeptItems={hasKeptItems}
             isDeleting={isItemPending(currentItem.id)}
@@ -94,7 +96,7 @@ export function ReaderPage() {
           </div>
         ) : null}
         {mode === 'scroll' && hasLoadedContent && items.length > 0 ? (
-          <ReaderScroll key={itemOrder} items={items} />
+          <ReaderScroll key={itemOrder} items={items} sources={sources} />
         ) : null}
       </section>
     </>
