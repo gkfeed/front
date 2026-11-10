@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { parseLiveballMatch } from '../domain/liveballMatch';
+import { isTelegramPost } from './TelegramPost';
 import { useTranslation } from 'react-i18next';
 import { FeedItemCardContent } from './FeedItemCardContent';
 import { useFeedItemCardModel } from './useFeedItemCardModel';
@@ -26,6 +27,7 @@ export const FeedItemCard = memo(function FeedItemCard({
       ref={cardRef}
       className={[
         'reader-card',
+        isTelegramPost(item.link) ? 'reader-card--telegram' : '',
         isPreviewPending && !isLiveballMatch ? 'reader-card--preview-pending' : '',
         isLiveballMatch ? 'reader-card--liveball' : '',
         ...getFeedItemCardClassNames(model),

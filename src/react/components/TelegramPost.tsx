@@ -1,5 +1,6 @@
 import { createElement, type ReactNode } from 'react';
 import type { FeedItem } from '../types';
+import { VkImageCarousel } from './previews/VkImageCarousel';
 
 export function isTelegramPost(link: string): boolean {
   try {
@@ -25,10 +26,7 @@ function renderNode(node: Node, key: number): ReactNode {
   const tag = node.tagName.toLowerCase();
   if (['script', 'style', 'iframe', 'object', 'svg', 'template'].includes(tag)) return null;
   const children = Array.from(node.childNodes, renderNode);
-  if (tag === 'img') {
-    const src = safeUrl(node.getAttribute('src'));
-    return src ? <img key={key} src={src} alt={node.getAttribute('alt') || ''} loading="lazy" /> : null;
-  }
+  if (tag === 'img') return null;
   if (tag === 'a') {
     const href = safeUrl(node.getAttribute('href'));
     return href ? <a key={key} href={href} target="_blank" rel="noopener noreferrer">{children}</a> : children;
@@ -38,12 +36,19 @@ function renderNode(node: Node, key: number): ReactNode {
 }
 
 export function TelegramPost({ item }: { item: FeedItem }) {
-  const content = typeof DOMParser === 'undefined' ? [] : Array.from(
-    new DOMParser().parseFromString(item.text || '', 'text/html').body.childNodes, renderNode,
-  );
-  return <div className="reader-card__copy telegram-post">
-    <h2 className="reader-card__title">{item.title || 'Telegram'}</h2>
-    <div className="telegram-post__content">{content}</div>
-    <a href={item.link} target="_blank" rel="noopener noreferrer">Telegram ↗</a>
-  </div>;
+  const document = typeof DOMParser === 'undefined' ? null : new DOMParser().parseFromString(item.text || '', 'text/html');
+  document?.querySelectorAll('script, style, iframe, object, svg, template').forEach((node) => node.remove());
+  const images = Array.from(document?.querySelectorAll('img') ?? [])
+    .map((image) => safeUrl(image.getAttribute('src')))
+    .filter((src): src is string => src !== null);
+  const content = Array.from(document?.body.childNodes ?? [], renderNode);
+  return <>
+    {images.length > 0 ? <VkImageCarousel key={item.link} href={item.link} hostname="Telegram"
+      preview={{ src: images[0], imageUrls: images, alt: item.title || 'Telegram' }} onPreviewError={() => {}} /> : null}
+    <div className="reader-card__copy telegram-post">
+      <h2 className="reader-card__title">{item.title || 'Telegram'}</h2>
+      <div className="telegram-post__content">{content}</div>
+      <a href={item.link} target="_blank" rel="noopener noreferrer">Telegram ↗</a>
+    </div>
+  </>;
 }

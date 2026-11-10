@@ -94,10 +94,30 @@
   white-space: pre-wrap;
 }
 
-.telegram-post__content img {
+.reader-card--telegram {
+  min-height: 0;
+  gap: 12px;
+}
+
+.reader-card--telegram .reader-card__vk-carousel {
+  width: min(100%, 55dvh);
+  justify-self: center;
+}
+
+.reader-card--telegram .reader-card__image-surface > img {
+  width: 100%;
+  height: min(37dvh, 420px);
+  object-fit: contain;
+}
+
+.reader-card--telegram .reader-card__copy {
+  gap: 8px;
+}
+
+.reader-card--telegram .reader-card__title {
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+}
+
+.reader-card--telegram .reader-card__image-surface {
   display: block;
-  max-width: 100%;
-  height: auto;
-  margin-block: 8px;
-  border-radius: 12px;
 }

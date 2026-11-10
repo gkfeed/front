@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
 import { TelegramPost, isTelegramPost } from './TelegramPost';
 import { inferFeedSourceFromLazyUrl } from '../domain/feedCreator';
@@ -17,7 +17,12 @@ it('renders formatted text, links and all photos while rejecting unsafe markup',
   expect(container.querySelector('b')?.textContent).toBe('Hello');
   expect(screen.getByRole('link', { name: 'link' }).getAttribute('href')).toBe('https://example.org/');
   expect(screen.getByRole('link', { name: 'Video' }).getAttribute('href')).toBe('https://t.me/mudotalida/9136');
-  expect(container.querySelectorAll('img')).toHaveLength(2);
+  expect(container.querySelector('img')?.getAttribute('src')).toBe('https://example.org/1.jpg');
+  fireEvent.click(screen.getByRole('button', { name: /next slide/i }));
+  expect(container.querySelector('img')?.getAttribute('src')).toBe('https://example.org/2.jpg');
+  expect(screen.getByText('2 / 2')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: /previous slide/i }));
+  expect(container.querySelector('img')?.getAttribute('src')).toBe('https://example.org/1.jpg');
   expect(container.querySelector('[onerror], script, a[href^="javascript:"]')).toBeNull();
 });
 it('shows a post link when text and media are absent', () => {

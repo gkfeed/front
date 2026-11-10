@@ -9,10 +9,11 @@ import {
   type ImagePresentationMetrics,
 } from './feedItemImagePresentation';
 
-export function VkImageCarousel({ href, preview, onPreviewError }: {
+export function VkImageCarousel({ href, preview, onPreviewError, hostname = 'VK' }: {
   href: string;
   preview: LocalizedFeedItemPreview;
   onPreviewError: () => void;
+  hostname?: string;
 }) {
   const { t } = useTranslation();
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -86,20 +87,20 @@ export function VkImageCarousel({ href, preview, onPreviewError }: {
         />
       </span>
       <a className="reader-card__vk-carousel-link" href={href} target="_blank" rel="noreferrer"
-        aria-label={t('preview.open', { hostname: 'VK' })} />
+        aria-label={t('preview.open', { hostname })} />
       {firstFallback && remoteFirst === 'pending' ? (
         <img src={current} alt="" aria-hidden="true" hidden data-preview-preloader=""
           style={{ display: 'none' }} referrerPolicy="no-referrer"
           onLoad={() => setRemoteFirst('loaded')}
           onError={() => setRemoteFirst('failed')} />
       ) : null}
-      <div className="reader-card__vk-carousel-controls">
+      {images.length > 1 ? <div className="reader-card__vk-carousel-controls">
         <button className="reader-card__vk-carousel-arrow reader-card__vk-carousel-arrow--previous"
           type="button" aria-label={t('preview.previousSlide')} onClick={() => move(-1)}>‹</button>
         <span className="reader-card__vk-carousel-count" aria-live="polite">{index + 1} / {images.length}</span>
         <button className="reader-card__vk-carousel-arrow reader-card__vk-carousel-arrow--next"
           type="button" aria-label={t('preview.nextSlide')} onClick={() => move(1)}>›</button>
-      </div>
+      </div> : null}
     </div>
   );
 }
