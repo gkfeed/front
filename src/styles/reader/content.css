@@ -100,13 +100,16 @@
 }
 
 .reader-card--telegram .reader-card__vk-carousel {
-  width: min(100%, 55dvh);
+  width: fit-content;
+  max-width: 100%;
   justify-self: center;
 }
 
 .reader-card--telegram .reader-card__image-surface > img {
-  width: 100%;
-  height: min(37dvh, 420px);
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: min(50dvh, 640px);
   object-fit: contain;
 }
 
@@ -114,9 +117,6 @@
   gap: 8px;
 }
 
-.reader-card--telegram .reader-card__title {
-  font-size: clamp(1.1rem, 3vw, 1.5rem);
-}
 
 .reader-card--telegram .reader-card__image-surface {
   display: block;

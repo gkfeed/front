@@ -42,13 +42,13 @@ export function TelegramPost({ item }: { item: FeedItem }) {
     .map((image) => safeUrl(image.getAttribute('src')))
     .filter((src): src is string => src !== null);
   const content = Array.from(document?.body.childNodes ?? [], renderNode);
+  const hasText = Boolean(document?.body.textContent?.trim());
   return <>
     {images.length > 0 ? <VkImageCarousel key={item.link} href={item.link} hostname="Telegram"
       preview={{ src: images[0], imageUrls: images, alt: item.title || 'Telegram' }} onPreviewError={() => {}} /> : null}
-    <div className="reader-card__copy telegram-post">
-      <h2 className="reader-card__title">{item.title || 'Telegram'}</h2>
+    {hasText ? <div className="reader-card__copy telegram-post">
       <div className="telegram-post__content">{content}</div>
-      <a href={item.link} target="_blank" rel="noopener noreferrer">Telegram ↗</a>
-    </div>
+    </div> : null}
+    {!hasText && images.length === 0 ? <a href={item.link} target="_blank" rel="noopener noreferrer">Telegram ↗</a> : null}
   </>;
 }
