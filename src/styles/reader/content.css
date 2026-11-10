@@ -94,9 +94,18 @@
   white-space: pre-wrap;
 }
 
+.telegram-post__content p {
+  margin: 0;
+}
+
+.telegram-post__content p + p {
+  margin-top: 0.5em;
+}
+
 .reader-card--telegram {
   min-height: 0;
-  gap: 12px;
+  gap: 8px;
+  padding: 12px 14px;
 }
 
 .reader-card--telegram .reader-card__vk-carousel {
@@ -104,7 +113,6 @@
   max-width: 100%;
   justify-self: center;
 }
-
 .reader-card--telegram .reader-card__image-surface > img {
   width: auto;
   max-width: 100%;
@@ -116,7 +124,6 @@
 .reader-card--telegram .reader-card__copy {
   gap: 8px;
 }
-
 
 .reader-card--telegram .reader-card__image-surface {
   display: block;
@@ -154,4 +161,8 @@
   flex: 0 0 auto;
   width: 20px;
   height: 20px;
+}
+
+.reader-card.reader-card--telegram:not(:has(> .reader-card__vk-carousel)) {
+  padding: 12px 14px;
 }
