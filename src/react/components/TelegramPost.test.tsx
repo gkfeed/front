@@ -13,10 +13,10 @@ it('creates a public channel source without mistaking posts or lookalike hosts f
   expect(isTelegramPost('https://t.me.evil.test/mudotalida/9136')).toBe(false);
 });
 it('renders formatted text, links and all photos while rejecting unsafe markup', () => {
-  const { container } = render(<TelegramPost item={{ id: 1, feedId: 2, title: 'Post', link: 'https://t.me/mudotalida/9136', text: '<b>Hello</b> <a href="https://example.org/">link</a><img src="https://example.org/1.jpg" onerror="alert(1)"><img src="https://example.org/2.jpg"><a href="https://t.me/mudotalida/9136">Video</a><a href="javascript:alert(1)">bad</a><script>alert(1)</script>' }} />);
+  const { container } = render(<TelegramPost sourceTitle="Мой канал" item={{ id: 1, feedId: 2, title: 'Post', link: 'https://t.me/mudotalida/9136', text: '<b>Hello</b> <a href="https://example.org/">link</a><img src="https://example.org/1.jpg" onerror="alert(1)"><img src="https://example.org/2.jpg"><a href="https://t.me/mudotalida/9136">Video</a><a href="javascript:alert(1)">bad</a><script>alert(1)</script>' }} />);
   expect(container.querySelector('b')?.textContent).toBe('Hello');
   expect(screen.queryByRole('heading')).toBeNull();
-  expect(screen.getByRole('link', { name: '@mudotalida' }).getAttribute('href')).toBe('https://t.me/mudotalida');
+  expect(screen.getByRole('link', { name: 'Мой канал' }).getAttribute('href')).toBe('https://t.me/mudotalida');
   expect(screen.queryByRole('link', { name: 'Telegram ↗' })).toBeNull();
   expect(screen.getByRole('link', { name: 'link' }).getAttribute('href')).toBe('https://example.org/');
   expect(screen.getByRole('link', { name: 'Video' }).getAttribute('href')).toBe('https://t.me/mudotalida/9136');
@@ -31,4 +31,5 @@ it('renders formatted text, links and all photos while rejecting unsafe markup',
 it('shows a post link when text and media are absent', () => {
   render(<TelegramPost item={{ id: 1, feedId: 2, title: '', link: 'https://t.me/mudotalida/9136', text: '' }} />);
   expect(screen.getByRole('link', { name: 'Telegram ↗' }).getAttribute('href')).toBe('https://t.me/mudotalida/9136');
+  expect(screen.getByRole('link', { name: '@mudotalida' }).getAttribute('href')).toBe('https://t.me/mudotalida');
 });

@@ -11,8 +11,10 @@ import { getFeedItemCardClassNames } from './providers/feedItemCardClassNames';
 
 export const FeedItemCard = memo(function FeedItemCard({
   item,
+  sourceTitle,
 }: {
   item: Parameters<typeof useFeedItemCardModel>[0];
+  sourceTitle?: string;
 }) {
   const { t } = useTranslation();
   const model = useFeedItemCardModel(item);
@@ -52,7 +54,7 @@ export const FeedItemCard = memo(function FeedItemCard({
           <span>{t('preview.hidden')}</span>
         </div>
       ) : null}
-      <FeedItemCardContent facts={model} onOpenArticle={articleReader.open} />
+      <FeedItemCardContent facts={model} sourceTitle={sourceTitle} onOpenArticle={articleReader.open} />
       <ArticleReaderOverlay reader={articleReader} originalUrl={item.link} />
     </article>
   );

@@ -151,6 +151,7 @@ export function useFeedReader({
 
   return {
     items: items ?? [],
+    sources,
     currentItem,
     isLoading,
     isSyncComplete,

@@ -129,7 +129,11 @@
 }
 
 .telegram-post__channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   justify-self: start;
+  min-width: 0;
   color: var(--color-muted);
   font-size: 0.85rem;
   font-weight: 700;
@@ -144,4 +148,10 @@
 .telegram-post__channel:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 3px;
+}
+
+.telegram-post__icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
 }
