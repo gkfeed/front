@@ -127,3 +127,21 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+.telegram-post__channel {
+  justify-self: start;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.telegram-post__channel:hover {
+  text-decoration: underline;
+}
+
+.telegram-post__channel:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}

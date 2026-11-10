@@ -43,6 +43,7 @@ export function TelegramPost({ item }: { item: FeedItem }) {
     .filter((src): src is string => src !== null);
   const content = Array.from(document?.body.childNodes ?? [], renderNode);
   const hasText = Boolean(document?.body.textContent?.trim());
+  const channel = new URL(item.link).pathname.split('/')[1];
   return <>
     {images.length > 0 ? <VkImageCarousel key={item.link} href={item.link} hostname="Telegram"
       preview={{ src: images[0], imageUrls: images, alt: item.title || 'Telegram' }} onPreviewError={() => {}} /> : null}
@@ -50,5 +51,6 @@ export function TelegramPost({ item }: { item: FeedItem }) {
       <div className="telegram-post__content">{content}</div>
     </div> : null}
     {!hasText && images.length === 0 ? <a href={item.link} target="_blank" rel="noopener noreferrer">Telegram ↗</a> : null}
+    <a className="telegram-post__channel" href={`https://t.me/${channel}`} target="_blank" rel="noopener noreferrer">@{channel}</a>
   </>;
 }
