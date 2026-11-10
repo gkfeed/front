@@ -85,6 +85,12 @@ export function createFeedCommandUseCases(
       return;
     }
 
+    if (inferredSource.type === 'telegram') {
+      const title = await suggestFeedTitle(inferredSource.url);
+      await port.createFeed({ ...inferredSource, title: title || 'Telegram' }, credentials);
+      return;
+    }
+
     const metadata = await metadataPort.getOpenGraphPreview(inferredSource.url);
     const title = metadata.title?.trim();
     if (!title) throw new Error('YouTube channel title is unavailable');

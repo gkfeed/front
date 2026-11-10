@@ -7,6 +7,7 @@ import type { FeedItemCardModel } from './useFeedItemCardModel';
 import { localizeFeedItemPreview } from './previewLocalization';
 import { FeedItemCardProviderContent } from './providers/FeedItemCardProviderContent';
 import { StandardCopy } from './providers/providerRenderers/common';
+import { TelegramPost, isTelegramPost } from './TelegramPost';
 import { PluginRenderBoundary } from './PluginRenderBoundary';
 
 export function FeedItemCardContent({
@@ -17,6 +18,7 @@ export function FeedItemCardContent({
   onOpenArticle?: () => void;
 }) {
   const { t } = useTranslation();
+  if (isTelegramPost(facts.item.link)) return <TelegramPost item={facts.item} />;
   const liveballMatch = facts.provider === 'liveball' ? parseLiveballMatch(facts.item) : null;
   if (liveballMatch) return <LiveballMatch item={facts.item} match={liveballMatch} snapshot={getLiveballSnapshot(facts.openGraphPreview?.providerData)} />;
   const localizedPreview = facts.visiblePreview
