@@ -303,13 +303,13 @@ describe('review session', () => {
     });
   });
 
-  it('adds received partial cards to the queue when synchronization fails', () => {
+  it('retains newly received partial cards when synchronization fails', () => {
     let state = startSession(null);
     state = snapshot(state, [3], false);
     state = reviewSessionReducer(state, { type: 'delete', id: 3, title: 'Item 3' });
     state = snapshot(state, [3, 2, 1], false);
 
-    expect(getActiveReviewIds(state)).toEqual([]);
+    expect(getActiveReviewIds(state)).toEqual([2, 1]);
 
     state = reviewSessionReducer(state, { type: 'syncFailed' });
 

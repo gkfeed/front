@@ -101,10 +101,10 @@ describe('ReaderPage', () => {
 
     act(() => publishProgress?.(ITEMS));
     expect(screen.queryByText('You’ve reviewed everything')).toBeNull();
-    expect(screen.getByRole('status', { name: 'Loading feed items' })).toBeTruthy();
+    expect(await screen.findByText('Second story')).toBeTruthy();
 
     await act(async () => finishLoad?.(ITEMS));
-    expect(await screen.findByText('Second story')).toBeTruthy();
+    expect(screen.getByText('Second story')).toBeTruthy();
   });
 
   it('restores the review queue after the page is reloaded', async () => {
@@ -253,7 +253,7 @@ describe('ReaderPage', () => {
     expect(deleteFeedItemById).not.toHaveBeenCalled();
   });
 
-  it('keeps the current queue unchanged while cursor pages are partial', async () => {
+  it('adds later cursor pages while keeping the current card stable', async () => {
     const firstPage = [
       { ...ITEMS[0], id: 20, title: 'Current page item' },
       { ...ITEMS[1], id: 19, title: 'Stable selected item' },
@@ -278,7 +278,7 @@ describe('ReaderPage', () => {
     act(() => publishProgress?.([...firstPage, nextPageItem]));
     expect(screen.getByText('Stable selected item')).toBeTruthy();
     expect(screen.queryByText('Current page item')).toBeNull();
-    expect(screen.getByText('1 remaining')).toBeTruthy();
+    expect(screen.getByText('2 remaining')).toBeTruthy();
 
     await act(async () => finishLoad?.([...firstPage, nextPageItem]));
     expect(screen.getByText('Stable selected item')).toBeTruthy();
@@ -305,7 +305,7 @@ describe('ReaderPage', () => {
     expect(screen.queryByText('Second story')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     expect(screen.queryByText('You’ve reviewed everything')).toBeNull();
-    expect(screen.getByRole('status', { name: 'Loading feed items' })).toBeTruthy();
+    expect(await screen.findByText('Second story')).toBeTruthy();
 
     await act(async () => failLoad?.(new Error('Later page failed')));
 

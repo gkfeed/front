@@ -1,7 +1,7 @@
 import { BffHttpError, BffResponseError } from './bffClient';
 import { getLiquipediaMatchPreview } from './liquipedia';
 import { getOpenGraphPreview } from './openGraph';
-import { loadQueuedPreview } from './previewQueue';
+import { loadQueuedPreview, reprioritizeQueuedPreview } from './previewQueue';
 import { retryRateLimitedPreview } from './retryRateLimitedPreview';
 import type { RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
 
@@ -11,6 +11,7 @@ export async function loadRemotePreview(
   url: string,
   source: Exclude<RemotePreviewSource, 'none'>,
   signal: AbortSignal,
+  priority = 0,
 ): Promise<RemotePreview> {
   if (source === 'liquipedia') {
     try {
@@ -20,6 +21,7 @@ export async function loadRemotePreview(
           () => getLiquipediaMatchPreview(url, requestSignal), requestSignal,
         ),
         signal,
+        priority,
       );
       return { liquipediaMatch, openGraphPreview: null };
     } catch (error) {
@@ -34,6 +36,7 @@ export async function loadRemotePreview(
       () => getOpenGraphPreview(url, requestSignal), requestSignal,
     ),
     signal,
+    priority,
   );
   return { liquipediaMatch: null, openGraphPreview };
 }
@@ -41,4 +44,10 @@ export async function loadRemotePreview(
 function isUnsupportedLiquipediaMarkupError(error: unknown): boolean {
   return (error instanceof BffResponseError && error.reason === 'invalid-shape')
     || (error instanceof BffHttpError && error.status === 422);
+}
+
+export function reprioritizeRemotePreview(url: string, source: Exclude<RemotePreviewSource, 'none'>, priority: number): void {
+  reprioritizeQueuedPreview(`${source}:${url}`, priority);
+  // Liquipedia can fall back to Open Graph after a failed request.
+  if (source === 'liquipedia') reprioritizeQueuedPreview(`open-graph:${url}`, priority);
 }

@@ -7,10 +7,12 @@ import { getProviderDataImageUrls } from '../../../shared/providerData';
 import type { FeedPluginId } from '../domain/feedItemProviderPresentation';
 
 type PreviewLoader = {
+  reprioritizeRemotePreview?: (url: string, source: Exclude<RemotePreviewSource, 'none'>, priority: number) => void;
   loadRemotePreview: (
     url: string,
     source: Exclude<RemotePreviewSource, 'none'>,
     signal: AbortSignal,
+    priority?: number,
   ) => Promise<RemotePreview>;
 };
 
@@ -21,6 +23,7 @@ export function prefetchFeedItem(
   prefetchControllers: Map<string, AbortController>,
   nsfwMode: NsfwMode,
   disabledPlugins: ReadonlySet<FeedPluginId> = new Set(),
+  priority = 1,
 ): void {
   const providerView = analyzeFeedItem(item, disabledPlugins);
   const initialPolicy = resolveFeedItemPreviewPolicy({
@@ -35,7 +38,10 @@ export function prefetchFeedItem(
   if (!initialPolicy.remoteRequest) return;
 
   const prefetchKey = `${initialPolicy.remoteRequest.source}:${item.link}`;
-  if (prefetchControllers.has(prefetchKey)) return;
+  if (prefetchControllers.has(prefetchKey)) {
+    previewUseCases.reprioritizeRemotePreview?.(item.link, initialPolicy.remoteRequest.source, priority);
+    return;
+  }
 
   const controller = new AbortController();
   prefetchControllers.set(prefetchKey, controller);
@@ -43,6 +49,7 @@ export function prefetchFeedItem(
     item.link,
     initialPolicy.remoteRequest.source,
     controller.signal,
+    priority,
   )
     .then((remotePreview) => {
       if (controller.signal.aborted) return;
