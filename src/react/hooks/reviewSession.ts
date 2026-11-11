@@ -44,6 +44,7 @@ export type ReviewSessionState = {
   hasProgress: boolean;
   progressToPersist: ReviewProgress | null;
   reorderRestoredProgress: boolean;
+  restoredSession: boolean;
 };
 
 export type ReviewSessionEvent =
@@ -77,6 +78,7 @@ export function createReviewSessionState(presentation: ReviewPresentation): Revi
     hasProgress: false,
     progressToPersist: null,
     reorderRestoredProgress: false,
+    restoredSession: false,
   };
 }
 
@@ -168,6 +170,7 @@ function reduceReviewSession(
         progress,
         deletions: [],
         hasProgress: event.restoredProgress !== null,
+        restoredSession: event.restoredProgress !== null,
         progressToPersist: null,
         reorderRestoredProgress: event.restoredItemOrder != null
           && event.restoredItemOrder !== state.presentation.itemOrder,
@@ -283,15 +286,23 @@ function reduceSnapshotChanged(
   }
 
   if (state.hasProgress) {
+    // Restored sessions cannot distinguish unseen old cards from new cards
+    // until the snapshot completes. Fresh sessions can safely append IDs first
+    // seen on a later page without resurrecting already reviewed cards.
+    const previousIds = new Set(state.snapshot?.map(({ id }) => id));
+    const queuedIds = new Set([...groupedProgress.pendingIds, ...groupedProgress.revisitIds, ...groupedProgress.keptItemIds]);
+    const addedIds = state.restoredSession ? [] : projection.reviewableIds.filter((id) => (
+      !previousIds.has(id) && !queuedIds.has(id)
+    ));
+    const progress = addedIds.length ? { ...groupedProgress, pendingIds: [...groupedProgress.pendingIds, ...addedIds] } : groupedProgress;
     return {
       ...state, snapshot, isSyncComplete: false, deletions, ...projection,
-      progress: groupedProgress,
-      progressToPersist: groupedProgress === state.progress ? state.progressToPersist : groupedProgress,
+      progress,
+      progressToPersist: progress === state.progress ? state.progressToPersist : progress,
     };
   }
 
-  // The first partial page starts the initial session. Later partial pages are
-  // data updates only and cannot insert cards into the active review queue.
+  // The first partial page starts the initial session.
   const progress = createProgress(projection.reviewableIds);
   return {
     ...state,

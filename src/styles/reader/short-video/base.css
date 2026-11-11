@@ -8,6 +8,9 @@
 /* Reveal decoded media once; buffering does not hide an already visible frame. */
 .reader-card__preview--short-video[data-media-ready] :is(img, video) {
   opacity: 0;
+}
+
+.reader-card__preview--short-video[data-media-ready] img {
   transition: opacity 180ms ease-out;
 }
 
@@ -16,7 +19,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reader-card__preview--short-video[data-media-ready] :is(img, video) {
+  .reader-card__preview--short-video[data-media-ready] img {
     transition: none;
   }
 }
