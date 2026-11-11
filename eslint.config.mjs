@@ -166,6 +166,7 @@ export default tseslint.config(
     ignores: [
       '.agents',
       '.codex',
+      '.verification',
       'dist',
       'dist-server',
       'node_modules',
