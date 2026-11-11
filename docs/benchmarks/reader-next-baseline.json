@@ -1,0 +1,1764 @@
+{
+  "revision": "78053f98aeaa5708c9573500e61cf5c11b145d1c",
+  "workingTree": " M package.json\n?? docs/benchmarks/\n?? scripts/benchmark-reader.mjs\n",
+  "measuredAt": "2026-11-11T06:51:41.763Z",
+  "node": "v26.13.0",
+  "chromium": "149.0.7827.55",
+  "platform": "linux 7.2.14-zen1-1-zen x64",
+  "cpu": "AMD Ryzen 9 7900 12-Core Processor",
+  "viewport": {
+    "width": 1366,
+    "height": 768
+  },
+  "itemCount": 1000,
+  "nextCount": 20,
+  "warmups": 0,
+  "cpuThrottling": "none",
+  "httpCache": "disabled by Playwright request routing",
+  "apiLatency": "fixed server delay per API/BFF response; static assets on localhost",
+  "metric": "Navigation start or captured Reader click to visible first card and its title, confirmed across two animation frames. Approximation of paint. No explicit wait for media/preview readiness; the UI may gate its title on preview completion.",
+  "nextMetric": "Keep click to the expected next different visible card and title across two animation frames. Repeated previously seen IDs are recorded, not treated as new unique items. No dwell time; prefetch and background sync remain active. Series total is reported only for completed series. Transitions blocked for 15 seconds are censored and recorded separately, never treated as completed fast transitions.",
+  "results": [
+    {
+      "nextItems": {
+        "count": 20,
+        "action": "keep",
+        "completedSeries": 3,
+        "blockedSeries": 0,
+        "uniqueNewItems": {
+          "min": 20,
+          "max": 20
+        },
+        "repeatedItems": 0,
+        "transitions": {
+          "medianMs": 33.300000000046566,
+          "p95Ms": 33.4000000001397,
+          "maxMs": 33.5
+        },
+        "totalWait": {
+          "medianMs": 664.8000000000466,
+          "p95Ms": 665.5999999993946,
+          "maxMs": 665.5999999993946
+        },
+        "perPosition": [
+          {
+            "position": 1,
+            "medianMs": 32.10000000009313,
+            "p95Ms": 32.89999999990687,
+            "maxMs": 32.89999999990687
+          },
+          {
+            "position": 2,
+            "medianMs": 33.199999999953434,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          },
+          {
+            "position": 3,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          },
+          {
+            "position": 4,
+            "medianMs": 33.199999999953434,
+            "p95Ms": 33.299999999813735,
+            "maxMs": 33.299999999813735
+          },
+          {
+            "position": 5,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 6,
+            "medianMs": 33.199999999953434,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 7,
+            "medianMs": 33.299999999813735,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 8,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          },
+          {
+            "position": 9,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 10,
+            "medianMs": 33.299999999813735,
+            "p95Ms": 33.39999999990687,
+            "maxMs": 33.39999999990687
+          },
+          {
+            "position": 11,
+            "medianMs": 33.200000000186265,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 12,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          },
+          {
+            "position": 13,
+            "medianMs": 33.299999999813735,
+            "p95Ms": 33.299999999813735,
+            "maxMs": 33.299999999813735
+          },
+          {
+            "position": 14,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.5,
+            "maxMs": 33.5
+          },
+          {
+            "position": 15,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          },
+          {
+            "position": 16,
+            "medianMs": 33.299999999813735,
+            "p95Ms": 33.5,
+            "maxMs": 33.5
+          },
+          {
+            "position": 17,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          },
+          {
+            "position": 18,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 19,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.39999999990687,
+            "maxMs": 33.39999999990687
+          },
+          {
+            "position": 20,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          }
+        ]
+      },
+      "name": "cold-api-0ms",
+      "latency": 0,
+      "runs": 3,
+      "medianMs": 418,
+      "p95Ms": 423.80000000004657,
+      "minMs": 413.19999999995343,
+      "maxMs": 423.80000000004657,
+      "samples": [
+        {
+          "firstItemMs": 423.80000000004657,
+          "domReadyMs": 406,
+          "resources": [
+            {
+              "path": "/api/v1/list",
+              "startMs": 56.5,
+              "endMs": 60
+            },
+            {
+              "path": "/api/v1/list",
+              "startMs": 365.30000000004657,
+              "endMs": 368.30000000004657
+            },
+            {
+              "path": "/api/v2/items/sync?limit=10",
+              "startMs": 367.5,
+              "endMs": 370.69999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=10",
+              "startMs": 371.4000000001397,
+              "endMs": 373.80000000004657
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F999",
+              "startMs": 380.60000000009313,
+              "endMs": 385.10000000009313
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F998",
+              "startMs": 380.80000000004657,
+              "endMs": 386.80000000004657
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F997",
+              "startMs": 381,
+              "endMs": 386.80000000004657
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=110",
+              "startMs": 381.69999999995343,
+              "endMs": 387
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=210",
+              "startMs": 388.5,
+              "endMs": 391.4000000001397
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F1000",
+              "startMs": 392.19999999995343,
+              "endMs": 395.4000000001397
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=310",
+              "startMs": 393.69999999995343,
+              "endMs": 397.19999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=410",
+              "startMs": 399.4000000001397,
+              "endMs": 402.10000000009313
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=510",
+              "startMs": 402.80000000004657,
+              "endMs": 405.5
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=610",
+              "startMs": 408.4000000001397,
+              "endMs": 411.19999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=710",
+              "startMs": 412.4000000001397,
+              "endMs": 415.10000000009313
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=810",
+              "startMs": 416.30000000004657,
+              "endMs": 418.80000000004657
+            }
+          ],
+          "nextItems": {
+            "action": "keep",
+            "count": 20,
+            "transitions": [
+              {
+                "position": 1,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": false,
+                "clickToVisibleMs": 31.699999999953434,
+                "elapsedFromFirstMs": 31.800000000046566
+              },
+              {
+                "position": 2,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 65.19999999995343
+              },
+              {
+                "position": 3,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": false,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 98.60000000009313
+              },
+              {
+                "position": 4,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 131.80000000004657
+              },
+              {
+                "position": 5,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 165.19999999995343
+              },
+              {
+                "position": 6,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 198.39999999990687
+              },
+              {
+                "position": 7,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 231.80000000004657
+              },
+              {
+                "position": 8,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 265.10000000009313
+              },
+              {
+                "position": 9,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 298.5
+              },
+              {
+                "position": 10,
+                "fromId": 991,
+                "toId": 990,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 331.80000000004657
+              },
+              {
+                "position": 11,
+                "fromId": 990,
+                "toId": 989,
+                "repeated": false,
+                "clickToVisibleMs": 33.200000000186265,
+                "elapsedFromFirstMs": 365.10000000009313
+              },
+              {
+                "position": 12,
+                "fromId": 989,
+                "toId": 988,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 398.5
+              },
+              {
+                "position": 13,
+                "fromId": 988,
+                "toId": 987,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 431.80000000004657
+              },
+              {
+                "position": 14,
+                "fromId": 987,
+                "toId": 986,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 465.10000000009313
+              },
+              {
+                "position": 15,
+                "fromId": 986,
+                "toId": 985,
+                "repeated": false,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 498.60000000009313
+              },
+              {
+                "position": 16,
+                "fromId": 985,
+                "toId": 984,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 531.8000000000466
+              },
+              {
+                "position": 17,
+                "fromId": 984,
+                "toId": 983,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 565.1999999999534
+              },
+              {
+                "position": 18,
+                "fromId": 983,
+                "toId": 982,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 598.5
+              },
+              {
+                "position": 19,
+                "fromId": 982,
+                "toId": 981,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 631.8000000000466
+              },
+              {
+                "position": 20,
+                "fromId": 981,
+                "toId": 980,
+                "repeated": false,
+                "clickToVisibleMs": 33.200000000186265,
+                "elapsedFromFirstMs": 665.1000000000931
+              }
+            ],
+            "completed": true,
+            "completedCount": 20,
+            "blocked": null,
+            "uniqueNewItems": 20,
+            "repeatedItems": 0,
+            "totalWaitMs": 663.7000000006519,
+            "elapsedFromFirstMs": 665.1999999999534,
+            "fromOpenMs": 1089
+          }
+        },
+        {
+          "firstItemMs": 418,
+          "domReadyMs": 402.0999999998603,
+          "resources": [
+            {
+              "path": "/api/v1/list",
+              "startMs": 51.39999999990687,
+              "endMs": 54.5
+            },
+            {
+              "path": "/api/v1/list",
+              "startMs": 359.80000000004657,
+              "endMs": 363
+            },
+            {
+              "path": "/api/v2/items/sync?limit=10",
+              "startMs": 361.69999999995343,
+              "endMs": 363.89999999990687
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=10",
+              "startMs": 364.69999999995343,
+              "endMs": 367
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F999",
+              "startMs": 372.30000000004657,
+              "endMs": 375.5999999998603
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F998",
+              "startMs": 372.39999999990687,
+              "endMs": 376.30000000004657
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F997",
+              "startMs": 372.5999999998603,
+              "endMs": 376.39999999990687
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=110",
+              "startMs": 373.5,
+              "endMs": 378.0999999998603
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=210",
+              "startMs": 378.69999999995343,
+              "endMs": 381.30000000004657
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=310",
+              "startMs": 382.0999999998603,
+              "endMs": 384.69999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=410",
+              "startMs": 386.5999999998603,
+              "endMs": 389.80000000004657
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F1000",
+              "startMs": 387,
+              "endMs": 391.0999999998603
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=510",
+              "startMs": 391.0999999998603,
+              "endMs": 393.69999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=610",
+              "startMs": 395.39999999990687,
+              "endMs": 398
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=710",
+              "startMs": 399.69999999995343,
+              "endMs": 402.19999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=810",
+              "startMs": 404.5999999998603,
+              "endMs": 407.80000000004657
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=910",
+              "startMs": 409,
+              "endMs": 411.69999999995343
+            }
+          ],
+          "nextItems": {
+            "action": "keep",
+            "count": 20,
+            "transitions": [
+              {
+                "position": 1,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": false,
+                "clickToVisibleMs": 32.89999999990687,
+                "elapsedFromFirstMs": 33.0999999998603
+              },
+              {
+                "position": 2,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": false,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 66.5
+              },
+              {
+                "position": 3,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 99.69999999995343
+              },
+              {
+                "position": 4,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 133.0999999998603
+              },
+              {
+                "position": 5,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 166.5
+              },
+              {
+                "position": 6,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 199.69999999995343
+              },
+              {
+                "position": 7,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 233.0999999998603
+              },
+              {
+                "position": 8,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": false,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 266.5
+              },
+              {
+                "position": 9,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 299.69999999995343
+              },
+              {
+                "position": 10,
+                "fromId": 991,
+                "toId": 990,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 333.0999999998603
+              },
+              {
+                "position": 11,
+                "fromId": 990,
+                "toId": 989,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 366.39999999990687
+              },
+              {
+                "position": 12,
+                "fromId": 989,
+                "toId": 988,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 399.69999999995343
+              },
+              {
+                "position": 13,
+                "fromId": 988,
+                "toId": 987,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 433.0999999998603
+              },
+              {
+                "position": 14,
+                "fromId": 987,
+                "toId": 986,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 466.39999999990687
+              },
+              {
+                "position": 15,
+                "fromId": 986,
+                "toId": 985,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 499.80000000004657
+              },
+              {
+                "position": 16,
+                "fromId": 985,
+                "toId": 984,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 533.0999999998603
+              },
+              {
+                "position": 17,
+                "fromId": 984,
+                "toId": 983,
+                "repeated": false,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 566.5
+              },
+              {
+                "position": 18,
+                "fromId": 983,
+                "toId": 982,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 599.8000000000466
+              },
+              {
+                "position": 19,
+                "fromId": 982,
+                "toId": 981,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 633.0999999998603
+              },
+              {
+                "position": 20,
+                "fromId": 981,
+                "toId": 980,
+                "repeated": false,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 666.5
+              }
+            ],
+            "completed": true,
+            "completedCount": 20,
+            "blocked": null,
+            "uniqueNewItems": 20,
+            "repeatedItems": 0,
+            "totalWaitMs": 665.5999999993946,
+            "elapsedFromFirstMs": 666.5999999998603,
+            "fromOpenMs": 1084.5999999998603
+          }
+        },
+        {
+          "firstItemMs": 413.19999999995343,
+          "domReadyMs": 397.10000000009313,
+          "resources": [
+            {
+              "path": "/api/v1/list",
+              "startMs": 46.60000000009313,
+              "endMs": 49.5
+            },
+            {
+              "path": "/api/v1/list",
+              "startMs": 354.69999999995343,
+              "endMs": 357.69999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=10",
+              "startMs": 356.60000000009313,
+              "endMs": 360.19999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=10",
+              "startMs": 361,
+              "endMs": 363.9000000001397
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F999",
+              "startMs": 369.19999999995343,
+              "endMs": 373.4000000001397
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F998",
+              "startMs": 369.30000000004657,
+              "endMs": 374
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F997",
+              "startMs": 369.4000000001397,
+              "endMs": 374.19999999995343
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=110",
+              "startMs": 370.30000000004657,
+              "endMs": 374.9000000001397
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=210",
+              "startMs": 376,
+              "endMs": 378.80000000004657
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=310",
+              "startMs": 380.30000000004657,
+              "endMs": 383.80000000004657
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F1000",
+              "startMs": 383.60000000009313,
+              "endMs": 386.9000000001397
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=410",
+              "startMs": 386.10000000009313,
+              "endMs": 388.9000000001397
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=510",
+              "startMs": 390.60000000009313,
+              "endMs": 393.4000000001397
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=610",
+              "startMs": 394.9000000001397,
+              "endMs": 397.80000000004657
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=710",
+              "startMs": 400.4000000001397,
+              "endMs": 403.80000000004657
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=810",
+              "startMs": 405,
+              "endMs": 408
+            }
+          ],
+          "nextItems": {
+            "action": "keep",
+            "count": 20,
+            "transitions": [
+              {
+                "position": 1,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": false,
+                "clickToVisibleMs": 32.10000000009313,
+                "elapsedFromFirstMs": 32.4000000001397
+              },
+              {
+                "position": 2,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": false,
+                "clickToVisibleMs": 33.0999999998603,
+                "elapsedFromFirstMs": 65.80000000004657
+              },
+              {
+                "position": 3,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 99.10000000009313
+              },
+              {
+                "position": 4,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 132.4000000001397
+              },
+              {
+                "position": 5,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 165.80000000004657
+              },
+              {
+                "position": 6,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 199.20000000018626
+              },
+              {
+                "position": 7,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 232.5
+              },
+              {
+                "position": 8,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 265.80000000004657
+              },
+              {
+                "position": 9,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 299.10000000009313
+              },
+              {
+                "position": 10,
+                "fromId": 991,
+                "toId": 990,
+                "repeated": false,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 332.5
+              },
+              {
+                "position": 11,
+                "fromId": 990,
+                "toId": 989,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 365.80000000004657
+              },
+              {
+                "position": 12,
+                "fromId": 989,
+                "toId": 988,
+                "repeated": false,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 399.20000000018626
+              },
+              {
+                "position": 13,
+                "fromId": 988,
+                "toId": 987,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 432.5
+              },
+              {
+                "position": 14,
+                "fromId": 987,
+                "toId": 986,
+                "repeated": false,
+                "clickToVisibleMs": 33.5,
+                "elapsedFromFirstMs": 466
+              },
+              {
+                "position": 15,
+                "fromId": 986,
+                "toId": 985,
+                "repeated": false,
+                "clickToVisibleMs": 33.10000000009313,
+                "elapsedFromFirstMs": 499.10000000009313
+              },
+              {
+                "position": 16,
+                "fromId": 985,
+                "toId": 984,
+                "repeated": false,
+                "clickToVisibleMs": 33.5,
+                "elapsedFromFirstMs": 532.6000000000931
+              },
+              {
+                "position": 17,
+                "fromId": 984,
+                "toId": 983,
+                "repeated": false,
+                "clickToVisibleMs": 33.10000000009313,
+                "elapsedFromFirstMs": 565.7000000001863
+              },
+              {
+                "position": 18,
+                "fromId": 983,
+                "toId": 982,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 599.1000000000931
+              },
+              {
+                "position": 19,
+                "fromId": 982,
+                "toId": 981,
+                "repeated": false,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 632.5
+              },
+              {
+                "position": 20,
+                "fromId": 981,
+                "toId": 980,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 665.8000000000466
+              }
+            ],
+            "completed": true,
+            "completedCount": 20,
+            "blocked": null,
+            "uniqueNewItems": 20,
+            "repeatedItems": 0,
+            "totalWaitMs": 664.8000000000466,
+            "elapsedFromFirstMs": 665.9000000001397,
+            "fromOpenMs": 1079.1000000000931
+          }
+        }
+      ]
+    },
+    {
+      "nextItems": {
+        "count": 20,
+        "action": "keep",
+        "completedSeries": 0,
+        "blockedSeries": 3,
+        "uniqueNewItems": {
+          "min": 9,
+          "max": 9
+        },
+        "repeatedItems": 30,
+        "transitions": {
+          "medianMs": 33.300000000046566,
+          "p95Ms": 2933.1999999999534,
+          "maxMs": 2933.2000000001863
+        },
+        "totalWait": {
+          "medianMs": null,
+          "p95Ms": null,
+          "maxMs": null
+        },
+        "perPosition": [
+          {
+            "position": 1,
+            "medianMs": 33.0999999998603,
+            "p95Ms": 33.10000000009313,
+            "maxMs": 33.10000000009313
+          },
+          {
+            "position": 2,
+            "medianMs": 33.39999999990687,
+            "p95Ms": 33.39999999990687,
+            "maxMs": 33.39999999990687
+          },
+          {
+            "position": 3,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 4,
+            "medianMs": 2933.1999999999534,
+            "p95Ms": 2933.1999999999534,
+            "maxMs": 2933.1999999999534
+          },
+          {
+            "position": 5,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          },
+          {
+            "position": 6,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.39999999990687,
+            "maxMs": 33.39999999990687
+          },
+          {
+            "position": 7,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.39999999990687,
+            "maxMs": 33.39999999990687
+          },
+          {
+            "position": 8,
+            "medianMs": 2933.1999999999534,
+            "p95Ms": 2933.2000000001863,
+            "maxMs": 2933.2000000001863
+          },
+          {
+            "position": 9,
+            "medianMs": 33.299999999813735,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 10,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.39999999990687,
+            "maxMs": 33.39999999990687
+          },
+          {
+            "position": 11,
+            "medianMs": 33.39999999990687,
+            "p95Ms": 33.5,
+            "maxMs": 33.5
+          },
+          {
+            "position": 12,
+            "medianMs": 33.299999999813735,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 13,
+            "medianMs": 33.199999999953434,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 14,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 15,
+            "medianMs": 33.199999999953434,
+            "p95Ms": 33.299999999813735,
+            "maxMs": 33.299999999813735
+          },
+          {
+            "position": 16,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.39999999990687,
+            "maxMs": 33.39999999990687
+          },
+          {
+            "position": 17,
+            "medianMs": 33.4000000001397,
+            "p95Ms": 33.4000000001397,
+            "maxMs": 33.4000000001397
+          },
+          {
+            "position": 18,
+            "medianMs": 33.299999999813735,
+            "p95Ms": 33.300000000046566,
+            "maxMs": 33.300000000046566
+          },
+          {
+            "position": 19,
+            "medianMs": 33.300000000046566,
+            "p95Ms": 33.60000000009313,
+            "maxMs": 33.60000000009313
+          },
+          {
+            "position": 20,
+            "medianMs": null,
+            "p95Ms": null,
+            "maxMs": null
+          }
+        ]
+      },
+      "name": "cold-api-3000ms",
+      "latency": 3000,
+      "runs": 3,
+      "medianMs": 9408.40000000014,
+      "p95Ms": 9408.700000000186,
+      "minMs": 9406.5,
+      "maxMs": 9408.700000000186,
+      "samples": [
+        {
+          "firstItemMs": 9406.5,
+          "domReadyMs": 9389.800000000047,
+          "resources": [
+            {
+              "path": "/api/v1/list",
+              "startMs": 46.60000000009313,
+              "endMs": 3048.6999999999534
+            },
+            {
+              "path": "/api/v1/list",
+              "startMs": 3353.5,
+              "endMs": 6356.5
+            },
+            {
+              "path": "/api/v2/items/sync?limit=10",
+              "startMs": 3356,
+              "endMs": 6357.399999999907
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=10",
+              "startMs": 6359.199999999953,
+              "endMs": 9361.800000000047
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F999",
+              "startMs": 6365.399999999907,
+              "endMs": 9367.100000000093
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F998",
+              "startMs": 6365.5,
+              "endMs": 9368.399999999907
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F997",
+              "startMs": 6365.699999999953,
+              "endMs": 9369.100000000093
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F1000",
+              "startMs": 6376.300000000047,
+              "endMs": 9378.699999999953
+            }
+          ],
+          "nextItems": {
+            "action": "keep",
+            "count": 20,
+            "transitions": [
+              {
+                "position": 1,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": false,
+                "clickToVisibleMs": 33,
+                "elapsedFromFirstMs": 33.300000000046566
+              },
+              {
+                "position": 2,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": false,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 66.69999999995343
+              },
+              {
+                "position": 3,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 100
+              },
+              {
+                "position": 4,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": false,
+                "clickToVisibleMs": 2933.1999999999534,
+                "elapsedFromFirstMs": 3033.1999999999534
+              },
+              {
+                "position": 5,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": false,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 3066.600000000093
+              },
+              {
+                "position": 6,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": false,
+                "clickToVisibleMs": 33.10000000009313,
+                "elapsedFromFirstMs": 3099.8000000000466
+              },
+              {
+                "position": 7,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": false,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 3133.1999999999534
+              },
+              {
+                "position": 8,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": false,
+                "clickToVisibleMs": 2933.1999999999534,
+                "elapsedFromFirstMs": 6066.399999999907
+              },
+              {
+                "position": 9,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 6099.699999999953
+              },
+              {
+                "position": 10,
+                "fromId": 991,
+                "toId": 1000,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6133
+              },
+              {
+                "position": 11,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": true,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 6166.399999999907
+              },
+              {
+                "position": 12,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6199.699999999953
+              },
+              {
+                "position": 13,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": true,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 6233
+              },
+              {
+                "position": 14,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6266.300000000047
+              },
+              {
+                "position": 15,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": true,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 6299.699999999953
+              },
+              {
+                "position": 16,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6333.100000000093
+              },
+              {
+                "position": 17,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": true,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 6366.399999999907
+              },
+              {
+                "position": 18,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6399.699999999953
+              },
+              {
+                "position": 19,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6433
+              }
+            ],
+            "completed": false,
+            "completedCount": 19,
+            "blocked": {
+              "position": 20,
+              "fromId": 991,
+              "waitedMs": 15016.199999999953
+            },
+            "uniqueNewItems": 9,
+            "repeatedItems": 10,
+            "totalWaitMs": 6432.09999999986,
+            "elapsedFromFirstMs": 21449.199999999953,
+            "fromOpenMs": 30855.800000000047
+          }
+        },
+        {
+          "firstItemMs": 9408.40000000014,
+          "domReadyMs": 9391.600000000093,
+          "resources": [
+            {
+              "path": "/api/v1/list",
+              "startMs": 54.5,
+              "endMs": 3056.600000000093
+            },
+            {
+              "path": "/api/v1/list",
+              "startMs": 3360.8000000000466,
+              "endMs": 6364.100000000093
+            },
+            {
+              "path": "/api/v2/items/sync?limit=10",
+              "startMs": 3363,
+              "endMs": 6365.300000000047
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=10",
+              "startMs": 6366.699999999953,
+              "endMs": 9368.40000000014
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F999",
+              "startMs": 6372.5,
+              "endMs": 9374.100000000093
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F998",
+              "startMs": 6372.600000000093,
+              "endMs": 9375
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F997",
+              "startMs": 6372.699999999953,
+              "endMs": 9375.699999999953
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F1000",
+              "startMs": 6378,
+              "endMs": 9380.100000000093
+            }
+          ],
+          "nextItems": {
+            "action": "keep",
+            "count": 20,
+            "transitions": [
+              {
+                "position": 1,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": false,
+                "clickToVisibleMs": 33.0999999998603,
+                "elapsedFromFirstMs": 33.299999999813735
+              },
+              {
+                "position": 2,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 66.5999999998603
+              },
+              {
+                "position": 3,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 99.89999999990687
+              },
+              {
+                "position": 4,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": false,
+                "clickToVisibleMs": 2933.1999999999534,
+                "elapsedFromFirstMs": 3033.1999999999534
+              },
+              {
+                "position": 5,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 3066.5
+              },
+              {
+                "position": 6,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": false,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 3099.899999999907
+              },
+              {
+                "position": 7,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 3133.0999999998603
+              },
+              {
+                "position": 8,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": false,
+                "clickToVisibleMs": 2933.0999999998603,
+                "elapsedFromFirstMs": 6066.299999999814
+              },
+              {
+                "position": 9,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6099.699999999953
+              },
+              {
+                "position": 10,
+                "fromId": 991,
+                "toId": 1000,
+                "repeated": true,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 6133.09999999986
+              },
+              {
+                "position": 11,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": true,
+                "clickToVisibleMs": 33.5,
+                "elapsedFromFirstMs": 6166.59999999986
+              },
+              {
+                "position": 12,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": true,
+                "clickToVisibleMs": 33.10000000009313,
+                "elapsedFromFirstMs": 6199.699999999953
+              },
+              {
+                "position": 13,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6233
+              },
+              {
+                "position": 14,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6266.399999999907
+              },
+              {
+                "position": 15,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": true,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 6299.699999999953
+              },
+              {
+                "position": 16,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": true,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 6333.09999999986
+              },
+              {
+                "position": 17,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": true,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 6366.5
+              },
+              {
+                "position": 18,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": true,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 6399.799999999814
+              },
+              {
+                "position": 19,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": true,
+                "clickToVisibleMs": 33.200000000186265,
+                "elapsedFromFirstMs": 6433
+              }
+            ],
+            "completed": false,
+            "completedCount": 19,
+            "blocked": {
+              "position": 20,
+              "fromId": 991,
+              "waitedMs": 15016
+            },
+            "uniqueNewItems": 9,
+            "repeatedItems": 10,
+            "totalWaitMs": 6432.199999999721,
+            "elapsedFromFirstMs": 21449.199999999953,
+            "fromOpenMs": 30857.600000000093
+          }
+        },
+        {
+          "firstItemMs": 9408.700000000186,
+          "domReadyMs": 9392.300000000047,
+          "resources": [
+            {
+              "path": "/api/v1/list",
+              "startMs": 58,
+              "endMs": 3060.2000000001863
+            },
+            {
+              "path": "/api/v1/list",
+              "startMs": 3363.5,
+              "endMs": 6367.800000000047
+            },
+            {
+              "path": "/api/v2/items/sync?limit=10",
+              "startMs": 3365.8000000000466,
+              "endMs": 6368.5
+            },
+            {
+              "path": "/api/v2/items/sync?limit=100&cursor=10",
+              "startMs": 6370,
+              "endMs": 9372.40000000014
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F999",
+              "startMs": 6375,
+              "endMs": 9377.40000000014
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F998",
+              "startMs": 6375.200000000186,
+              "endMs": 9378.100000000093
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F997",
+              "startMs": 6375.300000000047,
+              "endMs": 9378.600000000093
+            },
+            {
+              "path": "/bff/open-graph?url=https%3A%2F%2Fexample.com%2Fbenchmark%2F1000",
+              "startMs": 6380.100000000093,
+              "endMs": 9382.5
+            }
+          ],
+          "nextItems": {
+            "action": "keep",
+            "count": 20,
+            "transitions": [
+              {
+                "position": 1,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": false,
+                "clickToVisibleMs": 33.10000000009313,
+                "elapsedFromFirstMs": 33.39999999990687
+              },
+              {
+                "position": 2,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": false,
+                "clickToVisibleMs": 33.39999999990687,
+                "elapsedFromFirstMs": 66.79999999981374
+              },
+              {
+                "position": 3,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": false,
+                "clickToVisibleMs": 33.200000000186265,
+                "elapsedFromFirstMs": 100
+              },
+              {
+                "position": 4,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": false,
+                "clickToVisibleMs": 2933.100000000093,
+                "elapsedFromFirstMs": 3033.1999999999534
+              },
+              {
+                "position": 5,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": false,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 3066.5999999998603
+              },
+              {
+                "position": 6,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 3099.899999999907
+              },
+              {
+                "position": 7,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": false,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 3133.1999999999534
+              },
+              {
+                "position": 8,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": false,
+                "clickToVisibleMs": 2933.2000000001863,
+                "elapsedFromFirstMs": 6066.5
+              },
+              {
+                "position": 9,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": false,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 6099.799999999814
+              },
+              {
+                "position": 10,
+                "fromId": 991,
+                "toId": 1000,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6133.09999999986
+              },
+              {
+                "position": 11,
+                "fromId": 1000,
+                "toId": 999,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6166.5
+              },
+              {
+                "position": 12,
+                "fromId": 999,
+                "toId": 998,
+                "repeated": true,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 6199.799999999814
+              },
+              {
+                "position": 13,
+                "fromId": 998,
+                "toId": 997,
+                "repeated": true,
+                "clickToVisibleMs": 33.199999999953434,
+                "elapsedFromFirstMs": 6233.09999999986
+              },
+              {
+                "position": 14,
+                "fromId": 997,
+                "toId": 996,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6266.5
+              },
+              {
+                "position": 15,
+                "fromId": 996,
+                "toId": 995,
+                "repeated": true,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 6299.799999999814
+              },
+              {
+                "position": 16,
+                "fromId": 995,
+                "toId": 994,
+                "repeated": true,
+                "clickToVisibleMs": 33.300000000046566,
+                "elapsedFromFirstMs": 6333.09999999986
+              },
+              {
+                "position": 17,
+                "fromId": 994,
+                "toId": 993,
+                "repeated": true,
+                "clickToVisibleMs": 33.4000000001397,
+                "elapsedFromFirstMs": 6366.5
+              },
+              {
+                "position": 18,
+                "fromId": 993,
+                "toId": 992,
+                "repeated": true,
+                "clickToVisibleMs": 33.299999999813735,
+                "elapsedFromFirstMs": 6399.799999999814
+              },
+              {
+                "position": 19,
+                "fromId": 992,
+                "toId": 991,
+                "repeated": true,
+                "clickToVisibleMs": 33.60000000009313,
+                "elapsedFromFirstMs": 6433.5
+              }
+            ],
+            "completed": false,
+            "completedCount": 19,
+            "blocked": {
+              "position": 20,
+              "fromId": 991,
+              "waitedMs": 15015.699999999953
+            },
+            "uniqueNewItems": 9,
+            "repeatedItems": 10,
+            "totalWaitMs": 6432.40000000014,
+            "elapsedFromFirstMs": 21449.399999999907,
+            "fromOpenMs": 30858.100000000093
+          }
+        }
+      ]
+    }
+  ]
+}

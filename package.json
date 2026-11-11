@@ -17,7 +17,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install chromium",
-    "preview": "vite preview --host 0.0.0.0 --port 4200"
+    "preview": "vite preview --host 0.0.0.0 --port 4200",
+    "bench:reader": "node scripts/benchmark-reader.mjs"
   },
   "private": true,
   "engines": {
