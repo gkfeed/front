@@ -6,12 +6,14 @@ trap 'rm -rf "$tmp"' EXIT
 baseline=${1:-78053f9}
 window=${2:-6202095}
 mkdir -p "$root/test-results"
-scenario=${BENCH_SCENARIO:-reorder}
+scenario=${BENCH_SCENARIO:-decisions}
 reading=${BENCH_READ_MS:-150}
 api_first=${BENCH_API_FIRST_MS:-250}
 api_next=${BENCH_API_NEXT_MS:-900}
 providers=${BENCH_PROVIDER_MS:-120,350,700}
-label="$scenario-$reading-$api_first-$api_next-${providers//,/-}"
+seed=${BENCH_SEED:-1}
+api_delete=${BENCH_API_DELETE_MS:-250}
+label="$scenario-$reading-$api_first-$api_next-$api_delete-${providers//,/-}-seed$seed"
 for variant in baseline window current; do
   dir="$tmp/$variant"
   mkdir -p "$dir"
@@ -43,8 +45,12 @@ done
 node - "$root/test-results" "$label" <<'NODE'
 const fs = require('node:fs');
 const path = require('node:path');
+const results = [];
 for (const variant of ['baseline', 'window', 'current']) {
   const r = JSON.parse(fs.readFileSync(path.join(process.argv[2], `prefetch-${process.argv[3]}-${variant}.json`)));
-  console.log(JSON.stringify({ scenario: r.scenario, variant, waitForCardMs: r.waitForCardMs, reviewElapsedMs: r.reviewElapsedMs, openedIds: r.openedIds, uniqueOpened: r.uniqueOpened, totalPreviewWaitMs: r.totalPreviewWaitMs, waitsMs: r.waitsMs, states: r.states, providerStarts: r.providerStarts, providerAborts: r.providerAborts }));
+  results.push(r);
+  console.log(JSON.stringify({ scenario: r.scenario, variant, waitForCardMs: r.waitForCardMs, reviewElapsedMs: r.reviewElapsedMs, openedIds: r.openedIds, uniqueOpened: r.uniqueOpened, changedNext: r.changedNext, priorityReorders: r.priorityReorders, priorityChangedFollowing: r.priorityChangedFollowing, totalPreviewWaitMs: r.totalPreviewWaitMs, waitsMs: r.waitsMs, states: r.states, providerStarts: r.providerStarts, providerAborts: r.providerAborts }));
 }
+console.log(JSON.stringify({ comparable: results.every((r) => JSON.stringify(r.openedIds) === JSON.stringify(results[0].openedIds)
+  && JSON.stringify(r.decisions.map(({ itemId, action }) => [itemId, action])) === JSON.stringify(results[0].decisions.map(({ itemId, action }) => [itemId, action]))) }));
 NODE
