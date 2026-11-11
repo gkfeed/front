@@ -6,9 +6,12 @@ class PreviewQueue {
   private readonly cache = new PreviewCache();
   private readonly scheduler = new PreviewScheduler();
 
-  load<T>(key: string, load: PreviewLoader<T>, signal?: AbortSignal): Promise<T> {
+  load<T>(key: string, load: PreviewLoader<T>, signal?: AbortSignal, priority = 0): Promise<T> {
     const cached = this.cache.get<T>(key);
-    if (cached) return cached.subscribe(signal);
+    if (cached) {
+      this.scheduler.reprioritize(cached, priority, true);
+      return cached.subscribe(signal);
+    }
 
     const request = new PreviewRequest<T>(key, load, (settled, failed) => {
       this.scheduler.settled(settled);
@@ -18,8 +21,13 @@ class PreviewQueue {
     this.cache.set(key, request);
 
     const subscribed = request.subscribe(signal);
-    this.scheduler.enqueue(request);
+    this.scheduler.enqueue(request, priority);
     return subscribed;
+  }
+
+  reprioritize(key: string, priority: number): void {
+    const cached = this.cache.get(key);
+    if (cached) this.scheduler.reprioritize(cached, priority);
   }
 
   clear(): void {
@@ -34,8 +42,13 @@ export function loadQueuedPreview<T>(
   key: string,
   load: PreviewLoader<T>,
   signal?: AbortSignal,
+  priority = 0,
 ): Promise<T> {
-  return previewQueue.load(key, load, signal);
+  return previewQueue.load(key, load, signal, priority);
+}
+
+export function reprioritizeQueuedPreview(key: string, priority: number): void {
+  previewQueue.reprioritize(key, priority);
 }
 
 export function clearPreviewCache(): void {

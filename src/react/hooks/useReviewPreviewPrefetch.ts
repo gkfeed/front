@@ -62,17 +62,36 @@ export function useReviewPreviewPrefetch({
       `open-graph:${item.link}`,
       `liquipedia:${item.link}`,
     ]));
-    for (const [key, controller] of prefetchControllersRef.current) {
-      if (retainedKeys.has(key)) continue;
+    // Keep a small amount of work displaced by a reorder. Drop the oldest
+    // displaced requests first, and release everything when the queue ends.
+    const displaced = [...prefetchControllersRef.current].filter(([key]) => !retainedKeys.has(key));
+    for (const [key] of displaced) {
+      const separator = key.indexOf(':');
+      const source = key.slice(0, separator);
+      if (source === 'open-graph' || source === 'liquipedia') {
+        previewUseCases.reprioritizeRemotePreview?.(key.slice(separator + 1), source, 100);
+      }
+    }
+    const spare = activeReviewIds.length > 0 ? 3 : 0;
+    for (const [key, controller] of displaced.slice(0, Math.max(0, displaced.length - spare))) {
       controller.abort();
       prefetchControllersRef.current.delete(key);
     }
-    if (nextItems.length === 0) return undefined;
+    // Give short-lived reorders time to settle, then release spare requests so
+    // they cannot monopolize the network slots needed by the new window.
+    const releaseId = window.setTimeout(() => {
+      for (const [key, controller] of displaced) {
+        if (prefetchControllersRef.current.get(key) !== controller) continue;
+        controller.abort();
+        prefetchControllersRef.current.delete(key);
+      }
+    }, 50);
+    if (nextItems.length === 0) return () => window.clearTimeout(releaseId);
 
     // Let the current card enqueue its request first. The shared preview queue
     // then keeps prefetches bounded without delaying the item on screen.
     const timeoutId = window.setTimeout(() => {
-      nextItems.forEach((item) => {
+      nextItems.forEach((item, index) => {
         prefetchFeedItem(
           item,
           previewUseCases,
@@ -80,11 +99,15 @@ export function useReviewPreviewPrefetch({
           prefetchControllersRef.current,
           nsfwMode,
           disabledPlugins,
+          index + 1,
         );
       });
     }, 0);
 
-    return () => window.clearTimeout(timeoutId);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearTimeout(releaseId);
+    };
   }, [activeReviewIds, disabledPlugins, enabled, items, nextItems, nsfwMode, previewUseCases]);
 
   useEffect(() => () => {

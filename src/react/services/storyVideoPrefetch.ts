@@ -54,7 +54,7 @@ export function prefetchStoryVideo(
   };
   const policy = warmPreview(EMPTY_REMOTE_PREVIEW);
   if (policy.remoteRequest) {
-    void previewUseCases.loadRemotePreview(item.link, policy.remoteRequest.source, controller.signal)
+    void previewUseCases.loadRemotePreview(item.link, policy.remoteRequest.source, controller.signal, 1)
       .then(warmPreview)
       .catch(() => undefined);
   }

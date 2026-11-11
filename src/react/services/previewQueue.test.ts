@@ -43,6 +43,27 @@ describe('loadQueuedPreview', () => {
     await expect(Promise.all(requests)).resolves.toEqual(Array(6).fill('preview'));
   });
 
+  it('promotes a queued prefetch when it becomes the visible card', async () => {
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    const load = (id: string) => () => new Promise<string>((resolve) => {
+      started.push(id);
+      releases.set(id, () => resolve(id));
+    });
+    const running = Array.from({ length: 4 }, (_, index) => loadQueuedPreview(`running-${index}`, load(`running-${index}`)));
+    const distant = loadQueuedPreview('distant', load('distant'), undefined, 8);
+    const near = loadQueuedPreview('near', load('near'), undefined, 2);
+    const promoted = loadQueuedPreview('distant', load('duplicate'), undefined, 0);
+    releases.get('running-0')!();
+    await vi.waitFor(() => expect(started).toContain('distant'));
+    expect(started).not.toContain('near');
+    releases.get('running-1')!();
+    await vi.waitFor(() => expect(started).toContain('near'));
+    releases.forEach((release) => release());
+    await expect(Promise.all([...running, distant, near, promoted])).resolves.toHaveLength(7);
+    expect(started).not.toContain('duplicate');
+  });
+
   it('does not cancel a shared request while another subscriber remains', async () => {
     const controller = new AbortController();
     let resolveLoad!: (value: string) => void;

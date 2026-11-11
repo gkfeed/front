@@ -94,7 +94,7 @@ describe('useReviewPreviewPrefetch', () => {
     expect(loadRemotePreview).not.toHaveBeenCalled();
   });
 
-  it('aborts skipped prefetches on navigation and remaining ones on unmount', async () => {
+  it('briefly retains a displaced prefetch before releasing it', async () => {
     const signals: AbortSignal[] = [];
     const loadRemotePreview = vi.fn((
       _url: string,
@@ -120,9 +120,9 @@ describe('useReviewPreviewPrefetch', () => {
     await waitFor(() => expect(signals).toHaveLength(1));
     const firstSignal = signals[0]!;
     rerender({ activeReviewIds: [3, 4] });
+    expect(firstSignal.aborted).toBe(false);
     await waitFor(() => expect(signals).toHaveLength(2));
-
-    expect(firstSignal.aborted).toBe(true);
+    await waitFor(() => expect(firstSignal.aborted).toBe(true));
     const secondSignal = signals[1]!;
     unmount();
     expect(firstSignal.aborted).toBe(true);
@@ -174,7 +174,7 @@ describe('useReviewPreviewPrefetch', () => {
       rerender({ activeReviewIds: ids.slice(index) });
       await new Promise((resolve) => window.setTimeout(resolve, 0));
       expect(signals.filter((signal) => !signal.aborted).length)
-        .toBeLessThanOrEqual(REVIEW_PREVIEW_PREFETCH_COUNT + 1);
+        .toBeLessThanOrEqual(REVIEW_PREVIEW_PREFETCH_COUNT + 4);
     }
 
     expect(loadRemotePreview).toHaveBeenCalledTimes(items.length - 1);

@@ -11,10 +11,12 @@ export type PreviewGateway = {
   fetchTikTokComments: (url: string, signal: AbortSignal) => Promise<TikTokCommentsPreview>;
   fetchYoutubeComments: (url: string, signal: AbortSignal) => Promise<YoutubeCommentsPreview>;
   fetchYoutubeTimecodes: (url: string, signal: AbortSignal) => Promise<YoutubeTimecodesPreview>;
+  reprioritizeRemotePreview?: (url: string, source: Exclude<RemotePreviewSource, 'none'>, priority: number) => void;
   loadRemotePreview: (
     url: string,
     source: Exclude<RemotePreviewSource, 'none'>,
     signal: AbortSignal,
+    priority?: number,
   ) => Promise<RemotePreview>;
 };
 
@@ -25,6 +27,7 @@ export type PreviewUseCases = {
   loadYoutubeComments: PreviewGateway['fetchYoutubeComments'];
   loadYoutubeTimecodes: PreviewGateway['fetchYoutubeTimecodes'];
   loadRemotePreview: PreviewGateway['loadRemotePreview'];
+  reprioritizeRemotePreview?: PreviewGateway['reprioritizeRemotePreview'];
 };
 
 export function createPreviewUseCases(gateway: PreviewGateway): PreviewUseCases {
@@ -35,5 +38,6 @@ export function createPreviewUseCases(gateway: PreviewGateway): PreviewUseCases 
     loadYoutubeComments: gateway.fetchYoutubeComments,
     loadYoutubeTimecodes: gateway.fetchYoutubeTimecodes,
     loadRemotePreview: gateway.loadRemotePreview,
+    reprioritizeRemotePreview: gateway.reprioritizeRemotePreview,
   };
 }
