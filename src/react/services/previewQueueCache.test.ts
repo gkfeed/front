@@ -10,6 +10,7 @@ afterEach(() => {
 function settledEntry(expiresAt: number): PreviewRequestControl {
   return {
     isSettled: true,
+    hasForegroundSubscriber: false,
     expiresAt,
     start() {},
     cancel() {},

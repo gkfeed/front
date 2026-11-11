@@ -6,6 +6,7 @@ export type PreviewRequestState = 'queued' | 'running' | 'settled';
 
 export interface PreviewRequestControl {
   readonly isSettled: boolean;
+  readonly hasForegroundSubscriber: boolean;
   readonly expiresAt: number | null;
   start(): void;
   cancel(): void;
@@ -24,6 +25,7 @@ export class PreviewRequest<T> implements PreviewRequestControl {
   private readonly rejectPromise: (reason?: unknown) => void;
   private state: PreviewRequestState = 'queued';
   private subscribers = 0;
+  private foregroundSubscribers = 0;
   private controller?: AbortController;
   private settled = false;
   private _expiresAt: number | null = null;
@@ -46,6 +48,10 @@ export class PreviewRequest<T> implements PreviewRequestControl {
 
   get isSettled(): boolean {
     return this.settled;
+  }
+
+  get hasForegroundSubscriber(): boolean {
+    return this.foregroundSubscribers > 0;
   }
 
   get expiresAt(): number | null {
@@ -72,12 +78,13 @@ export class PreviewRequest<T> implements PreviewRequestControl {
     );
   }
 
-  subscribe(signal?: AbortSignal): Promise<T> {
+  subscribe(signal?: AbortSignal, foreground = true): Promise<T> {
     this.subscribers += 1;
+    if (foreground) this.foregroundSubscribers += 1;
     if (!signal) return this.promise;
 
     if (signal.aborted) {
-      this.release();
+      this.release(foreground);
       return Promise.reject(createAbortError());
     }
 
@@ -92,7 +99,7 @@ export class PreviewRequest<T> implements PreviewRequestControl {
       const onAbort = () => {
         settle(() => {
           reject(createAbortError());
-          this.release();
+          this.release(foreground);
         });
       };
 
@@ -110,9 +117,10 @@ export class PreviewRequest<T> implements PreviewRequestControl {
     this.fail(createAbortError());
   }
 
-  private release(): void {
+  private release(foreground: boolean): void {
     if (this.settled) return;
     this.subscribers -= 1;
+    if (foreground) this.foregroundSubscribers -= 1;
     if (this.subscribers === 0) this.cancel();
   }
 

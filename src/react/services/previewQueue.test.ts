@@ -65,6 +65,99 @@ describe('loadQueuedPreview', () => {
     expect(started).not.toContain('duplicate');
   });
 
+  it('lowers a shared prefetch after its last visible subscriber aborts', async () => {
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    const load = (id: string) => () => new Promise<string>((resolve) => {
+      started.push(id);
+      releases.set(id, () => resolve(id));
+    });
+    const running = Array.from({ length: 4 }, (_, index) => loadQueuedPreview(`running-${index}`, load(`running-${index}`)));
+    const prefetch = loadQueuedPreview('old', load('old'), undefined, 9);
+    const first = new AbortController();
+    const second = new AbortController();
+    const firstAbort = expectAbortError(loadQueuedPreview('old', load('duplicate'), first.signal));
+    const secondAbort = expectAbortError(loadQueuedPreview('old', load('duplicate'), second.signal));
+    first.abort();
+    const visible = loadQueuedPreview('visible', load('visible'));
+    // One visible subscriber still protects the original request.
+    releases.get('running-0')!();
+    await vi.waitFor(() => expect(started).toContain('old'));
+    expect(started).not.toContain('visible');
+    second.abort();
+    releases.get('running-1')!();
+    await vi.waitFor(() => expect(started).toContain('visible'));
+    releases.forEach((release) => release());
+    await Promise.all([...running, prefetch, visible, firstAbort, secondAbort]);
+  });
+
+  it('starts a new visible request ahead of a prefetch after its visible subscriber leaves', async () => {
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    const load = (id: string) => () => new Promise<string>((resolve) => {
+      started.push(id);
+      releases.set(id, () => resolve(id));
+    });
+    const running = Array.from({ length: 4 }, (_, index) => loadQueuedPreview(`running-${index}`, load(`running-${index}`)));
+    const prefetch = loadQueuedPreview('old', load('old'), undefined, 9);
+    const controller = new AbortController();
+    const aborted = expectAbortError(loadQueuedPreview('old', load('duplicate'), controller.signal));
+    controller.abort();
+    reprioritizeQueuedPreview('old', 2);
+    const visible = loadQueuedPreview('visible', load('visible'));
+    releases.get('running-0')!();
+    await vi.waitFor(() => expect(started).toContain('visible'));
+    expect(started).not.toContain('old');
+    releases.get('running-1')!();
+    await vi.waitFor(() => expect(started).toContain('old'));
+    releases.forEach((release) => release());
+    await Promise.all([...running, prefetch, visible, aborted]);
+  });
+
+  it('keeps the prefetch priority when a request starts with a visible subscriber', async () => {
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    const load = (id: string) => () => new Promise<string>((resolve) => {
+      started.push(id);
+      releases.set(id, () => resolve(id));
+    });
+    const running = Array.from({ length: 4 }, (_, index) => loadQueuedPreview(`running-${index}`, load(`running-${index}`)));
+    const controller = new AbortController();
+    const aborted = expectAbortError(loadQueuedPreview('distant', load('distant'), controller.signal));
+    const distant = loadQueuedPreview('distant', load('duplicate'), undefined, 9);
+    controller.abort();
+    const near = loadQueuedPreview('near', load('near'), undefined, 1);
+    releases.get('running-0')!();
+    await vi.waitFor(() => expect(started).toContain('near'));
+    expect(started).not.toContain('distant');
+    releases.get('running-1')!();
+    await vi.waitFor(() => expect(started).toContain('distant'));
+    releases.forEach((release) => release());
+    await Promise.all([...running, distant, near, aborted]);
+  });
+
+  it('does not promote a shared prefetch for an already-aborted visible subscriber', async () => {
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    const load = (id: string) => () => new Promise<string>((resolve) => {
+      started.push(id);
+      releases.set(id, () => resolve(id));
+    });
+    const running = Array.from({ length: 4 }, (_, index) => loadQueuedPreview(`running-${index}`, load(`running-${index}`)));
+    const distant = loadQueuedPreview('distant', load('distant'), undefined, 9);
+    const controller = new AbortController();
+    controller.abort();
+    await expectAbortError(loadQueuedPreview('distant', load('duplicate'), controller.signal));
+    const near = loadQueuedPreview('near', load('near'), undefined, 1);
+    releases.get('running-0')!();
+    await vi.waitFor(() => expect(started).toContain('near'));
+    expect(started).not.toContain('distant');
+    releases.get('running-1')!();
+    await vi.waitFor(() => expect(started).toContain('distant'));
+    releases.forEach((release) => release());
+    await Promise.all([...running, distant, near]);
+  });
+
   it('uses the revised order before an aborted request releases a slot', async () => {
     const started: string[] = [];
     const releases = new Map<string, () => void>();

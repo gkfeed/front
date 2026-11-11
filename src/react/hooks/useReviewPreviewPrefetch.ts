@@ -65,11 +65,11 @@ export function useReviewPreviewPrefetch({
     ]));
     // Reorder work that is already queued before cancellations release slots.
     const itemsById = new Map(items.map((item) => [item.id, item]));
-    activeReviewIds.slice(0, REVIEW_PREVIEW_PREFETCH_COUNT + 1).forEach((id, index) => {
+    activeReviewIds.slice(1, REVIEW_PREVIEW_PREFETCH_COUNT + 1).forEach((id, index) => {
       const item = itemsById.get(id);
       if (!item) return;
-      previewUseCases.reprioritizeRemotePreview?.(item.link, 'open-graph', index);
-      previewUseCases.reprioritizeRemotePreview?.(item.link, 'liquipedia', index);
+      previewUseCases.reprioritizeRemotePreview?.(item.link, 'open-graph', index + 1);
+      previewUseCases.reprioritizeRemotePreview?.(item.link, 'liquipedia', index + 1);
     });
     for (const [key, controller] of prefetchControllersRef.current) {
       if (retainedKeys.has(key)) continue;

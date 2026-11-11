@@ -9,8 +9,8 @@ class PreviewQueue {
   load<T>(key: string, load: PreviewLoader<T>, signal?: AbortSignal, priority = 0): Promise<T> {
     const cached = this.cache.get<T>(key);
     if (cached) {
-      this.scheduler.reprioritize(cached, priority, true);
-      return cached.subscribe(signal);
+      if (priority > 0 && !signal?.aborted) this.scheduler.reprioritize(cached, priority, true);
+      return cached.subscribe(signal, priority === 0);
     }
 
     const request = new PreviewRequest<T>(key, load, (settled, failed) => {
@@ -20,14 +20,14 @@ class PreviewQueue {
     });
     this.cache.set(key, request);
 
-    const subscribed = request.subscribe(signal);
+    const subscribed = request.subscribe(signal, priority === 0);
     this.scheduler.enqueue(request, priority);
     return subscribed;
   }
 
   reprioritize(key: string, priority: number): void {
     const cached = this.cache.get(key);
-    if (cached) this.scheduler.reprioritize(cached, priority);
+    if (cached && priority > 0) this.scheduler.reprioritize(cached, priority);
   }
 
   clear(): void {
