@@ -8,6 +8,10 @@ window=${2:-6202095}
 mkdir -p "$root/test-results"
 scenario=${BENCH_SCENARIO:-reorder}
 reading=${BENCH_READ_MS:-150}
+api_first=${BENCH_API_FIRST_MS:-250}
+api_next=${BENCH_API_NEXT_MS:-900}
+providers=${BENCH_PROVIDER_MS:-120,350,700}
+label="$scenario-$reading-$api_first-$api_next-${providers//,/-}"
 for variant in baseline window current; do
   dir="$tmp/$variant"
   mkdir -p "$dir"
@@ -34,13 +38,13 @@ const build = await rolldown({
 await build.write({ file: `${dir}/benchmark.mjs`, format: 'esm' });
 await build.close();
 NODE
-  node "$dir/benchmark.mjs" > "$root/test-results/prefetch-$scenario-$reading-$variant.json"
+  node "$dir/benchmark.mjs" > "$root/test-results/prefetch-$label-$variant.json"
 done
-node - "$root/test-results" "$scenario" "$reading" <<'NODE'
+node - "$root/test-results" "$label" <<'NODE'
 const fs = require('node:fs');
 const path = require('node:path');
 for (const variant of ['baseline', 'window', 'current']) {
-  const r = JSON.parse(fs.readFileSync(path.join(process.argv[2], `prefetch-${process.argv[3]}-${process.argv[4]}-${variant}.json`)));
-  console.log(JSON.stringify({ scenario: r.scenario, variant, totalWaitMs: r.totalWaitMs, waitsMs: r.waitsMs, states: r.states, networkStarts: r.networkStarts, aborts: r.aborts }));
+  const r = JSON.parse(fs.readFileSync(path.join(process.argv[2], `prefetch-${process.argv[3]}-${variant}.json`)));
+  console.log(JSON.stringify({ scenario: r.scenario, variant, waitForCardMs: r.waitForCardMs, reviewElapsedMs: r.reviewElapsedMs, openedIds: r.openedIds, uniqueOpened: r.uniqueOpened, totalPreviewWaitMs: r.totalPreviewWaitMs, waitsMs: r.waitsMs, states: r.states, providerStarts: r.providerStarts, providerAborts: r.providerAborts }));
 }
 NODE
