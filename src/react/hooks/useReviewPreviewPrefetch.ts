@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { abortPrefetches, prefetchFeedItem } from '../services/previewPrefetch';
 import { prefetchStoryVideo } from '../services/storyVideoPrefetch';
+import { prefetchTikTok } from '../services/tiktokPrefetch';
+import { useTikTokPreferences } from '../state/useTikTokPreferences';
 import { getFeedItemProvider } from '../domain/feedItemProviderPresentation';
 import { isNsfwLink } from '../domain/nsfw';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
@@ -23,9 +25,11 @@ export function useReviewPreviewPrefetch({
 }): void {
   const { preview: previewUseCases } = useFeatureUseCases();
   const { nsfwMode } = useNsfwPreferences();
+  const { playbackMode } = useTikTokPreferences();
   const { disabledPlugins } = usePluginPreferences();
   const prefetchedImageUrlsRef = useRef<Set<string>>(new Set());
   const prefetchControllersRef = useRef<Map<string, AbortController>>(new Map());
+  const tikTokPrefetchesRef = useRef<Map<number, { link: string; dispose: () => void }>>(new Map());
   const storyPrefetchesRef = useRef<Map<number, { signature: string; dispose: () => void }>>(new Map());
   // Navigation may retain overlapping work, but a policy change invalidates it.
   useEffect(() => {
@@ -46,6 +50,10 @@ export function useReviewPreviewPrefetch({
         return item ? [item] : [];
       });
   }, [activeReviewIds, items]);
+  const nextTikToks = useMemo(() => playbackMode === 'preview' ? nextItems
+    .filter((item) => getFeedItemProvider(item, disabledPlugins) === 'tiktok'
+      && (nsfwMode === 'show' || !isNsfwLink(item.link))).slice(0, 2) : [],
+  [disabledPlugins, nextItems, nsfwMode, playbackMode]);
   const nextStories = useMemo(() => {
     const stories = nextItems.filter((item) => getFeedItemProvider(item, disabledPlugins) === 'instagram'
       && (nsfwMode !== 'hide' || !isNsfwLink(item.link)));
@@ -55,6 +63,31 @@ export function useReviewPreviewPrefetch({
       ?? stories.find((item) => item.link !== first.link);
     return second ? [first, second] : [first];
   }, [disabledPlugins, nextItems, nsfwMode]);
+
+  useEffect(() => {
+    const prefetches = tikTokPrefetchesRef.current;
+    const candidates = enabled ? nextTikToks : [];
+    const retained = new Map(candidates.map((item) => [item.id, item.link]));
+    const current = enabled && playbackMode === 'preview' ? items.find(({ id }) => id === activeReviewIds[0]) : undefined;
+    if (current && getFeedItemProvider(current, disabledPlugins) === 'tiktok'
+      && (nsfwMode === 'show' || !isNsfwLink(current.link))) retained.set(current.id, current.link);
+    for (const [id, entry] of prefetches) {
+      if (retained.get(id) === entry.link) continue;
+      entry.dispose();
+      prefetches.delete(id);
+    }
+    const timer = window.setTimeout(() => {
+      for (const item of candidates) {
+        if (!prefetches.has(item.id)) prefetches.set(item.id, { link: item.link, dispose: prefetchTikTok(item.link) });
+      }
+    }, PREFETCH_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [activeReviewIds, disabledPlugins, enabled, items, nextTikToks, nsfwMode, playbackMode]);
+
+  useEffect(() => () => {
+    tikTokPrefetchesRef.current.forEach(({ dispose }) => dispose());
+    tikTokPrefetchesRef.current.clear();
+  }, []);
 
   useEffect(() => {
     const prefetches = storyPrefetchesRef.current;

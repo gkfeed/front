@@ -76,3 +76,9 @@ Raw samples: [reader-next-baseline.json](reader-next-baseline.json). Three measu
 Without added response delay, the 20-transition series completes in about 0.665 seconds. With 3-second responses, transitions 4 and 8 wait about 2.93 seconds. After the first 10 cards, the Reader repeats already seen IDs. All three runs block at transition 20 for at least 15 seconds, so there is no completed 20-transition series time for that scenario. Only nine unique new items were observed per slow run. Median-only reporting would hide both the preview stalls and the missing next card.
 
 This PR records that behavior without changing Reader loading or review-session logic. The next optimization should compare the same rapid navigation and separately check that all N next items are distinct.
+
+## Repeat after PR #17
+
+The same cold, 3-second response scenario was repeated on merge revision `5fe3d467070c23516158cc515c3616123a61f40f`, which combines this benchmark branch and PR #17. The [raw report](reader-after-pr17.json) contains three runs, no warmups, with 20 rapid Keep transitions each. First-card times were 9,429.6, 9,417.3 and 12,409.2 ms. The longer run started four speculative preview requests before the visible card's preview; the other two started the visible request first. This small synthetic sample shows a possible queue race, not an estimated production regression.
+
+All three runs completed 20 transitions to 20 distinct new IDs with no blocked transition. Completed-transition median was 33.3 ms and pooled p95 was 2,899.9 ms; median total transition wait was 15,015.1 ms. Each transition has no reading pause. These results do not measure TikTok playback readiness and should not be compared with a reading-pause workload as if the workloads were identical.

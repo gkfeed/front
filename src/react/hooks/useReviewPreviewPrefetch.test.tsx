@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 
 import type { ReactNode } from 'react';
+import { prefetchTikTok } from '../services/tiktokPrefetch';
+import { TikTokPreferencesContext } from '../state/tiktokPreferencesContext';
+
+vi.mock('../services/tiktokPrefetch', () => ({ prefetchTikTok: vi.fn() }));
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -26,6 +30,29 @@ afterEach(() => {
 });
 
 describe('useReviewPreviewPrefetch', () => {
+  it('prefetches at most two upcoming TikToks in preview mode and retains the current request', async () => {
+    const dispose = vi.fn();
+    vi.mocked(prefetchTikTok).mockReturnValue(dispose);
+    const items = [1, 2, 3, 4].map((id) => ({
+      ...createItem(id), link: `https://www.tiktok.com/@creator/video/${id}`,
+    }));
+    const Wrapper = createWrapper(vi.fn().mockResolvedValue(EMPTY_REMOTE_PREVIEW));
+    const preferences = { playbackMode: 'preview' as const, hideTikTokItems: false, setPlaybackMode: vi.fn(), setHideTikTokItems: vi.fn() };
+    const { rerender, unmount } = renderHook(({ ids }) => useReviewPreviewPrefetch({ enabled: true, items, activeReviewIds: ids }), {
+      initialProps: { ids: [1, 2, 3, 4] },
+      wrapper: ({ children }) => <Wrapper><TikTokPreferencesContext value={preferences}>{children}</TikTokPreferencesContext></Wrapper>,
+    });
+    await waitFor(() => expect(prefetchTikTok).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(prefetchTikTok).mock.calls.map(([url]) => url)).toEqual([items[1]!.link, items[2]!.link]);
+    rerender({ ids: [2, 3, 4] });
+    await waitFor(() => expect(prefetchTikTok).toHaveBeenCalledTimes(3));
+    expect(dispose).not.toHaveBeenCalled();
+    rerender({ ids: [3, 4] });
+    expect(dispose).toHaveBeenCalledTimes(1);
+    unmount();
+    expect(dispose).toHaveBeenCalledTimes(3);
+  });
+
   it('aborts pending work on plugin policy changes, even if the fallback uses the same source', async () => {
     stubLocalStorage();
     const loadRemotePreview = vi.fn<(url: string, source: string, signal: AbortSignal) => Promise<typeof EMPTY_REMOTE_PREVIEW>>(() => new Promise(() => {}));
