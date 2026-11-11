@@ -66,7 +66,7 @@ describe('useReviewPreviewPrefetch', () => {
 
   it('prefetches only the next few remote previews in queue order', async () => {
     const loadRemotePreview = vi.fn().mockResolvedValue(EMPTY_REMOTE_PREVIEW);
-    const items = [1, 2, 3, 4, 5].map((id) => createItem(id));
+    const items = Array.from({ length: 13 }, (_, index) => createItem(index + 1));
 
     renderHook(() => useReviewPreviewPrefetch({
       enabled: true,

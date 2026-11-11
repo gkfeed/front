@@ -7,7 +7,7 @@ import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
 import { usePluginPreferences } from '../state/usePluginPreferences';
 
-export const REVIEW_PREVIEW_PREFETCH_COUNT = 3;
+export const REVIEW_PREVIEW_PREFETCH_COUNT = 10;
 
 export function useReviewPreviewPrefetch({
   enabled,
