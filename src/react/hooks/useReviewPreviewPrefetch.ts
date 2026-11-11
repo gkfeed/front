@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { abortPrefetches, prefetchFeedItem } from '../services/previewPrefetch';
 import { prefetchStoryVideo } from '../services/storyVideoPrefetch';
+import { getFeedItemProvider } from '../domain/feedItemProviderPresentation';
+import { isNsfwLink } from '../domain/nsfw';
 import { useFeatureUseCases } from '../state/useFeatureUseCases';
 import { useNsfwPreferences } from '../state/useNsfwPreferences';
 import type { FeedItem } from '../types';
@@ -24,10 +26,16 @@ export function useReviewPreviewPrefetch({
   const { disabledPlugins } = usePluginPreferences();
   const prefetchedImageUrlsRef = useRef<Set<string>>(new Set());
   const prefetchControllersRef = useRef<Map<string, AbortController>>(new Map());
+  const storyPrefetchesRef = useRef<Map<number, { signature: string; dispose: () => void }>>(new Map());
   // Navigation may retain overlapping work, but a policy change invalidates it.
   useEffect(() => {
     const controllers = prefetchControllersRef.current;
-    return () => abortPrefetches(controllers);
+    const storyPrefetches = storyPrefetchesRef.current;
+    return () => {
+      abortPrefetches(controllers);
+      storyPrefetches.forEach(({ dispose }) => dispose());
+      storyPrefetches.clear();
+    };
   }, [disabledPlugins, nsfwMode, previewUseCases]);
   const nextItems = useMemo(() => {
     const itemsById = new Map(items.map((item) => [item.id, item]));
@@ -38,20 +46,40 @@ export function useReviewPreviewPrefetch({
         return item ? [item] : [];
       });
   }, [activeReviewIds, items]);
-  const nextItem = nextItems[0];
+  const nextStories = useMemo(() => {
+    const stories = nextItems.filter((item) => getFeedItemProvider(item, disabledPlugins) === 'instagram'
+      && (nsfwMode !== 'hide' || !isNsfwLink(item.link)));
+    const first = stories[0];
+    if (!first) return [];
+    const second = stories.find((item) => item.link !== first.link && item.feedId !== first.feedId)
+      ?? stories.find((item) => item.link !== first.link);
+    return second ? [first, second] : [first];
+  }, [disabledPlugins, nextItems, nsfwMode]);
 
   useEffect(() => {
-    if (!enabled || !nextItem) return;
-    // Start after the visible card has had a chance to request its media.
-    let dispose: (() => void) | undefined;
+    const prefetches = storyPrefetchesRef.current;
+    const candidates = enabled ? nextStories : [];
+    const signatures = new Map(candidates.map((item) => [item.id, JSON.stringify([item.link, item.title, item.text])]));
+    for (const [id, entry] of prefetches) {
+      if (signatures.get(id) === entry.signature) continue;
+      entry.dispose();
+      prefetches.delete(id);
+    }
+    if (candidates.length === 0) return undefined;
+
+    // Give the visible card a chance to start before speculative video loads.
     const timeoutId = window.setTimeout(() => {
-      dispose = prefetchStoryVideo(nextItem, previewUseCases, nsfwMode);
+      for (const item of candidates) {
+        if (prefetches.has(item.id)) continue;
+        const priority = nextItems.findIndex(({ id }) => id === item.id) + 1;
+        prefetches.set(item.id, {
+          signature: signatures.get(item.id)!,
+          dispose: prefetchStoryVideo(item, previewUseCases, nsfwMode, priority),
+        });
+      }
     }, 0);
-    return () => {
-      window.clearTimeout(timeoutId);
-      dispose?.();
-    };
-  }, [enabled, nextItem, nsfwMode, previewUseCases]);
+    return () => window.clearTimeout(timeoutId);
+  }, [enabled, nextItems, nextStories, nsfwMode, previewUseCases]);
 
   useEffect(() => {
     if (!enabled) {

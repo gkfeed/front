@@ -7,12 +7,12 @@ import { EMPTY_REMOTE_PREVIEW } from '../domain/remotePreview';
 import type { FeedItem } from '../types';
 import type { prefetchFeedItem } from './previewPrefetch';
 
-// Only the immediately upcoming story buffers video. The shared preview loader
-// deduplicates its metadata request with the existing image/metadata prefetch.
+// The shared preview loader deduplicates metadata with image/metadata prefetch.
 export function prefetchStoryVideo(
   item: FeedItem,
   previewUseCases: Parameters<typeof prefetchFeedItem>[1],
   nsfwMode: NsfwMode,
+  priority = 1,
 ): () => void {
   if (!isInstagramFeedItem(item)) return () => undefined;
 
@@ -54,7 +54,7 @@ export function prefetchStoryVideo(
   };
   const policy = warmPreview(EMPTY_REMOTE_PREVIEW);
   if (policy.remoteRequest) {
-    void previewUseCases.loadRemotePreview(item.link, policy.remoteRequest.source, controller.signal, 1)
+    void previewUseCases.loadRemotePreview(item.link, policy.remoteRequest.source, controller.signal, priority)
       .then(warmPreview)
       .catch(() => undefined);
   }
