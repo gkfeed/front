@@ -14,7 +14,11 @@ export class PreviewScheduler {
 
   reprioritize(request: PreviewRequestControl, priority: number, onlyPromote = false): void {
     const queued = this.queue.find((entry) => entry.request === request);
-    if (queued) queued.priority = onlyPromote ? Math.min(queued.priority, priority) : priority;
+    // Once a visible subscriber promotes a request, a speculative reorder
+    // must not demote it while that subscriber may still be waiting.
+    if (queued) queued.priority = onlyPromote || queued.priority === 0
+      ? Math.min(queued.priority, priority)
+      : priority;
   }
 
   settled(request: PreviewRequestControl): void {

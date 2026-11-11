@@ -94,7 +94,7 @@ describe('useReviewPreviewPrefetch', () => {
     expect(loadRemotePreview).not.toHaveBeenCalled();
   });
 
-  it('briefly retains a displaced prefetch before releasing it', async () => {
+  it('aborts displaced prefetches and releases remaining work on unmount', async () => {
     const signals: AbortSignal[] = [];
     const loadRemotePreview = vi.fn((
       _url: string,
@@ -120,13 +120,34 @@ describe('useReviewPreviewPrefetch', () => {
     await waitFor(() => expect(signals).toHaveLength(1));
     const firstSignal = signals[0]!;
     rerender({ activeReviewIds: [3, 4] });
-    expect(firstSignal.aborted).toBe(false);
+    expect(firstSignal.aborted).toBe(true);
     await waitFor(() => expect(signals).toHaveLength(2));
-    await waitFor(() => expect(firstSignal.aborted).toBe(true));
     const secondSignal = signals[1]!;
     unmount();
     expect(firstSignal.aborted).toBe(true);
     expect(secondSignal.aborted).toBe(true);
+  });
+
+  it('updates queued priorities before cancelling a displaced request', async () => {
+    const events: string[] = [];
+    const load = vi.fn((_url: string, _source: string, signal: AbortSignal) => {
+      signal.addEventListener('abort', () => events.push('abort'));
+      return new Promise<typeof EMPTY_REMOTE_PREVIEW>(() => undefined);
+    });
+    const reprioritize = vi.fn((url: string, source: string, priority: number) => {
+      events.push(`${source}:${url}:${priority}`);
+    });
+    const items = Array.from({ length: 13 }, (_, index) => createItem(index + 1));
+    const { rerender } = renderHook(
+      ({ activeReviewIds }: { activeReviewIds: number[] }) => useReviewPreviewPrefetch({ enabled: true, items, activeReviewIds }),
+      { initialProps: { activeReviewIds: items.map(({ id }) => id) }, wrapper: createWrapper(load, reprioritize) },
+    );
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(10));
+    events.length = 0;
+    rerender({ activeReviewIds: [1, 10, 11, 12, 13] });
+    const priorityIndex = events.indexOf(`open-graph:${items[9]!.link}:1`);
+    expect(priorityIndex).toBeGreaterThanOrEqual(0);
+    expect(events.indexOf('abort')).toBeGreaterThan(priorityIndex);
   });
 
   it('does not resubscribe to an overlapping pending prefetch after navigation', async () => {
@@ -172,9 +193,9 @@ describe('useReviewPreviewPrefetch', () => {
 
     for (let index = 0; index < ids.length; index += 1) {
       rerender({ activeReviewIds: ids.slice(index) });
-      await new Promise((resolve) => window.setTimeout(resolve, 0));
+      await new Promise((resolve) => window.setTimeout(resolve, 20));
       expect(signals.filter((signal) => !signal.aborted).length)
-        .toBeLessThanOrEqual(REVIEW_PREVIEW_PREFETCH_COUNT + 4);
+        .toBeLessThanOrEqual(REVIEW_PREVIEW_PREFETCH_COUNT + 1);
     }
 
     expect(loadRemotePreview).toHaveBeenCalledTimes(items.length - 1);
@@ -183,9 +204,9 @@ describe('useReviewPreviewPrefetch', () => {
   });
 });
 
-function createWrapper(loadRemotePreview: ReturnType<typeof vi.fn>) {
+function createWrapper(loadRemotePreview: ReturnType<typeof vi.fn>, reprioritizeRemotePreview?: ReturnType<typeof vi.fn>) {
   const useCases = {
-    preview: { loadRemotePreview },
+    preview: { loadRemotePreview, reprioritizeRemotePreview },
   } as unknown as FeatureUseCases;
 
   return function Wrapper({ children }: { children: ReactNode }) {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearPreviewCache, loadQueuedPreview } from './previewQueue';
+import { clearPreviewCache, loadQueuedPreview, reprioritizeQueuedPreview } from './previewQueue';
 
 afterEach(() => {
   clearPreviewCache();
@@ -54,6 +54,7 @@ describe('loadQueuedPreview', () => {
     const distant = loadQueuedPreview('distant', load('distant'), undefined, 8);
     const near = loadQueuedPreview('near', load('near'), undefined, 2);
     const promoted = loadQueuedPreview('distant', load('duplicate'), undefined, 0);
+    reprioritizeQueuedPreview('distant', 9);
     releases.get('running-0')!();
     await vi.waitFor(() => expect(started).toContain('distant'));
     expect(started).not.toContain('near');
@@ -62,6 +63,31 @@ describe('loadQueuedPreview', () => {
     releases.forEach((release) => release());
     await expect(Promise.all([...running, distant, near, promoted])).resolves.toHaveLength(7);
     expect(started).not.toContain('duplicate');
+  });
+
+  it('uses the revised order before an aborted request releases a slot', async () => {
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    const load = (id: string) => () => new Promise<string>((resolve) => {
+      started.push(id);
+      releases.set(id, () => resolve(id));
+    });
+    const controller = new AbortController();
+    const running = loadQueuedPreview('running-0', load('running-0'), controller.signal);
+    const runningAbort = expectAbortError(running);
+    const rest = Array.from({ length: 3 }, (_, index) => loadQueuedPreview(`running-${index + 1}`, load(`running-${index + 1}`)));
+    const first = loadQueuedPreview('first', load('first'), undefined, 1);
+    const next = loadQueuedPreview('next', load('next'), undefined, 5);
+    reprioritizeQueuedPreview('first', 5);
+    reprioritizeQueuedPreview('next', 1);
+    controller.abort();
+    expect(started).toContain('next');
+    expect(started).not.toContain('first');
+    releases.get('next')!();
+    await vi.waitFor(() => expect(started).toContain('first'));
+    releases.forEach((release) => release());
+    await runningAbort;
+    await Promise.all([...rest, first, next]);
   });
 
   it('does not cancel a shared request while another subscriber remains', async () => {

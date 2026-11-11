@@ -8,6 +8,7 @@ import type { FeedItem } from '../types';
 import { usePluginPreferences } from '../state/usePluginPreferences';
 
 export const REVIEW_PREVIEW_PREFETCH_COUNT = 10;
+const PREFETCH_DELAY_MS = 10;
 
 export function useReviewPreviewPrefetch({
   enabled,
@@ -62,31 +63,20 @@ export function useReviewPreviewPrefetch({
       `open-graph:${item.link}`,
       `liquipedia:${item.link}`,
     ]));
-    // Keep a small amount of work displaced by a reorder. Drop the oldest
-    // displaced requests first, and release everything when the queue ends.
-    const displaced = [...prefetchControllersRef.current].filter(([key]) => !retainedKeys.has(key));
-    for (const [key] of displaced) {
-      const separator = key.indexOf(':');
-      const source = key.slice(0, separator);
-      if (source === 'open-graph' || source === 'liquipedia') {
-        previewUseCases.reprioritizeRemotePreview?.(key.slice(separator + 1), source, 100);
-      }
-    }
-    const spare = activeReviewIds.length > 0 ? 3 : 0;
-    for (const [key, controller] of displaced.slice(0, Math.max(0, displaced.length - spare))) {
+    // Reorder work that is already queued before cancellations release slots.
+    const itemsById = new Map(items.map((item) => [item.id, item]));
+    activeReviewIds.slice(0, REVIEW_PREVIEW_PREFETCH_COUNT + 1).forEach((id, index) => {
+      const item = itemsById.get(id);
+      if (!item) return;
+      previewUseCases.reprioritizeRemotePreview?.(item.link, 'open-graph', index);
+      previewUseCases.reprioritizeRemotePreview?.(item.link, 'liquipedia', index);
+    });
+    for (const [key, controller] of prefetchControllersRef.current) {
+      if (retainedKeys.has(key)) continue;
       controller.abort();
       prefetchControllersRef.current.delete(key);
     }
-    // Give short-lived reorders time to settle, then release spare requests so
-    // they cannot monopolize the network slots needed by the new window.
-    const releaseId = window.setTimeout(() => {
-      for (const [key, controller] of displaced) {
-        if (prefetchControllersRef.current.get(key) !== controller) continue;
-        controller.abort();
-        prefetchControllersRef.current.delete(key);
-      }
-    }, 50);
-    if (nextItems.length === 0) return () => window.clearTimeout(releaseId);
+    if (nextItems.length === 0) return undefined;
 
     // Let the current card enqueue its request first. The shared preview queue
     // then keeps prefetches bounded without delaying the item on screen.
@@ -102,12 +92,9 @@ export function useReviewPreviewPrefetch({
           index + 1,
         );
       });
-    }, 0);
+    }, PREFETCH_DELAY_MS);
 
-    return () => {
-      window.clearTimeout(timeoutId);
-      window.clearTimeout(releaseId);
-    };
+    return () => window.clearTimeout(timeoutId);
   }, [activeReviewIds, disabledPlugins, enabled, items, nextItems, nsfwMode, previewUseCases]);
 
   useEffect(() => () => {

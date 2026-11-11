@@ -12,6 +12,11 @@ import type { FeatureUseCases } from '../src/react/application/featureCompositio
 
 const dom = new JSDOM('<div id="root"></div>', { url: 'https://benchmark.invalid' });
 Object.assign(globalThis, { window: dom.window, document: dom.window.document, Image: dom.window.Image, IS_REACT_ACT_ENVIRONMENT: true });
+const readingMs = Number(process.env.BENCH_READ_MS ?? 150);
+const scenario = process.env.BENCH_SCENARIO ?? 'reorder';
+if (!Number.isFinite(readingMs) || readingMs < 0 || !['stable', 'reorder', 'jump'].includes(scenario)) {
+  throw new Error('Invalid BENCH_READ_MS or BENCH_SCENARIO');
+}
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const startedAt = performance.now();
 const time = () => Math.round(performance.now() - startedAt);
@@ -43,9 +48,10 @@ let ids = items.map(({ id }) => id);
 const waits: number[] = [];
 const states: Record<string, number> = { cached: 0, pending: 0, notStarted: 0 };
 for (let step = 0; step < 12; step += 1) {
-  if (step === 3) {
-    // Priority changes after a decision: a previously distant source moves up.
-    ids = [ids[0]!, ...ids.slice(8, 12), ...ids.slice(1, 8), ...ids.slice(12)];
+  if (step === 3 && scenario !== 'stable') {
+    // A newly prioritized source moves up while the displayed card stays put.
+    const offset = scenario === 'jump' ? 16 : 8;
+    ids = [ids[0]!, ...ids.slice(offset, offset + 4), ...ids.slice(1, offset), ...ids.slice(offset + 4)];
     events.push({ time: time(), event: 'reorder', id: ids[1]! });
   }
   const id = ids[0]!;
@@ -57,10 +63,10 @@ for (let step = 0; step < 12; step += 1) {
   const waitStart = performance.now();
   await loadRemotePreview(items[id - 1]!.link, 'open-graph', new AbortController().signal);
   waits.push(Math.round(performance.now() - waitStart));
-  await sleep(150); // reading time after the preview appears
+  await sleep(readingMs); // reading time after the preview appears
   ids = ids.slice(1);
 }
 await act(async () => root.unmount());
 clearPreviewCache();
-console.log(JSON.stringify({ scenario: { responseMs: 300, readingMs: 150, cards: 12, reorderAfter: 3 }, waitsMs: waits, totalWaitMs: waits.reduce((a, b) => a + b, 0), states, networkStarts: events.filter((e) => e.event === 'start').length, aborts: events.filter((e) => e.event === 'abort').length, events }, null, 2));
+console.log(JSON.stringify({ scenario: { name: scenario, responseMs: 300, readingMs, cards: 12, reorderAfter: scenario === 'stable' ? null : 3 }, waitsMs: waits, totalWaitMs: waits.reduce((a, b) => a + b, 0), states, networkStarts: events.filter((e) => e.event === 'start').length, aborts: events.filter((e) => e.event === 'abort').length, events }, null, 2));
 dom.window.close();
