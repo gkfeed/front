@@ -60,6 +60,10 @@ export function useReviewPreviewPrefetch({
     const prefetches = storyPrefetchesRef.current;
     const candidates = enabled ? nextStories : [];
     const signatures = new Map(candidates.map((item) => [item.id, JSON.stringify([item.link, item.title, item.text])]));
+    const current = enabled ? items.find(({ id }) => id === activeReviewIds[0]) : undefined;
+    // Keep an in-flight video alive while its card is visible so navigation
+    // does not cancel the request just before the player needs it.
+    if (current) signatures.set(current.id, JSON.stringify([current.link, current.title, current.text]));
     for (const [id, entry] of prefetches) {
       if (signatures.get(id) === entry.signature) continue;
       entry.dispose();
@@ -79,7 +83,7 @@ export function useReviewPreviewPrefetch({
       }
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [enabled, nextItems, nextStories, nsfwMode, previewUseCases]);
+  }, [activeReviewIds, enabled, items, nextItems, nextStories, nsfwMode, previewUseCases]);
 
   useEffect(() => {
     if (!enabled) {

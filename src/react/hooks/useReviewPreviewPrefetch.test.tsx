@@ -65,9 +65,11 @@ describe('useReviewPreviewPrefetch', () => {
     rerender({ enabled: true, ids: [2, 4, 3, 5], feedItems: items.map((item) => ({ ...item })) });
     await waitFor(() => expect(videos()).toHaveLength(3));
     expect(nextSource.src).toBe(items[3]!.link);
-    expect(videos()[0]!.hasAttribute('src')).toBe(false);
+    expect(videos()[0]!.src).toBe(items[1]!.link);
     expect(videos()[2]!.src).toBe(items[2]!.link);
-    rerender({ enabled: false, ids: [2, 4, 3, 5], feedItems: items });
+    rerender({ enabled: true, ids: [4, 3, 5], feedItems: items });
+    expect(videos()[0]!.hasAttribute('src')).toBe(false);
+    rerender({ enabled: false, ids: [4, 3, 5], feedItems: items });
     expect(videos().every((video) => !video.hasAttribute('src'))).toBe(true);
   });
 
