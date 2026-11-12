@@ -147,10 +147,10 @@
   line-height: 1.15;
 }
 
-.reader-card__preview--tiktok > .reader-card__speed-toggle {
+.reader-card__preview--tiktok > :is(.reader-card__speed-toggle, .reader-card__normalize-toggle) {
   position: absolute;
   z-index: 6;
-  top: 12px;
+  bottom: 76px;
   right: 12px;
   min-width: 44px;
   min-height: 44px;
@@ -162,14 +162,43 @@
   cursor: pointer;
 }
 
-.reader-card__preview--tiktok > .reader-card__speed-toggle[aria-pressed="true"] {
+.reader-card__preview--tiktok > :is(.reader-card__speed-toggle, .reader-card__normalize-toggle)[aria-pressed="true"] {
   background: #fff;
   color: #111;
 }
 
-.reader-card__preview--tiktok > .reader-card__speed-toggle:focus-visible {
+.reader-card__preview--tiktok > :is(.reader-card__speed-toggle, .reader-card__normalize-toggle):focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
+}
+
+.reader-card__preview--tiktok > .reader-card__normalize-toggle {
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.reader-card__normalize-toggle svg {
+  width: 24px;
+  height: 24px;
+}
+
+.reader-card__preview--tiktok > .reader-card__speed-toggle,
+.reader-card__preview--slideshow > .reader-card__normalize-toggle {
+  bottom: 128px;
+}
+
+@media (hover: hover) {
+  .reader-card__preview--tiktok > :is(.reader-card__speed-toggle, .reader-card__normalize-toggle) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .reader-card__preview--tiktok:hover > :is(.reader-card__speed-toggle, .reader-card__normalize-toggle),
+  .reader-card__preview--tiktok > :is(.reader-card__speed-toggle, .reader-card__normalize-toggle):focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .reader-card__tiktok-author {
@@ -230,8 +259,3 @@
   font-weight: 400;
 }
 
-@media (max-width: 640px) {
-  .reader-card__preview--tiktok > .reader-card__speed-toggle {
-    top: 76px;
-  }
-}

@@ -136,6 +136,16 @@ export async function routeBffRequest(
     return true;
   }
 
+  if (requestUrl.pathname === '/bff/tiktok-media') {
+    const input = getRequiredPreviewUrl(requestUrl);
+    await hlsMediaRequestGate.run(clientId, requestContext, async () => {
+      const media = await useCases.tiktokMedia(input, requestRange, requestContext);
+      requestContext.startStreaming?.();
+      await sendPreviewVideo(response, media);
+    });
+    return true;
+  }
+
   if (requestUrl.pathname === '/bff/vk-video') {
     const input = getRequiredPreviewUrl(requestUrl);
     await hlsMediaRequestGate.run(clientId, requestContext, async () => {

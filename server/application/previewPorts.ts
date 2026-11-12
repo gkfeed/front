@@ -30,6 +30,7 @@ export interface PreviewPorts {
   fetchYoutubeTimecodes: PreviewPort<YoutubeTimecodesPreview>;
   resolveYoutubeChannel: PreviewPort<YoutubeChannelResolution>;
   fetchRedditPreviewImage: PreviewPort<PreviewImage>;
+  fetchTikTokMedia: (input: string, range: string | undefined, context: RequestExecutionContext) => Promise<PreviewVideo>;
   fetchSasflixMedia: (
     input: string,
     range: string | undefined,

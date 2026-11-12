@@ -5,6 +5,8 @@ import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { isAppleMobileDevice } from '../../domain/device';
 import { isTempfileUrl, parseUrl } from '../../domain/feedItemUrls';
 import { type SoundGestureLifecycle, useSoundGesture } from '../../hooks/useSoundGesture';
+import { tikTokMediaProxy, useTikTokNormalization } from './useTikTokNormalization';
+import { TikTokNormalizeButton } from './TikTokNormalizeButton';
 import { useHlsVideo } from './useHlsVideo';
 
 type VideoPreview = LocalizedFeedItemPreview & { type: 'video' };
@@ -33,6 +35,7 @@ export function FeedItemVideoMedia({
   const [hlsFallbackSrc, setHlsFallbackSrc] = useState<string | null>(null);
   const [readySource, setReadySource] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const normalization = useTikTokNormalization(videoRef);
   const hasAutoAppliedDoubleSpeed = useRef(false);
   const localSoundGesture = useSoundGesture(isAppleMobileDevice(), preview.src);
   const soundGesture = sharedSoundGesture ?? localSoundGesture;
@@ -133,7 +136,7 @@ export function FeedItemVideoMedia({
         <video
           key={preview.src}
           ref={videoRef}
-          src={isHls ? undefined : preview.src}
+          src={isHls ? undefined : isTikTok ? tikTokMediaProxy(preview.src) : preview.src}
           poster={preview.poster}
           aria-label={preview.alt}
           autoPlay
@@ -154,6 +157,9 @@ export function FeedItemVideoMedia({
           onError={handlePreviewError}
         />
       )}
+      {isTikTok && tempfileFallback === 'none' ? (
+        <TikTokNormalizeButton enabled={normalization.enabled} onClick={normalization.toggle} />
+      ) : null}
       {isTikTok && duration !== null && duration > 60 ? (
         <button
           type="button"

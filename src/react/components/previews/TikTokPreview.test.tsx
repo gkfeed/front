@@ -32,7 +32,7 @@ describe('TikTok preview', () => {
     const currentImage = () => document.querySelector('.reader-card__slide')?.getAttribute('src');
     expect(document.querySelector('video')).toBeNull();
     expect(document.querySelector('iframe')).toBeNull();
-    expect(document.querySelector('audio')?.src).toBe(videoUrl);
+    expect(document.querySelector('audio')?.getAttribute('src')).toBe(`/bff/tiktok-media?url=${encodeURIComponent(videoUrl)}`);
     expect(currentImage()).toContain('/1.jpeg');
     await act(async () => { vi.advanceTimersByTime(3000); });
     expect(currentImage()).toContain('/2.jpeg');
@@ -68,6 +68,32 @@ describe('TikTok preview', () => {
     expect(document.querySelector('.reader-card__tiktok-author img')).toBeNull();
     expect(document.querySelector('video')).not.toBeNull();
     expect(document.querySelector('iframe')).toBeNull();
+  });
+
+  it('enables and bypasses audio normalization only on request', async () => {
+    const input = { connect: vi.fn(), disconnect: vi.fn() };
+    const node = () => ({ connect: vi.fn().mockReturnThis(), threshold: { value: 0 }, knee: { value: 0 }, ratio: { value: 0 }, attack: { value: 0 }, gain: { value: 0 } });
+    const destination = {};
+    const context = { createMediaElementSource: vi.fn(() => input), createDynamicsCompressor: vi.fn(node),
+      createGain: vi.fn(node), destination, state: 'running', close: vi.fn().mockResolvedValue(undefined) };
+    const AudioContextMock = vi.fn(function () { return context; });
+    vi.stubGlobal('AudioContext', AudioContextMock);
+    try {
+      vi.mocked(fetchTikTokPlayback).mockResolvedValue({ videoUrl });
+      render(<TikTokPreview {...props} />);
+      await getVideo();
+      const button = screen.getByRole('button', { name: 'Normalize audio' });
+      expect(button.getAttribute('aria-pressed')).toBe('false');
+      expect(AudioContextMock).not.toHaveBeenCalled();
+      fireEvent.click(button);
+      expect(button.getAttribute('aria-pressed')).toBe('true');
+      expect(input.connect).not.toHaveBeenLastCalledWith(destination);
+      fireEvent.click(button);
+      expect(button.getAttribute('aria-pressed')).toBe('false');
+      expect(input.connect).toHaveBeenLastCalledWith(destination);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('automatically doubles the rate when the speed control appears', async () => {
@@ -133,7 +159,7 @@ describe('TikTok preview', () => {
     const video = await getVideo();
     await act(async () => { resolveFirst({ videoUrl }); });
     expect(signal.aborted).toBe(true);
-    expect(video.src).toBe(`${videoUrl}?second`);
+    expect(video.getAttribute('src')).toBe(`/bff/tiktok-media?url=${encodeURIComponent(`${videoUrl}?second`)}`);
   });
 
   it('resets speed and duration on a new post', async () => {

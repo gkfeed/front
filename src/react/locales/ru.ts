@@ -267,6 +267,7 @@ const ru = {
   },
   preview: {
     postDeleted: 'Пост удалён',
+    normalizeSound: 'Нормализация звука',
     doubleSpeed: 'Удвоенная скорость воспроизведения',
     previousSlide: 'Предыдущий слайд',
     nextSlide: 'Следующий слайд',

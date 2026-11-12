@@ -261,6 +261,7 @@ const en = {
   },
   preview: {
     postDeleted: 'Post deleted',
+    normalizeSound: 'Normalize audio',
     doubleSpeed: 'Double playback speed',
     previousSlide: 'Previous slide',
     nextSlide: 'Next slide',

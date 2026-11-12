@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TikTokPlaybackAuthor } from '../../../../shared/tiktokContracts';
 import type { SoundGestureLifecycle } from '../../hooks/useSoundGesture';
+import { tikTokMediaProxy, useTikTokNormalization } from './useTikTokNormalization';
+import { TikTokNormalizeButton } from './TikTokNormalizeButton';
 import { TikTokAuthorOverlay } from './TikTokAuthorOverlay';
 
 export function TikTokSlideshow({ imageUrls, audioUrl, title, author, soundGesture, onError }: {
@@ -16,6 +18,7 @@ export function TikTokSlideshow({ imageUrls, audioUrl, title, author, soundGestu
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const audio = useRef<HTMLAudioElement>(null);
+  const normalization = useTikTokNormalization(audio);
   const move = (offset: number) => setIndex((current) =>
     (current + offset + imageUrls.length) % imageUrls.length);
 
@@ -45,7 +48,8 @@ export function TikTokSlideshow({ imageUrls, audioUrl, title, author, soundGestu
           <button type="button" aria-label={t('preview.nextSlide')} onClick={() => move(1)}>›</button>
         </div>
       ) : null}
-      {audioUrl ? <audio ref={audio} src={audioUrl} autoPlay loop controls
+      {audioUrl ? <TikTokNormalizeButton enabled={normalization.enabled} onClick={normalization.toggle} /> : null}
+      {audioUrl ? <audio ref={audio} src={tikTokMediaProxy(audioUrl)} autoPlay loop controls
         muted={soundGesture.isMuted} aria-label={title}
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} /> : null}
       {audioUrl && soundGesture.showPrompt ? (

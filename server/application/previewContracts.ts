@@ -52,6 +52,7 @@ export interface PreviewUseCases {
   youtubeTimecodes: PreviewUseCase<YoutubeTimecodesPreview>;
   youtubeChannel: PreviewUseCase<YoutubeChannelResolution>;
   redditPreviewImage: PreviewUseCase<PreviewImage>;
+  tiktokMedia: (input: string, range: string | undefined, context: RequestExecutionContext) => Promise<PreviewVideo>;
   sasflixMedia: (
     input: string,
     range: string | undefined,
