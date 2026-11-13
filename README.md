@@ -158,6 +158,11 @@ volume at the default data directory so records survive container replacement. V
 proxies `/bff` to the BFF. Ingestion rejects other browser origins. Subject IDs
 are self-reported, rather than authenticated identities.
 
+In List, open **Feed scores** to see category proportions, reviewed-item counts
+and the dominant category for each feed. Search by feed name or sort by sample
+count or viewed proportion; Refresh reloads the server scores. The empty state
+links to card review instead of displaying estimated data.
+
 `GET /bff/recommendation-feed-scores?subjectId=<id>` returns counts, proportions
 for all three categories, the number of unique items, and the dominant category
 per feed. Ties yield `category: null`; feeds without decisions have no score.
