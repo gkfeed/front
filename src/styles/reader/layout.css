@@ -119,3 +119,30 @@
 .reader__page-button:last-child {
   justify-self: end;
 }
+
+.reader__progress {
+  display: grid;
+  gap: 4px;
+  flex: 0 1 180px;
+  min-width: 90px;
+  max-width: 180px;
+  justify-items: end;
+}
+
+.reader__feed-score {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 20px;
+  border-radius: 4px;
+}
+
+.reader__feed-score:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+.reader__progress .reader__count {
+  width: 100%;
+  text-align: center;
+}

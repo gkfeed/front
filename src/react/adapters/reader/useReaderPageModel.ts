@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router';
 
+import { useFeedRecommendationScores } from '../../hooks/useFeedRecommendationScores';
 import { useFeedReader } from './useFeedReader';
 import { useReviewShortcuts } from '../../hooks/useReviewShortcuts';
 import { getRequestErrorMessage } from '../../presentation/requestErrorMessage';
@@ -32,8 +33,10 @@ export function useReaderPageModel(t: Translator) {
 
   const reader = useFeedReader({
     prefetchNextPreviews: mode === 'review',
+    observeReview: mode === 'review',
     itemOrder,
   });
+  const feedScores = useFeedRecommendationScores(mode === 'review');
   useReviewShortcuts({
     mode,
     currentItem: reader.currentItem,
@@ -50,6 +53,7 @@ export function useReaderPageModel(t: Translator) {
 
   return {
     ...reader,
+    currentFeedScore: feedScores.result?.feeds.find((score) => score.feedId === reader.currentItem?.feedId),
     mode,
     itemOrder,
     reviewPanelRef,

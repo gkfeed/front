@@ -127,3 +127,57 @@ Run `npm run test:e2e:ui` for Playwright's interactive runner.
 ## Preview
 
 Run `npm run preview` to serve the production build locally.
+
+## Item decisions and feed scores
+
+Card review records the existing keep/delete action, visible card time (`activeMs`)
+and an item snapshot. Hidden-tab time is excluded. Buttons and A/D shortcuts use
+the same recorder; scroll mode does not record viewing time. The BFF assigns:
+
+- `keep_for_later`: keep, regardless of time.
+- `delete_immediately`: delete before 10 seconds.
+- `delete_after_viewing`: delete at 10 seconds or later.
+
+Items are unique: each subject/item contributes once. Retries are deduplicated;
+there is no decision history selection or replacement. Time measures exposure to
+the visible card, including paused media, rather than actual video playback.
+
+Records use a random browser-local subject ID scoped to the account. Credentials
+and usernames are excluded. Item titles, text and URLs are limited to 2,048,
+16,384 and 4,096 characters respectively. Visible time is also saved alongside
+the existing local feed decision history for later prioritization changes.
+
+The localStorage outbox sends bounded JSON batches to
+`POST /bff/recommendation-events`, retries every 15 seconds and on reconnection,
+and resumes on the next review visit. Clearing browser storage loses unsent data;
+if storage is unavailable, retries are kept in memory for this visit.
+
+The BFF appends JSONL to `data/recommendation-events.jsonl`. Configure
+`RECOMMENDATION_LOG_PATH` to change the location. Docker Compose mounts a named
+volume at the default data directory so records survive container replacement. Vite
+proxies `/bff` to the BFF. Ingestion rejects other browser origins. Subject IDs
+are self-reported, rather than authenticated identities.
+
+Open the **Scores** navigation tab at `/scores` to see category proportions,
+reviewed-item counts
+and the dominant category for each feed. Search by feed name or sort by sample
+count or viewed proportion; Refresh reloads the server scores. The empty state
+links to card review instead of displaying estimated data.
+
+`GET /bff/recommendation-feed-scores?subjectId=<id>` returns counts, proportions
+for all three categories, the number of unique items, and the dominant category
+per feed. Ties yield `category: null`; feeds without decisions have no score.
+The subject ID is in the log and in the browser's
+`gkfeed.recommendation-subject.v1:<username>` localStorage entry.
+
+Export classified items or feed scores with the project's required Node version:
+
+```bash
+node scripts/export-recommendation-dataset.mjs data/recommendation-events.jsonl > items.jsonl
+node scripts/export-recommendation-dataset.mjs data/recommendation-events.jsonl --feed-scores > feed-scores.jsonl
+```
+
+`RECOMMENDATION_LOG_PATH` also sets the export script's default input path.
+These category proportions are available for future prioritization changes;
+the current ranking weights are preserved. The reader shows the current feed's
+category bar below the remaining-card count, linking to `/scores`.

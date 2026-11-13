@@ -21,6 +21,7 @@ export function Navbar() {
       <span className="nav__links" aria-label={t('nav.sections')}>
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/" end>{t('nav.list')}</NavLink>
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/reader">{t('nav.reader')}</NavLink>
+        <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/scores">{t('nav.scores')}</NavLink>
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/create">{t('nav.create')}</NavLink>
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/live">{t('nav.live')}</NavLink>
         <NavLink className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`} to="/login">{t('nav.login')}</NavLink>

@@ -13,6 +13,7 @@ import { useAuth } from './react/state/useAuth';
 import { usePluginCatalogPolicy } from './react/hooks/usePluginCatalogPolicy';
 
 const FeedListPage = lazy(() => import('./react/pages/FeedListPage').then(({ FeedListPage: page }) => ({ default: page })));
+const FeedScoresPage = lazy(() => import('./react/pages/FeedScoresPage').then(({ FeedScoresPage: page }) => ({ default: page })));
 const CreateFeedPage = lazy(() => import('./react/pages/CreateFeedPage').then(({ CreateFeedPage: page }) => ({ default: page })));
 const FeedPage = lazy(() => import('./react/pages/FeedPage').then(({ FeedPage: page }) => ({ default: page })));
 const LoginPage = lazy(() => import('./react/pages/LoginPage').then(({ LoginPage: page }) => ({ default: page })));
@@ -63,6 +64,7 @@ export function App({ basename }: { basename?: string } = {}) {
                 <Suspense fallback={<p className="ui-status" role="status">{t('app.loading')}</p>}>
                   <Routes>
                     <Route path="/" element={<RequireAuth><FeedListPage /></RequireAuth>} />
+                    <Route path="/scores" element={<RequireAuth><FeedScoresPage /></RequireAuth>} />
                     <Route path="/create" element={<RequireAuth><CreateFeedPage /></RequireAuth>} />
                     <Route path="/reader" element={<RequireAuth><ReaderPage /></RequireAuth>} />
                     <Route path="/live" element={<RequireAuth><LivePage /></RequireAuth>} />

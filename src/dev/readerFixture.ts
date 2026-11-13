@@ -83,6 +83,9 @@ export async function installReaderFixture(): Promise<string> {
       }
       const configured = responses[`${url.pathname}${url.search}`] ?? responses[url.pathname];
       if (configured !== undefined) return json(configured);
+      if (url.pathname === '/bff/recommendation-feed-scores') {
+        return json({ classificationVersion: 1, viewedThresholdMs: 10000, feeds: [] });
+      }
       if (url.pathname === '/bff/open-graph') {
         const link = url.searchParams.get('url') ?? '';
         const item = snapshot.items.find((candidate) => candidate.link === link);
@@ -91,6 +94,10 @@ export async function installReaderFixture(): Promise<string> {
           video: null, siteName: null, type: 'article', providerData: null,
         });
       }
+    }
+    if (request.method === 'POST' && url.pathname === '/bff/recommendation-events') {
+      const body = await request.json() as { events: unknown[] };
+      return json({ accepted: body.events.length });
     }
     if (request.method === 'DELETE' && /^\/api\/v1\/items\/\d+$/.test(url.pathname)) {
       const id = Number(url.pathname.split('/').at(-1));

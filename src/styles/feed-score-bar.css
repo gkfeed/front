@@ -1,0 +1,32 @@
+.feed-score-bar {
+  display: flex;
+  gap: 1px;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--color-control-border);
+}
+
+.feed-score-bar > span {
+  flex-basis: 0;
+  min-width: 0;
+}
+
+.feed-score-bar > [data-category="keep_for_later"] {
+  background: var(--color-focus-light);
+}
+
+.feed-score-bar > [data-category="delete_immediately"] {
+  background: var(--color-danger);
+}
+
+.feed-score-bar > [data-category="delete_after_viewing"] {
+  background: var(--color-accent);
+}
+
+.feed-score-bar--large {
+  gap: 3px;
+  height: 12px;
+  border-radius: 4px;
+}

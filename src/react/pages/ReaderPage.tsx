@@ -15,6 +15,7 @@ export function ReaderPage() {
     items,
     sources,
     currentItem,
+    currentFeedScore,
     isLoading,
     isItemPending,
     loadFailed,
@@ -68,6 +69,7 @@ export function ReaderPage() {
           <ReaderReview
             key={currentItem.id}
             item={currentItem}
+            feedScore={currentFeedScore}
             sourceTitle={sources.find((source) => source.id === currentItem.feedId)?.title}
             remainingCount={remainingCount}
             hasKeptItems={hasKeptItems}

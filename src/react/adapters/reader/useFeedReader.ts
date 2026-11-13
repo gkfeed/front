@@ -10,6 +10,7 @@ import { useReviewSession } from '../../hooks/useReviewSession';
 import { useReviewPreviewPrefetch } from '../../hooks/useReviewPreviewPrefetch';
 import { useAsyncLoad } from '../../hooks/useAsyncLoad';
 import { useFeedPriority } from '../../state/useFeedPriority';
+import { useReviewObservation } from '../../telemetry/useReviewObservation';
 import { useFeedDecisions } from '../../state/useFeedDecisions';
 import { getEffectiveFeedPriorities } from '../../state/feedPriority';
 import { useFeatureUseCases } from '../../state/useFeatureUseCases';
@@ -21,9 +22,11 @@ const EMPTY_SOURCES: Feed[] = [];
 /** Connects the Reader transaction model to loading, deletion, and cache I/O. */
 export function useFeedReader({
   prefetchNextPreviews = false,
+  observeReview = false,
   itemOrder = 'desc',
 }: {
   prefetchNextPreviews?: boolean;
+  observeReview?: boolean;
   itemOrder?: ReaderItemOrder;
 } = {}) {
   const { credentials } = useAuth();
@@ -91,6 +94,7 @@ export function useFeedReader({
   });
   const items = sourceError ? undefined : reviewItems;
   const currentItem = isSourcesLoading || sourceError ? undefined : reviewCurrentItem;
+  const observeDecision = useReviewObservation(observeReview ? currentItem : undefined);
   const attemptedDeletions = useRef(new Set<string>());
   const deleteRemoteItem = useCallback(
     (itemId: number) => feeds.deleteFeedItem(itemId, credentials),
@@ -124,17 +128,21 @@ export function useFeedReader({
   const keepItem = useCallback(() => {
     if (!currentItem) return;
 
-    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: true, decidedAt: Date.now() });
+    const observation = observeDecision('keep');
+    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: true, decidedAt: Date.now(),
+      activeMs: observation?.activeMs });
     if (groupedFeedIds.has(currentItem.feedId)) keepFeed(currentItem.id, currentItem.feedId);
     else keep(currentItem.id);
-  }, [currentItem, groupedFeedIds, keep, keepFeed, recordDecision]);
+  }, [currentItem, groupedFeedIds, keep, keepFeed, observeDecision, recordDecision]);
 
   const deleteCurrentItem = useCallback(() => {
     if (!currentItem) return;
 
-    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: false, decidedAt: Date.now() });
+    const observation = observeDecision('delete');
+    recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: false, decidedAt: Date.now(),
+      activeMs: observation?.activeMs });
     startDeletion(currentItem.id, getItemTitle(currentItem));
-  }, [currentItem, recordDecision, startDeletion]);
+  }, [currentItem, observeDecision, recordDecision, startDeletion]);
 
   const recoverFailedDeletion = useCallback((itemId: number) => {
     recoverDeletion(itemId);

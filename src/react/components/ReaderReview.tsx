@@ -1,5 +1,9 @@
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
+
+import type { FeedRecommendationScore } from '../../../shared/recommendationScoring';
+import { FeedScoreBar } from './FeedScoreBar';
 
 import { isShortVideoFeedItem, isTikTokFeedItem } from '../domain/feedItemProviderPresentation';
 import { useAutomaticReaderFullscreen } from '../hooks/useAutomaticReaderFullscreen';
@@ -13,6 +17,7 @@ import { usePluginPreferences } from '../state/usePluginPreferences';
 export function ReaderReview({
   item,
   sourceTitle,
+  feedScore,
   remainingCount,
   hasKeptItems,
   isDeleting,
@@ -23,6 +28,7 @@ export function ReaderReview({
 }: {
   item: FeedItem;
   sourceTitle?: string;
+  feedScore?: FeedRecommendationScore;
   remainingCount: number;
   hasKeptItems: boolean;
   isDeleting: boolean;
@@ -39,6 +45,7 @@ export function ReaderReview({
     itemId: item.id,
     shouldEnterAutomatically: isShortVideo,
   });
+  const feedTitle = sourceTitle || t('feedScores.unknownFeed', { id: item.feedId });
   const reviewActions = { isDeleting, onKeep, onDelete };
 
   return (
@@ -70,7 +77,12 @@ export function ReaderReview({
           </button>
         ) : null}
         <FeedPriorityControls feedId={item.feedId} />
-        <span className="reader__count">{t('reader.remaining', { count: remainingCount })}</span>
+        <div className="reader__progress">
+          <span className="reader__count">{t('reader.remaining', { count: remainingCount })}</span>
+          <Link className="reader__feed-score" to="/scores" aria-label={t('feedScores.openScore', { title: feedTitle })}>
+            <FeedScoreBar score={feedScore} title={feedTitle} />
+          </Link>
+        </div>
       </div>
     </div>
   );
