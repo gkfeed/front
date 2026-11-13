@@ -71,17 +71,17 @@ export function ReaderReview({
       ) : null}
       <ReaderReviewActions {...reviewActions} />
       <div className="reader__count-row">
-        {hasKeptItems ? (
-          <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={onReset}>
-            {t('reader.reset')}
-          </button>
-        ) : null}
+        <Link className="reader__feed-score" to="/scores" aria-label={t('feedScores.openScore', { title: feedTitle })}>
+          <FeedScoreBar score={feedScore} title={feedTitle} />
+        </Link>
         <FeedPriorityControls feedId={item.feedId} />
-        <div className="reader__progress">
+        <div className="reader__remaining">
+          {hasKeptItems ? (
+            <button type="button" className="reader__reset" aria-label={t('reader.resetKeptItems')} onClick={onReset}>
+              {t('reader.reset')}
+            </button>
+          ) : null}
           <span className="reader__count">{t('reader.remaining', { count: remainingCount })}</span>
-          <Link className="reader__feed-score" to="/scores" aria-label={t('feedScores.openScore', { title: feedTitle })}>
-            <FeedScoreBar score={feedScore} title={feedTitle} />
-          </Link>
         </div>
       </div>
     </div>
