@@ -2,6 +2,7 @@ export type FeedDecision = {
   itemId: number;
   feedId: number;
   kept: boolean;
+  activeMs?: number;
   decidedAt?: number;
 };
 
@@ -22,7 +23,7 @@ export function parseFeedDecisions(value: unknown): readonly FeedDecision[] {
   const decisions = new Map<number, FeedDecision>();
   for (const entry of value.slice(-MAX_FEED_DECISIONS)) {
     if (!entry || typeof entry !== 'object') continue;
-    const { itemId, feedId, kept, decidedAt } = entry;
+    const { itemId, feedId, kept, decidedAt, activeMs } = entry;
     if (
       !Number.isSafeInteger(itemId) || itemId <= 0
       || !Number.isSafeInteger(feedId) || feedId <= 0
@@ -31,6 +32,7 @@ export function parseFeedDecisions(value: unknown): readonly FeedDecision[] {
     decisions.delete(itemId);
     const decision: FeedDecision = { itemId, feedId, kept };
     if (Number.isSafeInteger(decidedAt) && decidedAt > 0) decision.decidedAt = decidedAt;
+    if (Number.isSafeInteger(activeMs) && activeMs >= 0) decision.activeMs = activeMs;
     decisions.set(itemId, decision);
   }
   return [...decisions.values()];

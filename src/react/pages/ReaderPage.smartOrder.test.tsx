@@ -118,7 +118,7 @@ describe('ReaderPage smart order', () => {
     expect(await screen.findByText('Low keep rate')).toBeTruthy();
 
     await waitFor(() => expect(JSON.parse(storage.get(getFeedDecisionsStorageKey('reader')) ?? '[]')).toContainEqual({
-      itemId: 21, feedId: 6, kept: true, decidedAt: expect.any(Number),
+      itemId: 21, feedId: 6, kept: true, activeMs: expect.any(Number), decidedAt: expect.any(Number),
     }));
   });
 
@@ -150,7 +150,7 @@ describe('ReaderPage smart order', () => {
     expect(await screen.findByText('Other second')).toBeTruthy();
 
     await waitFor(() => expect(JSON.parse(storage.get(getFeedDecisionsStorageKey('reader')) ?? '[]'))
-      .toContainEqual({ itemId: 34, feedId: 6, kept: false, decidedAt: expect.any(Number) }));
+      .toContainEqual({ itemId: 34, feedId: 6, kept: false, activeMs: expect.any(Number), decidedAt: expect.any(Number) }));
   });
 
   it('does not use keep rates when automatic prioritization is disabled', async () => {

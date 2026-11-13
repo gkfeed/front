@@ -79,6 +79,15 @@ describe('parseFeedDecisions', () => {
     expect(parseFeedDecisions(decisions)).toEqual(decisions.slice(2));
   });
 
+  it('preserves visible time while accepting legacy decisions without it', () => {
+    expect(parseFeedDecisions([{ ...kept, activeMs: 10000 }, deleted]))
+      .toEqual([{ ...kept, activeMs: 10000 }, deleted]);
+    expect(parseFeedDecisions([{ ...kept, activeMs: 0 }])).toEqual([{ ...kept, activeMs: 0 }]);
+    for (const activeMs of [null, '10000', -1, 1.5, NaN, Infinity]) {
+      expect(parseFeedDecisions([{ ...kept, activeMs }])).toEqual([kept]);
+    }
+  });
+
   it('keeps valid timestamps, accepts legacy decisions, and ignores malformed timestamps', () => {
     expect(parseFeedDecisions([{ ...kept, decidedAt: 1000 }, deleted]))
       .toEqual([{ ...kept, decidedAt: 1000 }, deleted]);

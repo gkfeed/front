@@ -11,3 +11,4 @@ test-results
 .DS_Store
 .verification/
 dev/reader-fixtures/*.local.json
+/data/

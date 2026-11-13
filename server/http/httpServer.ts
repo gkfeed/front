@@ -1,5 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
+import { sendRecommendationFeedScores } from '../telemetry/recommendationScores.js';
+import { recordRecommendationEvents } from '../telemetry/recommendationLog.js';
 import { handleBffRequest } from './apiRouter.js';
 import { createBffClientAddressResolver } from './bffClientAddress.js';
 import { toHttpErrorResponse } from './httpErrorMapping.js';
@@ -34,6 +36,20 @@ export async function handleHttpRequest(
   const context = createHttpRequestContext(request, response);
   try {
     const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
+
+    if (requestUrl.pathname === '/bff/recommendation-feed-scores') {
+      if (request.method !== 'GET') {
+        sendJson(response, 405, { error: { code: 'method_not_allowed', message: 'Method not allowed' } });
+      } else {
+        await sendRecommendationFeedScores(requestUrl, response);
+      }
+      return;
+    }
+
+    if (requestUrl.pathname === '/bff/recommendation-events') {
+      await recordRecommendationEvents(request, response);
+      return;
+    }
 
     if (request.method === 'GET' && await dependencies.handleBffRequest(
       requestUrl,

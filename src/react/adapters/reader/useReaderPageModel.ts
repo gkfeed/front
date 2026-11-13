@@ -32,6 +32,7 @@ export function useReaderPageModel(t: Translator) {
 
   const reader = useFeedReader({
     prefetchNextPreviews: mode === 'review',
+    observeReview: mode === 'review',
     itemOrder,
   });
   useReviewShortcuts({
