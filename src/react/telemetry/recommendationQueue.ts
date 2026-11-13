@@ -1,4 +1,4 @@
-import { isRecommendationEvent, type RecommendationEvent } from '../../../shared/recommendationEvents';
+import { RECOMMENDATION_SCORES_UPDATED_EVENT, isRecommendationEvent, type RecommendationEvent } from '../../../shared/recommendationEvents';
 
 const PREFIX = 'gkfeed.recommendation-outbox.v1:';
 const memory = new Map<string, RecommendationEvent>();
@@ -56,6 +56,7 @@ export async function flushRecommendationEvents(): Promise<void> {
         try { localStorage.removeItem(PREFIX + event.eventId); }
         catch { /* A later retry may resend it; scoring counts unique items. */ }
       }
+      window.dispatchEvent(new Event(RECOMMENDATION_SCORES_UPDATED_EVENT));
     }
   } catch { /* Keep the outbox for retry after a network failure or reload. */ }
   finally { flushing = false; }

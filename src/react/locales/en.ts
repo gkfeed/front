@@ -13,6 +13,7 @@ const en = {
     settings: 'Settings',
   },
   nav: {
+    scores: 'Scores',
     primary: 'Primary navigation',
     home: 'GKFEED home',
     sections: 'Feed sections',
@@ -24,7 +25,8 @@ const en = {
     settings: 'Settings',
   },
   feedScores: {
-    "views": "List view",
+    noScore: '{{title}}: no observations yet',
+    openScore: 'Scores for {{title}}',
     "tab": "Feed scores",
     "eyebrow": "Your reading history",
     "title": "What you watch and what you skip",

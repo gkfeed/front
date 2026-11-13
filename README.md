@@ -158,7 +158,8 @@ volume at the default data directory so records survive container replacement. V
 proxies `/bff` to the BFF. Ingestion rejects other browser origins. Subject IDs
 are self-reported, rather than authenticated identities.
 
-In List, open **Feed scores** to see category proportions, reviewed-item counts
+Open the **Scores** navigation tab at `/scores` to see category proportions,
+reviewed-item counts
 and the dominant category for each feed. Search by feed name or sort by sample
 count or viewed proportion; Refresh reloads the server scores. The empty state
 links to card review instead of displaying estimated data.
@@ -178,4 +179,5 @@ node scripts/export-recommendation-dataset.mjs data/recommendation-events.jsonl 
 
 `RECOMMENDATION_LOG_PATH` also sets the export script's default input path.
 These category proportions are available for future prioritization changes;
-the current ranking weights are preserved.
+the current ranking weights are preserved. The reader shows the current feed's
+category bar above the remaining-card count, linking to `/scores`.

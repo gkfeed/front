@@ -1,3 +1,5 @@
+export const RECOMMENDATION_SCORES_UPDATED_EVENT = 'gkfeed:recommendation-scores-updated';
+
 export type RecommendationCategory = 'keep_for_later' | 'delete_immediately' | 'delete_after_viewing';
 
 export type RecommendationEvent = {

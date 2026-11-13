@@ -1,29 +1,21 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { RECOMMENDATION_CATEGORIES, type FeedRecommendationScore } from '../../../shared/recommendationScoring';
 import type { RecommendationCategory } from '../../../shared/recommendationEvents';
-import { useAsyncResource } from '../hooks/useAsyncResource';
-import { getFeedRecommendationScores } from '../services/feedRecommendationScores';
-import { useAuth } from '../state/useAuth';
-import { getRecommendationSubjectId } from '../telemetry/recommendationSubject';
 import type { Feed } from '../types';
+import { useFeedRecommendationScores } from '../hooks/useFeedRecommendationScores';
+import { FeedScoreBar } from './FeedScoreBar';
 import { getFeedIcon } from './feedIcons';
 
 import '../../styles/feed-scores.css';
 
 export function FeedScores({ feeds }: { feeds: Feed[] }) {
   const { t, i18n } = useTranslation();
-  const { credentials } = useAuth();
-  const username = credentials?.username;
   const [sort, setSort] = useState('samples');
   const [query, setQuery] = useState('');
-  const load = useCallback((signal: AbortSignal) => {
-    if (!username) throw new Error('Missing score subject');
-    return getFeedRecommendationScores(getRecommendationSubjectId(username), signal);
-  }, [username]);
-  const { result, error, isLoading, retry } = useAsyncResource(load, { enabled: !!username, key: username });
+  const { result, error, isLoading, retry } = useFeedRecommendationScores();
   const scores = result?.feeds ?? [];
   const titles = useMemo(() => new Map(feeds.map((feed) => [feed.id, feed])), [feeds]);
   const total = scores.reduce((sum, score) => sum + score.itemCount, 0);
@@ -89,11 +81,7 @@ function ScoreRow({ score, feed, percent }: { score: FeedRecommendationScore; fe
         <span className="feed-scores__badge" data-category={score.category ?? 'mixed'}>{score.category ? t(`feedScores.categories.${score.category}`) : t('feedScores.mixed')}</span></div>
     </div>
     <div className="feed-scores__distribution">
-      <div className="feed-scores__bar" role="img" aria-label={t('feedScores.barLabel', { title,
-        keep: percent(score.probabilities.keep_for_later), skip: percent(score.probabilities.delete_immediately), viewed: percent(score.probabilities.delete_after_viewing) })}>
-        {RECOMMENDATION_CATEGORIES.map((category) => <span key={category} data-category={category} style={{ width: `${score.probabilities[category] * 100}%` }}
-          title={`${t(`feedScores.categories.${category}`)}: ${percent(score.probabilities[category])} · ${score.counts[category]}`} />)}
-      </div>
+      <FeedScoreBar score={score} title={title} large />
       <div className="feed-scores__percentages" aria-hidden="true">{RECOMMENDATION_CATEGORIES.map((category) => <span key={category}><CategoryDot category={category} />{percent(score.probabilities[category])}</span>)}</div>
     </div>
     <div className="feed-scores__sample"><strong>{new Intl.NumberFormat(i18n.language).format(score.itemCount)}</strong><span>{t('feedScores.sampleLabel', { count: score.itemCount })}</span></div>

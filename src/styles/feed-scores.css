@@ -1,27 +1,4 @@
-.feed-view-tabs {
-  display: flex;
-  gap: 5px;
-  width: fit-content;
-  margin: 0 auto 26px;
-  padding: 4px;
-  border: 1px solid var(--color-control-border);
-  border-radius: 12px;
-  background: var(--color-control-well);
-}
-.feed-view-tabs button {
-  padding: 9px 18px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-muted);
-  font-size: 14px;
-  font-weight: 600;
-}
-.feed-view-tabs button[aria-pressed="true"] {
-  background: var(--color-card);
-  color: var(--color-ink-strong);
-  box-shadow: 0 2px 7px rgb(0 0 0 / .1);
-}
+.feed-scores-page { padding-top: 32px; }
 .feed-scores {
   --score-keep: var(--color-focus-light);
   --score-skip: var(--color-danger);
@@ -64,10 +41,6 @@
 .feed-scores__identity a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-ink-inverse); font-size: 14px; font-weight: 600; text-decoration: none; }
 .feed-scores__identity a:hover { text-decoration: underline; }
 .feed-scores__badge { width: fit-content; padding: 3px 7px; border-radius: 5px; background: color-mix(in srgb, var(--category-color, var(--color-muted)) 10%, transparent); color: var(--category-color, var(--color-muted)); font-size: 10px; }
-.feed-scores__bar { display: flex; gap: 3px; height: 12px; overflow: hidden; border-radius: 4px; }
-.feed-scores__bar > span { display: block; background: var(--category-color); min-width: 0; }
-.feed-scores__bar > span:first-child { border-radius: 4px 0 0 4px; }
-.feed-scores__bar > span:last-child { border-radius: 0 4px 4px 0; }
 .feed-scores__percentages { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 10px; color: var(--color-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .feed-scores__percentages > span { display: flex; align-items: center; gap: 6px; }
 .feed-scores__sample { display: grid; justify-items: end; gap: 4px; font-variant-numeric: tabular-nums; }
@@ -96,5 +69,4 @@
   .feed-scores__distribution { grid-row: 2; grid-column: 1 / -1; }
   .feed-scores__sample { grid-row: 1; grid-column: 2; }
   .feed-scores__refresh { padding: 8px 10px; }
-  .feed-view-tabs { margin-bottom: 24px; }
 }

@@ -13,6 +13,7 @@ const ru = {
     settings: 'Настройки',
   },
   nav: {
+    scores: 'Оценки',
     primary: 'Основная навигация',
     home: 'На главную GKFEED',
     sections: 'Разделы лент',
@@ -24,7 +25,8 @@ const ru = {
     settings: 'Настройки',
   },
   feedScores: {
-    "views": "Вид списка",
+    noScore: '{{title}}: пока нет оценок',
+    openScore: 'Оценки фида {{title}}',
     "tab": "Оценки фидов",
     "eyebrow": "Ваша история чтения",
     "title": "Что вы смотрите, а что пропускаете",
