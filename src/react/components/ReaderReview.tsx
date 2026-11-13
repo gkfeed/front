@@ -78,10 +78,10 @@ export function ReaderReview({
         ) : null}
         <FeedPriorityControls feedId={item.feedId} />
         <div className="reader__progress">
+          <span className="reader__count">{t('reader.remaining', { count: remainingCount })}</span>
           <Link className="reader__feed-score" to="/scores" aria-label={t('feedScores.openScore', { title: feedTitle })}>
             <FeedScoreBar score={feedScore} title={feedTitle} />
           </Link>
-          <span className="reader__count">{t('reader.remaining', { count: remainingCount })}</span>
         </div>
       </div>
     </div>

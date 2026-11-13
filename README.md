@@ -180,4 +180,4 @@ node scripts/export-recommendation-dataset.mjs data/recommendation-events.jsonl 
 `RECOMMENDATION_LOG_PATH` also sets the export script's default input path.
 These category proportions are available for future prioritization changes;
 the current ranking weights are preserved. The reader shows the current feed's
-category bar above the remaining-card count, linking to `/scores`.
+category bar below the remaining-card count, linking to `/scores`.
