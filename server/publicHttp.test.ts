@@ -1,6 +1,8 @@
 import { EventEmitter, once } from 'node:events';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { Writable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -82,6 +84,31 @@ describe('public HTTP timeouts', () => {
     await once(media.body, 'resume');
     expect(media.body.socket?.timeout).toBe(8_000);
     media.body.destroy();
+  });
+
+  it('handles pause and resume after a streamed response has ended', async () => {
+    server = createServer((_request, response) => {
+      response.writeHead(200, { 'content-type': 'video/mp4' });
+      response.end('complete video');
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const url = new URL(`http://localhost:${(server.address() as AddressInfo).port}/video.mp4`);
+    const media = await requestPublicHttp(url, {}, undefined, { streamBody: true });
+    let received = '';
+    await pipeline(media.body, new Writable({
+      write(chunk, _encoding, callback) {
+        received += chunk.toString();
+        callback();
+      },
+    }));
+
+    expect(received).toBe('complete video');
+    expect(media.body.socket).toBeNull();
+    expect(() => {
+      media.body.emit('pause');
+      media.body.emit('resume');
+    }).not.toThrow();
   });
 
   it('still terminates a media body when its socket reports a stall', async () => {

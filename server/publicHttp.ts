@@ -60,8 +60,8 @@ export async function requestPublicHttp(
         // A downstream player can stop reading after filling its buffer. Do not
         // mistake that backpressure for an upstream stall.
         request.setTimeout(0);
-        response.on('pause', () => response.setTimeout(0));
-        response.on('resume', () => response.setTimeout(REMOTE_REQUEST_TIMEOUT_MS));
+        response.on('pause', () => response.socket?.setTimeout(0));
+        response.on('resume', () => response.socket?.setTimeout(REMOTE_REQUEST_TIMEOUT_MS));
       } else {
         response.setTimeout(REMOTE_REQUEST_TIMEOUT_MS);
       }
