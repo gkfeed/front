@@ -55,8 +55,17 @@ export async function requestPublicHttp(
       lookup: createPinnedLookup(address),
     } satisfies RequestOptions, (response) => {
       responseBody = response;
-      if (streamBody) clearTimeout(totalTimeout);
-      response.setTimeout(REMOTE_REQUEST_TIMEOUT_MS, () => {
+      if (streamBody) {
+        clearTimeout(totalTimeout);
+        // A downstream player can stop reading after filling its buffer. Do not
+        // mistake that backpressure for an upstream stall.
+        request.setTimeout(0);
+        response.on('pause', () => response.setTimeout(0));
+        response.on('resume', () => response.setTimeout(REMOTE_REQUEST_TIMEOUT_MS));
+      } else {
+        response.setTimeout(REMOTE_REQUEST_TIMEOUT_MS);
+      }
+      response.once('timeout', () => {
         response.destroy(new PublicHttpError('timeout'));
       });
       response.once('end', clearTotalTimeout);

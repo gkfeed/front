@@ -67,6 +67,23 @@ describe('public HTTP timeouts', () => {
     expect(metadata.body.destroyed).toBe(true);
   });
 
+  it('disables the socket timeout while the media consumer applies backpressure', async () => {
+    const media = await requestPublicHttp(await upstream(), {}, undefined, { streamBody: true });
+    media.body.resume();
+    await once(media.body, 'resume');
+    expect(media.body.socket?.timeout).toBe(8_000);
+
+    media.body.pause();
+    expect(media.body.socket?.timeout).toBe(0);
+    await vi.advanceTimersByTimeAsync(180_000);
+    expect(media.body.destroyed).toBe(false);
+
+    media.body.resume();
+    await once(media.body, 'resume');
+    expect(media.body.socket?.timeout).toBe(8_000);
+    media.body.destroy();
+  });
+
   it('still terminates a media body when its socket reports a stall', async () => {
     const media = await requestPublicHttp(await upstream(), {}, undefined, { streamBody: true });
     const failure = once(media.body, 'error');
