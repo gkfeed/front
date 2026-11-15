@@ -24,6 +24,20 @@ main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
     height: fit-content;
   }
 
+  /* Match summaries have no media to fill the flexible card row. */
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card--liveball) {
+    height: fit-content;
+    grid-template-rows: auto auto auto;
+  }
+
+  .reader__item--fullscreen .liveball-match__teams {
+    min-height: clamp(220px, 52cqw, 360px);
+  }
+
+  .reader__item--fullscreen .liveball-match__crest {
+    width: clamp(74px, 18cqw, 128px);
+  }
+
   .reader__item--fullscreen.reader__item--card-flow > .reader-card {
     min-width: 0;
     min-height: 0;
@@ -51,5 +65,11 @@ main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
 
   .reader__item--fullscreen.reader__item--card-flow .reader-card__description {
     -webkit-line-clamp: 3;
+  }
+}
+
+@media (max-width: 640px) {
+  .reader__item--fullscreen .liveball-match__header {
+    padding-right: 36px;
   }
 }
