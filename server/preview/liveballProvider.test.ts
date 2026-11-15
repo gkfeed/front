@@ -14,5 +14,15 @@ describe('LiveBall match data', () => {
     expect(isOpenGraphProviderData(result)).toBe(true);
     expect(getProviderDataImageUrls(result)).toHaveLength(3);
   });
+  it('does not interpret kickoff time and static countdown as a score', () => {
+    const result = parseLiveballData(`<div class="mt-hero">
+      <time class="mt-hero__date" data-ts="1793822400"></time>
+      <div class="mt-side--home"><span class="mt-side__name">Испания</span></div>
+      <div class="mt-hero__score">22:45</div>
+      <div class="mt-hero__status">До матча:00 : 00 : 00</div>
+      <div class="mt-side--away"><span class="mt-side__name">Англия</span></div>
+    </div>`, url);
+    expect(result?.snapshot).toMatchObject({ score: null, status: null, normalizedStatus: 'scheduled', startsAt: '2026-11-04T20:00:00.000Z' });
+  });
   it('returns null for missing teams', () => expect(parseLiveballData('<div class="mt-hero"></div>', url)).toBeNull());
 });

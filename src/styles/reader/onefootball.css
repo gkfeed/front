@@ -296,7 +296,7 @@
 
 .liveball-match__teams {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(75px, .6fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(125px, .9fr) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   padding: 22px 0 8px;
@@ -321,6 +321,13 @@
   color: var(--color-muted);
 }
 .liveball-match__crest img { width: 100%; height: 100%; object-fit: contain; }
-.liveball-match__result { grid-column: 2; grid-row: 1; display: grid; justify-items: center; gap: 8px; text-align: center; }
+.liveball-match__result { grid-column: 2; grid-row: 1; display: grid; min-width: 0; justify-items: center; gap: 12px; text-align: center; }
 .liveball-match__result strong { color: var(--color-ink-strong); font-size: clamp(1.4rem, 5cqw, 2.4rem); white-space: nowrap; }
 .liveball-match__result span { color: var(--color-muted); font-size: .75rem; }
+
+.liveball-match__result .liveball-match__countdown {
+  font-size: clamp(.8rem, 2cqw, 1rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}

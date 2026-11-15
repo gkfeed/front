@@ -24,12 +24,14 @@ export function parseLiveballData(html: string, url: URL): LiveballProviderData 
     ? new Date(timestamp * 1000).toISOString() : null;
   const status = hero.querySelector('.mt-hero__status')?.textContent?.trim() || null;
   const state = hero.getAttribute('data-live-st');
+  const isScheduled = state !== 'fin' && /^до\s*матча\s*:/iu.test(status ?? '');
   return { provider: 'liveball', snapshot: {
     teams: [teams[0], teams[1]],
     competition: hero.querySelector('.mt-hero__league')?.textContent?.replace(/\s*·\s*/, ' · ').trim() || null,
     competitionLogo: resolveHttpUrl(hero.querySelector('.mt-hero__head img')?.getAttribute('src') ?? null, url),
-    score: scoreParts ? [scoreParts[1]!, scoreParts[2]!] : null,
-    status, normalizedStatus: state === 'fin' ? 'over' : null, startsAt,
+    score: !isScheduled && scoreParts ? [scoreParts[1]!, scoreParts[2]!] : null,
+    status: isScheduled ? null : status,
+    normalizedStatus: state === 'fin' ? 'over' : isScheduled ? 'scheduled' : null, startsAt,
   } };
 }
 
