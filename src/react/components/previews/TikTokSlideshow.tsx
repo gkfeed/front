@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TikTokPlaybackAuthor } from '../../../../shared/tiktokContracts';
 import type { SoundGestureLifecycle } from '../../hooks/useSoundGesture';
-import { tikTokMediaProxy, useTikTokNormalization } from './useTikTokNormalization';
+import { tikTokMediaProxy } from '../../services/tiktokMediaUrl';
+import { useTikTokNormalization } from './useTikTokNormalization';
 import { TikTokNormalizeButton } from './TikTokNormalizeButton';
 import { TikTokAuthorOverlay } from './TikTokAuthorOverlay';
 

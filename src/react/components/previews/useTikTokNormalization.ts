@@ -44,7 +44,3 @@ export function useTikTokNormalization(ref: RefObject<HTMLMediaElement | null>) 
 
   return { enabled, toggle };
 }
-
-export function tikTokMediaProxy(url: string): string {
-  return `/bff/tiktok-media?url=${encodeURIComponent(url)}`;
-}

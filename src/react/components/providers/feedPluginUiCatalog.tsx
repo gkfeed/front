@@ -1,4 +1,4 @@
-import { lazy, type ComponentType } from 'react';
+import { lazy, useState, type ComponentType } from 'react';
 
 import type { FeedPluginId } from '../../domain/feedItemProviderPresentation';
 import { FeedItemMediaPreview, FeedPluginCardSlots, StandardCopy, type FeedItemCardProviderRendererProps, type FeedPluginCardContent, type ProviderRendererProps } from './providerRenderers/common';
@@ -8,17 +8,36 @@ type PluginUi<Id extends FeedPluginId> = {
 };
 
 /** UI capabilities stay separate from the React-free plugin core. */
-function definePluginUi<Id extends FeedPluginId>(id: Id, loadUi: () => Promise<PluginUi<Id>>) {
-  const Card = lazy(async () => {
-    const ui = await loadUi();
-    function PluginCard(props: FeedItemCardProviderRendererProps) {
-      if (props.facts.provider !== id) throw new Error(`Invalid card payload for ${id}`);
-      // The id check narrows the tagged union at this single dispatch boundary.
-      const slots = ui.renderCard(props as ProviderRendererProps<Id>);
-      return <FeedPluginCardSlots {...props} {...slots} />;
+export function definePluginUi<Id extends FeedPluginId>(id: Id, load: () => Promise<PluginUi<Id>>) {
+  let ready: PluginUi<Id> | undefined;
+  let pending: Promise<PluginUi<Id>> | undefined;
+  const loadUi = () => {
+    if (!pending) {
+      pending = load().then((ui) => {
+        ready = ui;
+        return ui;
+      }).catch((error: unknown) => {
+        pending = undefined;
+        throw error;
+      });
     }
+    return pending;
+  };
+  function PluginCard(props: FeedItemCardProviderRendererProps) {
+    if (props.facts.provider !== id) throw new Error(`Invalid card payload for ${id}`);
+    // The id check narrows the tagged union at this single dispatch boundary.
+    const slots = ready!.renderCard(props as ProviderRendererProps<Id>);
+    return <FeedPluginCardSlots {...props} {...slots} />;
+  }
+  const LazyCard = lazy(async () => {
+    await loadUi();
     return { default: PluginCard };
   });
+  function Card(props: FeedItemCardProviderRendererProps) {
+    // Keep the same component tree if the import resolves after this card mounted.
+    const [wasPrefetched] = useState(() => Boolean(ready));
+    return wasPrefetched ? <PluginCard {...props} /> : <LazyCard {...props} />;
+  }
   return { loadUi, Card };
 }
 

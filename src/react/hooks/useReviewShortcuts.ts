@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { readerDiagnostic } from '../services/readerDiagnostics';
 
 import type { ReaderMode } from '../state/readerMode';
 import type { FeedItem } from '../types';
@@ -37,9 +38,11 @@ export function useReviewShortcuts({
       }
 
       if (event.key === 'a') {
+        if (import.meta.env.DEV) readerDiagnostic('decision-key', currentItem.id, `keep:dispatch-delay-ms=${Math.max(0, Math.round(performance.now() - event.timeStamp))}`);
         event.preventDefault();
         onKeep();
       } else if (event.key === 'd') {
+        if (import.meta.env.DEV) readerDiagnostic('decision-key', currentItem.id, `delete:dispatch-delay-ms=${Math.max(0, Math.round(performance.now() - event.timeStamp))}`);
         event.preventDefault();
         void onDelete();
       }

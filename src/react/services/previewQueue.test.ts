@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearPreviewCache, loadQueuedPreview, reprioritizeQueuedPreview } from './previewQueue';
+import { createBffRequestGate } from '../../../server/http/bffRequestGate';
+import { clearPreviewCache, loadQueuedPreview, peekQueuedPreview, reprioritizeQueuedPreview } from './previewQueue';
 
 afterEach(() => {
   clearPreviewCache();
@@ -41,6 +42,172 @@ describe('loadQueuedPreview', () => {
     releases.slice(2).forEach((release) => release());
 
     await expect(Promise.all(requests)).resolves.toEqual(Array(6).fill('preview'));
+  });
+
+  it('starts the nearest speculative item even if a distant item was queued first', async () => {
+    const started: string[] = [];
+    const releases: Array<() => void> = [];
+    const load = (name: string) => () => new Promise<string>((resolve) => {
+      started.push(name);
+      releases.push(() => resolve(name));
+    });
+    const far = loadQueuedPreview('batched-far', load('far'), undefined, 7);
+    const near = loadQueuedPreview('batched-near', load('near'), undefined, 1);
+    await vi.waitFor(() => expect(started).toEqual(['near']));
+    releases[0]!();
+    await vi.waitFor(() => expect(started).toEqual(['near', 'far']));
+    releases[1]!();
+    await Promise.all([near, far]);
+  });
+
+  it('pauses a distant prefetch for a nearer item and later restarts it', async () => {
+    const farCalls: Array<{ signal: AbortSignal; resolve: (value: string) => void }> = [];
+    let releaseNear!: (value: string) => void;
+    const far = loadQueuedPreview('preempt-far', (signal) => new Promise<string>((resolve) => {
+      farCalls.push({ signal, resolve });
+    }), undefined, 5);
+    await vi.waitFor(() => expect(farCalls).toHaveLength(1));
+    const near = loadQueuedPreview('preempt-near', () => new Promise<string>((resolve) => {
+      releaseNear = resolve;
+    }), undefined, 1);
+    await vi.waitFor(() => expect(farCalls[0]!.signal.aborted).toBe(true));
+    farCalls[0]!.resolve('stale result');
+    releaseNear('near result');
+    await expect(near).resolves.toBe('near result');
+    await vi.waitFor(() => expect(farCalls).toHaveLength(2));
+    farCalls[1]!.resolve('fresh result');
+    await expect(far).resolves.toBe('fresh result');
+  });
+
+  it('releases a BFF slot when a nearer prefetch interrupts a slow one', async () => {
+    const gate = createBffRequestGate();
+    const started: string[] = [];
+    const farReleases: Array<(value: string) => void> = [];
+    let releaseNear!: (value: string) => void;
+    const context = (signal: AbortSignal) => ({ signal, deadline: Infinity, remainingMs: () => Infinity });
+    const far = loadQueuedPreview('bff-preempt-far', (signal) => gate.run('same-client', context(signal),
+      () => new Promise<string>((resolve, reject) => {
+        started.push('far');
+        farReleases.push(resolve);
+        signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+      })), undefined, 5);
+    await vi.waitFor(() => expect(started).toEqual(['far']));
+    const near = loadQueuedPreview('bff-preempt-near', (signal) => gate.run('same-client', context(signal),
+      () => new Promise<string>((resolve) => { started.push('near'); releaseNear = resolve; })), undefined, 1);
+    await vi.waitFor(() => expect(started).toEqual(['far', 'near']));
+    releaseNear('near');
+    await expect(near).resolves.toBe('near');
+    await vi.waitFor(() => expect(started).toEqual(['far', 'near', 'far']));
+    farReleases[1]!('far');
+    await expect(far).resolves.toBe('far');
+  });
+
+  it('reconsiders an active prefetch when its priority falls behind a queued item', async () => {
+    const farSignals: AbortSignal[] = [];
+    const farReleases: Array<(value: string) => void> = [];
+    let releaseNear!: (value: string) => void;
+    const far = loadQueuedPreview('reorder-active', (signal) => new Promise<string>((resolve) => {
+      farSignals.push(signal);
+      farReleases.push(resolve);
+    }), undefined, 1);
+    await vi.waitFor(() => expect(farSignals).toHaveLength(1));
+    const near = loadQueuedPreview('reorder-near', () => new Promise<string>((resolve) => {
+      releaseNear = resolve;
+    }), undefined, 2);
+    reprioritizeQueuedPreview('reorder-active', 3);
+    await vi.waitFor(() => expect(farSignals[0]!.aborted).toBe(true));
+    releaseNear('near');
+    await expect(near).resolves.toBe('near');
+    await vi.waitFor(() => expect(farSignals).toHaveLength(2));
+    farReleases[1]!('far');
+    await expect(far).resolves.toBe('far');
+  });
+
+  it('does not suspend a request that has become visible', async () => {
+    let farSignal!: AbortSignal;
+    let releaseFar!: (value: string) => void;
+    let releaseNear!: (value: string) => void;
+    const far = loadQueuedPreview('protected-far', (signal) => new Promise<string>((resolve) => {
+      farSignal = signal;
+      releaseFar = resolve;
+    }), undefined, 5);
+    await vi.waitFor(() => expect(farSignal).toBeDefined());
+    const visible = loadQueuedPreview('protected-far', () => Promise.resolve('duplicate'));
+    const near = loadQueuedPreview('protected-near', () => new Promise<string>((resolve) => {
+      releaseNear = resolve;
+    }), undefined, 1);
+    await vi.waitFor(() => expect(releaseNear).toBeDefined());
+    expect(farSignal.aborted).toBe(false);
+    releaseFar('far');
+    releaseNear('near');
+    await expect(Promise.all([far, visible, near])).resolves.toEqual(['far', 'far', 'near']);
+  });
+
+  it('lets the visible request enter the BFF while prefetches occupy the queue', async () => {
+    const gate = createBffRequestGate();
+    const started: string[] = [];
+    const releases: Array<() => void> = [];
+    const load = (name: string) => (signal: AbortSignal) => gate.run(
+      'same-client', { signal, deadline: Infinity, remainingMs: () => Infinity },
+      () => new Promise<string>((resolve) => {
+        started.push(name);
+        releases.push(() => resolve(name));
+      }),
+    );
+    const prefetches = [1, 2, 3].map((index) => (
+      loadQueuedPreview(`gate-${index}`, load(`prefetch-${index}`), undefined, index).catch(() => undefined)
+    ));
+    await vi.waitFor(() => expect(started).toEqual(['prefetch-1']));
+    const visible = loadQueuedPreview('gate-visible', load('visible')).catch(() => undefined);
+    expect(started).toEqual(['prefetch-1', 'visible']);
+    clearPreviewCache();
+    releases.forEach((release) => release());
+    await Promise.all([...prefetches, visible]);
+  });
+
+  it('reserves a slot for the current card when background requests stall', async () => {
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    const load = (id: string) => () => new Promise<string>((resolve) => {
+      started.push(id);
+      releases.set(id, () => resolve(id));
+    });
+    const background = Array.from({ length: 4 }, (_, index) => (
+      loadQueuedPreview(`background-${index}`, load(`background-${index}`), undefined, index + 1)
+    ));
+    await vi.waitFor(() => expect(started).toEqual(['background-0']));
+    const visible = loadQueuedPreview('visible-now', load('visible-now'));
+    expect(started).toContain('visible-now');
+    expect(started).not.toContain('background-3');
+    releases.get('visible-now')!();
+    await expect(visible).resolves.toBe('visible-now');
+    for (let index = 0; index < 4; index += 1) {
+      await vi.waitFor(() => expect(started).toContain(`background-${index}`));
+      releases.get(`background-${index}`)!();
+    }
+    await Promise.all(background);
+  });
+
+  it('starts a queued prefetch immediately when it becomes visible', async () => {
+    const started: string[] = [];
+    const releases = new Map<string, () => void>();
+    const load = (id: string) => () => new Promise<string>((resolve) => {
+      started.push(id);
+      releases.set(id, () => resolve(id));
+    });
+    const background = Array.from({ length: 4 }, (_, index) => (
+      loadQueuedPreview(`promote-${index}`, load(`promote-${index}`), undefined, index + 1)
+    ));
+    await vi.waitFor(() => expect(started).toEqual(['promote-0']));
+    const visible = loadQueuedPreview('promote-3', load('duplicate'));
+    expect(started).toContain('promote-3');
+    expect(started).not.toContain('duplicate');
+    releases.get('promote-3')!();
+    for (let index = 0; index < 3; index += 1) {
+      await vi.waitFor(() => expect(started).toContain(`promote-${index}`));
+      releases.get(`promote-${index}`)!();
+    }
+    await Promise.all([...background, visible]);
   });
 
   it('promotes a queued prefetch when it becomes the visible card', async () => {
@@ -130,7 +297,7 @@ describe('loadQueuedPreview', () => {
     releases.get('running-0')!();
     await vi.waitFor(() => expect(started).toContain('near'));
     expect(started).not.toContain('distant');
-    releases.get('running-1')!();
+    releases.get('near')!();
     await vi.waitFor(() => expect(started).toContain('distant'));
     releases.forEach((release) => release());
     await Promise.all([...running, distant, near, aborted]);
@@ -152,7 +319,7 @@ describe('loadQueuedPreview', () => {
     releases.get('running-0')!();
     await vi.waitFor(() => expect(started).toContain('near'));
     expect(started).not.toContain('distant');
-    releases.get('running-1')!();
+    releases.get('near')!();
     await vi.waitFor(() => expect(started).toContain('distant'));
     releases.forEach((release) => release());
     await Promise.all([...running, distant, near]);
@@ -232,6 +399,18 @@ describe('loadQueuedPreview', () => {
     expect(load).not.toHaveBeenCalled();
   });
 
+  it('exposes only completed, unexpired data for the first render', async () => {
+    vi.useFakeTimers();
+    let resolve!: (value: string) => void;
+    const result = loadQueuedPreview('peek-url', () => new Promise<string>((done) => { resolve = done; }));
+    expect(peekQueuedPreview('peek-url')).toBeUndefined();
+    resolve('ready');
+    await result;
+    expect(peekQueuedPreview('peek-url')).toEqual({ value: 'ready' });
+    vi.advanceTimersByTime(5 * 60_000);
+    expect(peekQueuedPreview('peek-url')).toBeUndefined();
+  });
+
   it('expires completed values after the cache TTL', async () => {
     vi.useFakeTimers();
     const load = vi.fn().mockResolvedValue('preview');
@@ -264,6 +443,20 @@ describe('loadQueuedPreview', () => {
     await expect(loadQueuedPreview('sync-error-url', load)).rejects.toThrow('sync failure');
     await expect(loadQueuedPreview('retry-url', load)).resolves.toBe('preview');
     expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not start queued prefetches while clearing active work', async () => {
+    const started: string[] = [];
+    const load = (id: string) => () => {
+      started.push(id);
+      return new Promise<string>(() => {});
+    };
+    const active = loadQueuedPreview('clear-active', load('active'), undefined, 1).catch(() => undefined);
+    const waiting = loadQueuedPreview('clear-waiting', load('waiting'), undefined, 2).catch(() => undefined);
+    await vi.waitFor(() => expect(started).toEqual(['active']));
+    clearPreviewCache();
+    await Promise.all([active, waiting]);
+    expect(started).toEqual(['active']);
   });
 
   it('cancels cached requests when the preview cache is cleared', async () => {

@@ -1,8 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchTikTokJson } from './tiktokJson.js';
 import { fetchTikTokPlayback } from './tiktokPlayback.js';
+import { PublicHttpError } from './publicHttpError.js';
 
-vi.mock('./tiktokJson.js');
+vi.mock('./tiktokJson.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./tiktokJson.js')>(),
+  fetchTikTokJson: vi.fn(),
+}));
+vi.mock('./tiktokDirectPlayback.js', () => ({ fetchTikTokDirectPlayback: vi.fn().mockResolvedValue(null) }));
 const post = 'https://www.tiktok.com/@rus_goest/video/7681860124163476754';
 const videoUrl = 'https://v16m.tiktokcdn-us.com/video.mp4?signature=temporary';
 afterEach(() => vi.resetAllMocks());
@@ -58,6 +63,25 @@ describe('TikTok playback resolver', () => {
   ])('rejects unavailable or unsafe media: %j', async (value) => {
     vi.mocked(fetchTikTokJson).mockResolvedValue({ value });
     await expect(fetchTikTokPlayback(post)).rejects.toThrow('TikTok video is unavailable');
+  });
+
+  it.each([
+    ['timeout', 'tiktok_upstream_timeout'],
+    ['network', 'tiktok_upstream_unavailable'],
+  ] as const)('classifies provider %s errors', async (reason, kind) => {
+    vi.mocked(fetchTikTokJson).mockRejectedValue(new PublicHttpError(reason));
+    await expect(fetchTikTokPlayback(post)).rejects.toMatchObject({ kind });
+  });
+
+  it('identifies unsuccessful provider responses separately from malformed data', async () => {
+    vi.mocked(fetchTikTokJson).mockResolvedValueOnce(null).mockResolvedValueOnce({ value: { code: -1 } });
+    await expect(fetchTikTokPlayback(post)).rejects.toMatchObject({ kind: 'tiktok_upstream_unavailable' });
+    await expect(fetchTikTokPlayback(post)).rejects.toMatchObject({ kind: 'tiktok_upstream_rejected' });
+  });
+
+  it('distinguishes TikWM throttling from invalid playback details', async () => {
+    vi.mocked(fetchTikTokJson).mockResolvedValue({ value: { code: -1, msg: 'Free Api Limit: try again later' } });
+    await expect(fetchTikTokPlayback(post)).rejects.toMatchObject({ kind: 'tiktok_rate_limited' });
   });
 
   it('rejects non-TikTok inputs before calling the provider', async () => {

@@ -13,6 +13,7 @@ function settledEntry(expiresAt: number): PreviewRequestControl {
     hasForegroundSubscriber: false,
     expiresAt,
     start() {},
+    suspend() { return false; },
     cancel() {},
   };
 }

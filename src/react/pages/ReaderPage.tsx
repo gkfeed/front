@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import '../../styles/reader.css';
 import { ReaderReview } from '../components/ReaderReview';
+import { ReaderProviderPreloader } from '../components/ReaderProviderPreloader';
 import { ReaderScroll } from '../components/ReaderScroll';
 import { ReaderFullscreenButton } from '../components/ReaderFullscreenButton';
 import {
@@ -21,6 +22,7 @@ export function ReaderPage() {
     loadFailed,
     failedDeletions,
     remainingCount,
+    activeReviewIds,
     hasKeptItems,
     keepItem,
     deleteItem,
@@ -36,6 +38,7 @@ export function ReaderPage() {
 
   return (
     <>
+      <ReaderProviderPreloader enabled={mode === 'review'} items={items} activeReviewIds={activeReviewIds} />
       <div className="reader__fullscreen-toolbar">
         <ReaderFullscreenButton enableKeyboardShortcut />
       </div>

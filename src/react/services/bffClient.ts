@@ -1,5 +1,6 @@
 import { DEFAULT_REQUEST_TIMEOUT_MS } from '../platform/requestTimeout';
 import { requestJson } from './httpRequest';
+import { tikTokDiagnostic } from './readerDiagnostics';
 
 export const BFF_REQUEST_TIMEOUT_MS = DEFAULT_REQUEST_TIMEOUT_MS;
 
@@ -69,6 +70,16 @@ export async function requestBffJson<T>({
       status,
       endpoint,
     ),
+    inspectHttpError: import.meta.env.DEV && endpoint === '/bff/tiktok-playback'
+      ? (response) => {
+        void response.clone().json().then((body: unknown) => {
+          const value = body as { error?: { code?: unknown } } | null;
+          const code = value?.error?.code;
+          if (typeof code === 'string' && /^[a-z_]{1,40}$/.test(code)) {
+            tikTokDiagnostic('metadata-error-code', input, `${response.status}:${code}`);
+          }
+        }).catch(() => undefined);
+      } : undefined,
     createTimeoutError: (normalizedTimeoutMs) => new BffTimeoutError(endpoint, normalizedTimeoutMs),
     createInvalidJsonError: (status) => new BffResponseError(
       `Invalid ${resourceName} response`,

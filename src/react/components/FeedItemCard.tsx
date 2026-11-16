@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
+import { readerDiagnostic } from '../services/readerDiagnostics';
 import { parseLiveballMatch } from '../domain/liveballMatch';
 import { isTelegramPost } from './TelegramPost';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +22,9 @@ export const FeedItemCard = memo(function FeedItemCard({
   const [areTikTokCommentsExpanded] = useTikTokCommentsPreference();
   const articleReader = useArticleReader(item.link);
   const { cardRef, isPreviewPending, shouldBlurNsfw, shouldHideNsfw } = model;
+  useEffect(() => {
+    readerDiagnostic('item-visible-status', item.id, `${model.provider}:${model.previewStatus}`);
+  }, [item.id, model.provider, model.previewStatus]);
   if (shouldHideNsfw) return null;
   const isLiveballMatch = model.provider === 'liveball' && Boolean(parseLiveballMatch(item));
 
@@ -39,6 +43,13 @@ export const FeedItemCard = memo(function FeedItemCard({
         ? areTikTokCommentsExpanded
         : undefined}
       inert={shouldBlurNsfw}
+      onLoadCapture={import.meta.env.DEV ? (event) => {
+        if (event.target instanceof HTMLImageElement) readerDiagnostic('item-visible-image-ready', item.id, model.provider);
+        else if (event.target instanceof HTMLIFrameElement) readerDiagnostic('item-visible-frame-loaded', item.id, model.provider);
+      } : undefined}
+      onLoadedDataCapture={import.meta.env.DEV ? (event) => {
+        if (event.target instanceof HTMLVideoElement) readerDiagnostic('item-visible-video-ready', item.id, model.provider);
+      } : undefined}
       onClickCapture={(event) => {
         if (!model.canReadArticle || articleReader.isOpen) return;
         const target = event.target instanceof Element ? event.target : null;

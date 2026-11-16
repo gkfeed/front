@@ -9,6 +9,7 @@ export interface PreviewRequestControl {
   readonly hasForegroundSubscriber: boolean;
   readonly expiresAt: number | null;
   start(): void;
+  suspend(): boolean;
   cancel(): void;
 }
 
@@ -28,12 +29,15 @@ export class PreviewRequest<T> implements PreviewRequestControl {
   private foregroundSubscribers = 0;
   private controller?: AbortController;
   private settled = false;
+  private generation = 0;
   private _expiresAt: number | null = null;
+  private cachedValue: { value: T } | undefined;
 
   constructor(
     readonly key: string,
     private readonly load: PreviewLoader<T>,
     private readonly onSettled: PreviewRequestSettled,
+    private readonly cacheTtlMs = CACHE_TTL_MS,
   ) {
     let resolve!: (value: T) => void;
     let reject!: (reason?: unknown) => void;
@@ -58,11 +62,16 @@ export class PreviewRequest<T> implements PreviewRequestControl {
     return this._expiresAt;
   }
 
+  peek(): { value: T } | undefined {
+    return this.cachedValue;
+  }
+
   start(): void {
     if (this.state !== 'queued') return;
     this.state = 'running';
     const controller = new AbortController();
     this.controller = controller;
+    const generation = ++this.generation;
 
     let result: Promise<T>;
     try {
@@ -73,8 +82,8 @@ export class PreviewRequest<T> implements PreviewRequestControl {
     }
 
     Promise.resolve(result).then(
-      (value) => this.succeed(value),
-      (error: unknown) => this.fail(error),
+      (value) => { if (generation === this.generation) this.succeed(value); },
+      (error: unknown) => { if (generation === this.generation) this.fail(error); },
     );
   }
 
@@ -111,6 +120,15 @@ export class PreviewRequest<T> implements PreviewRequestControl {
     });
   }
 
+  suspend(): boolean {
+    if (this.state !== 'running' || this.settled || this.hasForegroundSubscriber) return false;
+    this.state = 'queued';
+    this.generation += 1;
+    this.controller?.abort();
+    this.controller = undefined;
+    return true;
+  }
+
   cancel(): void {
     if (this.settled) return;
     this.controller?.abort();
@@ -126,7 +144,8 @@ export class PreviewRequest<T> implements PreviewRequestControl {
 
   private succeed(value: T): void {
     if (this.settled) return;
-    this._expiresAt = Date.now() + CACHE_TTL_MS;
+    this.cachedValue = { value };
+    this._expiresAt = Date.now() + this.cacheTtlMs;
     this.settled = true;
     this.state = 'settled';
     this.onSettled(this, false);

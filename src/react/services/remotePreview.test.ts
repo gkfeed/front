@@ -13,7 +13,7 @@ import {
 } from './openGraph';
 import { clearPreviewCache } from './previewQueue';
 import { mergeHltvLiveData } from '../domain/remotePreview';
-import { loadRemotePreview } from './remotePreview';
+import { getCachedRemotePreview, loadRemotePreview } from './remotePreview';
 
 vi.mock('./liquipedia');
 vi.mock('./openGraph');
@@ -37,6 +37,18 @@ afterEach(() => {
 });
 
 describe('loadRemotePreview', () => {
+  it('provides prefetched metadata synchronously until it expires', async () => {
+    vi.useFakeTimers();
+    vi.mocked(getOpenGraphPreview).mockResolvedValue(OPEN_GRAPH_PREVIEW);
+    expect(getCachedRemotePreview(LIQUIPEDIA_URL, 'open-graph')).toBeUndefined();
+    await loadRemotePreview(LIQUIPEDIA_URL, 'open-graph', new AbortController().signal);
+    expect(getCachedRemotePreview(LIQUIPEDIA_URL, 'open-graph'))
+      .toEqual({ liquipediaMatch: null, openGraphPreview: OPEN_GRAPH_PREVIEW });
+    expect(getCachedRemotePreview('https://example.com/other', 'open-graph')).toBeUndefined();
+    vi.advanceTimersByTime(5 * 60_000);
+    expect(getCachedRemotePreview(LIQUIPEDIA_URL, 'open-graph')).toBeUndefined();
+  });
+
   it('recovers a shared preview after rate limiting without navigating away', async () => {
     vi.useFakeTimers();
     vi.mocked(getOpenGraphPreview)

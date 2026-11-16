@@ -1,7 +1,7 @@
 import { BffHttpError, BffResponseError } from './bffClient';
 import { getLiquipediaMatchPreview } from './liquipedia';
 import { getOpenGraphPreview } from './openGraph';
-import { loadQueuedPreview, reprioritizeQueuedPreview } from './previewQueue';
+import { loadQueuedPreview, peekQueuedPreview, reprioritizeQueuedPreview } from './previewQueue';
 import { retryRateLimitedPreview } from './retryRateLimitedPreview';
 import type { RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
 
@@ -39,6 +39,19 @@ export async function loadRemotePreview(
     priority,
   );
   return { liquipediaMatch: null, openGraphPreview };
+}
+
+/** Returns already resolved metadata without starting a request. */
+export function getCachedRemotePreview(
+  url: string,
+  source: Exclude<RemotePreviewSource, 'none'>,
+): RemotePreview | undefined {
+  if (source === 'liquipedia') {
+    const match = peekQueuedPreview<NonNullable<RemotePreview['liquipediaMatch']>>(`liquipedia:${url}`);
+    if (match) return { liquipediaMatch: match.value, openGraphPreview: null };
+  }
+  const openGraph = peekQueuedPreview<NonNullable<RemotePreview['openGraphPreview']>>(`open-graph:${url}`);
+  return openGraph ? { liquipediaMatch: null, openGraphPreview: openGraph.value } : undefined;
 }
 
 function isUnsupportedLiquipediaMarkupError(error: unknown): boolean {

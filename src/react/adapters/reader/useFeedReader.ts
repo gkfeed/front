@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { readerDiagnostic } from '../../services/readerDiagnostics';
 import { useNsfwPreferences } from '../../state/useNsfwPreferences';
 import { useTikTokPreferences } from '../../state/useTikTokPreferences';
 import { usePluginPreferences } from '../../state/usePluginPreferences';
@@ -138,10 +139,15 @@ export function useFeedReader({
   const deleteCurrentItem = useCallback(() => {
     if (!currentItem) return;
 
+    const started = import.meta.env.DEV ? performance.now() : 0;
     const observation = observeDecision('delete');
+    const observed = import.meta.env.DEV ? performance.now() : 0;
     recordDecision({ itemId: currentItem.id, feedId: currentItem.feedId, kept: false, decidedAt: Date.now(),
       activeMs: observation?.activeMs });
+    const recorded = import.meta.env.DEV ? performance.now() : 0;
     startDeletion(currentItem.id, getItemTitle(currentItem));
+    if (import.meta.env.DEV) readerDiagnostic('decision-work', currentItem.id,
+      `observe=${Math.round(observed - started)} record=${Math.round(recorded - observed)} dispatch=${Math.round(performance.now() - recorded)}`);
   }, [currentItem, observeDecision, recordDecision, startDeletion]);
 
   const recoverFailedDeletion = useCallback((itemId: number) => {
@@ -169,6 +175,7 @@ export function useFeedReader({
     loadFailed: status === 'error' || sourceError !== null,
     loadError: sourceError ?? loadError,
     failedDeletions: deletions.filter((deletion) => deletion.status === 'failed'),
+    activeReviewIds,
     remainingCount: activeReviewIds.length,
     hasKeptItems,
     keepItem,

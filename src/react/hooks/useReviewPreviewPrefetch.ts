@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 
+
 import { abortPrefetches, prefetchFeedItem } from '../services/previewPrefetch';
 import { prefetchStoryVideo } from '../services/storyVideoPrefetch';
 import { prefetchTikTok } from '../services/tiktokPrefetch';
+import { reprioritizeTikTokPlayback } from '../services/tiktokPlayback';
 import { useTikTokPreferences } from '../state/useTikTokPreferences';
 import { getFeedItemProvider } from '../domain/feedItemProviderPresentation';
 import { isNsfwLink } from '../domain/nsfw';
@@ -71,6 +73,10 @@ export function useReviewPreviewPrefetch({
     const current = enabled && playbackMode === 'preview' ? items.find(({ id }) => id === activeReviewIds[0]) : undefined;
     if (current && getFeedItemProvider(current, disabledPlugins) === 'tiktok'
       && (nsfwMode === 'show' || !isNsfwLink(current.link))) retained.set(current.id, current.link);
+    for (const item of candidates) {
+      const priority = nextItems.findIndex(({ id }) => id === item.id) + 1;
+      reprioritizeTikTokPlayback(item.link, priority);
+    }
     for (const [id, entry] of prefetches) {
       if (retained.get(id) === entry.link) continue;
       entry.dispose();
@@ -78,11 +84,14 @@ export function useReviewPreviewPrefetch({
     }
     const timer = window.setTimeout(() => {
       for (const item of candidates) {
-        if (!prefetches.has(item.id)) prefetches.set(item.id, { link: item.link, dispose: prefetchTikTok(item.link) });
+        if (!prefetches.has(item.id)) {
+          const priority = nextItems.findIndex(({ id }) => id === item.id) + 1;
+          prefetches.set(item.id, { link: item.link, dispose: prefetchTikTok(item.link, priority) });
+        }
       }
     }, PREFETCH_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [activeReviewIds, disabledPlugins, enabled, items, nextTikToks, nsfwMode, playbackMode]);
+  }, [activeReviewIds, disabledPlugins, enabled, items, nextItems, nextTikToks, nsfwMode, playbackMode]);
 
   useEffect(() => () => {
     tikTokPrefetchesRef.current.forEach(({ dispose }) => dispose());
@@ -114,7 +123,7 @@ export function useReviewPreviewPrefetch({
           dispose: prefetchStoryVideo(item, previewUseCases, nsfwMode, priority),
         });
       }
-    }, 0);
+    }, PREFETCH_DELAY_MS);
     return () => window.clearTimeout(timeoutId);
   }, [activeReviewIds, enabled, items, nextItems, nextStories, nsfwMode, previewUseCases]);
 

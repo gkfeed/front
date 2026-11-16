@@ -24,6 +24,8 @@ const PREVIEW_HTTP_MAPPINGS: Record<string, PreviewHttpMapping> = {
   vk_video_unavailable: { status: 422, code: 'vk_video_unavailable' },
   unresolvable_host: { status: 422, code: 'unresolvable_host' },
   private_url: { status: 403, code: 'private_url' },
+  tiktok_rate_limited: { status: 503, code: 'tiktok_rate_limited' },
+  tiktok_upstream_timeout: { status: 504, code: 'tiktok_upstream_timeout' },
   preview_busy: { status: 429, code: 'preview_busy' },
   preview_rate_limited: { status: 429, code: 'preview_rate_limited' },
 };

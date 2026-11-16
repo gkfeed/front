@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Profiler, Suspense, useEffect } from 'react';
+import { readerDiagnostic } from './react/services/readerDiagnostics';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
@@ -66,7 +67,11 @@ export function App({ basename }: { basename?: string } = {}) {
                     <Route path="/" element={<RequireAuth><FeedListPage /></RequireAuth>} />
                     <Route path="/scores" element={<RequireAuth><FeedScoresPage /></RequireAuth>} />
                     <Route path="/create" element={<RequireAuth><CreateFeedPage /></RequireAuth>} />
-                    <Route path="/reader" element={<RequireAuth><ReaderPage /></RequireAuth>} />
+                    <Route path="/reader" element={<RequireAuth>{import.meta.env.DEV ? (
+                      <Profiler id="reader" onRender={(_id, phase, actualDuration, baseDuration) => {
+                        readerDiagnostic('reader-render', 'unknown', `${phase}:actual=${Math.round(actualDuration)}:base=${Math.round(baseDuration)}`);
+                      }}><ReaderPage /></Profiler>
+                    ) : <ReaderPage />}</RequireAuth>} />
                     <Route path="/live" element={<RequireAuth><LivePage /></RequireAuth>} />
                     <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
                     <Route path="/login" element={<LoginPage />} />

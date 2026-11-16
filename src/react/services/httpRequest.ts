@@ -8,6 +8,7 @@ import {
 export type HttpRequestOptions = {
   timeoutMs?: number | null;
   createHttpError: (status: number) => Error;
+  inspectHttpError?: (response: Response) => void;
   createTimeoutError: (timeoutMs: number) => Error;
   createInvalidJsonError?: (status: number) => Error;
   validate?: (value: unknown) => boolean;
@@ -64,7 +65,10 @@ async function requestTransport<T>(
 ): Promise<T> {
   return runRequest(async (signal) => {
     const response = await fetch(input, { ...init, signal });
-    if (!response.ok) throw options.createHttpError(response.status);
+    if (!response.ok) {
+      options.inspectHttpError?.(response);
+      throw options.createHttpError(response.status);
+    }
     return parse(response);
   }, init.signal, options);
 }

@@ -62,8 +62,9 @@ export function isTikTokMediaUrl(value: unknown): value is string {
   try {
     const url = new URL(value);
     return url.protocol === 'https:' && !url.username && !url.password && !url.port
-      && ['tiktokcdn.com', 'tiktokcdn-us.com', 'tiktokcdn-eu.com', 'tikwm.com']
-        .some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
+      && (/^v\d+-webapp(?:-prime)?\.tiktok\.com$/.test(url.hostname)
+        || ['tiktokcdn.com', 'tiktokcdn-us.com', 'tiktokcdn-eu.com', 'tikwm.com']
+        .some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`)));
   } catch {
     return false;
   }

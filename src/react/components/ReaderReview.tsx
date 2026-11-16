@@ -1,4 +1,5 @@
-import type { RefObject } from 'react';
+import { useEffect, useLayoutEffect, type RefObject } from 'react';
+import { readerDiagnostic } from '../services/readerDiagnostics';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
@@ -47,6 +48,16 @@ export function ReaderReview({
   });
   const feedTitle = sourceTitle || t('feedScores.unknownFeed', { id: item.feedId });
   const reviewActions = { isDeleting, onKeep, onDelete };
+  useEffect(() => {
+    const postId = isTikTok ? item.link.match(/\/(?:video|v)\/(\d+)/)?.[1] : undefined;
+    readerDiagnostic('item-current', item.id, postId ? `tiktok:${postId}` : undefined);
+  }, [item.id, item.link, isTikTok]);
+  useLayoutEffect(() => {
+    if (!import.meta.env.DEV || typeof requestAnimationFrame === 'undefined') return undefined;
+    readerDiagnostic('item-layout-commit', item.id);
+    const frame = requestAnimationFrame(() => readerDiagnostic('item-first-frame', item.id));
+    return () => cancelAnimationFrame(frame);
+  }, [item.id]);
 
   return (
     <div
@@ -61,6 +72,16 @@ export function ReaderReview({
       ].filter(Boolean).join(' ')}
       role="region"
       aria-label={t('reader.reviewView')}
+      onPointerDownCapture={import.meta.env.DEV ? (event) => {
+        const target = event.target instanceof Element ? event.target.closest('button') : null;
+        if (!target?.matches('.reader__keep, .ui-button--danger, .reader__mobile-keep, .reader__mobile-delete')) return;
+        readerDiagnostic('decision-pointer', item.id, `dispatch-delay-ms=${Math.max(0, Math.round(performance.now() - event.timeStamp))}`);
+      } : undefined}
+      onClickCapture={import.meta.env.DEV ? (event) => {
+        const target = event.target instanceof Element ? event.target.closest('button') : null;
+        if (!target?.matches('.reader__keep, .ui-button--danger, .reader__mobile-keep, .reader__mobile-delete')) return;
+        readerDiagnostic('decision-click', item.id, `dispatch-delay-ms=${Math.max(0, Math.round(performance.now() - event.timeStamp))}`);
+      } : undefined}
     >
       <FeedItemCard key={item.id} item={item} sourceTitle={sourceTitle} />
       {isShortVideo ? (

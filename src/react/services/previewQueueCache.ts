@@ -22,6 +22,12 @@ export class PreviewCache {
     return entry as PreviewRequest<T>;
   }
 
+  peek<T>(key: string): { value: T } | undefined {
+    const entry = this.entries.get(key);
+    if (!entry || entry.expiresAt === null || entry.expiresAt <= Date.now()) return undefined;
+    return (entry as PreviewRequest<T>).peek();
+  }
+
   set<T>(key: string, entry: PreviewRequest<T>): void {
     this.entries.set(key, entry);
   }

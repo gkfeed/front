@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchTikTokPlayback } from '../../services/tiktokPlayback';
+import { fetchTikTokPlayback, getCachedTikTokPlayback } from '../../services/tiktokPlayback';
 import { TikTokPreview } from './TikTokPreview';
 
 vi.mock('../../services/tiktokPlayback');
@@ -23,6 +23,14 @@ function metadata(video: HTMLVideoElement, duration: number) {
 }
 
 describe('TikTok preview', () => {
+  it('renders a prefetched video on the first render without waiting for an effect', () => {
+    vi.mocked(getCachedTikTokPlayback).mockReturnValue({ videoUrl });
+    render(<TikTokPreview {...props} />);
+    expect(document.querySelector('video')?.getAttribute('src'))
+      .toBe(`/bff/tiktok-media?url=${encodeURIComponent(videoUrl)}`);
+    expect(fetchTikTokPlayback).not.toHaveBeenCalled();
+  });
+
   it('renders photos instead of a black video and supports automatic and manual navigation', async () => {
     vi.useFakeTimers();
     vi.mocked(fetchTikTokPlayback).mockResolvedValue({

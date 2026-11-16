@@ -9,6 +9,8 @@ vi.mock('./publicHttp.js', async (original) => ({
   ...await original<typeof import('./publicHttp.js')>(), requestPublicHttp: vi.fn(),
 }));
 
+vi.mock('./tiktokDirectPlayback.js', () => ({ fetchTikTokDirectPlayback: vi.fn().mockResolvedValue(null) }));
+
 it('resolves Preview while comments load against the provider one-request-per-second limit', async () => {
   const starts: number[] = [];
   let lastStart = 0;

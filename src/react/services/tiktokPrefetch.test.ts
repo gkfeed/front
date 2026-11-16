@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { BffHttpError } from './bffClient';
 import { fetchTikTokPlayback } from './tiktokPlayback';
 import { prefetchTikTok } from './tiktokPrefetch';
 
 vi.mock('./tiktokPlayback');
-afterEach(() => { vi.restoreAllMocks(); vi.resetAllMocks(); });
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.resetAllMocks(); });
 
 describe('TikTok media prefetch', () => {
   it('starts a muted video preload and releases it on disposal', async () => {
@@ -16,10 +17,33 @@ describe('TikTok media prefetch', () => {
     const video = create.mock.results.find((r) => r.value instanceof HTMLVideoElement)!.value as HTMLVideoElement;
     expect(video.preload).toBe('auto');
     expect(video.muted).toBe(true);
-    expect(video.src).toBe('https://v.tiktokcdn.com/123.mp4');
+    expect(video.getAttribute('src')).toBe(`/bff/tiktok-media?url=${encodeURIComponent('https://v.tiktokcdn.com/123.mp4')}`);
     dispose();
     expect(video.hasAttribute('src')).toBe(false);
     expect(load).toHaveBeenCalled();
+  });
+
+  it('retries a transient failure once while the item is still upcoming', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined);
+    vi.mocked(fetchTikTokPlayback)
+      .mockRejectedValueOnce(new BffHttpError('unavailable', 502, '/bff/tiktok-playback'))
+      .mockResolvedValueOnce({ videoUrl: 'https://v.tiktokcdn.com/retry.mp4' });
+    const dispose = prefetchTikTok('https://www.tiktok.com/@creator/video/789');
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(fetchTikTokPlayback).toHaveBeenCalledTimes(2);
+    dispose();
+  });
+
+  it('cancels a pending retry when the item leaves the queue', async () => {
+    vi.useFakeTimers();
+    vi.mocked(fetchTikTokPlayback).mockRejectedValue(new BffHttpError('unavailable', 502, '/bff/tiktok-playback'));
+    const dispose = prefetchTikTok('https://www.tiktok.com/@creator/video/790');
+    await Promise.resolve();
+    await Promise.resolve();
+    dispose();
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(fetchTikTokPlayback).toHaveBeenCalledTimes(1);
   });
 
   it('does not start media after the speculative request is cancelled', async () => {

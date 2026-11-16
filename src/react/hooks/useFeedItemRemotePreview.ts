@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type Dispatch,
@@ -47,6 +48,15 @@ export function useFeedItemRemotePreview(
     [previewUseCases, source, url],
   );
   const previewKey = `${url}:${source}:${scopeKey}:${enabled}`;
+  const cachedCandidate = enabled && source !== 'none'
+    ? previewUseCases.getCachedRemotePreview?.(url, source)
+    : undefined;
+  const hasCachedPreview = Boolean(cachedCandidate);
+  const cachedOpenGraph = cachedCandidate?.openGraphPreview ?? null;
+  const cachedLiquipedia = cachedCandidate?.liquipediaMatch ?? null;
+  const cachedPreview = useMemo(() => hasCachedPreview
+    ? { openGraphPreview: cachedOpenGraph, liquipediaMatch: cachedLiquipedia }
+    : undefined, [hasCachedPreview, cachedOpenGraph, cachedLiquipedia]);
   const resource = useAsyncResource(load, {
     enabled: enabled && canLoadPreview,
     key: previewKey,
@@ -57,22 +67,23 @@ export function useFeedItemRemotePreview(
   } | null>(null);
   const preview = !enabled ? EMPTY_REMOTE_PREVIEW : (livePreview?.key === previewKey ? livePreview.value : null)
     ?? resource.result
+    ?? cachedPreview
     ?? EMPTY_REMOTE_PREVIEW;
   const setPreview = useCallback<Dispatch<SetStateAction<RemotePreview>>>((update) => {
     setLivePreview((previous) => {
       const current = previous?.key === previewKey
         ? previous.value
-        : resource.result ?? EMPTY_REMOTE_PREVIEW;
+        : resource.result ?? cachedPreview ?? EMPTY_REMOTE_PREVIEW;
       const value = typeof update === 'function' ? update(current) : update;
       return { key: previewKey, value };
     });
-  }, [previewKey, resource.result]);
+  }, [previewKey, resource.result, cachedPreview]);
   const previewStatus: RemotePreviewStatus = !enabled
     ? 'idle'
-    : !canLoadPreview
-      ? 'pending'
-      : resource.status === 'success'
-        ? 'loaded'
+    : resource.status === 'success' || cachedPreview
+      ? 'loaded'
+      : !canLoadPreview
+        ? 'pending'
         : resource.status === 'error'
           ? 'failed'
           : 'pending';

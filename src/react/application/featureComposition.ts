@@ -14,7 +14,7 @@ import {
 import { getFeedItemChanges } from '../services/feedItems';
 import { validateCredentials } from '../services/auth';
 import { isAuthenticationError } from '../domain/requestError';
-import { loadRemotePreview as loadRemotePreviewRequest, reprioritizeRemotePreview } from '../services/remotePreview';
+import { loadRemotePreview as loadRemotePreviewRequest, reprioritizeRemotePreview, getCachedRemotePreview } from '../services/remotePreview';
 import { getOpenGraphPreview } from '../services/openGraph';
 import { getFeedTypeSuggestion } from '../services/feedTypeSuggestion';
 import { resolveYoutubeChannel } from '../services/youtubeChannel';
@@ -73,6 +73,7 @@ export function createFeatureComposition() {
       getOpenGraphPreview,
       loadRemotePreview: loadRemotePreviewRequest,
       reprioritizeRemotePreview,
+      getCachedRemotePreview,
     }),
   } as const;
 }

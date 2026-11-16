@@ -1,9 +1,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 import { readerFixturesPlugin } from './dev/readerFixturesPlugin';
+import { readerDiagnosticsPlugin } from './dev/readerDiagnosticsPlugin';
 
 export default defineConfig({
-  plugins: [react(), readerFixturesPlugin()],
+  plugins: [react(), readerFixturesPlugin(), readerDiagnosticsPlugin()],
   server: {
     allowedHosts: ['gkfeed.local'],
     proxy: {

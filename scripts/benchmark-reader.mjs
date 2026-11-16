@@ -11,6 +11,8 @@ const warmups = Number(process.env.BENCH_WARMUPS ?? 2);
 const slowRuns = Number(process.env.BENCH_SLOW_RUNS ?? 10);
 const itemCount = Number(process.env.BENCH_ITEMS ?? 1000);
 const nextCount = Number(process.env.BENCH_NEXT ?? 20);
+const action = process.env.BENCH_ACTION ?? 'keep';
+if (!['keep', 'delete'].includes(action)) throw new Error('BENCH_ACTION must be keep or delete');
 if (![runs, slowRuns, itemCount].every((n) => Number.isSafeInteger(n) && n > 0)
   || !Number.isSafeInteger(nextCount) || nextCount < 0 || nextCount >= itemCount
   || !Number.isSafeInteger(warmups) || warmups < 0) throw new Error('Invalid benchmark configuration');
@@ -36,7 +38,8 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
     let data;
-    if (url.pathname === '/api/v1/list') data = feeds;
+    if (req.method === 'DELETE' && /^\/api\/v1\/items\/\d+$/.test(url.pathname)) data = {};
+    else if (url.pathname === '/api/v1/list') data = feeds;
     else if (url.pathname === '/api/v2/items/sync') {
       const offset = Number(url.searchParams.get('cursor') ?? 0);
       const limit = Number(url.searchParams.get('limit') ?? 100);
@@ -44,6 +47,10 @@ const server = createServer(async (req, res) => {
       data = { items: items.slice(offset, end), next_cursor: end < itemCount ? String(end) : '', has_more: end < itemCount, sync_cursor: 'benchmark' };
     } else if (url.pathname === '/api/v2/items/changes') {
       data = { upserted: [], deleted_ids: [], next_cursor: 'benchmark', has_more: false };
+    } else if (url.pathname === '/bff/recommendation-feed-scores') {
+      data = { classificationVersion: 1, viewedThresholdMs: 10000, feeds: [] };
+    } else if (url.pathname === '/bff/recommendation-events' && req.method === 'POST') {
+      data = { accepted: 1 };
     } else if (url.pathname === '/bff/open-graph') {
       data = { url: url.searchParams.get('url'), title: null, description: null, image: null, video: null, siteName: null, type: 'article', providerData: null };
     } else if (/^\/(api|bff)\//.test(url.pathname)) {
@@ -88,7 +95,7 @@ try {
       page.on('pageerror', (error) => errors.push(String(error)));
       await context.route('**/*', (route) => new URL(route.request().url()).origin === baseURL
         ? route.continue() : (errors.push(`External request: ${route.request().url()}`), route.abort()));
-      await page.addInitScript(({ itemCount, nextCount }) => {
+      await page.addInitScript(({ itemCount, nextCount, action }) => {
         localStorage.setItem('gkfeed.credentials', JSON.stringify({ username: 'reader-benchmark', password: 'synthetic' }));
         const state = window.__readerBench = { start: location.pathname === '/reader' ? 0 : null, result: null, step: 0, stepStart: null, done: false, error: null };
         document.addEventListener('click', (event) => {
@@ -142,7 +149,7 @@ try {
                   firstItemMs: now - state.start,
                   domReadyMs: candidate - state.start,
                   resources: performance.getEntriesByType('resource').filter((r) => /\/(api|bff)\//.test(r.name)).map((r) => ({ path: new URL(r.name).pathname + new URL(r.name).search, startMs: r.startTime - state.start, endMs: r.responseEnd - state.start })),
-                  nextItems: { action: 'keep', count: nextCount, transitions: [] },
+                  nextItems: { action, count: nextCount, transitions: [] },
                 };
               } else {
                 state.result.nextItems.transitions.push({
@@ -156,9 +163,9 @@ try {
                 finish(true);
                 return;
               }
-              const keep = document.querySelector('.reader__actions .reader__keep');
-              if (!keep || keep.disabled || !visible(keep)) {
-                state.error = 'Visible, enabled Keep button was not found';
+              const button = document.querySelector(action === 'keep' ? '.reader__actions .reader__keep' : '.reader__actions .ui-button--danger');
+              if (!button || button.disabled || !visible(button)) {
+                state.error = `Visible, enabled ${action} button was not found`;
                 return;
               }
               candidate = null;
@@ -166,7 +173,7 @@ try {
               state.step += 1;
               state.stepStart = performance.now();
               // Run the actual React click handler without adding automation round trips or dwell time.
-              keep.click();
+              button.click();
               requestAnimationFrame(tick);
               return;
             }
@@ -175,7 +182,7 @@ try {
           requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
-      }, { itemCount, nextCount });
+      }, { itemCount, nextCount, action });
       if (scenario.cached || scenario.spa) {
         await page.goto(`${baseURL}/settings`);
         await page.getByRole('link', { name: 'Reader', exact: true }).waitFor();
@@ -227,7 +234,7 @@ try {
       return { medianMs: sorted[Math.ceil(sorted.length * 0.5) - 1] ?? null, p95Ms: sorted[Math.ceil(sorted.length * 0.95) - 1] ?? null, maxMs: sorted.at(-1) ?? null };
     };
     const nextItems = {
-      count: nextCount, action: 'keep',
+      count: nextCount, action,
       completedSeries: samples.filter((s) => s.nextItems.completed).length,
       blockedSeries: samples.filter((s) => !s.nextItems.completed).length,
       uniqueNewItems: { min: Math.min(...samples.map((s) => s.nextItems.uniqueNewItems)), max: Math.max(...samples.map((s) => s.nextItems.uniqueNewItems)) },
@@ -248,7 +255,7 @@ try {
     platform: `${os.platform()} ${os.release()} ${os.arch()}`, cpu: os.cpus()[0]?.model,
     viewport: { width: 1366, height: 768 }, itemCount, nextCount, warmups, cpuThrottling: 'none', httpCache: 'disabled by Playwright request routing', apiLatency: 'fixed server delay per API/BFF response; static assets on localhost',
     metric: 'Navigation start or captured Reader click to visible first card and its title, confirmed across two animation frames. Approximation of paint. No explicit wait for media/preview readiness; the UI may gate its title on preview completion.',
-    nextMetric: 'Keep click to the expected next different visible card and title across two animation frames. Repeated previously seen IDs are recorded, not treated as new unique items. No dwell time; prefetch and background sync remain active. Series total is reported only for completed series. Transitions blocked for 15 seconds are censored and recorded separately, never treated as completed fast transitions.',
+    nextMetric: `${action} click to the expected next different visible card and title across two animation frames. Repeated previously seen IDs are recorded, not treated as new unique items. No dwell time; prefetch and background sync remain active. Series total is reported only for completed series. Transitions blocked for 15 seconds are censored and recorded separately, never treated as completed fast transitions.`,
     results,
   };
   await writeFile(resolve(output, 'results.json'), `${JSON.stringify(report, null, 2)}\n`);

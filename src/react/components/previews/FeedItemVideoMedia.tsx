@@ -5,8 +5,10 @@ import type { LocalizedFeedItemPreview } from '../previewLocalization';
 import { isAppleMobileDevice } from '../../domain/device';
 import { isTempfileUrl, parseUrl } from '../../domain/feedItemUrls';
 import { type SoundGestureLifecycle, useSoundGesture } from '../../hooks/useSoundGesture';
-import { tikTokMediaProxy, useTikTokNormalization } from './useTikTokNormalization';
+import { tikTokMediaProxy } from '../../services/tiktokMediaUrl';
+import { useTikTokNormalization } from './useTikTokNormalization';
 import { TikTokNormalizeButton } from './TikTokNormalizeButton';
+import { tikTokDiagnostic, tikTokMediaDiagnostic } from '../../services/readerDiagnostics';
 import { useHlsVideo } from './useHlsVideo';
 
 type VideoPreview = LocalizedFeedItemPreview & { type: 'video' };
@@ -18,6 +20,7 @@ export function FeedItemVideoMedia({
   isTikTok,
   onPreviewError,
   overlay,
+  diagnosticId,
   soundGesture: sharedSoundGesture,
 }: {
   preview: VideoPreview;
@@ -25,6 +28,7 @@ export function FeedItemVideoMedia({
   isTikTok: boolean;
   onPreviewError: () => void;
   overlay?: ReactNode;
+  diagnosticId?: string;
   soundGesture?: SoundGestureLifecycle;
 }) {
   const { t } = useTranslation();
@@ -145,16 +149,18 @@ export function FeedItemVideoMedia({
           muted={soundGesture.isMuted}
           playsInline
           preload="auto"
-          onLoadedData={() => setReadySource(preview.src)}
-          onPlaying={() => setReadySource(preview.src)}
+          onLoadedData={(event) => { if (diagnosticId) tikTokMediaDiagnostic('visible-loadeddata', diagnosticId, event.currentTarget); setReadySource(preview.src); }}
+          onPlaying={() => { if (diagnosticId) tikTokDiagnostic('visible-playing', diagnosticId); setReadySource(preview.src); }}
+          onWaiting={() => { if (diagnosticId) tikTokDiagnostic('visible-waiting', diagnosticId); }}
           onLoadedMetadata={(event) => {
+            if (diagnosticId) tikTokDiagnostic('visible-loadedmetadata', diagnosticId);
             updateDuration(event.currentTarget);
             const { videoHeight, videoWidth } = event.currentTarget;
             if (videoHeight > 0 && videoWidth > 0) setAspectRatio(videoWidth / videoHeight);
           }}
           onDurationChange={(event) => updateDuration(event.currentTarget)}
           onRateChange={(event) => setPlaybackRate(event.currentTarget.playbackRate)}
-          onError={handlePreviewError}
+          onError={() => { if (diagnosticId) tikTokDiagnostic('visible-media-error', diagnosticId); handlePreviewError(); }}
         />
       )}
       {isTikTok && tempfileFallback === 'none' ? (

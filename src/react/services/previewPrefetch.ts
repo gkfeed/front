@@ -1,3 +1,4 @@
+import { readerDiagnostic } from './readerDiagnostics';
 import { analyzeFeedItem } from '../domain/feedItemAnalysis';
 import { resolveFeedItemPreviewPolicy } from '../domain/feedItemPreviewPolicy';
 import type { NsfwMode, RemotePreview, RemotePreviewSource } from '../domain/feedItemCardContracts';
@@ -33,7 +34,7 @@ export function prefetchFeedItem(
     remotePreview: EMPTY_REMOTE_PREVIEW,
     previewFailures: 0,
   });
-  prefetchPreviewImages(initialPolicy.visiblePreview, prefetchedImageUrls);
+  prefetchPreviewImages(initialPolicy.visiblePreview, prefetchedImageUrls, item.id);
 
   if (!initialPolicy.remoteRequest) return;
 
@@ -44,6 +45,7 @@ export function prefetchFeedItem(
   }
 
   const controller = new AbortController();
+  readerDiagnostic('item-prefetch-start', item.id, `${providerView.provider}:${initialPolicy.remoteRequest.source}:${priority}`);
   prefetchControllers.set(prefetchKey, controller);
   void previewUseCases.loadRemotePreview(
     item.link,
@@ -53,6 +55,7 @@ export function prefetchFeedItem(
   )
     .then((remotePreview) => {
       if (controller.signal.aborted) return;
+      readerDiagnostic('item-prefetch-ready', item.id, providerView.provider);
       const loadedPolicy = resolveFeedItemPreviewPolicy({
         item,
         providerView,
@@ -64,9 +67,10 @@ export function prefetchFeedItem(
         filterRemotePreviewForProvider(remotePreview, providerView.provider),
         loadedPolicy.visiblePreview,
         prefetchedImageUrls,
+        item.id,
       );
     })
-    .catch(() => undefined)
+    .catch((error: unknown) => { if (!controller.signal.aborted) readerDiagnostic('item-prefetch-error', item.id, error instanceof Error ? error.name : 'unknown'); })
     .finally(() => {
       if (prefetchControllers.get(prefetchKey) === controller) {
         prefetchControllers.delete(prefetchKey);
@@ -83,33 +87,36 @@ function prefetchRemotePreviewImages(
   remotePreview: RemotePreview,
   selectedPreview: ReturnType<typeof resolveFeedItemPreviewPolicy>['preview'],
   prefetchedImageUrls: Set<string>,
+  itemId: number,
 ): void {
-  prefetchPreviewImages(selectedPreview, prefetchedImageUrls);
+  prefetchPreviewImages(selectedPreview, prefetchedImageUrls, itemId);
 
   getProviderDataImageUrls(remotePreview.openGraphPreview?.providerData ?? null)
-    .forEach((url) => prefetchImage(url, prefetchedImageUrls));
+    .forEach((url) => prefetchImage(url, prefetchedImageUrls, itemId));
 
   remotePreview.liquipediaMatch?.teams.forEach((team) => {
-    if (team.logo) prefetchImage(team.logo, prefetchedImageUrls);
+    if (team.logo) prefetchImage(team.logo, prefetchedImageUrls, itemId);
   });
 }
 
 function prefetchPreviewImages(
   preview: ReturnType<typeof resolveFeedItemPreviewPolicy>['preview'],
   prefetchedImageUrls: Set<string>,
+  itemId: number,
 ): void {
   if (!preview) return;
-  if (preview.type === undefined) prefetchImage(preview.src, prefetchedImageUrls);
-  if (preview.poster) prefetchImage(preview.poster, prefetchedImageUrls);
-  if (preview.fallbackSrc) prefetchImage(preview.fallbackSrc, prefetchedImageUrls);
+  if (preview.type === undefined) prefetchImage(preview.src, prefetchedImageUrls, itemId);
+  if (preview.poster) prefetchImage(preview.poster, prefetchedImageUrls, itemId);
+  if (preview.fallbackSrc) prefetchImage(preview.fallbackSrc, prefetchedImageUrls, itemId);
 }
 
-function prefetchImage(src: string, prefetchedImageUrls: Set<string>): void {
+function prefetchImage(src: string, prefetchedImageUrls: Set<string>, itemId: number): void {
   if (!src || prefetchedImageUrls.has(src) || typeof Image === 'undefined') return;
 
   prefetchedImageUrls.add(src);
   const image = new Image();
   image.referrerPolicy = 'no-referrer';
-  image.onerror = () => prefetchedImageUrls.delete(src);
+  image.onload = () => readerDiagnostic('item-prefetch-image-ready', itemId);
+  image.onerror = () => { prefetchedImageUrls.delete(src); readerDiagnostic('item-prefetch-image-error', itemId); };
   image.src = src;
 }
