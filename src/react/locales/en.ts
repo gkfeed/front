@@ -306,6 +306,8 @@ const en = {
     pauseSlideshow: 'Pause slideshow',
     playSlideshow: 'Play slideshow',
     loadingVideo: 'Loading video…',
+    videoLoadingSlow: 'Video is taking longer than expected. Still trying to load it.',
+    tiktokUnavailable: 'This TikTok is unavailable in the preview.',
     loading: 'Loading preview',
     mediaUnavailable: 'Media unavailable',
     mediaError: 'The image or video could not be loaded.',

@@ -316,6 +316,8 @@ const ru = {
     pauseSlideshow: 'Приостановить слайд-шоу',
     playSlideshow: 'Продолжить слайд-шоу',
     loadingVideo: 'Загрузка видео…',
+    videoLoadingSlow: 'Видео загружается дольше обычного. Продолжаем попытку.',
+    tiktokUnavailable: 'Этот TikTok недоступен для предпросмотра.',
     loading: 'Загрузка предпросмотра',
     mediaUnavailable: 'Медиафайл недоступен',
     mediaError: 'Не удалось загрузить изображение или видео.',

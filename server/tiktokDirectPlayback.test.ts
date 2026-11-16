@@ -12,8 +12,8 @@ vi.mock('./publicHttp.js', async (original) => ({
 const post = new URL('https://www.tiktok.com/@test/video/123');
 const mediaUrl = 'https://v16-webapp-prime.tiktok.com/video.mp4?signature=abc';
 const context = createDetachedRequestExecutionContext();
-function page(item: unknown, cookie = 'tt_chain_token=abc+/==; Path=/; Secure') {
-  const state = { __DEFAULT_SCOPE__: { 'webapp.video-detail': { itemInfo: { itemStruct: item } } } };
+function page(item: unknown, cookie = 'tt_chain_token=abc+/==; Path=/; Secure', statusCode = 0) {
+  const state = { __DEFAULT_SCOPE__: { 'webapp.video-detail': { statusCode, itemInfo: { itemStruct: item } } } };
   return {
     body: Readable.from([`<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">${JSON.stringify(state)}</script>`]) as never,
     headers: { 'set-cookie': [cookie] }, status: 200, url: post,
@@ -91,6 +91,17 @@ describe('direct TikTok playback', () => {
     const target = vi.mocked(requestPublicHttp).mock.calls[0]![0];
     expect(target.hostname).toBe('www.tiktok.com');
     expect(target.pathname).toBe('//evil.test/video/123');
+  });
+
+  it.each([10204, 10216, 10222])('reports explicit TikTok access restrictions immediately: %i', async (status) => {
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(page(undefined, 'other=value', status));
+    await expect(fetchTikTokDirectPlayback(post, context)).rejects.toMatchObject({ kind: 'tiktok_post_unavailable' });
+    expect(requestPublicHttp).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not interpret unknown status codes as a confirmed restriction', async () => {
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(page(undefined, 'other=value', 12345));
+    await expect(fetchTikTokDirectPlayback(post, context)).resolves.toBeNull();
   });
 
   it('requires a valid anonymous session cookie', async () => {

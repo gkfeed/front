@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { BffHttpError } from '../../services/bffClient';
 import { fetchTikTokPlayback, getCachedTikTokPlayback } from '../../services/tiktokPlayback';
 import { TikTokPreview } from './TikTokPreview';
 
@@ -31,6 +32,40 @@ describe('TikTok preview', () => {
     expect(fetchTikTokPlayback).not.toHaveBeenCalled();
   });
 
+  it('retries a transient metadata failure while the card remains visible', async () => {
+    vi.useFakeTimers();
+    vi.mocked(fetchTikTokPlayback).mockRejectedValueOnce(new BffHttpError('unavailable', 504, '/bff/tiktok-playback'))
+      .mockResolvedValueOnce({ videoUrl });
+    await act(async () => { render(<TikTokPreview {...props} />); });
+    expect(document.querySelector('iframe')).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    expect(fetchTikTokPlayback).toHaveBeenCalledTimes(2);
+    expect(document.querySelector('video')).not.toBeNull();
+    expect(document.querySelector('iframe')).toBeNull();
+  });
+
+  it('shows a clear status immediately when TikTok reports a restricted post', async () => {
+    vi.mocked(fetchTikTokPlayback).mockRejectedValue(new BffHttpError('not accessible', 422, '/bff/tiktok-playback'));
+    render(<TikTokPreview {...props} />);
+    await waitFor(() => expect(screen.getByText('This TikTok is unavailable in the preview.')).toBeTruthy());
+    expect(screen.getByRole('link', { name: 'Open original' }).getAttribute('href')).toBe(props.href);
+    expect(fetchTikTokPlayback).toHaveBeenCalledOnce();
+    expect(document.querySelector('iframe')).toBeNull();
+  });
+
+  it('reports a slow load while allowing a later successful result', async () => {
+    vi.useFakeTimers();
+    let resolve!: (value: { videoUrl: string }) => void;
+    vi.mocked(fetchTikTokPlayback).mockImplementation(() => new Promise((done) => { resolve = done; }));
+    await act(async () => { render(<TikTokPreview {...props} />); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(screen.getByText('Video is taking longer than expected. Still trying to load it.')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Open original' })).toBeTruthy();
+    await act(async () => { resolve({ videoUrl }); });
+    expect(document.querySelector('video')).not.toBeNull();
+    expect(screen.queryByText('Video is taking longer than expected. Still trying to load it.')).toBeNull();
+  });
+
   it('renders photos instead of a black video and supports automatic and manual navigation', async () => {
     vi.useFakeTimers();
     vi.mocked(fetchTikTokPlayback).mockResolvedValue({
@@ -54,12 +89,13 @@ describe('TikTok preview', () => {
     expect(currentImage()).toContain('/2.jpeg');
   });
 
-  it('falls back when a slideshow image fails to load', async () => {
+  it('reports an unavailable slideshow image', async () => {
     vi.mocked(fetchTikTokPlayback).mockResolvedValue({ imageUrls: ['https://p.tiktokcdn.com/1.jpeg'] });
     render(<TikTokPreview {...props} />);
     await waitFor(() => expect(document.querySelector('.reader-card__slide')).not.toBeNull());
     fireEvent.error(document.querySelector('.reader-card__slide')!);
-    expect(document.querySelector('iframe')).not.toBeNull();
+    expect(screen.getByText('This TikTok is unavailable in the preview.')).toBeTruthy();
+    expect(document.querySelector('iframe')).toBeNull();
   });
 
   it('shows author details over the native player and tolerates a broken avatar', async () => {
@@ -128,32 +164,46 @@ describe('TikTok preview', () => {
     expect(button.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('falls back to a single embed on media failure', async () => {
+  it('reports a native video failure immediately', async () => {
     vi.mocked(fetchTikTokPlayback).mockResolvedValue({ videoUrl });
     render(<TikTokPreview {...props} />);
     const video = await getVideo();
     metadata(video, 167);
     fireEvent.error(video);
     expect(document.querySelector('video')).toBeNull();
-    expect(document.querySelectorAll('iframe')).toHaveLength(1);
-    expect(document.querySelector('iframe')?.src).toBe(props.src);
+    expect(screen.getByText('This TikTok is unavailable in the preview.')).toBeTruthy();
+    expect(document.querySelector('iframe')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Double playback speed' })).toBeNull();
   });
 
-  it('falls back when the resolver fails', async () => {
+  it('shows an unavailable message when the resolver fails', async () => {
     vi.mocked(fetchTikTokPlayback).mockRejectedValue(new Error('Unavailable'));
     render(<TikTokPreview {...props} />);
-    await waitFor(() => expect(document.querySelector('iframe')).not.toBeNull());
+    await waitFor(() => expect(screen.getByText('This TikTok is unavailable in the preview.')).toBeTruthy());
     expect(document.querySelector('video')).toBeNull();
+    expect(document.querySelector('iframe')).toBeNull();
   });
 
-  it('falls back if native media never supplies metadata', async () => {
+  it('reports slow media while letting the video continue loading', async () => {
+    vi.useFakeTimers();
+    vi.mocked(fetchTikTokPlayback).mockResolvedValue({ videoUrl });
+    await act(async () => { render(<TikTokPreview {...props} />); });
+    const video = document.querySelector('video')!;
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(screen.getByText('Video is taking longer than expected. Still trying to load it.')).toBeTruthy();
+    fireEvent.loadedData(video);
+    expect(screen.queryByText('Video is taking longer than expected. Still trying to load it.')).toBeNull();
+    expect(document.querySelector('video')).not.toBeNull();
+  });
+
+  it('reports a video that never supplies metadata', async () => {
     vi.useFakeTimers();
     vi.mocked(fetchTikTokPlayback).mockResolvedValue({ videoUrl });
     await act(async () => { render(<TikTokPreview {...props} />); });
     expect(document.querySelector('video')).not.toBeNull();
     await act(async () => { vi.advanceTimersByTime(15_000); });
-    expect(document.querySelector('iframe')).not.toBeNull();
+    expect(screen.getByText('This TikTok is unavailable in the preview.')).toBeTruthy();
+    expect(document.querySelector('iframe')).toBeNull();
   });
 
   it('aborts old requests and ignores their late results', async () => {

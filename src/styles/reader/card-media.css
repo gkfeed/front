@@ -93,6 +93,12 @@
   text-align: center;
 }
 
+.reader-card__media-waiting {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+}
+
 .reader-card__media-error > svg {
   width: 42px;
   height: 42px;

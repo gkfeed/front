@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchTikTokJson } from './tiktokJson.js';
 import { fetchTikTokPlayback } from './tiktokPlayback.js';
+import { fetchTikTokDirectPlayback } from './tiktokDirectPlayback.js';
+import { PreviewError } from './preview/errors.js';
 import { PublicHttpError } from './publicHttpError.js';
 
 vi.mock('./tiktokJson.js', async (importOriginal) => ({
@@ -13,6 +15,12 @@ const videoUrl = 'https://v16m.tiktokcdn-us.com/video.mp4?signature=temporary';
 afterEach(() => vi.resetAllMocks());
 
 describe('TikTok playback resolver', () => {
+  it('does not wait for TikWM after TikTok explicitly restricts a post', async () => {
+    vi.mocked(fetchTikTokDirectPlayback).mockRejectedValueOnce(new PreviewError('not accessible', 'tiktok_post_unavailable'));
+    await expect(fetchTikTokPlayback(post)).rejects.toMatchObject({ kind: 'tiktok_post_unavailable' });
+    expect(fetchTikTokJson).not.toHaveBeenCalled();
+  });
+
   it('includes author details from the same provider response and rejects unsafe avatar URLs', async () => {
     vi.mocked(fetchTikTokJson).mockResolvedValue({ value: { code: 0, data: {
       play: videoUrl,

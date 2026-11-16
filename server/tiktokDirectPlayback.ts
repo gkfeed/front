@@ -4,6 +4,7 @@ import { normalizeExternalText } from '../shared/text.js';
 import type { RequestExecutionContext } from './application/requestExecutionContext.js';
 import { discardResponseBody, requestPublicHttp } from './publicHttp.js';
 import { readLimitedBody } from './preview/bodyAdapters.js';
+import { PreviewError } from './preview/errors.js';
 
 export const TIKTOK_DIRECT_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
@@ -42,6 +43,9 @@ export async function fetchTikTokDirectPlayback(post: URL, context?: RequestExec
   try { root = JSON.parse(script); } catch { return null; }
   if (!isRecord(root) || !isRecord(root.__DEFAULT_SCOPE__)) return null;
   const details = root.__DEFAULT_SCOPE__['webapp.video-detail'];
+  if (isRecord(details) && [10204, 10216, 10222].includes(Number(details.statusCode))) {
+    throw new PreviewError('TikTok post is not accessible', 'tiktok_post_unavailable');
+  }
   if (!isRecord(details) || !isRecord(details.itemInfo) || !isRecord(details.itemInfo.itemStruct)) return null;
   const item = details.itemInfo.itemStruct;
   const expectedId = post.pathname.match(/\/(?:video|v)\/(\d+)/)?.[1];

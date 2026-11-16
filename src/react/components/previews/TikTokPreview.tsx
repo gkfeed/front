@@ -3,11 +3,11 @@ import { TikTokAuthorOverlay } from './TikTokAuthorOverlay';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SoundGestureLifecycle } from '../../hooks/useSoundGesture';
+import { BffHttpError, BffTimeoutError } from '../../services/bffClient';
 import { tikTokDiagnostic } from '../../services/readerDiagnostics';
 import { fetchTikTokPlayback, getCachedTikTokPlayback } from '../../services/tiktokPlayback';
 import { FeedItemVideoMedia } from './FeedItemVideoMedia';
 import { TikTokSlideshow } from './TikTokSlideshow';
-import { TikTokEmbed } from './TikTokEmbed';
 
 export function TikTokPreview(props: {
   href: string;
@@ -19,7 +19,7 @@ export function TikTokPreview(props: {
   return <TikTokPreviewPlayer key={props.href} {...props} />;
 }
 
-function TikTokPreviewPlayer({ href, src, title, soundGesture }: {
+function TikTokPreviewPlayer({ href, title, soundGesture }: {
   href: string;
   src: string;
   title: string;
@@ -28,7 +28,8 @@ function TikTokPreviewPlayer({ href, src, title, soundGesture }: {
   const { t } = useTranslation();
   const [initialPlayback] = useState(() => getCachedTikTokPlayback(href) ?? null);
   const [playback, setPlayback] = useState<TikTokPlaybackPreview | null>(initialPlayback);
-  const [failed, setFailed] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     tikTokDiagnostic('visible-start', href);
@@ -37,18 +38,52 @@ function TikTokPreviewPlayer({ href, src, title, soundGesture }: {
       return undefined;
     }
     const controller = new AbortController();
-    void fetchTikTokPlayback(href, controller.signal).then((result) => {
-      if (!controller.signal.aborted) { tikTokDiagnostic('visible-metadata-ready', href); setPlayback(result); }
-    }).catch(() => {
-      if (!controller.signal.aborted) { tikTokDiagnostic('visible-metadata-error', href); setFailed(true); }
+    let retryTimer: number | undefined;
+    const slowTimer = window.setTimeout(() => {
+      tikTokDiagnostic('visible-loading-slow', href);
+      setSlow(true);
+    }, 2_000);
+    const load = (retry: boolean) => void fetchTikTokPlayback(href, controller.signal).then((result) => {
+      if (!controller.signal.aborted) {
+        window.clearTimeout(slowTimer);
+        tikTokDiagnostic('visible-metadata-ready', href);
+        setPlayback(result);
+      }
+    }).catch((error: unknown) => {
+      if (controller.signal.aborted) return;
+      const transient = error instanceof BffTimeoutError || error instanceof TypeError
+        || (error instanceof BffHttpError && (error.status === 429 || error.status >= 500));
+      if (!retry && transient) {
+        tikTokDiagnostic('visible-metadata-retry', href);
+        retryTimer = window.setTimeout(() => load(true), 500);
+      } else {
+        window.clearTimeout(slowTimer);
+        tikTokDiagnostic('visible-metadata-error', href);
+        setUnavailable(true);
+      }
     });
-    return () => controller.abort();
+    load(false);
+    return () => {
+      controller.abort();
+      window.clearTimeout(slowTimer);
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+    };
   }, [href, initialPlayback]);
 
-  if (failed) return <TikTokEmbed src={src} title={title} soundGesture={soundGesture} />;
+  if (unavailable) return (
+    <div className="reader-card__preview reader-card__preview--short-video reader-card__preview--tiktok">
+      <div className="reader-card__media-error" role="status">
+        <strong>{t('preview.tiktokUnavailable')}</strong>
+        <a href={href} target="_blank" rel="noreferrer">{t('reader.openOriginal')}</a>
+      </div>
+    </div>
+  );
   if (!playback) return (
-    <div className="reader-card__preview reader-card__preview--short-video reader-card__preview--tiktok" role="status">
-      {t('preview.loadingVideo')}
+    <div className="reader-card__preview reader-card__preview--short-video reader-card__preview--tiktok">
+      <div className="reader-card__media-error" role="status">
+        <strong>{t(slow ? 'preview.videoLoadingSlow' : 'preview.loadingVideo')}</strong>
+        {slow ? <a href={href} target="_blank" rel="noreferrer">{t('reader.openOriginal')}</a> : null}
+      </div>
     </div>
   );
   if (playback.imageUrls) return (
@@ -58,7 +93,7 @@ function TikTokPreviewPlayer({ href, src, title, soundGesture }: {
       title={title}
       soundGesture={soundGesture}
       author={playback.author}
-      onError={() => setFailed(true)}
+      onError={() => setUnavailable(true)}
     />
   );
   return (
@@ -70,7 +105,7 @@ function TikTokPreviewPlayer({ href, src, title, soundGesture }: {
       diagnosticId={href}
       isShortVideo
       isTikTok
-      onPreviewError={() => setFailed(true)}
+      onPreviewError={() => setUnavailable(true)}
     />
   );
 }

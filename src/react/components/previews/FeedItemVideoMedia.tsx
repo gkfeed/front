@@ -38,6 +38,7 @@ export function FeedItemVideoMedia({
   const [tempfileFallback, setTempfileFallback] = useState<TempfileFallback>('none');
   const [hlsFallbackSrc, setHlsFallbackSrc] = useState<string | null>(null);
   const [readySource, setReadySource] = useState<string | null>(null);
+  const [slowMedia, setSlowMedia] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const normalization = useTikTokNormalization(videoRef);
   const hasAutoAppliedDoubleSpeed = useRef(false);
@@ -52,6 +53,7 @@ export function FeedItemVideoMedia({
     setDuration(null);
     setPlaybackRate(1);
     setTempfileFallback('none');
+    setSlowMedia(false);
     hasAutoAppliedDoubleSpeed.current = false;
     if (videoRef.current) videoRef.current.playbackRate = 1;
   }, [preview.src]);
@@ -61,6 +63,12 @@ export function FeedItemVideoMedia({
     const timeout = window.setTimeout(onPreviewError, 15_000);
     return () => window.clearTimeout(timeout);
   }, [isTikTok, duration, onPreviewError]);
+
+  useEffect(() => {
+    if (!isTikTok || readySource === preview.src) return undefined;
+    const timeout = window.setTimeout(() => setSlowMedia(true), 2_000);
+    return () => window.clearTimeout(timeout);
+  }, [isTikTok, preview.src, readySource]);
 
   const updateDuration = (video: HTMLVideoElement) => {
     const nextDuration = video.duration;
@@ -163,6 +171,12 @@ export function FeedItemVideoMedia({
           onError={() => { if (diagnosticId) tikTokDiagnostic('visible-media-error', diagnosticId); handlePreviewError(); }}
         />
       )}
+      {isTikTok && slowMedia && readySource !== preview.src ? (
+        <div className="reader-card__media-error reader-card__media-waiting" role="status">
+          <strong>{t('preview.videoLoadingSlow')}</strong>
+          {diagnosticId ? <a href={diagnosticId} target="_blank" rel="noreferrer">{t('reader.openOriginal')}</a> : null}
+        </div>
+      ) : null}
       {isTikTok && tempfileFallback === 'none' ? (
         <TikTokNormalizeButton enabled={normalization.enabled} onClick={normalization.toggle} />
       ) : null}

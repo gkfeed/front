@@ -15,7 +15,8 @@ export async function fetchTikTokPlayback(
   try {
     const direct = await fetchTikTokDirectPlayback(post, context);
     if (direct) return direct;
-  } catch {
+  } catch (error) {
+    if (error instanceof PreviewError && error.kind === 'tiktok_post_unavailable') throw error;
     if (context?.signal.aborted) throw new PreviewError('TikTok playback request aborted', 'tiktok_upstream_unavailable');
   }
   const upstream = new URL('https://www.tikwm.com/api/');

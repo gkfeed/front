@@ -231,3 +231,9 @@
   left: 0;
   width: 100%;
 }
+
+@media (max-width: 640px) {
+  .reader-card__preview--tiktok .reader-card__media-error {
+    padding-inline: 64px;
+  }
+}
