@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const requestPublicHttp = vi.hoisted(() => vi.fn());
 
+vi.mock('./tiktokWebComments.js', () => ({
+  fetchTikTokWebComments: vi.fn().mockResolvedValue(null),
+  fetchTikTokWebDetails: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock('./tikwmRequestScheduler.js', () => ({ scheduleTikwmRequest: vi.fn().mockResolvedValue(undefined) }));
 
 vi.mock('./publicHttp.js', async (importOriginal) => ({
@@ -12,6 +17,7 @@ vi.mock('./publicHttp.js', async (importOriginal) => ({
 }));
 
 import { PublicHttpError } from './publicHttp.js';
+import { fetchTikTokWebComments, fetchTikTokWebDetails } from './tiktokWebComments.js';
 import {
   fetchTikTokComments,
   parseTikTokComments,
@@ -25,6 +31,16 @@ beforeEach(() => {
 });
 
 describe('fetchTikTokComments', () => {
+  it('returns direct TikTok comments without contacting the fallback provider', async () => {
+    const comments = [{ id: '1', text: 'Hello', author: 'Viewer', username: 'viewer', avatarUrl: null }];
+    const details = { description: 'Caption', creatorName: 'Creator', creatorAvatarUrl: null };
+    vi.mocked(fetchTikTokWebComments).mockResolvedValueOnce(comments);
+    vi.mocked(fetchTikTokWebDetails).mockResolvedValueOnce(details);
+    await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
+      .resolves.toEqual({ comments, ...details });
+    expect(requestPublicHttp).not.toHaveBeenCalled();
+  });
+
   it('retries a temporary comments provider failure once', async () => {
     let commentsRequests = 0;
     requestPublicHttp.mockImplementation(async (url: URL) => {

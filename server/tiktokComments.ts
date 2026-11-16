@@ -1,6 +1,8 @@
 import type { RequestExecutionContext } from './application/requestExecutionContext.js';
 import { PreviewError } from './preview/errors.js';
 import { fetchTikTokDetails } from './tiktokDetails.js';
+import { emptyTikTokDetails } from './tiktokDetailsParser.js';
+import { fetchTikTokWebComments, fetchTikTokWebDetails } from './tiktokWebComments.js';
 import {
   fetchTikTokJson,
   isRetryableTikTokRequestError,
@@ -19,6 +21,12 @@ export async function fetchTikTokComments(
   context?: RequestExecutionContext,
 ): Promise<TikTokCommentsPreview> {
   const videoUrl = parseTikTokVideoUrl(input);
+  const [directComments, directDetails] = await Promise.all([
+    fetchTikTokWebComments(videoUrl, context).catch(() => null),
+    fetchTikTokWebDetails(videoUrl, context).catch(() => null),
+  ]);
+  if (context?.signal.aborted) throw new PreviewError('TikTok comments request aborted', 'comments_fetch_failed');
+  if (directComments !== null) return { comments: directComments, ...(directDetails ?? emptyTikTokDetails()) };
   const detailsPromise = fetchTikTokDetails(videoUrl, context);
   const upstream = new URL('https://www.tikwm.com/api/comment/list');
   upstream.searchParams.set('url', videoUrl.href);

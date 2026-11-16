@@ -9,6 +9,7 @@ vi.mock('./publicHttp.js', async (original) => ({
   ...await original<typeof import('./publicHttp.js')>(), requestPublicHttp: vi.fn(),
 }));
 
+vi.mock('./tiktokWebComments.js', () => ({ fetchTikTokWebComments: vi.fn().mockResolvedValue(null), fetchTikTokWebDetails: vi.fn().mockResolvedValue(null) }));
 vi.mock('./tiktokDirectPlayback.js', () => ({ fetchTikTokDirectPlayback: vi.fn().mockResolvedValue(null) }));
 
 it('resolves Preview while comments load against the provider one-request-per-second limit', async () => {
