@@ -48,6 +48,21 @@ export function App({ basename }: { basename?: string } = {}) {
   const { i18n, t } = useTranslation();
 
   useEffect(() => {
+    if (!import.meta.env.DEV) return undefined;
+    const supportsLongTask = typeof PerformanceObserver !== 'undefined'
+      && !!PerformanceObserver.supportedEntryTypes?.includes('longtask');
+    readerDiagnostic('browser-diagnostics', 'unknown', `longtask=${supportsLongTask}:firefox=${/Firefox\//.test(navigator.userAgent)}`);
+    if (!supportsLongTask) return undefined;
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        readerDiagnostic('browser-long-task', 'unknown', `duration=${Math.round(entry.duration)}:start=${Math.round(performance.timeOrigin + entry.startTime)}`);
+      }
+    });
+    observer.observe({ entryTypes: ['longtask'] });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     document.documentElement.lang = i18n.language;
   }, [i18n, i18n.language]);
 

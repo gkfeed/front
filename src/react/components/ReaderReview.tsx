@@ -54,9 +54,14 @@ export function ReaderReview({
   }, [item.id, item.link, isTikTok]);
   useLayoutEffect(() => {
     if (!import.meta.env.DEV || typeof requestAnimationFrame === 'undefined') return undefined;
-    readerDiagnostic('item-layout-commit', item.id);
+    readerDiagnostic('item-layout-commit', item.id, `visibility=${document.visibilityState}:focus=${document.hasFocus()}`);
+    const timer = window.setTimeout(() => readerDiagnostic('item-after-commit-timer', item.id), 0);
     const frame = requestAnimationFrame(() => readerDiagnostic('item-first-frame', item.id));
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      readerDiagnostic('item-layout-cleanup', item.id);
+      window.clearTimeout(timer);
+      cancelAnimationFrame(frame);
+    };
   }, [item.id]);
 
   return (
