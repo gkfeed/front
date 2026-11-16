@@ -23,7 +23,7 @@ describe('prefetchStoryVideo', () => {
 
     expect(video.tagName).toBe('VIDEO');
     expect(video.src).toBe(story.link);
-    expect(video.preload).toBe('auto');
+    expect(video.preload).toBe('metadata');
     expect(video.muted).toBe(true);
     expect(video.autoplay).toBe(false);
     expect(loadRemotePreview).not.toHaveBeenCalled();

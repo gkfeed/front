@@ -39,7 +39,8 @@ export function prefetchStoryVideo(
       video = document.createElement('video');
       video.muted = true;
       video.playsInline = true;
-      video.preload = 'auto';
+      // Metadata is enough to prepare the player without buffering an entire story.
+      video.preload = 'metadata';
       // Extensionless imports can be photos. Warm the same image fallback used
       // by the visible player if the browser cannot decode them as video.
       video.onerror = () => {
