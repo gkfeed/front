@@ -2,13 +2,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { RemotePreview } from '../domain/feedItemCardContracts';
+import { ImagePrefetchCache } from './imagePrefetchCache';
 import { abortPrefetches, prefetchFeedItem } from './previewPrefetch';
 
 describe('preview prefetch cancellation', () => {
   it('does not start media requests from a late response after cancellation', async () => {
     let resolve!: (preview: RemotePreview) => void;
     const loadRemotePreview = vi.fn(() => new Promise<RemotePreview>((done) => { resolve = done; }));
-    const urls = new Set<string>();
+    const urls = new ImagePrefetchCache();
+    const prefetch = vi.spyOn(urls, 'prefetch');
     const controllers = new Map<string, AbortController>();
     prefetchFeedItem(
       { id: 1, feedId: 1, title: 'Match', text: '', link: 'https://www.hltv.org/matches/123/example' },
@@ -23,7 +25,7 @@ describe('preview prefetch cancellation', () => {
       },
     });
     await Promise.resolve();
-    expect(urls.size).toBe(0);
+    expect(prefetch).not.toHaveBeenCalled();
     expect(controllers.size).toBe(0);
   });
 });

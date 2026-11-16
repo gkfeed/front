@@ -1,3 +1,4 @@
+import { ImagePrefetchCache } from './imagePrefetchCache';
 import { readerDiagnostic } from './readerDiagnostics';
 import { analyzeFeedItem } from '../domain/feedItemAnalysis';
 import { resolveFeedItemPreviewPolicy } from '../domain/feedItemPreviewPolicy';
@@ -20,7 +21,7 @@ type PreviewLoader = {
 export function prefetchFeedItem(
   item: FeedItem,
   previewUseCases: PreviewLoader,
-  prefetchedImageUrls: Set<string>,
+  prefetchedImageUrls: ImagePrefetchCache,
   prefetchControllers: Map<string, AbortController>,
   nsfwMode: NsfwMode,
   disabledPlugins: ReadonlySet<FeedPluginId> = new Set(),
@@ -86,7 +87,7 @@ export function abortPrefetches(prefetchControllers: Map<string, AbortController
 function prefetchRemotePreviewImages(
   remotePreview: RemotePreview,
   selectedPreview: ReturnType<typeof resolveFeedItemPreviewPolicy>['preview'],
-  prefetchedImageUrls: Set<string>,
+  prefetchedImageUrls: ImagePrefetchCache,
   itemId: number,
 ): void {
   prefetchPreviewImages(selectedPreview, prefetchedImageUrls, itemId);
@@ -101,7 +102,7 @@ function prefetchRemotePreviewImages(
 
 function prefetchPreviewImages(
   preview: ReturnType<typeof resolveFeedItemPreviewPolicy>['preview'],
-  prefetchedImageUrls: Set<string>,
+  prefetchedImageUrls: ImagePrefetchCache,
   itemId: number,
 ): void {
   if (!preview) return;
@@ -110,13 +111,6 @@ function prefetchPreviewImages(
   if (preview.fallbackSrc) prefetchImage(preview.fallbackSrc, prefetchedImageUrls, itemId);
 }
 
-function prefetchImage(src: string, prefetchedImageUrls: Set<string>, itemId: number): void {
-  if (!src || prefetchedImageUrls.has(src) || typeof Image === 'undefined') return;
-
-  prefetchedImageUrls.add(src);
-  const image = new Image();
-  image.referrerPolicy = 'no-referrer';
-  image.onload = () => readerDiagnostic('item-prefetch-image-ready', itemId);
-  image.onerror = () => { prefetchedImageUrls.delete(src); readerDiagnostic('item-prefetch-image-error', itemId); };
-  image.src = src;
+function prefetchImage(src: string, prefetchedImageUrls: ImagePrefetchCache, itemId: number): void {
+  prefetchedImageUrls.prefetch(src, itemId);
 }

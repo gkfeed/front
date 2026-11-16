@@ -30,6 +30,17 @@ afterEach(() => {
 });
 
 describe('useReviewPreviewPrefetch', () => {
+  it('does not serialize the visible item body when retaining story prefetches', () => {
+    const text = `<img src="data:image/jpeg;base64,${'A'.repeat(2_000_000)}">`;
+    const stringify = vi.spyOn(JSON, 'stringify');
+    const item = { ...createItem(1), text };
+    const { unmount } = renderHook(() => useReviewPreviewPrefetch({
+      enabled: true, items: [item], activeReviewIds: [1],
+    }), { wrapper: createWrapper(vi.fn().mockResolvedValue(EMPTY_REMOTE_PREVIEW)) });
+    expect(stringify.mock.calls.some(([value]) => Array.isArray(value) && value.includes(text))).toBe(false);
+    unmount();
+  });
+
   it('prefetches at most two upcoming TikToks in preview mode and retains the current request', async () => {
     const dispose = vi.fn();
     vi.mocked(prefetchTikTok).mockReturnValue(dispose);

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 
 import { abortPrefetches, prefetchFeedItem } from '../services/previewPrefetch';
+import { ImagePrefetchCache } from '../services/imagePrefetchCache';
 import { prefetchStoryVideo } from '../services/storyVideoPrefetch';
 import { prefetchTikTok } from '../services/tiktokPrefetch';
 import { reprioritizeTikTokPlayback } from '../services/tiktokPlayback';
@@ -29,16 +30,18 @@ export function useReviewPreviewPrefetch({
   const { nsfwMode } = useNsfwPreferences();
   const { playbackMode } = useTikTokPreferences();
   const { disabledPlugins } = usePluginPreferences();
-  const prefetchedImageUrlsRef = useRef<Set<string>>(new Set());
+  const prefetchedImageUrlsRef = useRef(new ImagePrefetchCache());
   const prefetchControllersRef = useRef<Map<string, AbortController>>(new Map());
   const tikTokPrefetchesRef = useRef<Map<number, { link: string; dispose: () => void }>>(new Map());
-  const storyPrefetchesRef = useRef<Map<number, { signature: string; dispose: () => void }>>(new Map());
+  const storyPrefetchesRef = useRef<Map<number, { item: FeedItem; dispose: () => void }>>(new Map());
   // Navigation may retain overlapping work, but a policy change invalidates it.
   useEffect(() => {
     const controllers = prefetchControllersRef.current;
     const storyPrefetches = storyPrefetchesRef.current;
+    const images = prefetchedImageUrlsRef.current;
     return () => {
       abortPrefetches(controllers);
+      images.clear();
       storyPrefetches.forEach(({ dispose }) => dispose());
       storyPrefetches.clear();
     };
@@ -101,13 +104,14 @@ export function useReviewPreviewPrefetch({
   useEffect(() => {
     const prefetches = storyPrefetchesRef.current;
     const candidates = enabled ? nextStories : [];
-    const signatures = new Map(candidates.map((item) => [item.id, JSON.stringify([item.link, item.title, item.text])]));
+    const retained = new Map(candidates.map((item) => [item.id, item]));
     const current = enabled ? items.find(({ id }) => id === activeReviewIds[0]) : undefined;
     // Keep an in-flight video alive while its card is visible so navigation
     // does not cancel the request just before the player needs it.
-    if (current) signatures.set(current.id, JSON.stringify([current.link, current.title, current.text]));
+    if (current) retained.set(current.id, current);
     for (const [id, entry] of prefetches) {
-      if (signatures.get(id) === entry.signature) continue;
+      const item = retained.get(id);
+      if (item && item.link === entry.item.link && item.title === entry.item.title && item.text === entry.item.text) continue;
       entry.dispose();
       prefetches.delete(id);
     }
@@ -119,7 +123,7 @@ export function useReviewPreviewPrefetch({
         if (prefetches.has(item.id)) continue;
         const priority = nextItems.findIndex(({ id }) => id === item.id) + 1;
         prefetches.set(item.id, {
-          signature: signatures.get(item.id)!,
+          item,
           dispose: prefetchStoryVideo(item, previewUseCases, nsfwMode, priority),
         });
       }
@@ -129,6 +133,7 @@ export function useReviewPreviewPrefetch({
 
   useEffect(() => {
     if (!enabled) {
+      prefetchedImageUrlsRef.current.clear();
       abortPrefetches(prefetchControllersRef.current);
       return undefined;
     }
