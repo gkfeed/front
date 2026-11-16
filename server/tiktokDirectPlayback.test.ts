@@ -55,6 +55,26 @@ describe('direct TikTok playback', () => {
     expect(getTikTokMediaCookie(alternate)).toBe('tt_chain_token=abc+/==');
   });
 
+  it('extracts photo posts and their optional soundtrack without calling TikWM', async () => {
+    const photo = 'https://p16.tiktokcdn-eu.com/photo.jpg';
+    const audio = 'https://v45.tiktokcdn-eu.com/audio.mp3';
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(page({ id: '123',
+      imagePost: { images: [{ imageURL: { urlList: ['https://evil.test/image', photo] } }] },
+      music: { playUrl: audio }, author: item.author }, 'other=value'));
+    await expect(fetchTikTokDirectPlayback(post, context)).resolves.toMatchObject({
+      imageUrls: [photo], videoUrl: audio, author: { name: 'Author', username: 'test' },
+    });
+    expect(requestPublicHttp).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a slideshow when any slide lacks a trusted URL', async () => {
+    vi.mocked(requestPublicHttp).mockResolvedValueOnce(page({ id: '123', imagePost: { images: [
+      { imageURL: { urlList: ['https://p16.tiktokcdn.com/one.jpg'] } },
+      { imageURL: { urlList: ['https://evil.test/two.jpg'] } },
+    ] } }));
+    await expect(fetchTikTokDirectPlayback(post, context)).resolves.toBeNull();
+  });
+
   it.each([
     { ...item, id: '999' },
     { ...item, imagePost: { images: [] } },

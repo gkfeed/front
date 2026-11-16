@@ -35,7 +35,6 @@ export async function fetchTikTokDirectPlayback(post: URL, context?: RequestExec
   }, localContext);
   if (response.status !== 200) { discardResponseBody(response.body); return null; }
   const cookie = response.headers['set-cookie']?.find((entry) => entry.startsWith('tt_chain_token='))?.split(';', 1)[0];
-  if (!cookie || !/^tt_chain_token=[A-Za-z0-9%._~+=/-]+$/.test(cookie)) { discardResponseBody(response.body); return null; }
   const html = await readLimitedBody(response, { maxBytes: 2_000_000, context: localContext });
   const script = html.match(/<script\b[^>]*\bid=["']__UNIVERSAL_DATA_FOR_REHYDRATION__["'][^>]*>([\s\S]*?)<\/script>/i)?.[1];
   if (!script) return null;
@@ -46,7 +45,25 @@ export async function fetchTikTokDirectPlayback(post: URL, context?: RequestExec
   if (!isRecord(details) || !isRecord(details.itemInfo) || !isRecord(details.itemInfo.itemStruct)) return null;
   const item = details.itemInfo.itemStruct;
   const expectedId = post.pathname.match(/\/(?:video|v)\/(\d+)/)?.[1];
-  if (item.id !== expectedId || item.imagePost || !isRecord(item.video)) return null;
+  if (item.id !== expectedId) return null;
+  const author = isRecord(item.author) ? item.author : null;
+  const authorDetails = author ? { author: {
+    name: typeof author.nickname === 'string' ? normalizeExternalText(author.nickname) || null : null,
+    username: typeof author.uniqueId === 'string' ? normalizeExternalText(author.uniqueId) || null : null,
+    avatarUrl: isTikTokAvatarUrl(author.avatarThumb) ? author.avatarThumb : null,
+  } } : {};
+  if (isRecord(item.imagePost)) {
+    if (!Array.isArray(item.imagePost.images) || item.imagePost.images.length === 0
+      || item.imagePost.images.length > 100) return null;
+    const imageUrls = item.imagePost.images.map((image: unknown) => {
+      if (!isRecord(image) || !isRecord(image.imageURL) || !Array.isArray(image.imageURL.urlList)) return undefined;
+      return image.imageURL.urlList.find(isTikTokMediaUrl);
+    });
+    if (!imageUrls.every((url: unknown): url is string => typeof url === 'string')) return null;
+    const audioUrl = isRecord(item.music) && isTikTokMediaUrl(item.music.playUrl) ? item.music.playUrl : undefined;
+    return { imageUrls, ...(audioUrl ? { videoUrl: audioUrl } : {}), ...authorDetails };
+  }
+  if (!cookie || !/^tt_chain_token=[A-Za-z0-9%._~+=/-]+$/.test(cookie) || !isRecord(item.video)) return null;
   const formats = Array.isArray(item.video.bitrateInfo) ? item.video.bitrateInfo : [];
   const candidates = formats.flatMap((format) => {
     if (!isRecord(format) || !isRecord(format.PlayAddr) || !Array.isArray(format.PlayAddr.UrlList)) return [];
@@ -73,12 +90,7 @@ export async function fetchTikTokDirectPlayback(post: URL, context?: RequestExec
   if (!videoUrl) return null;
   if (sessions.size >= MAX_SESSIONS) sessions.delete(sessions.keys().next().value!);
   sessions.set(videoUrl, { cookie, expires: Date.now() + SESSION_LIFETIME_MS });
-  const author = isRecord(item.author) ? item.author : null;
-  return { videoUrl, ...(author ? { author: {
-    name: typeof author.nickname === 'string' ? normalizeExternalText(author.nickname) || null : null,
-    username: typeof author.uniqueId === 'string' ? normalizeExternalText(author.uniqueId) || null : null,
-    avatarUrl: isTikTokAvatarUrl(author.avatarThumb) ? author.avatarThumb : null,
-  } } : {}) };
+  return { videoUrl, ...authorDetails };
 }
 
 export function isTikTokDirectMediaHost(hostname: string): boolean {
