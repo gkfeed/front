@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import '../../styles/reader.css';
@@ -36,9 +37,16 @@ export function ReaderPage() {
     loadErrorMessage,
   } = useReaderPageModel(t);
 
+  // React development performance tracks serialize changed props. Never pass
+  // the full feed (including base64 bodies) across this preloading boundary.
+  const upcomingProviders = useMemo(() => activeReviewIds.slice(1, 4).flatMap((id) => {
+    const item = items.find((candidate) => candidate.id === id);
+    return item ? [{ id: item.id, link: item.link, title: item.title }] : [];
+  }), [activeReviewIds, items]);
+
   return (
     <>
-      <ReaderProviderPreloader enabled={mode === 'review'} items={items} activeReviewIds={activeReviewIds} />
+      <ReaderProviderPreloader enabled={mode === 'review'} upcoming={upcomingProviders} />
       <div className="reader__fullscreen-toolbar">
         <ReaderFullscreenButton enableKeyboardShortcut />
       </div>

@@ -30,22 +30,22 @@ afterEach(() => { cleanup(); mocks.disabled.clear(); vi.clearAllMocks(); });
 
 describe('review provider preloading', () => {
   it('loads modules for the next three cards and does not reload them as the queue advances', async () => {
-    const view = render(<ReaderProviderPreloader enabled items={items} activeReviewIds={[1, 2, 3, 4, 5]} />);
+    const view = render(<ReaderProviderPreloader enabled upcoming={items.slice(1, 4)} />);
     await waitFor(() => expect(mocks.vk).toHaveBeenCalledOnce());
     expect(mocks.youtube).toHaveBeenCalledOnce();
     expect(mocks.tiktok).toHaveBeenCalledOnce();
-    view.rerender(<ReaderProviderPreloader enabled items={items} activeReviewIds={[2, 3, 4, 5]} />);
+    view.rerender(<ReaderProviderPreloader enabled upcoming={items.slice(2, 5)} />);
     await waitFor(() => expect(mocks.youtube).toHaveBeenCalledOnce());
     expect(mocks.tiktok).toHaveBeenCalledOnce();
   });
 
   it('does not load while review mode is disabled or for disabled plugins', async () => {
     mocks.disabled.add('vk');
-    const view = render(<ReaderProviderPreloader enabled={false} items={items} activeReviewIds={[1, 2, 3]} />);
+    const view = render(<ReaderProviderPreloader enabled={false} upcoming={items.slice(1, 3)} />);
     await new Promise((resolve) => setTimeout(resolve, 25));
     expect(mocks.vk).not.toHaveBeenCalled();
     expect(mocks.youtube).not.toHaveBeenCalled();
-    view.rerender(<ReaderProviderPreloader enabled items={items} activeReviewIds={[1, 2, 3]} />);
+    view.rerender(<ReaderProviderPreloader enabled upcoming={items.slice(1, 3)} />);
     await waitFor(() => expect(mocks.youtube).toHaveBeenCalledOnce());
     expect(mocks.vk).not.toHaveBeenCalled();
   });
