@@ -14,6 +14,10 @@
     pointer-events: none;
   }
 
+  .reader__mobile-rail:has(.reader__mobile-comments[aria-expanded="true"]) {
+    visibility: hidden;
+  }
+
   .reader__mobile-decisions {
     position: fixed;
     z-index: 14;
@@ -56,7 +60,7 @@
     color: var(--color-on-danger);
   }
 
-  .reader__mobile-decisions .reader__mobile-copy-link {
+  .reader__mobile-decisions :is(.reader__mobile-copy-link, .reader__mobile-comments) {
     border-color: var(--color-control-border);
     background: var(--color-control-well);
     color: var(--color-ink-inverse);
