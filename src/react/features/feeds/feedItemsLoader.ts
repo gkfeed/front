@@ -81,9 +81,11 @@ export function createFeedItemsLoader(
       }
     }
 
-    async function commitSnapshot(snapshot: ItemSnapshot): Promise<void> {
+    async function commitSnapshot(snapshot: ItemSnapshot, changes?: { upserted: FeedItem[]; deletedIds: number[] }): Promise<void> {
       if (!username || getCacheRevision(username) !== revision) return;
-      await queueCacheOperation(username, () => cachePort.write(username, snapshot));
+      await queueCacheOperation(username, () => changes && cachePort.applyChanges
+        ? cachePort.applyChanges(username, changes.upserted, changes.deletedIds, snapshot.cursor)
+        : cachePort.write(username, snapshot));
       if (getCacheRevision(username) === revision) snapshots.set(username, snapshot);
     }
 
@@ -93,6 +95,21 @@ export function createFeedItemsLoader(
       while (true) {
         const page = await feedPort.getFeedItemChanges(credentials, snapshot.cursor, signal);
         if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+        // An unchanged cursor with no changes needs no IndexedDB rewrite.
+        // In particular, rewriting a snapshot clones every embedded image.
+        if (page.upserted.length === 0 && page.deletedIds.length === 0 && !page.hasMore
+          && (page.nextCursor === snapshot.cursor || cachePort.updateCursor)) {
+          if (page.nextCursor !== snapshot.cursor) {
+            if (username && getCacheRevision(username) === revision && cachePort.updateCursor) {
+              await queueCacheOperation(username, () => cachePort.updateCursor!(username, page.nextCursor));
+            }
+            snapshot = { ...snapshot, cursor: page.nextCursor };
+          }
+          if (username && getCacheRevision(username) === revision) snapshots.set(username, snapshot);
+          onProgress?.(snapshot.items, true);
+          signal?.throwIfAborted();
+          return snapshot;
+        }
         const itemsById = new Map(snapshot.items.map((item) => [item.id, item]));
         page.upserted.forEach((item) => itemsById.set(item.id, item));
         page.deletedIds.forEach((id) => itemsById.delete(id));
@@ -100,7 +117,7 @@ export function createFeedItemsLoader(
           items: [...itemsById.values()].sort((left, right) => right.id - left.id),
           cursor: page.nextCursor,
         };
-        await commitSnapshot(snapshot);
+        await commitSnapshot(snapshot, { upserted: page.upserted, deletedIds: page.deletedIds });
         signal?.throwIfAborted();
         // A change page updates a full baseline, even while more changes remain.
         const shouldContinue = onProgress?.(snapshot.items, true);
@@ -132,7 +149,9 @@ export function createFeedItemsLoader(
     cacheRevisions.set(username, getCacheRevision(username) + 1);
     const updated = { ...current, items: current.items.filter((item) => item.id !== id) };
     snapshots.set(username, updated);
-    void queueCacheOperation(username, () => cachePort.write(username, updated));
+    void queueCacheOperation(username, () => cachePort.removeItem
+      ? cachePort.removeItem(username, id)
+      : cachePort.write(username, updated));
   }
 
   return { invalidate, load, remove };

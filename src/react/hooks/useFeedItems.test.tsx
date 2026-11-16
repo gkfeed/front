@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, renderHook, waitFor } from '@testing-library/r
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  applyCachedFeedChanges,
   deleteFeedItemsCache,
   readFeedItemsCache,
   writeFeedItemsCache,
@@ -78,7 +79,7 @@ describe('useFeedItems', () => {
     expect(result.current.session.items).toEqual([CURRENT_ITEM]);
     expect(result.current.session.currentItem).toEqual(DELETED_ITEM);
     expect(result.current.session.activeReviewIds).toEqual([DELETED_ITEM.id, CURRENT_ITEM.id]);
-    expect(writeFeedItemsCache).toHaveBeenCalledWith('reader', { items: [CURRENT_ITEM], cursor: 'page2' });
+    expect(applyCachedFeedChanges).toHaveBeenCalledWith('reader', [CURRENT_ITEM], [DELETED_ITEM.id], 'page2');
 
     act(() => result.current.session.keep(DELETED_ITEM.id));
     expect(result.current.session.currentItem).toEqual(CURRENT_ITEM);

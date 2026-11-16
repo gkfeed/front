@@ -47,6 +47,9 @@ export type FeedMetadataPort = {
 export type FeedItemsCachePort = {
   read: (username: string) => Promise<CachedFeedItems | undefined>;
   write: (username: string, snapshot: ItemSnapshot) => Promise<void>;
+  removeItem?: (username: string, id: number) => Promise<void>;
+  updateCursor?: (username: string, cursor: string) => Promise<void>;
+  applyChanges?: (username: string, upserted: FeedItem[], deletedIds: number[], cursor: string) => Promise<void>;
   delete: (username: string) => Promise<void>;
 };
 

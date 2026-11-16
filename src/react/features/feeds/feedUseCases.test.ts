@@ -158,6 +158,73 @@ describe('feed use cases', () => {
     expect(ports.cachePort.delete).not.toHaveBeenCalled();
   });
 
+  it('persists local deletions without rewriting the full cached snapshot', async () => {
+    const ports = createPorts();
+    const removeItem = vi.fn().mockResolvedValue(undefined);
+    ports.cachePort.removeItem = removeItem;
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [currentItem, cachedItem], cursor: 'saved' });
+    const useCases = createFeedUseCases(ports);
+    await useCases.loadFeedItems(credentials);
+    vi.mocked(ports.cachePort.write).mockClear();
+    useCases.removeFeedItemFromCache(credentials, currentItem.id);
+    await vi.waitFor(() => expect(removeItem).toHaveBeenCalledWith('reader', currentItem.id));
+    expect(ports.cachePort.write).not.toHaveBeenCalled();
+    await expect(useCases.loadFeedItems(credentials)).resolves.toEqual([cachedItem]);
+  });
+
+  it('does not rewrite an unchanged snapshot on refresh', async () => {
+    const ports = createPorts();
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [cachedItem], cursor: 'saved' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges).mockResolvedValue({ upserted: [], deletedIds: [], nextCursor: 'saved', hasMore: false });
+    const useCases = createFeedUseCases(ports);
+    await expect(useCases.loadFeedItems(credentials)).resolves.toEqual([cachedItem]);
+    await expect(useCases.loadFeedItems(credentials)).resolves.toEqual([cachedItem]);
+    expect(ports.cachePort.write).not.toHaveBeenCalled();
+    expect(ports.cachePort.read).toHaveBeenCalledOnce();
+  });
+
+  it('advances a cursor without rewriting an unchanged snapshot', async () => {
+    const ports = createPorts();
+    const updateCursor = vi.fn().mockResolvedValue(undefined);
+    ports.cachePort.updateCursor = updateCursor;
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [cachedItem], cursor: 'saved' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges).mockResolvedValue({ upserted: [], deletedIds: [], nextCursor: 'next', hasMore: false });
+    const useCases = createFeedUseCases(ports);
+    await expect(useCases.loadFeedItems(credentials)).resolves.toEqual([cachedItem]);
+    expect(updateCursor).toHaveBeenCalledWith('reader', 'next');
+    expect(ports.cachePort.write).not.toHaveBeenCalled();
+    await useCases.loadFeedItems(credentials);
+    expect(ports.itemsPort.getFeedItemChanges).toHaveBeenLastCalledWith(credentials, 'next', undefined);
+  });
+
+  it('persists remote deletions and their cursor without rewriting the snapshot', async () => {
+    const ports = createPorts();
+    const applyChanges = vi.fn().mockResolvedValue(undefined);
+    ports.cachePort.applyChanges = applyChanges;
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [currentItem, cachedItem], cursor: 'saved' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges).mockResolvedValue({
+      upserted: [], deletedIds: [currentItem.id], nextCursor: 'next', hasMore: false,
+    });
+    const useCases = createFeedUseCases(ports);
+    await expect(useCases.loadFeedItems(credentials)).resolves.toEqual([cachedItem]);
+    expect(applyChanges).toHaveBeenCalledWith('reader', [], [currentItem.id], 'next');
+    expect(ports.cachePort.write).not.toHaveBeenCalled();
+  });
+
+  it('persists new and changed items without rewriting the full snapshot', async () => {
+    const ports = createPorts();
+    const applyChanges = vi.fn().mockResolvedValue(undefined);
+    ports.cachePort.applyChanges = applyChanges;
+    vi.mocked(ports.cachePort.read).mockResolvedValue({ items: [cachedItem], cursor: 'saved' });
+    vi.mocked(ports.itemsPort.getFeedItemChanges).mockResolvedValue({
+      upserted: [currentItem], deletedIds: [], nextCursor: 'next', hasMore: false,
+    });
+    const useCases = createFeedUseCases(ports);
+    await useCases.loadFeedItems(credentials);
+    expect(applyChanges).toHaveBeenCalledWith('reader', [currentItem], [], 'next');
+    expect(ports.cachePort.write).not.toHaveBeenCalled();
+  });
+
   it('does not restore an in-flight snapshot after cache invalidation', async () => {
     const ports = createPorts();
     let finishLoad!: (snapshot: { items: FeedItem[]; cursor: string }) => void;

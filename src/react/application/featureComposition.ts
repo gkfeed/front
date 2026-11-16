@@ -26,6 +26,9 @@ import { getLiveTwitchItems } from '../services/twitch';
 import {
   deleteFeedItemsCache,
   readFeedItemsCache,
+  removeCachedFeedItem,
+  updateCachedFeedCursor,
+  applyCachedFeedChanges,
   writeFeedItemsCache,
 } from '../services/feedItemsCache';
 
@@ -59,6 +62,9 @@ export function createFeatureComposition() {
       cachePort: {
         read: readFeedItemsCache,
         write: writeFeedItemsCache,
+        removeItem: removeCachedFeedItem,
+        updateCursor: updateCachedFeedCursor,
+        applyChanges: applyCachedFeedChanges,
         delete: deleteFeedItemsCache,
       },
     }),
