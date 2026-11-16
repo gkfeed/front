@@ -51,6 +51,7 @@ describe('TikTok preview', () => {
     expect(screen.getByRole('link', { name: 'Open original' }).getAttribute('href')).toBe(props.href);
     expect(fetchTikTokPlayback).toHaveBeenCalledOnce();
     expect(document.querySelector('iframe')).toBeNull();
+    expect(document.querySelector('.reader-card__tiktok-author-name')?.textContent).toBe('creator');
   });
 
   it('reports a slow load while allowing a later successful result', async () => {
@@ -60,6 +61,7 @@ describe('TikTok preview', () => {
     await act(async () => { render(<TikTokPreview {...props} />); });
     await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
     expect(screen.getByText('Video is taking longer than expected. Still trying to load it.')).toBeTruthy();
+    expect(document.querySelector('.reader-card__tiktok-author-name')?.textContent).toBe('creator');
     expect(screen.getByRole('link', { name: 'Open original' })).toBeTruthy();
     await act(async () => { resolve({ videoUrl }); });
     expect(document.querySelector('video')).not.toBeNull();
@@ -96,6 +98,17 @@ describe('TikTok preview', () => {
     fireEvent.error(document.querySelector('.reader-card__slide')!);
     expect(screen.getByText('This TikTok is unavailable in the preview.')).toBeTruthy();
     expect(document.querySelector('iframe')).toBeNull();
+  });
+
+  it('keeps the resolved author on the unavailable placeholder after a media error', async () => {
+    vi.mocked(fetchTikTokPlayback).mockResolvedValue({ videoUrl, author: {
+      name: 'Author', username: 'creator', avatarUrl: 'https://example.com/avatar.jpg',
+    } });
+    render(<TikTokPreview {...props} />);
+    fireEvent.error(await getVideo());
+    expect(screen.getByText('This TikTok is unavailable in the preview.')).toBeTruthy();
+    expect(screen.getByText('Author')).toBeTruthy();
+    expect(document.querySelector('.reader-card__tiktok-author img')).not.toBeNull();
   });
 
   it('shows author details over the native player and tolerates a broken avatar', async () => {

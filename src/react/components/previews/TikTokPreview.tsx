@@ -30,6 +30,8 @@ function TikTokPreviewPlayer({ href, title, soundGesture }: {
   const [playback, setPlayback] = useState<TikTokPlaybackPreview | null>(initialPlayback);
   const [unavailable, setUnavailable] = useState(false);
   const [slow, setSlow] = useState(false);
+  const username = getTikTokUsername(href);
+  const author = playback?.author ?? (username ? { name: null, username, avatarUrl: null } : undefined);
 
   useEffect(() => {
     tikTokDiagnostic('visible-start', href);
@@ -76,6 +78,7 @@ function TikTokPreviewPlayer({ href, title, soundGesture }: {
         <strong>{t('preview.tiktokUnavailable')}</strong>
         <a href={href} target="_blank" rel="noreferrer">{t('reader.openOriginal')}</a>
       </div>
+      {author ? <TikTokAuthorOverlay author={author} /> : null}
     </div>
   );
   if (!playback) return (
@@ -84,6 +87,7 @@ function TikTokPreviewPlayer({ href, title, soundGesture }: {
         <strong>{t(slow ? 'preview.videoLoadingSlow' : 'preview.loadingVideo')}</strong>
         {slow ? <a href={href} target="_blank" rel="noreferrer">{t('reader.openOriginal')}</a> : null}
       </div>
+      {author ? <TikTokAuthorOverlay author={author} /> : null}
     </div>
   );
   if (playback.imageUrls) return (
@@ -92,7 +96,7 @@ function TikTokPreviewPlayer({ href, title, soundGesture }: {
       audioUrl={playback.videoUrl}
       title={title}
       soundGesture={soundGesture}
-      author={playback.author}
+      author={author}
       onError={() => setUnavailable(true)}
     />
   );
@@ -100,7 +104,7 @@ function TikTokPreviewPlayer({ href, title, soundGesture }: {
     <FeedItemVideoMedia
       key={playback.videoUrl}
       preview={{ type: 'video', src: playback.videoUrl, alt: title }}
-      overlay={playback.author ? <TikTokAuthorOverlay author={playback.author} /> : undefined}
+      overlay={author ? <TikTokAuthorOverlay author={author} /> : undefined}
       soundGesture={soundGesture}
       diagnosticId={href}
       isShortVideo
@@ -108,4 +112,13 @@ function TikTokPreviewPlayer({ href, title, soundGesture }: {
       onPreviewError={() => setUnavailable(true)}
     />
   );
+}
+
+function getTikTokUsername(href: string): string | null {
+  try {
+    const username = new URL(href).pathname.match(/^\/@([A-Za-z0-9._-]{1,64})(?:\/|$)/)?.[1];
+    return username ?? null;
+  } catch {
+    return null;
+  }
 }

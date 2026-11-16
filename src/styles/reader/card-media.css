@@ -221,6 +221,10 @@
   pointer-events: none;
 }
 
+.reader-card__preview--tiktok > .reader-card__media-error + .reader-card__tiktok-author {
+  background: linear-gradient(rgb(0 0 0 / 68%), transparent);
+}
+
 .reader-card__tiktok-author-avatar {
   display: grid;
   place-items: center;

@@ -20,7 +20,7 @@ export function TikTokAuthorOverlay({ author }: { author: TikTokPlaybackAuthor }
       </span>
       <span className="reader-card__tiktok-author-text">
         <strong className="reader-card__tiktok-author-name" title={name}>{name}</strong>
-        {author.username ? (
+        {author.username && author.name && author.username !== author.name ? (
           <span className="reader-card__tiktok-author-username" title={author.username}>
             {author.username}
           </span>
