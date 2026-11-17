@@ -286,11 +286,10 @@ describe('FeedItemCard YouTube and general states', () => {
     }} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
-    expect(fetchYoutubeTimecodes).not.toHaveBeenCalled();
     await act(async () => {
       await Promise.resolve();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Show video timecodes' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Show video timecodes' }));
 
     const timecode = await screen.findByRole('button', { name: 'Go to 4:30, Opening topic' });
     expect(fetchYoutubeTimecodes).toHaveBeenCalledWith(
@@ -311,13 +310,22 @@ describe('FeedItemCard YouTube and general states', () => {
     expect(player.seekTo).toHaveBeenCalledWith(270, true);
   });
 
+  it('hides the timecodes button when the video has no timecodes', async () => {
+    vi.mocked(fetchYoutubeTimecodes).mockResolvedValueOnce({ timecodes: [] });
+    render(<FeedItemCard item={{ ...item, link: 'https://www.youtube.com/watch?v=abc123xyz' }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
+    await act(async () => { await Promise.resolve(); });
+    expect(fetchYoutubeTimecodes).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Show video timecodes' })).toBeNull();
+  });
+
   it('uses one side panel for YouTube timecodes and comments', async () => {
     render(<FeedItemCard item={{
       ...item,
       link: 'https://www.youtube.com/watch?v=abc123xyz',
     }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Play video Story' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Show video timecodes' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Show video timecodes' }));
     expect(screen.getByRole('complementary', { name: 'Video timecodes' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show YouTube comments' }));

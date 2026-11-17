@@ -1,6 +1,8 @@
 import { useCallback, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useYoutubeTimecodes } from '../../hooks/useYoutubeTimecodes';
+
 import { TheaterPlayerShell } from './TheaterPlayerShell';
 import { YoutubeComments } from './YoutubeComments';
 import { YoutubeTimecodes } from './YoutubeTimecodes';
@@ -70,6 +72,7 @@ export function YoutubePlayerView({
 }: YoutubePlayerViewProps) {
   const { t } = useTranslation();
   const [openPanel, setOpenPanel] = useState<'comments' | 'timecodes' | null>(null);
+  const { timecodes } = useYoutubeTimecodes(videoId, !isPlayerUnavailable);
   const isCommentsOpen = openPanel === 'comments';
   const isTimecodesOpen = openPanel === 'timecodes';
   const parameters = new URLSearchParams({
@@ -90,11 +93,11 @@ export function YoutubePlayerView({
       aside={!isPlayerUnavailable && isCommentsOpen
         ? <YoutubeComments videoId={videoId} isOpen />
         : !isPlayerUnavailable && isTimecodesOpen
-          ? <YoutubeTimecodes currentTime={currentTime} videoId={videoId} onSeek={onSeek} />
+          ? <YoutubeTimecodes currentTime={currentTime} videoId={videoId} onSeek={onSeek} timecodes={timecodes ?? []} />
           : undefined}
       toolbar={!isPlayerUnavailable ? (
         <>
-          <button
+          {timecodes && timecodes.length > 0 ? <button
             type="button"
             className="reader-card__timecodes-toggle"
             aria-label={isTimecodesOpen ? t('youtubeTimecodes.hide') : t('youtubeTimecodes.show')}
@@ -104,7 +107,7 @@ export function YoutubePlayerView({
           >
             <span aria-hidden="true">⌁</span>
             {t('youtubeTimecodes.timecodes')}
-          </button>
+          </button> : null}
           <button
             type="button"
             className="reader-card__speed-toggle"
