@@ -398,3 +398,30 @@ describe('BFF HTTP router', () => {
     expect(useCases.tiktokPlayback).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('article summary route', () => {
+  it('reuses parsed articles and caches successful summaries', async () => {
+    const previousKey = process.env.OPENROUTER_API_KEY;
+    process.env.OPENROUTER_API_KEY = 'test-key';
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ sentences: ['Первое предложение.', 'Второе предложение.'] }) } }],
+    })));
+    vi.stubGlobal('fetch', fetcher);
+    try {
+      const cache = createBffResultCache();
+      const useCases = createUseCases();
+      await handleBffRequest(new URL('http://localhost/bff/article?url=https://example.com/story'), createResponse(), undefined, useCases, 'test', undefined, cache);
+      for (let index = 0; index < 2; index++) {
+        const response = createResponse();
+        await expect(handleBffRequest(new URL('http://localhost/bff/article-summary?url=https://example.com/story'), response, undefined, useCases, 'test', undefined, cache)).resolves.toBe(true);
+        expect(JSON.parse(response.end.mock.calls[0]![0])).toEqual({ summary: 'Первое предложение. Второе предложение.' });
+      }
+      expect(useCases.article).toHaveBeenCalledTimes(1);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+      if (previousKey === undefined) delete process.env.OPENROUTER_API_KEY;
+      else process.env.OPENROUTER_API_KEY = previousKey;
+    }
+  });
+});

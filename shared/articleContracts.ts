@@ -50,3 +50,11 @@ function isNullableString(value: unknown): value is string | null {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
+
+export interface ArticleSummary {
+  summary: string;
+}
+
+export function isArticleSummary(value: unknown): value is ArticleSummary {
+  return isRecord(value) && typeof value.summary === 'string' && value.summary.trim().length > 0;
+}

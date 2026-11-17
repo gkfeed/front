@@ -33,7 +33,8 @@ export async function handleHttpRequest(
   response: ServerResponse,
   dependencies: HttpServerDependencies = defaultDependencies,
 ): Promise<void> {
-  const context = createHttpRequestContext(request, response);
+  const context = createHttpRequestContext(request, response,
+    request.url?.split('?')[0] === '/bff/article-summary' ? 30_000 : undefined);
   try {
     const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
 

@@ -182,6 +182,12 @@ const ru = {
     openOriginal: 'Открыть оригинал',
   },
   article: {
+    summarize: 'Саммари',
+    summarizing: 'Суммаризируем…',
+    summaryTitle: 'Кратко на русском',
+    summaryError: 'Не удалось получить саммари. Попробуйте ещё раз.',
+    summaryUnavailable: 'Саммари пока недоступно. На сервере нужен ключ OpenRouter.',
+
     title: 'Чтение статьи',
     close: 'Назад',
     original: 'Оригинал',

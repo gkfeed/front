@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createFeatureComposition } from '../application/featureComposition';
 import { FeatureUseCasesContext } from '../state/featureUseCasesContext';
+import { ArticleReaderDialog } from './ArticleReaderDialog';
 import { ArticleReaderLink, ArticleReaderOverlay } from './ArticleReader';
 import { useArticleReader } from '../hooks/useArticleReader';
 
@@ -135,3 +136,48 @@ function ArticleReaderHarness() {
     </>
   );
 }
+
+describe('article summary', () => {
+  const article = { url: 'https://example.com/story', title: 'Story', byline: null, excerpt: null,
+    blocks: [{ type: 'paragraph' as const, text: 'Article text.' }] };
+  function mount(loadArticleSummary: (url: string, signal?: AbortSignal) => Promise<{ summary: string }>) {
+    const composition = createFeatureComposition();
+    return render(<FeatureUseCasesContext.Provider value={{ ...composition,
+      preview: { ...composition.preview, loadArticleSummary } }}>
+      <ArticleReaderDialog article={article} status="success" originalUrl={article.url} onClose={vi.fn()} onRetry={vi.fn()} />
+    </FeatureUseCasesContext.Provider>);
+  }
+
+  it('loads only on click, shows Russian text and prevents duplicate requests', async () => {
+    const load = vi.fn().mockResolvedValue({ summary: 'Первое предложение. Второе предложение.' });
+    mount(load);
+    expect(load).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Summary' }));
+    expect(await screen.findByText('Первое предложение. Второе предложение.')).toBeTruthy();
+    expect(screen.getByText('Первое предложение. Второе предложение.').lang).toBe('ru');
+    expect(load).toHaveBeenCalledWith(article.url, expect.any(AbortSignal));
+    expect((screen.getByRole('button', { name: 'Summary' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers retry after an error', async () => {
+    const load = vi.fn().mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ summary: 'Первое предложение. Второе предложение.' });
+    mount(load);
+    fireEvent.click(screen.getByRole('button', { name: 'Summary' }));
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Первое предложение. Второе предложение.')).toBeTruthy();
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('aborts a pending summary when the dialog unmounts', async () => {
+    const load = vi.fn().mockImplementation(() => new Promise(() => {}));
+    const view = mount(load);
+    fireEvent.click(screen.getByRole('button', { name: 'Summary' }));
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(1));
+    const signal = load.mock.calls[0]![1] as AbortSignal;
+    view.unmount();
+    expect(signal.aborted).toBe(true);
+  });
+});

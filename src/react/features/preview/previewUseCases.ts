@@ -1,11 +1,12 @@
 import type { OpenGraphPreview } from '../../../../shared/previewContracts';
 import type { TikTokCommentsPreview } from '../../../../shared/tiktokContracts';
 import type { YoutubeCommentsPreview, YoutubeTimecodesPreview } from '../../../../shared/youtubeContracts';
-import type { ArticlePreview } from '../../../../shared/articleContracts';
+import type { ArticlePreview, ArticleSummary } from '../../../../shared/articleContracts';
 
 import type { RemotePreview, RemotePreviewSource } from '../../domain/feedItemCardContracts';
 
 export type PreviewGateway = {
+  getArticleSummary: (url: string, signal?: AbortSignal) => Promise<ArticleSummary>;
   getArticle: (url: string, signal?: AbortSignal) => Promise<ArticlePreview>;
   getOpenGraphPreview: (url: string, signal?: AbortSignal) => Promise<OpenGraphPreview>;
   fetchTikTokComments: (url: string, signal: AbortSignal) => Promise<TikTokCommentsPreview>;
@@ -22,6 +23,7 @@ export type PreviewGateway = {
 };
 
 export type PreviewUseCases = {
+  loadArticleSummary: PreviewGateway['getArticleSummary'];
   loadArticle: PreviewGateway['getArticle'];
   loadOpenGraphPreview: PreviewGateway['getOpenGraphPreview'];
   loadTikTokComments: PreviewGateway['fetchTikTokComments'];
@@ -35,6 +37,7 @@ export type PreviewUseCases = {
 export function createPreviewUseCases(gateway: PreviewGateway): PreviewUseCases {
   return {
     loadArticle: gateway.getArticle,
+    loadArticleSummary: gateway.getArticleSummary,
     loadOpenGraphPreview: gateway.getOpenGraphPreview,
     loadTikTokComments: gateway.fetchTikTokComments,
     loadYoutubeComments: gateway.fetchYoutubeComments,

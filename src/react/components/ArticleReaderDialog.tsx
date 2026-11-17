@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ArticlePreview } from '../../../shared/articleContracts';
+import { useAsyncResource } from '../hooks/useAsyncResource';
+import { useFeatureUseCases } from '../state/useFeatureUseCases';
+import { BffHttpError } from '../services/bffClient';
 import { trapFocus } from '../platform/focusTrap';
 import { ArticleContent } from './ArticleReaderContent';
 
@@ -19,6 +22,16 @@ export function ArticleReaderDialog({
   onRetry: () => void;
 }) {
   const { t } = useTranslation();
+  const { preview } = useFeatureUseCases();
+  const [summaryUrl, setSummaryUrl] = useState<string | null>(null);
+  const loadSummary = useCallback((signal: AbortSignal) => (
+    preview.loadArticleSummary(originalUrl, signal)
+  ), [preview, originalUrl]);
+  const summary = useAsyncResource(loadSummary, {
+    enabled: Boolean(article) && summaryUrl === originalUrl,
+    key: originalUrl,
+    timeoutMs: 35_000,
+  });
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -64,6 +77,17 @@ export function ArticleReaderDialog({
           <button ref={closeRef} className="article-reader__close" type="button" onClick={onClose}>
             <span aria-hidden="true">←</span> {t('article.close')}
           </button>
+          <button
+            className="article-reader__summary-button"
+            type="button"
+            disabled={!article || status !== 'success' || summary.isLoading || summary.status === 'success'}
+            onClick={() => {
+              if (summary.status === 'error') summary.retry();
+              else setSummaryUrl(originalUrl);
+            }}
+          >
+            {t(summary.isLoading ? 'article.summarizing' : 'article.summarize')}
+          </button>
           <a href={article?.url ?? originalUrl} target="_blank" rel="noreferrer">
             {t('article.original')} <span aria-hidden="true">↗</span>
           </a>
@@ -77,6 +101,18 @@ export function ArticleReaderDialog({
               <p>{t('article.error')}</p>
               <button type="button" onClick={onRetry}>{t('article.retry')}</button>
             </div>
+          ) : null}
+          {summary.status !== 'idle' ? (
+            <section className="article-reader__summary" aria-label={t('article.summaryTitle')} aria-busy={summary.isLoading}>
+              <h2>{t('article.summaryTitle')}</h2>
+              {summary.isLoading ? <p role="status">{t('article.summarizing')}</p> : null}
+              {summary.result ? <p lang="ru" role="status">{summary.result.summary}</p> : null}
+              {summary.status === 'error' ? <div role="alert">
+                <p>{t(summary.error instanceof BffHttpError && summary.error.status === 503
+                  ? 'article.summaryUnavailable' : 'article.summaryError')}</p>
+                <button type="button" onClick={summary.retry}>{t('article.retry')}</button>
+              </div> : null}
+            </section>
           ) : null}
           {article ? <ArticleContent article={article} /> : null}
         </div>

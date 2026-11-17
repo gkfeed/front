@@ -22,6 +22,7 @@ type InFlightEntry = {
 export type BffCacheLoadOptions = {
   context?: RequestExecutionContext;
   ttlMs?: number;
+  timeoutMs?: number;
 };
 
 export interface BffResultCache {
@@ -105,8 +106,9 @@ export function createBffResultCache({
       if (pending) return subscribe<T>(key, pending, options.context);
 
       const controller = new AbortController();
-      const deadline = Date.now() + REQUEST_DEADLINE_MS;
-      const timer = setTimeout(() => controller.abort(), REQUEST_DEADLINE_MS);
+      const timeoutMs = options.timeoutMs ?? REQUEST_DEADLINE_MS;
+      const deadline = Date.now() + timeoutMs;
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
       const sharedContext: RequestExecutionContext = {
         signal: controller.signal,
         deadline,
