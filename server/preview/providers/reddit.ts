@@ -70,6 +70,21 @@ function parseRedditOpenGraph(html: string, pageUrl: URL) {
         && /\.(?:jpe?g|png|gif|webp)$/i.test(url.pathname);
     });
 
+  const comments = Array.from(document.querySelectorAll('.commentarea .thing.comment')).slice(0, 50).flatMap((comment) => {
+    const entry = comment.querySelector(':scope > .entry');
+    const text = entry?.querySelector('.usertext-body .md')?.textContent?.trim();
+    if (!text) return [];
+    let depth = 0;
+    let parent = comment.parentElement;
+    while (parent && !parent.classList.contains('commentarea')) {
+      if (parent.classList.contains('thing') && parent.classList.contains('comment')) depth++;
+      parent = parent.parentElement;
+    }
+    return [{ author: entry?.querySelector('a.author')?.textContent?.trim() || '[deleted]', text, depth: Math.min(depth, 3) }];
+  });
+  const author = post?.querySelector('a.author')?.textContent?.trim() || '';
+  const details = post && (body || comments.length) ? { provider: 'reddit' as const, status: 'active' as const, body: body || '', author, comments } : null;
+
   return {
     ...preview,
     title: title || preview.title?.replace(/^From the .+? community on Reddit:\s*/i, '') || null,
@@ -77,6 +92,6 @@ function parseRedditOpenGraph(html: string, pageUrl: URL) {
     video: isDeleted ? null : video,
     siteName: 'Reddit',
     type: isDeleted ? null : video ? 'video' : preview.type,
-    providerData: isDeleted ? { provider: 'reddit', status: 'deleted' } as const : null,
+    providerData: isDeleted ? { provider: 'reddit', status: 'deleted' } as const : details,
   };
 }

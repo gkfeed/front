@@ -65,3 +65,21 @@
     height: 100%;
   }
 }
+
+.reddit-discussion {
+  width: 100%;
+  max-height: min(50vh, 520px);
+  overflow-y: auto;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--color-card-border);
+  border-radius: 15px;
+  background: var(--color-card-bg, transparent);
+  text-align: left;
+}
+.reddit-discussion p { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reddit-discussion strong { font-size: .85rem; }
+.reddit-discussion h3 { margin: 18px 0 8px; font-size: 1rem; }
+.reddit-discussion h3 span { opacity: .65; }
+.reddit-discussion ol { list-style: none; padding: 0; margin: 0; }
+.reddit-discussion li { padding: 12px 0; border-top: 1px solid var(--color-card-border); }

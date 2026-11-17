@@ -35,6 +35,15 @@ describe('Reddit post previews', () => {
     });
   });
 
+  it('extracts the post and nested comments', () => {
+    const html = `<div data-fullname="t3_1wrjlkh"><a class="author">alice</a><div class="usertext-body"><div class="md">Hello</div></div></div>
+      <div class="commentarea"><div class="thing comment"><div class="entry"><a class="author">bob</a><div class="usertext-body"><div class="md">Reply</div></div></div>
+      <div class="child"><div class="thing comment"><div class="entry"><a class="author">carol</a><div class="usertext-body"><div class="md">Nested</div></div></div></div></div></div></div>`;
+    expect(parseOpenGraph(html, postUrl).providerData).toMatchObject({ body: 'Hello', author: 'alice', comments: [
+      { author: 'bob', text: 'Reply', depth: 0 }, { author: 'carol', text: 'Nested', depth: 1 },
+    ] });
+  });
+
   it('keeps a clean title and the share image when only crawler metadata is available', () => {
     expect(parseOpenGraph(`
       <meta property="og:title" content="From the omarchy community on Reddit: Introducing OmaPhoto | Photo Editor">
@@ -140,7 +149,7 @@ describe('Reddit post previews', () => {
     const html = oldHtml.replace('data-fullname="t3_1wrjlkh"', 'is-removed="false" data-fullname="t3_1wrjlkh"')
       .replace('<a class="title">Introducing OmaPhoto | Photo Editor</a>',
         '<a class="title">Introducing OmaPhoto | Photo Editor</a><div class="usertext-body">Why does Reddit show [removed]?</div>');
-    expect(parseOpenGraph(html, postUrl).providerData).toBeNull();
+    expect(parseOpenGraph(html, postUrl).providerData).toMatchObject({ status: 'active', body: 'Why does Reddit show [removed]?' });
   });
 
   it.each([
