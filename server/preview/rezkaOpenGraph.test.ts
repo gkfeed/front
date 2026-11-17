@@ -7,6 +7,7 @@ vi.mock('../publicHttp.js', async (importOriginal) => ({
   requestPublicHttp,
 }));
 
+import { rezkaOpenGraphAdapter } from './providers/rezka.js';
 import { fetchOpenGraph } from './openGraph.js';
 import { parseOpenGraph } from './openGraph.js';
 import { gzipHtmlResponse } from './openGraphTestFixtures.js';
@@ -16,6 +17,13 @@ beforeEach(() => {
 });
 
 describe('Rezka OpenGraph provider', () => {
+  it('prefers the full synopsis to the social description', () => {
+    const html = '<meta property="og:description" content="Short">'
+      + '<div class="b-post__description_text">Full <b>story</b> &amp; more.</div>';
+    expect(rezkaOpenGraphAdapter.parse!(html, new URL('https://rezka.ag/films/drama/123-story.html')).description)
+      .toBe('Full story & more.');
+  });
+
   it('prefers the original Rezka cover over its small social preview', () => {
     const html = `
       <meta property="og:image" content="/covers/social.jpg">

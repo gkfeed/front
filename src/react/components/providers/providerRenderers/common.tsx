@@ -23,6 +23,7 @@ export type FeedPluginCardContent = { preview: ReactNode; supplementary?: ReactN
 export function FeedPluginCardSlots({ facts, previewPlaceholder, preview, supplementary, copy }: FeedItemCardProviderRendererProps & FeedPluginCardContent) {
   const hideCopy = facts.provider !== 'vk'
     && facts.provider !== 'reddit'
+    && facts.provider !== 'rezka'
     && (facts.imagePreview.type !== 'none' || facts.provider === 'instagram' || facts.provider === 'tiktok');
   return (
     <Fragment>
@@ -87,6 +88,7 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
     return (
       <div className="reader-card__copy">
         <h2 className="reader-card__title">{title}</h2>
+        {facts.provider === 'rezka' && description ? <p className="reader-card__description">{description}</p> : null}
       </div>
     );
   }

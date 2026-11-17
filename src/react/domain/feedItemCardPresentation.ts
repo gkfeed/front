@@ -91,7 +91,9 @@ function resolveMetadata({
   const hltvSnapshot = getHltvSnapshot(remotePreview.openGraphPreview?.providerData);
   const description = loading.description === 'vk'
     ? getFeedItemDescription(item.text, item.title)
-    : null;
+    : provider === 'rezka'
+      ? remotePreview.openGraphPreview?.description || getFeedItemDescription(item.text, item.title)
+      : null;
   // Prefer parsed match data over HLTV's generated screenshot, which can capture a 404 page.
   const hltvMatchTeams = isHltv && hltvSnapshot?.teams
     ? hltvSnapshot.teams

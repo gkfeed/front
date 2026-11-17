@@ -1,27 +1,53 @@
-/* Rezka artwork is poster-shaped, so let it use the available height while
-   keeping enough room for the title and review controls. */
+/* Keep the poster and synopsis together, with the poster as the focus. */
+.reader-card--rezka .reader-card__copy {
+  align-content: start;
+  gap: 16px;
+  padding: clamp(18px, 2vw, 28px);
+  border: 1px solid var(--color-card-border);
+  border-radius: 22px;
+  background: var(--color-card);
+}
+
+.reader-card--rezka.reader-card--simple-image .reader-card__title {
+  padding: 0;
+  text-align: left;
+}
+
+.reader-card--rezka .reader-card__description {
+  display: block;
+  margin: 0;
+  max-width: 65ch;
+  overflow: auto;
+  -webkit-line-clamp: unset;
+}
+
 @media (min-width: 641px) {
-  .reader__item:has(> .reader-card--rezka) > .reader-card--rezka {
-    width: fit-content;
-    max-width: min(100%, 720px);
+  .reader__item:has(> .reader-card--rezka) > .reader-card--rezka,
+  .reader__item--fullscreen.reader__item--card-flow > .reader-card--simple-image.reader-card--rezka:has(> .reader-card__copy) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 420px);
+    grid-template-rows: minmax(0, 1fr);
+    width: min(100%, 1100px);
     justify-self: center;
+    align-items: start;
   }
 
-  .reader__item:has(> .reader-card--rezka)
-  > .reader-card--rezka
-  > .reader-card__preview {
-    width: fit-content;
+  .reader__item:has(> .reader-card--rezka) > .reader-card--rezka > .reader-card__preview {
+    width: auto;
     max-width: 100%;
+    max-height: min(84dvh, 900px);
     justify-self: center;
   }
 
-  .reader__item:has(> .reader-card--rezka)
-  > .reader-card--rezka
-  > .reader-card__preview
-  > img {
+  .reader__item:has(> .reader-card--rezka) > .reader-card--rezka > .reader-card__preview > img {
     width: auto;
     max-width: 100%;
     max-height: min(84dvh, 900px);
     object-fit: contain;
+  }
+
+  .reader-card--rezka .reader-card__copy {
+    max-height: 100%;
+    overflow: auto;
   }
 }

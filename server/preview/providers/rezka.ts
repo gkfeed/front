@@ -1,3 +1,4 @@
+import { parseHTML } from 'linkedom';
 import { normalizeHostname } from '../../../shared/urlRules.js';
 import { decodeHtml, parseAttributes, resolveHttpUrl } from '../html.js';
 import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
@@ -56,7 +57,13 @@ export const rezkaOpenGraphAdapter: OpenGraphProviderAdapter = {
 
 function parseRezkaOpenGraph(html: string, pageUrl: URL) {
   const preview = parseOpenGraph(html, pageUrl);
-  return { ...preview, image: parseRezkaOriginalCover(html, pageUrl) ?? preview.image };
+  const { document } = parseHTML(html);
+  const synopsis = document.querySelector('.b-post__description_text')?.textContent?.replace(/\s+/g, ' ').trim();
+  return {
+    ...preview,
+    description: synopsis || preview.description,
+    image: parseRezkaOriginalCover(html, pageUrl) ?? preview.image,
+  };
 }
 
 function isRezkaUrl(url: URL): boolean {

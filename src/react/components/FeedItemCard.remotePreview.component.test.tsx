@@ -143,7 +143,7 @@ describe('FeedItemCard remote and feed previews', () => {
     const remotePreview = {
       url: 'https://rezka.ag/films/drama/123-story.html',
       title: 'Story',
-      description: null,
+      description: 'История о втором шансе',
       image: 'https://static.hdrezka.ac/covers/original.jpg',
       video: null,
       siteName: 'HDrezka',
@@ -167,6 +167,7 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(screen.getByAltText('Preview for Story').getAttribute('src'))
       .toBe('https://static.hdrezka.ac/covers/original.jpg');
     expect(screen.getByAltText('Preview for Story').closest('.reader-card--rezka')).toBeTruthy();
+    expect(screen.getByText('История о втором шансе')).toBeTruthy();
     expect(getPreview).toHaveBeenCalledWith(
       'https://hdrezka.me/films/drama/123-story.html',
       expect.any(AbortSignal),
