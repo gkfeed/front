@@ -32,10 +32,14 @@ describe('TikTok slideshow contract', () => {
   it('accepts photos with an optional soundtrack', () => {
     const imageUrls = ['https://p.tiktokcdn.com/1.jpeg'];
     expect(isTikTokPlaybackPreview({ imageUrls })).toBe(true);
-    expect(isTikTokPlaybackPreview({ imageUrls, videoUrl: 'https://v.tikwm.com/music.mp3' })).toBe(true);
+    expect(isTikTokPlaybackPreview({ imageUrls, videoUrl: 'https://v.tiktokcdn.com/music.mp3' })).toBe(true);
   });
 
   it.each([{ imageUrls: [] }, { imageUrls: ['javascript:alert(1)'] }, { imageUrls: [null] }])('rejects invalid image lists: %j', ({ imageUrls }) => {
     expect(isTikTokPlaybackPreview({ imageUrls })).toBe(false);
   });
+});
+
+it('rejects playback from the removed TikWM provider', () => {
+  expect(isTikTokPlaybackPreview({ videoUrl: 'https://v.tikwm.com/video.mp4' })).toBe(false);
 });

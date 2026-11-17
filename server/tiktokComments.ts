@@ -1,70 +1,37 @@
 import type { RequestExecutionContext } from './application/requestExecutionContext.js';
 import { PreviewError } from './preview/errors.js';
-import { fetchTikTokDetails } from './tiktokDetails.js';
+import { PublicHttpError } from './publicHttpError.js';
 import { emptyTikTokDetails } from './tiktokDetailsParser.js';
 import { fetchTikTokWebComments, fetchTikTokWebDetails } from './tiktokWebComments.js';
-import {
-  fetchTikTokJson,
-  isRetryableTikTokRequestError,
-  isTikTokRequestTimeout,
-  type TikTokJsonResult,
-} from './tiktokJson.js';
-import { parseTikTokComments } from './tiktokCommentParser.js';
 import { parseTikTokVideoUrl } from './tiktokUrlParser.js';
-import type { TikTokCommentsPreview } from '../shared/tiktokContracts.js';
-
-const COMMENT_LIMIT = 10;
-const COMMENT_REQUEST_ATTEMPTS = 2;
+import type { TikTokComment, TikTokCommentsPreview } from '../shared/tiktokContracts.js';
 
 export async function fetchTikTokComments(
   input: string,
   context?: RequestExecutionContext,
 ): Promise<TikTokCommentsPreview> {
-  const videoUrl = parseTikTokVideoUrl(input);
-  const [directComments, directDetails] = await Promise.all([
-    fetchTikTokWebComments(videoUrl, context).catch(() => null),
-    fetchTikTokWebDetails(videoUrl, context).catch(() => null),
+  const post = parseTikTokVideoUrl(input);
+  const [comments, details] = await Promise.all([
+    fetchComments(post, context),
+    fetchTikTokWebDetails(post, context).catch(() => null),
   ]);
   if (context?.signal.aborted) throw new PreviewError('TikTok comments request aborted', 'comments_fetch_failed');
-  if (directComments !== null) return { comments: directComments, ...(directDetails ?? emptyTikTokDetails()) };
-  const detailsPromise = fetchTikTokDetails(videoUrl, context);
-  const upstream = new URL('https://www.tikwm.com/api/comment/list');
-  upstream.searchParams.set('url', videoUrl.href);
-  upstream.searchParams.set('count', String(COMMENT_LIMIT));
-  upstream.searchParams.set('cursor', '0');
-
-  let body: TikTokJsonResult | null;
-  try {
-    body = await fetchTikTokCommentsJson(upstream, context);
-  } catch (error) {
-    if (error instanceof PreviewError) throw error;
-    const message = isTikTokRequestTimeout(error)
-      ? 'TikTok comments took too long to respond'
-      : 'TikTok comments could not be fetched';
-    throw new PreviewError(message, 'comments_fetch_failed');
-  }
-
-  if (!body) throw new PreviewError('The comments provider returned an error', 'comments_upstream_error');
-  return {
-    comments: parseTikTokComments(body.value),
-    ...await detailsPromise,
-  };
+  return { comments, ...(details ?? emptyTikTokDetails()) };
 }
 
-async function fetchTikTokCommentsJson(
-  upstream: URL,
-  context?: RequestExecutionContext,
-) {
-  for (let attempt = 0; attempt < COMMENT_REQUEST_ATTEMPTS; attempt += 1) {
+async function fetchComments(post: URL, context?: RequestExecutionContext): Promise<TikTokComment[]> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    if (context?.signal.aborted) throw new PreviewError('TikTok comments request aborted', 'comments_fetch_failed');
     try {
-      const response = await fetchTikTokJson(upstream, 'comments', context);
-      if (response || attempt === COMMENT_REQUEST_ATTEMPTS - 1) return response;
+      const comments = await fetchTikTokWebComments(post, context);
+      if (comments !== null) return comments;
+      if (attempt === 1) throw new PreviewError('TikTok did not return comments', 'comments_upstream_error');
     } catch (error) {
-      if (attempt === COMMENT_REQUEST_ATTEMPTS - 1 || !isRetryableTikTokRequestError(error)) {
-        throw error;
-      }
+      const transient = error instanceof PublicHttpError && ['network', 'timeout'].includes(error.reason);
+      if (attempt === 0 && transient && !context?.signal.aborted) continue;
+      if (error instanceof PreviewError) throw error;
+      throw new PreviewError('TikTok comments could not be fetched', 'comments_fetch_failed');
     }
   }
-
-  return null;
+  throw new PreviewError('TikTok comments could not be fetched', 'comments_fetch_failed');
 }

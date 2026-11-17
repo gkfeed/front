@@ -1,9 +1,6 @@
-import { normalizeExternalText } from '../shared/text.js';
-import { isTikTokAvatarUrl, isTikTokMediaUrl, type TikTokPlaybackPreview } from '../shared/tiktokContracts.js';
-import { isRecord } from '../shared/valueGuards.js';
+import type { TikTokPlaybackPreview } from '../shared/tiktokContracts.js';
 import type { RequestExecutionContext } from './application/requestExecutionContext.js';
 import { PreviewError } from './preview/errors.js';
-import { fetchTikTokJson, isRetryableTikTokRequestError, isTikTokRequestTimeout } from './tiktokJson.js';
 import { fetchTikTokDirectPlayback } from './tiktokDirectPlayback.js';
 import { parseTikTokVideoUrl } from './tiktokUrlParser.js';
 
@@ -13,54 +10,67 @@ export async function fetchTikTokPlayback(
 ): Promise<TikTokPlaybackPreview> {
   const post = parseTikTokVideoUrl(input);
   try {
-    const direct = await fetchTikTokDirectPlayback(post, context);
+    const direct = await fetchDirectPlaybackWithRecovery(post, context);
     if (direct) return direct;
   } catch (error) {
     if (error instanceof PreviewError && error.kind === 'tiktok_post_unavailable') throw error;
     if (context?.signal.aborted) throw new PreviewError('TikTok playback request aborted', 'tiktok_upstream_unavailable');
   }
-  const upstream = new URL('https://www.tikwm.com/api/');
-  upstream.searchParams.set('url', post.href);
-  let response: Awaited<ReturnType<typeof fetchTikTokJson>>;
-  try {
-    response = await fetchTikTokJson(upstream, 'details', context);
-  } catch (error) {
-    if (isTikTokRequestTimeout(error)) {
-      throw new PreviewError('TikTok playback provider timed out', 'tiktok_upstream_timeout');
-    }
-    if (isRetryableTikTokRequestError(error)) {
-      throw new PreviewError('TikTok playback provider is unavailable', 'tiktok_upstream_unavailable');
-    }
-    throw error;
-  }
-  const value = response?.value;
-  if (isRecord(value) && value.code === -1
-    && typeof value.msg === 'string' && value.msg.startsWith('Free Api Limit:')) {
-    throw new PreviewError('TikTok playback provider is rate limited', 'tiktok_rate_limited');
-  }
-  if (!response) throw new PreviewError('TikTok video is unavailable', 'tiktok_upstream_unavailable');
-  if (isRecord(value) && typeof value.code === 'number' && value.code !== 0) {
-    throw new PreviewError('TikTok video is unavailable', 'tiktok_upstream_rejected');
-  }
-  if (!isRecord(value) || value.code !== 0 || !isRecord(value.data)) {
-    throw new PreviewError('TikTok video is unavailable', 'invalid_details');
-  }
-  const imageUrls = Array.isArray(value.data.images)
-    ? value.data.images.filter(isTikTokAvatarUrl) : [];
-  const videoUrl = isTikTokMediaUrl(value.data.play) ? value.data.play : undefined;
-  if (!imageUrls.length && !videoUrl) {
-    throw new PreviewError('TikTok video is unavailable', 'invalid_details');
-  }
-  const media = imageUrls.length
-    ? { imageUrls, ...(videoUrl ? { videoUrl } : {}) }
-    : { videoUrl: videoUrl! };
-  const author = isRecord(value.data.author) ? value.data.author : null;
-  return {
-    ...media,
-    ...(author ? { author: {
-      name: typeof author.nickname === 'string' ? normalizeExternalText(author.nickname) || null : null,
-      username: typeof author.unique_id === 'string' ? normalizeExternalText(author.unique_id) || null : null,
-      avatarUrl: isTikTokAvatarUrl(author.avatar) ? author.avatar : null,
-    } } : {}),
+  throw new PreviewError('TikTok did not provide playable media', 'tiktok_upstream_unavailable');
+}
+
+// Recover transient TikTok page/probe failures using at most two direct attempts.
+// Keep recovery inside the shared BFF load so prefetch and visible consumers
+// still share one operation rather than racing duplicate browser requests.
+const DIRECT_RECOVERY_DELAY_MS = 750;
+
+function fetchDirectPlaybackWithRecovery(
+  post: URL,
+  context?: RequestExecutionContext,
+): Promise<TikTokPlaybackPreview | null> {
+  const controller = new AbortController();
+  const localContext: RequestExecutionContext = {
+    signal: controller.signal,
+    deadline: context?.deadline ?? Infinity,
+    remainingMs: (maximum = Infinity) => context?.remainingMs(maximum) ?? maximum,
   };
+  return new Promise((resolve, reject) => {
+    let started = 0;
+    let failed = 0;
+    let settled = false;
+    const finish = (value: TikTokPlaybackPreview | null, error?: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      context?.signal.removeEventListener('abort', onAbort);
+      controller.abort();
+      if (error) reject(error);
+      else resolve(value);
+    };
+    const onAbort = () => finish(null, new PreviewError('TikTok playback request aborted', 'tiktok_upstream_unavailable'));
+    const unsuccessful = () => {
+      if (settled) return;
+      failed += 1;
+      if (started === 1) {
+        clearTimeout(timer);
+        attempt();
+      }
+      if (failed === 2) finish(null);
+    };
+    const attempt = () => {
+      if (settled || started === 2) return;
+      started += 1;
+      void fetchTikTokDirectPlayback(post, localContext).then((value) => {
+        if (value) finish(value);
+        else unsuccessful();
+      }, (error: unknown) => {
+        if (error instanceof PreviewError && error.kind === 'tiktok_post_unavailable') finish(null, error);
+        else unsuccessful();
+      });
+    };
+    const timer = setTimeout(attempt, DIRECT_RECOVERY_DELAY_MS);
+    context?.signal.addEventListener('abort', onAbort, { once: true });
+    if (context?.signal.aborted) { onAbort(); return; }
+    attempt();
+  });
 }

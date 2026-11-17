@@ -1,5 +1,3 @@
-import { Readable } from 'node:stream';
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const requestPublicHttp = vi.hoisted(() => vi.fn());
@@ -9,14 +7,13 @@ vi.mock('./tiktokWebComments.js', () => ({
   fetchTikTokWebDetails: vi.fn().mockResolvedValue(null),
 }));
 
-vi.mock('./tikwmRequestScheduler.js', () => ({ scheduleTikwmRequest: vi.fn().mockResolvedValue(undefined) }));
-
 vi.mock('./publicHttp.js', async (importOriginal) => ({
   ...await importOriginal<typeof import('./publicHttp.js')>(),
   requestPublicHttp,
 }));
 
 import { PublicHttpError } from './publicHttp.js';
+import { PreviewError } from './preview/errors.js';
 import { fetchTikTokWebComments, fetchTikTokWebDetails } from './tiktokWebComments.js';
 import {
   fetchTikTokComments,
@@ -28,6 +25,8 @@ import { parseTikTokVideoUrl } from './tiktokParser.js';
 
 beforeEach(() => {
   requestPublicHttp.mockReset();
+  vi.mocked(fetchTikTokWebComments).mockReset().mockResolvedValue(null);
+  vi.mocked(fetchTikTokWebDetails).mockReset().mockResolvedValue(null);
 });
 
 describe('fetchTikTokComments', () => {
@@ -41,57 +40,51 @@ describe('fetchTikTokComments', () => {
     expect(requestPublicHttp).not.toHaveBeenCalled();
   });
 
-  it('retries a temporary comments provider failure once', async () => {
-    let commentsRequests = 0;
-    requestPublicHttp.mockImplementation(async (url: URL) => {
-      if (url.pathname === '/api/comment/list') {
-        commentsRequests += 1;
-        return commentsRequests === 1
-          ? jsonResponse('{}', 503)
-          : jsonResponse(JSON.stringify({ code: 0, data: { comments: [] } }));
-      }
-      return jsonResponse(JSON.stringify({
-        code: 0,
-        data: { title: 'Video caption', author: { nickname: 'Creator' } },
-      }));
-    });
-
+  it('retries a temporary direct comments failure once', async () => {
+    vi.mocked(fetchTikTokWebComments).mockRejectedValueOnce(new PublicHttpError('network')).mockResolvedValueOnce([]);
+    vi.mocked(fetchTikTokWebDetails).mockResolvedValueOnce({ description: 'Video caption', creatorName: 'Creator', creatorAvatarUrl: null });
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
       .resolves.toMatchObject({ comments: [], description: 'Video caption' });
-    expect(commentsRequests).toBe(2);
+    expect(fetchTikTokWebComments).toHaveBeenCalledTimes(2);
+    expect(requestPublicHttp).not.toHaveBeenCalled();
   });
 
-  it('maps a non-success comments response to an upstream error', async () => {
-    requestPublicHttp.mockImplementation(async () => jsonResponse('{}', 503));
-
+  it('stops after two unsuccessful direct responses without contacting TikWM', async () => {
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
       .rejects.toMatchObject({ kind: 'comments_upstream_error' });
+    expect(fetchTikTokWebComments).toHaveBeenCalledTimes(2);
+    expect(requestPublicHttp).not.toHaveBeenCalled();
   });
 
-  it('preserves invalid JSON and response-size errors from the comments provider', async () => {
-    requestPublicHttp.mockImplementation(async () => jsonResponse('not-json'));
-
+  it('preserves invalid JSON and response-size errors from TikTok', async () => {
+    vi.mocked(fetchTikTokWebComments).mockRejectedValueOnce(new PreviewError('invalid JSON', 'invalid_comments'));
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
       .rejects.toMatchObject({ kind: 'invalid_comments' });
+    expect(fetchTikTokWebComments).toHaveBeenCalledOnce();
   });
 
   it('does not retry a request aborted by the client', async () => {
-    let commentsRequests = 0;
-    requestPublicHttp.mockImplementation(async (url: URL) => {
-      if (url.pathname === '/api/comment/list') commentsRequests += 1;
-      throw new PublicHttpError('aborted');
-    });
-
+    vi.mocked(fetchTikTokWebComments).mockRejectedValueOnce(new PublicHttpError('aborted'));
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
       .rejects.toMatchObject({ kind: 'comments_fetch_failed' });
-    expect(commentsRequests).toBe(1);
+    expect(fetchTikTokWebComments).toHaveBeenCalledOnce();
+    expect(requestPublicHttp).not.toHaveBeenCalled();
   });
 
-  it('maps a provider timeout to a fetch error', async () => {
-    requestPublicHttp.mockRejectedValue(new PublicHttpError('timeout'));
-
+  it('maps repeated direct timeouts to a fetch error', async () => {
+    vi.mocked(fetchTikTokWebComments).mockRejectedValue(new PublicHttpError('timeout'));
     await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
       .rejects.toMatchObject({ kind: 'comments_fetch_failed' });
+    expect(fetchTikTokWebComments).toHaveBeenCalledTimes(2);
+    expect(requestPublicHttp).not.toHaveBeenCalled();
+  });
+
+  it('preserves comments if the direct creator details request fails', async () => {
+    vi.mocked(fetchTikTokWebComments).mockResolvedValueOnce([]);
+    vi.mocked(fetchTikTokWebDetails).mockRejectedValueOnce(new PublicHttpError('network'));
+    await expect(fetchTikTokComments('https://www.tiktok.com/@creator/video/123'))
+      .resolves.toEqual({ comments: [], description: null, creatorName: null, creatorAvatarUrl: null });
+    expect(requestPublicHttp).not.toHaveBeenCalled();
   });
 });
 
@@ -188,12 +181,3 @@ describe('parseTikTokDetails', () => {
     });
   });
 });
-
-function jsonResponse(body: string, status = 200) {
-  return {
-    body: Readable.from([body]),
-    headers: {},
-    status,
-    url: new URL('https://provider.example/'),
-  };
-}
