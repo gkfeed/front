@@ -193,7 +193,7 @@ const ru = {
     original: 'Оригинал',
     loading: 'Разбираем статью…',
     error: 'Не удалось разобрать эту статью.',
-    retry: 'Повторить',
+    retry: 'Повторить', refreshFeed: 'Найти добавленный фид',
   },
   live: {
     streams: 'Трансляции',
@@ -398,6 +398,7 @@ const ru = {
     fullTime: 'Матч завершён',
     postponed: 'Перенесён',
   },
+  rezka: { addToFeed: 'Добавить в фид', inFeed: 'Уже в фиде →', added: 'Добавлено в фид', adding: 'Добавление…', checking: 'Проверяем фиды…', feedError: 'Не удалось проверить или добавить фид.', retry: 'Повторить', refreshFeed: 'Найти добавленный фид' },
   liquipedia: {
     match: '{{firstTeam}} {{firstScore}}:{{secondScore}} {{secondTeam}}',
     gameResults: 'Результаты матчей команды {{team}}',

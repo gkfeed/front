@@ -183,7 +183,7 @@ const en = {
     original: 'Original',
     loading: 'Parsing article…',
     error: 'This article could not be parsed.',
-    retry: 'Try again',
+    retry: 'Try again', refreshFeed: 'Find added feed',
   },
   live: {
     streams: 'Streams',
@@ -388,6 +388,7 @@ const en = {
     fullTime: 'Full time',
     postponed: 'Postponed',
   },
+  rezka: { addToFeed: 'Add to feed', inFeed: 'Already in feed →', added: 'Added to feed', adding: 'Adding…', checking: 'Checking feeds…', feedError: 'Could not check or add the feed.', retry: 'Try again', refreshFeed: 'Find added feed' },
   liquipedia: {
     match: '{{firstTeam}} {{firstScore}} to {{secondScore}} {{secondTeam}}',
     gameResults: '{{team}} game results',

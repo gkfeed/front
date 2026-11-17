@@ -1,5 +1,6 @@
 /* Keep the poster and synopsis together, with the poster as the focus. */
-.reader-card--rezka .reader-card__copy {
+.reader-card--rezka .reader-card__rezka-panel {
+  display: grid;
   align-content: start;
   gap: 16px;
   padding: clamp(18px, 2vw, 28px);
@@ -84,7 +85,60 @@
   overflow-wrap: anywhere;
 }
 
-.reader-card--rezka .reader-card__copy:focus-visible {
+.reader-card--rezka .reader-card__rezka-panel:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 3px;
+}
+
+.reader-card--rezka .reader-card__rezka-copy {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.reader-card__rezka-panel {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.reader-card__rezka-feed-action {
+  display: grid;
+  gap: 8px;
+  color: var(--color-ink);
+}
+
+.reader-card__rezka-feed-button {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--color-card-border);
+  border-radius: 14px;
+  background: var(--color-card);
+  color: var(--color-ink-strong);
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.reader-card__rezka-feed-button:disabled { opacity: 0.65; cursor: wait; }
+.reader-card__rezka-feed-button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+
+.reader-card__rezka-badge--tnt {
+  border-color: #aa792f;
+  background: #29211d;
+  color: #f9e8c2;
+}
+
+.reader-card__rezka-badge--tnt strong {
+  margin-left: 2px;
+  color: #f5c55e;
+  font-size: 1.02em;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  text-shadow: 0 1px 0 #855b20;
 }
