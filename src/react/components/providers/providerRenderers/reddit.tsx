@@ -42,16 +42,11 @@ export function RedditCopy({ facts, displayHostname }: FeedItemCardProviderRende
         {details?.body && <p>{details.body}</p>}
       </article>
       {details && details.comments.length > 0 && <section className="reddit-discussion" aria-label={t('comments.title')}>
-        <header className="reddit-discussion__header">
-          <h3>{t('comments.title')}</h3>
-          <a href={facts.item.link} target="_blank" rel="noreferrer">{t('reddit.viewDiscussion')} ↗</a>
-        </header>
         <ol tabIndex={0} aria-label={t('comments.title')}>
           {details.comments.map((comment, index) => <li key={index} style={{ marginInlineStart: `${comment.depth * 16}px` }}>
             <span className="reddit-discussion__avatar" aria-hidden="true">{comment.author.slice(0, 1).toUpperCase()}</span>
             <div><strong>u/{comment.author}</strong><p>{comment.text}</p></div>
           </li>)}
-          <li className="reddit-discussion__more"><a href={facts.item.link} target="_blank" rel="noreferrer">{t('reddit.viewDiscussion')} ↗</a></li>
         </ol>
       </section>}
     </div>

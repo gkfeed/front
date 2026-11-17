@@ -276,7 +276,6 @@ const ru = {
     descriptionLatte: 'Тёплая пастель',
     descriptionMocha: 'Глубокая пастель',
   },
-  reddit: { viewDiscussion: 'Вся дискуссия на Reddit' },
   comments: {
     label: 'Комментарии TikTok',
     title: 'Комментарии',
