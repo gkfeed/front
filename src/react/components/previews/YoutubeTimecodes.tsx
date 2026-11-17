@@ -1,17 +1,17 @@
 import { useTranslation } from 'react-i18next';
 
-import { useYoutubeTimecodes } from '../../hooks/useYoutubeTimecodes';
+import type { YoutubeTimecode } from '../../../../shared/youtubeContracts';
 import { formatYoutubeTimecode } from '../../services/youtubeTimecodes';
 
 type YoutubeTimecodesProps = {
   currentTime: number;
   onSeek: (seconds: number) => void;
   videoId: string;
+  timecodes: YoutubeTimecode[];
 };
 
-export function YoutubeTimecodes({ currentTime, onSeek, videoId }: YoutubeTimecodesProps) {
+export function YoutubeTimecodes({ currentTime, onSeek, videoId, timecodes }: YoutubeTimecodesProps) {
   const { t } = useTranslation();
-  const { status, timecodes, retry } = useYoutubeTimecodes(videoId, true);
   const currentIndex = timecodes?.reduce(
     (foundIndex, timecode, index) => timecode.seconds <= currentTime ? index : foundIndex,
     -1,
@@ -23,18 +23,6 @@ export function YoutubeTimecodes({ currentTime, onSeek, videoId }: YoutubeTimeco
       className="youtube-timecodes"
       aria-label={t('youtubeTimecodes.title')}
     >
-      {status === 'loading' ? (
-        <p className="youtube-timecodes__state" role="status">{t('youtubeTimecodes.loading')}</p>
-      ) : null}
-      {status === 'error' ? (
-        <div className="youtube-timecodes__state" role="alert">
-          <p>{t('youtubeTimecodes.loadError')}</p>
-          <button type="button" onClick={retry}>{t('live.tryAgain')}</button>
-        </div>
-      ) : null}
-      {timecodes?.length === 0 ? (
-        <p className="youtube-timecodes__state">{t('youtubeTimecodes.empty')}</p>
-      ) : null}
       {timecodes && timecodes.length > 0 ? (
         <ol className="youtube-timecodes__list">
           {timecodes.map((timecode, index) => {
