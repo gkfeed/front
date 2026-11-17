@@ -1,4 +1,5 @@
 import { parseHTML } from 'linkedom';
+import { REZKA_DETAIL_LABELS, type RezkaProviderData } from '../../../shared/providerData/rezka.js';
 import { normalizeHostname } from '../../../shared/urlRules.js';
 import { decodeHtml, parseAttributes, resolveHttpUrl } from '../html.js';
 import type { OpenGraphProviderAdapter } from '../openGraphProviderAdapter.js';
@@ -62,8 +63,24 @@ function parseRezkaOpenGraph(html: string, pageUrl: URL) {
   return {
     ...preview,
     description: synopsis || preview.description,
+    providerData: parseRezkaDetails(document),
     image: parseRezkaOriginalCover(html, pageUrl) ?? preview.image,
   };
+}
+
+function parseRezkaDetails(document: ReturnType<typeof parseHTML>['document']): RezkaProviderData | null {
+  const details: RezkaProviderData['details'] = [];
+  for (const row of document.querySelectorAll('.b-post__info tr')) {
+    const cells = row.querySelectorAll('td');
+    const label = cells[0]?.querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim();
+    if (!label || !REZKA_DETAIL_LABELS.has(label)) continue;
+    const valueCell = (cells.length > 1 ? cells[1] : cells[0])?.cloneNode(true) as Element | undefined;
+    valueCell?.querySelectorAll('script, style, noscript').forEach((element) => element.remove());
+    if (cells.length === 1) valueCell?.querySelector('.l')?.remove();
+    const value = valueCell?.textContent?.replace(/\s+/g, ' ').trim();
+    if (value) details.push({ label, value });
+  }
+  return details.length ? { provider: 'rezka', details } : null;
 }
 
 function isRezkaUrl(url: URL): boolean {

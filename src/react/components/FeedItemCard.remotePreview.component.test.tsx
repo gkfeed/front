@@ -148,7 +148,7 @@ describe('FeedItemCard remote and feed previews', () => {
       video: null,
       siteName: 'HDrezka',
       type: 'video.movie',
-      providerData: null,
+      providerData: { provider: 'rezka' as const, details: [{ label: 'Страна', value: 'Россия' }, { label: 'Жанр', value: 'Комедия, Драма' }, { label: 'Дата выхода', value: '26 октября 2026 года' }] },
     };
     let resolvePreview!: (value: typeof remotePreview) => void;
     getPreview.mockReturnValue(new Promise((resolve) => { resolvePreview = resolve; }));
@@ -168,6 +168,12 @@ describe('FeedItemCard remote and feed previews', () => {
       .toBe('https://static.hdrezka.ac/covers/original.jpg');
     expect(screen.getByAltText('Preview for Story').closest('.reader-card--rezka')).toBeTruthy();
     expect(screen.getByText('История о втором шансе')).toBeTruthy();
+    expect(screen.queryByText('Страна')).toBeNull();
+    expect(screen.queryByText('Россия')).toBeNull();
+    expect(screen.getByRole('list', { name: 'Жанр' })).toBeTruthy();
+    expect(screen.getByText('26 октября 2026 года').previousElementSibling?.textContent).toBe('Story');
+    expect(screen.getByText('Драма')).toBeTruthy();
+    expect(screen.getByText('Комедия')).toBeTruthy();
     expect(getPreview).toHaveBeenCalledWith(
       'https://hdrezka.me/films/drama/123-story.html',
       expect.any(AbortSignal),

@@ -24,6 +24,20 @@ describe('Rezka OpenGraph provider', () => {
       .toBe('Full story & more.');
   });
 
+  it('extracts only the requested details', () => {
+    const html = `<table class="b-post__info">
+      <tr><td class="l"><h2>Рейтинги</h2>:</td><td>IMDb: <b>6.4</b></td></tr>
+      <tr><td class="l"><h2>Жанр</h2>:</td><td>Комедия, <a>Драма</a></td></tr>
+      <tr><td colspan="2"><span class="l"><h2>В ролях актеры</h2>:</span><span>Иван,</span> Анна</td></tr>
+      <tr><td class="l"><h2>Другое</h2>:</td><td>скрыто</td></tr>
+    </table>`;
+    expect(rezkaOpenGraphAdapter.parse!(html, new URL('https://rezka.ag/films/drama/123-story.html')).providerData)
+      .toEqual({ provider: 'rezka', details: [
+        { label: 'Рейтинги', value: 'IMDb: 6.4' },
+        { label: 'Жанр', value: 'Комедия, Драма' },
+      ] });
+  });
+
   it('prefers the original Rezka cover over its small social preview', () => {
     const html = `
       <meta property="og:image" content="/covers/social.jpg">

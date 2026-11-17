@@ -1,3 +1,4 @@
+import { isRezkaProviderData, REZKA_DETAIL_LABELS } from '../../../../../shared/providerData/rezka';
 import { Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -86,26 +87,55 @@ export function StandardCopy({ facts, displayHostname, onOpenArticle }: FeedItem
     || facts.provider === 'rezka'
     || facts.provider === 'spotify') && facts.simpleImage) {
     return (
-      <div className="reader-card__copy">
+      <div className="reader-card__copy" tabIndex={facts.provider === 'rezka' && isRezkaProviderData(facts.openGraphPreview?.providerData) ? 0 : undefined}>
         <h2 className="reader-card__title">{title}</h2>
+        {facts.provider === 'rezka' ? <RezkaReleaseDate facts={facts} /> : null}
         {facts.provider === 'rezka' && description ? <p className="reader-card__description">{description}</p> : null}
+        {facts.provider === 'rezka' ? <RezkaDetails facts={facts} /> : null}
       </div>
     );
   }
 
   return (
-    <div className="reader-card__copy">
+    <div className="reader-card__copy" tabIndex={facts.provider === 'rezka' && isRezkaProviderData(facts.openGraphPreview?.providerData) ? 0 : undefined}>
       <div className="reader-card__meta">
         <span>{displayHostname}</span>
         <span>{t('feed.item')} #{item.feedId}</span>
       </div>
       <h2 className="reader-card__title">{title}</h2>
+      {facts.provider === 'rezka' ? <RezkaReleaseDate facts={facts} /> : null}
       {description ? <p className="reader-card__description">{description}</p> : null}
+      {facts.provider === 'rezka' ? <RezkaDetails facts={facts} /> : null}
       <ArticleReaderLink
         url={item.link}
         enabled={facts.canReadArticle}
         onOpen={onOpenArticle ?? (() => {})}
       />
+    </div>
+  );
+}
+
+function RezkaReleaseDate({ facts }: { facts: FeedItemCardModel }) {
+  const data = facts.openGraphPreview?.providerData;
+  if (!isRezkaProviderData(data)) return null;
+  const date = data.details.find(({ label }) => label === 'Дата выхода')?.value;
+  return date ? <p className="reader-card__rezka-date">{date}</p> : null;
+}
+
+function RezkaDetails({ facts }: { facts: FeedItemCardModel }) {
+  const data = facts.openGraphPreview?.providerData;
+  if (!isRezkaProviderData(data)) return null;
+  const details = data.details.filter(({ label }) => label !== 'Дата выхода' && REZKA_DETAIL_LABELS.has(label));
+  if (!details.length) return null;
+  return (
+    <div className="reader-card__rezka-details">
+      {details.map(({ label, value }, index) => (
+        <div className="reader-card__rezka-badges" role="list" aria-label={label} key={`${label}-${index}`}>
+          {(label === 'Рейтинги' ? [value] : value.split(',')).map((badge, badgeIndex) => (
+            <span className="reader-card__rezka-badge" role="listitem" key={badgeIndex}>{badge.trim()}</span>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

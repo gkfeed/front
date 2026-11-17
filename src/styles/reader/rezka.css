@@ -51,3 +51,40 @@
     overflow: auto;
   }
 }
+
+.reader-card__rezka-date {
+  margin: -8px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.reader-card__rezka-details {
+  display: grid;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-card-border);
+}
+
+.reader-card__rezka-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reader-card__rezka-badge {
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--color-card-border);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--color-ink) 7%, var(--color-card));
+  color: var(--color-ink);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.reader-card--rezka .reader-card__copy:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}

@@ -1,3 +1,4 @@
+import { isRezkaProviderData, type RezkaProviderData } from './providerData/rezka.js';
 import { isLiveballProviderData, type LiveballProviderData } from './providerData/liveball.js';
 import { hltvProviderDataModule, type HltvProviderData } from './providerData/hltv.js';
 import {
@@ -7,7 +8,7 @@ import {
 import { vkProviderDataModule, type VkProviderData } from './providerData/vk.js';
 import { redditProviderDataModule, type RedditProviderData } from './providerData/reddit.js';
 
-export type OpenGraphProviderData = HltvProviderData | OneFootballProviderData | LiveballProviderData | VkProviderData | RedditProviderData | null;
+export type OpenGraphProviderData = HltvProviderData | OneFootballProviderData | LiveballProviderData | VkProviderData | RedditProviderData | RezkaProviderData | null;
 
 const providerDataModules = [
   hltvProviderDataModule,
@@ -17,7 +18,7 @@ const providerDataModules = [
 ] as const;
 
 export function isOpenGraphProviderData(value: unknown): value is OpenGraphProviderData {
-  return value === null || isLiveballProviderData(value) || providerDataModules.some((module) => module.is(value));
+  return value === null || isRezkaProviderData(value) || isLiveballProviderData(value) || providerDataModules.some((module) => module.is(value));
 }
 
 export function getProviderDataImageUrls(value: unknown): readonly string[] {
