@@ -266,6 +266,7 @@ const en = {
     descriptionLatte: 'Warm pastel',
     descriptionMocha: 'Deep pastel',
   },
+  reddit: { viewDiscussion: 'View full discussion on Reddit' },
   comments: {
     label: 'TikTok comments',
     title: 'Comments',
