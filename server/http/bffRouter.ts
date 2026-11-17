@@ -18,6 +18,7 @@ import {
   type BffRequestGate,
 } from './bffRequestGate.js';
 import { bffResultCache, type BffResultCache } from './bffResultCache.js';
+import { requireArticleSummaryKey, summarizeArticle } from '../articleSummary.js';
 import { suggestFeedType } from '../feedTypeSuggestion.js';
 import { isYoutubeChannelResolution } from '../../shared/youtubeChannel.js';
 
@@ -76,6 +77,21 @@ export async function routeBffRequest(
   requestRange?: string,
 ): Promise<boolean> {
   const requestContext = context ?? createDetachedRequestExecutionContext();
+  if (requestUrl.pathname === '/bff/article-summary') {
+    const input = getRequiredPreviewUrl(requestUrl);
+    const apiKey = requireArticleSummaryKey();
+    const result = await requestGate.run(clientId, requestContext, () => (
+      resultCache.load(`${requestUrl.pathname}:${input}`, async (sharedContext) => {
+        const article = await resultCache.load(`/bff/article:${input}`, (articleContext) => (
+          useCases.article(input, articleContext)
+        ), { context: sharedContext, ttlMs: cacheTtlMs('/bff/article') });
+        if (!isArticlePreview(article)) throw new Error('Invalid article contract');
+        return summarizeArticle(article, sharedContext, apiKey);
+      }, { context: requestContext, ttlMs: 30 * 60_000, timeoutMs: 30_000 })
+    ));
+    sendJson(response, 200, result);
+    return true;
+  }
   if (requestUrl.pathname === '/bff/feed-type') {
     const input = getRequiredPreviewUrl(requestUrl);
     const title = requestUrl.searchParams.get('title')?.slice(0, 300);

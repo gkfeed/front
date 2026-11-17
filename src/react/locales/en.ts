@@ -172,6 +172,12 @@ const en = {
     openOriginal: 'Open original',
   },
   article: {
+    summarize: 'Summary',
+    summarizing: 'Summarizing…',
+    summaryTitle: 'Summary in Russian',
+    summaryError: 'Could not generate a summary. Please try again.',
+    summaryUnavailable: 'Summaries are unavailable. An OpenRouter key is required on the server.',
+
     title: 'Article reader',
     close: 'Back',
     original: 'Original',

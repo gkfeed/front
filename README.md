@@ -181,3 +181,12 @@ node scripts/export-recommendation-dataset.mjs data/recommendation-events.jsonl 
 These category proportions are available for future prioritization changes;
 the current ranking weights are preserved. The reader shows the current feed's
 category bar below the remaining-card count, linking to `/scores`.
+
+### Article summaries
+
+The article reader's Summary button generates 2–3 sentences in Russian through
+[OpenRouter Chat Completions](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request).
+Set `OPENROUTER_API_KEY` on the BFF process. The key stays on the server.
+`OPENROUTER_SUMMARY_MODEL` optionally overrides the default `deepseek/deepseek-v4.1-flash-1017`.
+The request uses extracted article text, capped at 60,000 characters, and summaries
+are cached in server memory for 30 minutes. Failed requests can be retried.
