@@ -19,7 +19,7 @@
   position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  width: min(100%, 900px);
+  width: min(100%, 1100px);
   min-height: 100dvh;
   background: var(--color-card);
   color: var(--color-ink);
@@ -53,7 +53,7 @@
 .article-reader__content {
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: clamp(28px, 7vw, 72px) clamp(20px, 8vw, 88px) 80px;
+  padding: clamp(24px, 3vw, 32px) clamp(20px, 8vw, 88px) 80px;
 }
 
 .article-reader__article {
@@ -150,15 +150,15 @@
 .article-reader__summary {
   max-width: 68ch;
   margin: 0 auto 32px;
-  padding: 20px;
-  border: 1px solid var(--color-card-border);
-  border-radius: 16px;
-  background: var(--color-surface-muted);
-  line-height: 1.65;
+  padding: 0 0 24px;
+  border-bottom: 1px solid var(--color-card-border);
+  color: var(--color-ink);
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  line-height: 1.72;
 }
 
-.article-reader__summary h2 { margin: 0; font-size: 1rem; }
-.article-reader__summary p { margin: 10px 0 0; }
+.article-reader__summary h2 { margin: 0; color: var(--color-ink); font-size: 1rem; font-weight: 800; }
+.article-reader__summary p { margin: 8px 0 0; font-size: clamp(1.08rem, 2vw, 1.2rem); font-weight: 500; text-align: justify; hyphens: auto; }
 
 @media (max-width: 480px) {
   .article-reader__toolbar { gap: 8px; padding-inline: 12px; font-size: 0.85rem; }
