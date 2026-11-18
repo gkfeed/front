@@ -114,7 +114,7 @@
   > .reader-card--simple-image.reader-card--rezka:has(> .reader-card__copy) {
     height: 100%;
     width: 100%;
-    grid-template-columns: auto minmax(240px, 1fr);
+    grid-template-columns: auto minmax(var(--reader-rezka-panel-min-width), 1fr);
     align-self: center;
     align-items: start;
     align-content: center;
@@ -127,7 +127,7 @@
   .reader__item--fullscreen.reader__item--card-flow
   > .reader-card--simple-image.reader-card--rezka:has(> .reader-card__copy)
   > .reader-card__preview {
-    height: min(78dvh, calc(100dvh - 220px), 1050px, calc((100cqw - 258px) / var(--reader-media-aspect-ratio, 0.6667)));
+    height: min(78dvh, calc(100dvh - 220px), 1050px, calc((100cqw - var(--reader-rezka-panel-min-width) - 18px) / var(--reader-media-aspect-ratio, 0.6667)));
     width: auto;
     max-width: 100%;
     max-height: 100%;

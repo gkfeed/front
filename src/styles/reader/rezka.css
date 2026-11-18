@@ -1,3 +1,7 @@
+.reader-card--rezka {
+  --reader-rezka-panel-min-width: 400px;
+}
+
 /* Keep the poster and synopsis together, with the poster as the focus. */
 .reader-card--rezka .reader-card__rezka-panel {
   display: grid;
@@ -26,7 +30,7 @@
   .reader__item:has(> .reader-card--rezka) > .reader-card--rezka,
   .reader__item--fullscreen.reader__item--card-flow > .reader-card--simple-image.reader-card--rezka:has(> .reader-card__copy) {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(240px, 420px);
+    grid-template-columns: minmax(0, 1fr) minmax(var(--reader-rezka-panel-min-width), 420px);
     grid-template-rows: minmax(0, 1fr);
     width: min(100%, 1100px);
     justify-self: center;
