@@ -146,3 +146,37 @@
   letter-spacing: -0.04em;
   text-shadow: 0 1px 0 #855b20;
 }
+
+.reader-card__rezka-badge--netflix {
+  border-color: #b83340;
+  background: #251419;
+  color: #ffe9eb;
+}
+
+.reader-card__rezka-badge--netflix strong {
+  color: #ff4d5a;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.reader-card__rezka-badge--imdb {
+  border-color: #f5c518;
+  background: #f5c518;
+  color: #171300;
+}
+
+.reader-card__rezka-badge--imdb strong {
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.reader-card__rezka-badge--kinopoisk {
+  border-color: #ff7133;
+  background: #301b15;
+  color: #ffece2;
+}
+
+.reader-card__rezka-badge--kinopoisk strong {
+  color: #ff8b53;
+  font-weight: 800;
+}

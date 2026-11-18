@@ -131,6 +131,25 @@ function RezkaReleaseDate({ facts }: { facts: FeedItemCardModel }) {
   return date ? <p className="reader-card__rezka-date">{date}</p> : null;
 }
 
+function RezkaRatingBadges({ value }: { value: string }) {
+  const ratings = value.replace(/\s*\(\s*\d[\d\s.,]*\)/g, '').trim();
+  const scores = [...ratings.matchAll(/(imdb|кинопоиск)\s*:\s*(\d+(?:[.,]\d+)?)/giu)];
+  if (!scores.length) {
+    return ratings ? <span className="reader-card__rezka-badge" role="listitem">{ratings}</span> : null;
+  }
+
+  return scores.map(([, source, score], index) => {
+    const imdb = source?.toLowerCase() === 'imdb';
+    const modifier = imdb ? 'imdb' : 'kinopoisk';
+    const name = imdb ? 'IMDb' : 'Кинопоиск';
+    return (
+      <span className={`reader-card__rezka-badge reader-card__rezka-badge--${modifier}`} role="listitem" key={index}>
+        <strong>{name}</strong> {score}
+      </span>
+    );
+  });
+}
+
 function RezkaDetails({ facts }: { facts: FeedItemCardModel }) {
   const data = facts.openGraphPreview?.providerData;
   if (!isRezkaProviderData(data)) return null;
@@ -140,15 +159,19 @@ function RezkaDetails({ facts }: { facts: FeedItemCardModel }) {
     <div className="reader-card__rezka-details">
       {details.map(({ label, value }, index) => (
         <div className="reader-card__rezka-badges" role="list" aria-label={label} key={`${label}-${index}`}>
-          {(label === 'Рейтинги' ? [value] : value.split(',')).map((badge, badgeIndex) => (
-            label === 'Из серии' && badge.trim().toLocaleLowerCase('ru') === 'сериалы тнт' ? (
-              <span className="reader-card__rezka-badge reader-card__rezka-badge--tnt" role="listitem" key={badgeIndex}>
-                Сериалы <strong>ТНТ</strong>
+          {label === 'Рейтинги' ? <RezkaRatingBadges value={value} /> : value.split(',').map((badge, badgeIndex) => {
+            const text = badge.trim();
+            const brand = label === 'Из серии' ? /^сериалы\s+(тнт|netflix)$/iu.exec(text)?.[1]?.toUpperCase() : undefined;
+            if (!brand) {
+              return <span className="reader-card__rezka-badge" role="listitem" key={badgeIndex}>{text}</span>;
+            }
+            const modifier = brand === 'ТНТ' ? 'tnt' : 'netflix';
+            return (
+              <span className={`reader-card__rezka-badge reader-card__rezka-badge--${modifier}`} role="listitem" key={badgeIndex}>
+                Сериалы <strong>{brand}</strong>
               </span>
-            ) : (
-              <span className="reader-card__rezka-badge" role="listitem" key={badgeIndex}>{badge.trim()}</span>
-            )
-          ))}
+            );
+          })}
         </div>
       ))}
     </div>

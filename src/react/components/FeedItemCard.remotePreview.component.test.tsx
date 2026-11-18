@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { getArticlePreview, getPreview, item } from './FeedItemCard.component.testUtils';
@@ -148,7 +148,15 @@ describe('FeedItemCard remote and feed previews', () => {
       video: null,
       siteName: 'HDrezka',
       type: 'video.movie',
-      providerData: { provider: 'rezka' as const, details: [{ label: 'Страна', value: 'Россия' }, { label: 'Жанр', value: 'Комедия, Драма' }, { label: 'Дата выхода', value: '26 октября 2026 года' }] },
+      providerData: {
+        provider: 'rezka' as const,
+        details: [
+          { label: 'Рейтинги', value: 'IMDb: 8.1 (217 644) Кинопоиск: 7.90 (103 999)' },
+          { label: 'Страна', value: 'Россия' },
+          { label: 'Жанр', value: 'Комедия, Драма' },
+          { label: 'Дата выхода', value: '26 октября 2026 года' },
+        ],
+      },
     };
     let resolvePreview!: (value: typeof remotePreview) => void;
     getPreview.mockReturnValue(new Promise((resolve) => { resolvePreview = resolve; }));
@@ -171,6 +179,10 @@ describe('FeedItemCard remote and feed previews', () => {
     expect(screen.queryByText('Страна')).toBeNull();
     expect(screen.queryByText('Россия')).toBeNull();
     expect(screen.getByRole('list', { name: 'Жанр' })).toBeTruthy();
+    const ratings = within(screen.getByRole('list', { name: 'Рейтинги' })).getAllByRole('listitem');
+    expect(ratings.map((badge) => badge.textContent)).toEqual(['IMDb 8.1', 'Кинопоиск 7.90']);
+    expect(ratings[0]?.classList.contains('reader-card__rezka-badge--imdb')).toBe(true);
+    expect(ratings[1]?.classList.contains('reader-card__rezka-badge--kinopoisk')).toBe(true);
     expect(screen.getByText('26 октября 2026 года').previousElementSibling?.textContent).toBe('Story');
     expect(screen.getByText('Драма')).toBeTruthy();
     expect(screen.getByText('Комедия')).toBeTruthy();
