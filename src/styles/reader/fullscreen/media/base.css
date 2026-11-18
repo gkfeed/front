@@ -53,4 +53,51 @@
     -webkit-clip-path: inset(0 round 22px);
     clip-path: inset(0 round 22px);
   }
+
+  /* Paint the corners above images promoted to a separate fullscreen layer. */
+  .reader__item--fullscreen.reader__item--card-flow
+  :is(
+    .reader-card--vk > .reader-card__preview--image > .reader-card__image-surface,
+    .reader-card--reddit > a.reader-card__preview--image
+  )::before,
+  .reader__item--fullscreen.reader__item--card-flow
+  :is(
+    .reader-card--vk > .reader-card__preview--image > .reader-card__image-surface,
+    .reader-card--reddit > a.reader-card__preview--image
+  )::after {
+    content: "";
+    position: absolute;
+    z-index: 20;
+    inset-inline: 0;
+    height: 22px;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        circle at bottom right,
+        transparent 21px,
+        var(--color-page) 22px
+      ) top left / 22px 22px no-repeat,
+      radial-gradient(
+        circle at bottom left,
+        transparent 21px,
+        var(--color-page) 22px
+      ) top right / 22px 22px no-repeat;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  :is(
+    .reader-card--vk > .reader-card__preview--image > .reader-card__image-surface,
+    .reader-card--reddit > a.reader-card__preview--image
+  )::before {
+    top: 0;
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  :is(
+    .reader-card--vk > .reader-card__preview--image > .reader-card__image-surface,
+    .reader-card--reddit > a.reader-card__preview--image
+  )::after {
+    bottom: 0;
+    transform: scaleY(-1);
+  }
 }

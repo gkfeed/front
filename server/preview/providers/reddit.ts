@@ -1,5 +1,6 @@
 import { parseHTML } from 'linkedom';
 
+import { isRedditHostedImage } from '../../../shared/providerData/reddit.js';
 import { isRedditVideoUrl, normalizeHostname } from '../../../shared/urlRules.js';
 import { PreviewError } from '../errors.js';
 import { resolveHttpUrl } from '../html.js';
@@ -62,25 +63,36 @@ function parseRedditOpenGraph(html: string, pageUrl: URL) {
     ...Array.from(postBody?.querySelectorAll('img[src], a[href]') ?? []),
   ]
     .map((element) => resolveHttpUrl(element.getAttribute(element.tagName === 'IMG' ? 'src' : 'href'), pageUrl))
-    .find((source) => {
-      if (!source) return false;
-      const url = new URL(source);
-      return url.protocol === 'https:' && !url.username && !url.password && !url.port
-        && ['i.redd.it', 'preview.redd.it', 'external-preview.redd.it'].includes(url.hostname)
-        && /\.(?:jpe?g|png|gif|webp)$/i.test(url.pathname);
-    });
+    .find(isRedditHostedImage);
 
   const comments = Array.from(document.querySelectorAll('.commentarea .thing.comment')).slice(0, 50).flatMap((comment) => {
     const entry = comment.querySelector(':scope > .entry');
-    const text = entry?.querySelector('.usertext-body .md')?.textContent?.trim();
-    if (!text) return [];
+    const content = entry?.querySelector('.usertext-body .md');
+    const text = content?.textContent?.trim() ?? '';
+    const images = [...new Set(Array.from(content?.querySelectorAll('img[src], a[href]') ?? [])
+      .map((element) => resolveHttpUrl(element.getAttribute(element.tagName === 'IMG' ? 'src' : 'href'), pageUrl))
+      .filter(isRedditHostedImage))];
+    if (!text && images.length === 0) return [];
+
+    const id = comment.getAttribute('data-fullname')?.match(/^t1_([a-z0-9]+)$/i)?.[1];
     let depth = 0;
+    let replyTo: string | undefined;
     let parent = comment.parentElement;
     while (parent && !parent.classList.contains('commentarea')) {
-      if (parent.classList.contains('thing') && parent.classList.contains('comment')) depth++;
+      if (parent.classList.contains('thing') && parent.classList.contains('comment')) {
+        if (depth === 0) replyTo = parent.querySelector(':scope > .entry a.author')?.textContent?.trim() || '[deleted]';
+        depth++;
+      }
       parent = parent.parentElement;
     }
-    return [{ author: entry?.querySelector('a.author')?.textContent?.trim() || '[deleted]', text, depth: Math.min(depth, 3) }];
+    return [{
+      author: entry?.querySelector('a.author')?.textContent?.trim() || '[deleted]',
+      text,
+      depth,
+      ...(id && { id }),
+      ...(replyTo && { replyTo }),
+      ...(images.length > 0 && { images }),
+    }];
   });
   const author = post?.querySelector('a.author')?.textContent?.trim() || '';
   const details = post && (body || comments.length) ? { provider: 'reddit' as const, status: 'active' as const, body: body || '', author, comments } : null;

@@ -73,3 +73,39 @@ main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
     padding-right: 36px;
   }
 }
+
+@media (min-width: 900px) {
+  main[data-reader-fullscreen="true"] .reader__item--card-flow:has(
+    > .reader-card--reddit > .reader-card__preview--image
+  ):has(> .reader-card--reddit .reddit-discussion) {
+    width: min(100%, 1520px);
+  }
+
+  .reader__item--fullscreen.reader__item--card-flow
+  > .reader-card--reddit:has(> .reader-card__preview--image):has(.reddit-discussion) {
+    --reddit-image-max-height: calc(100dvh - 180px);
+    height: 100%;
+    grid-template-rows: minmax(0, max-content);
+    align-content: center;
+
+    > .reader-card__preview--image {
+      display: block;
+      width: var(--reddit-image-width);
+      height: auto;
+      align-self: start;
+      justify-self: end;
+    }
+
+    > .reader-card__preview--image > img {
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  main[data-reader-fullscreen="true"] .reader-card--reddit:has(
+    > .reader-card__preview--image
+  ):has(.reddit-discussion) .reader-card__title {
+    font-size: clamp(1.3rem, 2vw, 1.75rem);
+    line-height: 1.2;
+  }
+}

@@ -269,6 +269,9 @@ const en = {
   comments: {
     label: 'TikTok comments',
     title: 'Comments',
+    redditReply: 'Reply',
+    replyToRedditUser: 'Reply to u/{{user}}',
+    viewImageOnReddit: 'View image on Reddit',
     hide: 'Hide comments',
     show: 'Show comments',
     copyLink: 'Copy link',

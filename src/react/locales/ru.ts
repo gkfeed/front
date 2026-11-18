@@ -277,6 +277,9 @@ const ru = {
     descriptionMocha: 'Глубокая пастель',
   },
   comments: {
+    redditReply: 'Ответ',
+    replyToRedditUser: 'Ответ u/{{user}}',
+    viewImageOnReddit: 'Посмотреть изображение на Reddit',
     label: 'Комментарии TikTok',
     title: 'Комментарии',
     hide: 'Скрыть комментарии',

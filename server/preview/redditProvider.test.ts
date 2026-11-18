@@ -37,10 +37,13 @@ describe('Reddit post previews', () => {
 
   it('extracts the post and nested comments', () => {
     const html = `<div data-fullname="t3_1wrjlkh"><a class="author">alice</a><div class="usertext-body"><div class="md">Hello</div></div></div>
-      <div class="commentarea"><div class="thing comment"><div class="entry"><a class="author">bob</a><div class="usertext-body"><div class="md">Reply</div></div></div>
-      <div class="child"><div class="thing comment"><div class="entry"><a class="author">carol</a><div class="usertext-body"><div class="md">Nested</div></div></div></div></div></div></div>`;
+      <div class="commentarea"><div class="thing comment" data-fullname="t1_abc"><div class="entry"><a class="author">bob</a><div class="usertext-body"><div class="md">Reply</div></div></div>
+      <div class="child"><div class="thing comment" data-fullname="t1_def"><div class="entry"><a class="author">carol</a><div class="usertext-body"><div class="md">
+        <a href="https://i.redd.it/photo.png">&lt;image&gt;</a><a href="https://example.com/photo.png">Unrelated link</a>
+      </div></div></div></div></div></div></div>`;
     expect(parseOpenGraph(html, postUrl).providerData).toMatchObject({ body: 'Hello', author: 'alice', comments: [
-      { author: 'bob', text: 'Reply', depth: 0 }, { author: 'carol', text: 'Nested', depth: 1 },
+      { id: 'abc', author: 'bob', text: 'Reply', depth: 0 },
+      { id: 'def', author: 'carol', text: '<image>Unrelated link', depth: 1, replyTo: 'bob', images: ['https://i.redd.it/photo.png'] },
     ] });
   });
 

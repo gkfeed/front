@@ -25,45 +25,6 @@
     justify-self: center;
   }
 
-  /* Some fullscreen compositors promote a replaced image to its own square
-     layer and visually ignore clipping on both the image and its parent. The
-     two paint guards cover only the four corner cutouts, so the result stays
-     rounded even when that promoted layer bypasses overflow/clip-path. */
-  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
-  > .reader-card__preview--image > .reader-card__image-surface::before,
-  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
-  > .reader-card__preview--image > .reader-card__image-surface::after {
-    content: "";
-    position: absolute;
-    z-index: 20;
-    right: 0;
-    left: 0;
-    height: 22px;
-    pointer-events: none;
-    background:
-      radial-gradient(
-        circle at bottom right,
-        transparent 21px,
-        var(--color-page) 22px
-      ) top left / 22px 22px no-repeat,
-      radial-gradient(
-        circle at bottom left,
-        transparent 21px,
-        var(--color-page) 22px
-      ) top right / 22px 22px no-repeat;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
-  > .reader-card__preview--image > .reader-card__image-surface::before {
-    top: 0;
-  }
-
-  .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
-  > .reader-card__preview--image > .reader-card__image-surface::after {
-    bottom: 0;
-    transform: scaleY(-1);
-  }
-
   .reader__item--fullscreen.reader__item--card-flow > .reader-card--vk
   > .reader-card__preview > .reader-card__image-surface {
     position: relative;
