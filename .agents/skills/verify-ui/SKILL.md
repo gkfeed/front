@@ -45,6 +45,8 @@ Start each scenario from a known fixture URL. Exercise the relevant action and i
 
 Visually inspect the rendered UI and saved screenshots: content must be present, media correctly sized, text readable, and controls visible and usable without unintended clipping, overlap or horizontal overflow. DOM assertions and successful screenshots alone do not prove visual correctness. Check mobile-only behavior when affected. These viewport checks do not establish native mobile browser compatibility.
 
+When changing a Reader card's appearance, preserve the position, size and styling of the Reader controls unless the user asks to change them. Compare Keep, Delete and the fullscreen toggle before and after at the same viewport.
+
 Fix defects introduced by the current changes and repeat the affected checks. Report unrelated defects separately. If a repair requires a new product decision or exceeds the authorized task, explain the specific unresolved behavior.
 
 ## Evidence

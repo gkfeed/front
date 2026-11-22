@@ -433,6 +433,61 @@ test.describe('Fullscreen text card flow', () => {
   });
 });
 
+test('keeps the Spotify album title close to the fullscreen player without moving review actions', async ({ page }) => {
+  const link = 'https://open.spotify.com/album/5n9oHQlYB2XRQZqFrJILxx';
+  const title = 'Album preview';
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.addInitScript(() => {
+    localStorage.setItem('gkfeed.credentials', JSON.stringify({ username: 'automation', password: 'secret' }));
+  });
+  await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/v2/items/sync?**', (route) => route.fulfill({ json: {
+    items: [{ id: 1, feed_id: 1, link, title, text: '' }],
+    next_cursor: '', has_more: false, sync_cursor: 'sync',
+  } }));
+  await page.route('**/bff/open-graph?**', (route) => route.fulfill({ json: {
+    url: link,
+    title,
+    description: null,
+    image: 'https://example.com/album-cover.svg',
+    video: null,
+    siteName: 'Spotify',
+    type: 'music.album',
+    providerData: null,
+  } }));
+  await page.route('https://example.com/album-cover.svg', (route) => route.fulfill({
+    contentType: 'image/svg+xml',
+    body: '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="gold"/></svg>',
+  }));
+  await page.route('https://open.spotify.com/embed/album/**', (route) => route.fulfill({
+    contentType: 'text/html', body: '<p>Spotify album embed</p>',
+  }));
+  await page.route('https://open.spotify.com/embed/iframe-api/v1', (route) => route.abort());
+
+  await page.goto('/reader');
+  const cover = page.getByRole('button', { name: `Play ${title} on Spotify` });
+  await expect(cover).toBeVisible();
+  await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+  await expect(page.locator('#reader-review-panel')).toHaveClass(/reader__item--fullscreen/);
+
+  const actions = page.locator('.reader__actions');
+  const originalActions = await actions.boundingBox();
+  await cover.click();
+  const player = page.getByTitle(`Spotify player: ${title}`);
+  await expect(player).toBeVisible();
+  await expect(page.locator('.reader-card--spotify')).toHaveCSS('overflow-y', 'visible');
+  const preview = page.locator('.reader-card__preview--spotify-player');
+  const previewBox = (await preview.boundingBox())!;
+  const titleBox = (await page.getByRole('heading', { name: title }).boundingBox())!;
+
+  expect(previewBox.width).toBeGreaterThanOrEqual(600);
+  expect(previewBox.height).toBe(352);
+  const titleGap = titleBox.y - (previewBox.y + previewBox.height);
+  expect(titleGap).toBeGreaterThanOrEqual(0);
+  expect(titleGap).toBeLessThanOrEqual(24);
+  expect(await actions.boundingBox()).toEqual(originalActions);
+});
+
 test.describe('TikTok player on iPad-sized readers', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/list', (route) => route.fulfill({ json: [] }));

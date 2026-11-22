@@ -99,13 +99,27 @@
     height: 100%;
   }
 
+  /* Keep the title with the fixed-height embed inside the media row. */
   .reader__item--fullscreen.reader__item--card-flow
-  > .reader-card--spotify:has(> .reader-card__preview--spotify-player)
-  > .reader-card__preview--spotify-player {
-    width: 100%;
-    height: 152px;
-    aspect-ratio: auto;
-    overflow: hidden;
+  > .reader-card--spotify:has(> .reader-card__preview--spotify-player) {
+    display: grid;
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: max-content max-content;
+    align-self: center;
+    justify-items: center;
+    gap: 14px;
+
+    > .reader-card__preview--spotify-player {
+      display: block;
+      width: min(100%, 640px);
+      overflow: hidden;
+    }
+
+    .reader-card__title {
+      padding: 0;
+      text-align: center;
+    }
   }
 }
 
