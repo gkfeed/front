@@ -416,20 +416,23 @@ test.describe('Fullscreen text card flow', () => {
       const item = document.querySelector<HTMLElement>('.reader__item')!.getBoundingClientRect();
       const card = document.querySelector<HTMLElement>('.reader-card')!.getBoundingClientRect();
       const actions = document.querySelector<HTMLElement>('.reader__actions')!.getBoundingClientRect();
+      const reader = document.querySelector<HTMLElement>('.reader')!.getBoundingClientRect();
       return {
         itemHeight: item.height,
         itemCenter: item.top + item.height / 2,
         cardHeight: card.height,
         cardActionsGap: actions.top - card.bottom,
+        readerCenter: reader.top + reader.height / 2,
+        actionsBottom: actions.bottom,
         viewportHeight: window.innerHeight,
       };
     });
 
     expect(bounds.cardHeight).toBeLessThanOrEqual(360);
     expect(bounds.itemHeight).toBeLessThan(bounds.viewportHeight * 0.6);
-    expect(Math.abs(bounds.itemCenter - bounds.viewportHeight / 2)).toBeLessThanOrEqual(2);
+    expect(Math.abs(bounds.itemCenter - bounds.readerCenter)).toBeLessThanOrEqual(10);
     expect(bounds.cardActionsGap).toBeGreaterThanOrEqual(0);
-    expect(bounds.cardActionsGap).toBeLessThanOrEqual(24);
+    expect(bounds.actionsBottom).toBe(bounds.viewportHeight - 12);
   });
 });
 
@@ -1265,8 +1268,8 @@ test.describe('TikTok player on iPad-sized readers', () => {
     expect(bounds.documentWidth).toBeLessThanOrEqual(bounds.viewportWidth);
     expect(bounds.itemRight).toBeLessThanOrEqual(bounds.viewportWidth);
     expect(bounds.actionsRight).toBeLessThanOrEqual(bounds.viewportWidth);
-    expect(Math.abs(bounds.itemWidth - bounds.actionsWidth)).toBeLessThan(1);
-    expect(Math.abs(bounds.itemLeft - bounds.actionsLeft)).toBeLessThan(1);
+    expect(bounds.actionsWidth).toBe(688);
+    expect(bounds.actionsLeft + bounds.actionsWidth / 2).toBe(bounds.viewportWidth / 2);
     expect(Math.abs(bounds.itemWidth - bounds.cardWidth)).toBeLessThan(1);
     expect(bounds.imageWidth).toBeLessThanOrEqual(bounds.previewWidth);
     expect(bounds.imageHeight).toBeLessThanOrEqual(bounds.previewHeight);

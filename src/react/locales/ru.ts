@@ -154,6 +154,7 @@ const ru = {
     reviewedEverything: 'Вы просмотрели всё',
     switchToScroll: 'Переключитесь на прокрутку, чтобы снова просмотреть все элементы.',
     reviewView: 'Режим просмотра',
+    postText: 'Текст поста',
     currentItemAnnouncement: 'Текущий элемент: {{title}}. Осталось: {{count}}.',
     scrollView: 'Режим прокрутки',
     pageControls: 'Страницы режима прокрутки',

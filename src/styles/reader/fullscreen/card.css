@@ -3,18 +3,18 @@ main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
   line-height: 1.08;
 }
 
-/* Review mode is a three-row frame: the card uses the flexible viewport row,
-   while decisions and progress always keep their own rows below it. */
+/* Media cards share the available height with the progress row. */
 @media (min-width: 641px) {
   .reader__item--fullscreen.reader__item--card-flow {
     width: min(100%, 1200px);
     height: calc(
-      100dvh
-      - 2 * max(28px, calc(env(safe-area-inset-top) + 20px))
+      var(--reader-fullscreen-content-height)
+      - var(--reader-fullscreen-padding-top)
+      - var(--reader-fullscreen-content-bottom)
     );
     min-width: 0;
     min-height: 0;
-    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     justify-self: center;
   }
 
@@ -27,7 +27,7 @@ main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
   /* Match summaries have no media to fill the flexible card row. */
   .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card--liveball) {
     height: fit-content;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto;
   }
 
   .reader__item--fullscreen .liveball-match__teams {
@@ -44,8 +44,7 @@ main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
     max-height: 100%;
   }
 
-  /* Text-only cards should keep their natural height. Centering within the
-     flexible row preserves the position of the controls below. */
+  /* Text-only cards keep their natural height in the scrollable area. */
   .reader__item--fullscreen.reader__item--card-flow
   > .reader-card:has(> .reader-card__copy):not(:has(> .reader-card__preview)) {
     height: fit-content;
@@ -53,7 +52,7 @@ main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
   }
 
   .reader__item--fullscreen.reader__item--card-flow
-  > :is(.reader__actions, .reader__count-row) {
+  > .reader__count-row {
     width: 100%;
     min-width: 0;
   }
@@ -83,7 +82,7 @@ main[data-reader-fullscreen="true"] .reader-card--reddit .reader-card__title {
 
   .reader__item--fullscreen.reader__item--card-flow
   > .reader-card--reddit:has(> .reader-card__preview--image):has(.reddit-discussion) {
-    --reddit-image-max-height: calc(100dvh - 180px);
+    --reddit-image-max-height: calc(var(--reader-fullscreen-content-height) - 120px);
     height: 100%;
     grid-template-rows: minmax(0, max-content);
     align-content: center;

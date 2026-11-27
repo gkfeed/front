@@ -42,18 +42,6 @@ export function isAutomaticFallbackFullscreen(): boolean {
   return automaticFallbackFullscreen;
 }
 
-export function rememberReviewActionsSize(main: HTMLElement): void {
-  const actions = document.querySelector<HTMLElement>('.reader__actions:not([hidden])');
-  if (!actions) return;
-
-  const { height } = actions.getBoundingClientRect();
-  if (height > 0) main.style.setProperty('--reader-actions-height', `${height}px`);
-}
-
-export function clearReviewActionsSize(main: HTMLElement | null): void {
-  main?.style.removeProperty('--reader-actions-height');
-}
-
 export function isReaderFullscreen(): boolean {
   const main = getMainElement();
   return main !== null && (
@@ -71,7 +59,6 @@ export async function exitReaderFullscreen(): Promise<void> {
     setFallbackFullscreen(false);
   }
   setNativeFullscreenAttribute(main, false);
-  clearReviewActionsSize(main);
 
   if (fullscreenElement !== main) return;
   if (document.exitFullscreen) await document.exitFullscreen();

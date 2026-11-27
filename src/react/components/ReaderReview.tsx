@@ -48,6 +48,10 @@ export function ReaderReview({
   });
   const feedTitle = sourceTitle || t('feedScores.unknownFeed', { id: item.feedId });
   const reviewActions = { isDeleting, onKeep, onDelete };
+  useLayoutEffect(() => {
+    const scrollport = reviewPanelRef.current?.closest<HTMLElement>('.reader');
+    if (isFullscreen && scrollport) scrollport.scrollTop = 0;
+  }, [isFullscreen, item.id, reviewPanelRef]);
   useEffect(() => {
     const postId = isTikTok ? item.link.match(/\/(?:video|v)\/(\d+)/)?.[1] : undefined;
     readerDiagnostic('item-current', item.id, postId ? `tiktok:${postId}` : undefined);
