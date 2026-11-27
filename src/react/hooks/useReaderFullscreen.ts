@@ -2,12 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 
 import {
   FALLBACK_FULLSCREEN_EVENT,
-  clearReviewActionsSize,
   type FullscreenDocument,
   type FullscreenElement,
   getFullscreenElement,
   getMainElement,
-  rememberReviewActionsSize,
   setFallbackFullscreen,
   setNativeFullscreenAttribute,
 } from '../platform/readerFullscreen';
@@ -32,7 +30,6 @@ export function useReaderFullscreen(enableKeyboardShortcut: boolean) {
       const isFallback = document.documentElement.dataset.readerFullscreen === 'true';
       setIsFallbackFullscreen(isFallback);
       setIsFullscreen(isNativeFullscreen || isFallback);
-      if (!isNativeFullscreen && !isFallback) clearReviewActionsSize(main);
     };
     syncNativeFullscreen();
 
@@ -45,7 +42,6 @@ export function useReaderFullscreen(enableKeyboardShortcut: boolean) {
       document.removeEventListener(FALLBACK_FULLSCREEN_EVENT, syncFallbackFullscreen);
       setNativeFullscreenAttribute(main, false);
       setFallbackFullscreen(false);
-      clearReviewActionsSize(main);
     };
   }, []);
 
@@ -58,11 +54,9 @@ export function useReaderFullscreen(enableKeyboardShortcut: boolean) {
       setFallbackFullscreen(false);
       setIsFallbackFullscreen(false);
       setIsFullscreen(false);
-      clearReviewActionsSize(main);
       return;
     }
 
-    rememberReviewActionsSize(main);
     try {
       if (getFullscreenElement()) {
         if (document.exitFullscreen) await document.exitFullscreen();
@@ -104,13 +98,11 @@ export function useReaderFullscreen(enableKeyboardShortcut: boolean) {
 
   useEffect(() => {
     if (!isFallbackFullscreen) return;
-    const main = getMainElement();
     const exitOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       setFallbackFullscreen(false);
       setIsFallbackFullscreen(false);
       setIsFullscreen(false);
-      clearReviewActionsSize(main);
     };
     document.addEventListener('keydown', exitOnEscape);
     return () => document.removeEventListener('keydown', exitOnEscape);

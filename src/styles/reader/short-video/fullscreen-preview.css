@@ -1,15 +1,16 @@
 @media (min-width: 641px) {
-  /* Photo posts opt into the same three-row review frame as card-flow media,
+  /* Photo posts opt into the same review frame as card-flow media,
      without making the generic fullscreen shell depend on Instagram markup. */
   .reader__item--fullscreen:has(> .reader-card--instagram-photo) {
     width: min(100%, 960px);
     height: calc(
-      100dvh
-      - 2 * max(28px, calc(env(safe-area-inset-top) + 20px))
+      var(--reader-fullscreen-content-height)
+      - var(--reader-fullscreen-padding-top)
+      - var(--reader-fullscreen-content-bottom)
     );
     min-width: 0;
     min-height: 0;
-    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     justify-self: center;
   }
 
@@ -21,13 +22,13 @@
   }
 
   .reader__item--fullscreen:has(> .reader-card--instagram-photo)
-  > :is(.reader__actions, .reader__count-row) {
+  > .reader__count-row {
     width: 100%;
     min-width: 0;
   }
 
   main[data-reader-fullscreen="true"] .reader__item .reader-card__preview--short-video {
-    width: calc(56.25dvh - 16px);
+    width: calc(max(0px, var(--reader-fullscreen-content-height) - 96px) * 9 / 16);
   }
 
   /* Instagram photo posts share the short-video markup, but their aspect ratio

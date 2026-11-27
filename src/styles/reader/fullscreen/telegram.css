@@ -1,0 +1,44 @@
+@media (min-width: 641px) {
+  .reader__item--fullscreen.reader__item--card-flow:has(> .reader-card--telegram) {
+    height: fit-content;
+  }
+}
+
+@media (min-width: 641px) and (min-height: 600px) {
+  .reader__item--fullscreen.reader__item--card-flow:has(
+    > .reader-card--telegram > .reader-card__vk-carousel
+  ):has(.telegram-post__content) {
+    height: calc(
+      var(--reader-fullscreen-content-height)
+      - var(--reader-fullscreen-padding-top)
+      - var(--reader-fullscreen-content-bottom)
+    );
+  }
+
+  .reader__item--fullscreen .reader-card--telegram:has(> .reader-card__vk-carousel):has(.telegram-post__content) {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .reader__item--fullscreen .reader-card--telegram:has(> .reader-card__vk-carousel) .telegram-post {
+    grid-template-rows: minmax(0, auto) auto;
+    align-content: start;
+  }
+
+  .reader__item--fullscreen .reader-card--telegram:has(> .reader-card__vk-carousel) .telegram-post__content {
+    min-block-size: 0;
+    overflow-y: auto;
+  }
+
+  .reader__item--fullscreen .telegram-post__content pre {
+    white-space: pre-wrap;
+  }
+
+  .telegram-post__content[tabindex="0"] {
+    overscroll-behavior-y: contain;
+  }
+
+  .telegram-post__content:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
+}

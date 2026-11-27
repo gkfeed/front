@@ -1,0 +1,46 @@
+main[data-reader-fullscreen="true"] {
+  --reader-fullscreen-action-height: 52px;
+  --reader-fullscreen-action-bottom: max(12px, env(safe-area-inset-bottom));
+  --reader-fullscreen-content-bottom: 12px;
+  --reader-fullscreen-actions-space: calc(
+    var(--reader-fullscreen-action-height) + var(--reader-fullscreen-action-bottom) + 12px
+  );
+  --reader-fullscreen-content-height: calc(100dvh - var(--reader-fullscreen-actions-space));
+}
+
+/* Keep the scrollport above the buttons so the last line stays reachable. */
+main[data-reader-fullscreen="true"] .reader:has(> .reader__item--fullscreen) {
+  height: var(--reader-fullscreen-content-height);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  align-content: safe center;
+  padding-bottom: var(--reader-fullscreen-content-bottom);
+}
+
+main[data-reader-fullscreen="true"] .reader__item--fullscreen > .reader__actions {
+  position: fixed;
+  z-index: 20;
+  inset: auto max(12px, env(safe-area-inset-right)) var(--reader-fullscreen-action-bottom) max(12px, env(safe-area-inset-left));
+  display: grid;
+  width: auto;
+  max-width: 688px;
+  margin-inline: auto;
+  justify-self: stretch;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+main[data-reader-fullscreen="true"] .reader__item--fullscreen > .reader__actions button {
+  height: var(--reader-fullscreen-action-height);
+  min-height: var(--reader-fullscreen-action-height);
+}
+
+@media (max-width: 640px) {
+  main[data-reader-fullscreen="true"] {
+    --reader-fullscreen-action-height: 48px;
+  }
+
+  main[data-reader-fullscreen="true"] .reader__mobile-decisions :is(.reader__mobile-keep, .reader__mobile-delete) {
+    display: none;
+  }
+}

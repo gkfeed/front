@@ -1,4 +1,5 @@
-import { createElement, type ReactNode } from 'react';
+import { createElement, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FeedItem } from '../types';
 import { VkImageCarousel } from './previews/VkImageCarousel';
 
@@ -48,7 +49,7 @@ export function TelegramPost({ item, sourceTitle }: { item: FeedItem; sourceTitl
     {images.length > 0 ? <VkImageCarousel key={item.link} href={item.link} hostname="Telegram"
       preview={{ src: images[0], imageUrls: images, alt: item.title || 'Telegram' }} onPreviewError={() => {}} /> : null}
     <div className="reader-card__copy telegram-post">
-      {hasText ? <div className="telegram-post__content">{content}</div> : null}
+      {hasText ? <TelegramPostText hasPhotos={images.length > 0}>{content}</TelegramPostText> : null}
       {!hasText && images.length === 0 ? <a href={item.link} target="_blank" rel="noopener noreferrer">Telegram ↗</a> : null}
       <a className="telegram-post__channel" href={`https://t.me/${channel}`} target="_blank" rel="noopener noreferrer">
         <svg className="telegram-post__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="12" fill="#2aabee" /><path d="M5 11.6 18.1 6.5c.6-.2 1.1.2.9 1l-2.2 10.3c-.2.7-.6.9-1.2.6l-3.4-2.5-1.6 1.6c-.2.2-.3.3-.6.3l.2-3.5 6.3-5.7c.3-.2-.1-.4-.4-.2l-7.8 4.9-3.4-1.1c-.7-.2-.7-.5.1-.8Z" fill="#fff" /></svg>
@@ -56,4 +57,38 @@ export function TelegramPost({ item, sourceTitle }: { item: FeedItem; sourceTitl
       </a>
     </div>
   </>;
+}
+
+function TelegramPostText({ children, hasPhotos }: { children: ReactNode; hasPhotos: boolean }) {
+  const { t } = useTranslation();
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [scrollable, setScrollable] = useState(false);
+  const isScrollable = hasPhotos && scrollable;
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const body = bodyRef.current;
+    if (!hasPhotos || !viewport || !body || typeof ResizeObserver === 'undefined') return;
+
+    const update = () => {
+      setScrollable(viewport.scrollHeight > viewport.clientHeight && getComputedStyle(viewport).overflowY === 'auto');
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(viewport);
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, [hasPhotos]);
+
+  return (
+    <div
+      className="telegram-post__content"
+      ref={viewportRef}
+      tabIndex={isScrollable ? 0 : undefined}
+      role={isScrollable ? 'region' : undefined}
+      aria-label={isScrollable ? t('reader.postText') : undefined}
+    >
+      <div ref={bodyRef}>{children}</div>
+    </div>
+  );
 }

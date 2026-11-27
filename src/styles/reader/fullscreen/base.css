@@ -31,15 +31,6 @@ html[data-reader-fullscreen="true"] main .reader {
   min-height: 100dvh;
 }
 
-main[data-reader-fullscreen="true"] .reader__actions {
-  width: 100%;
-}
-
-main[data-reader-fullscreen="true"] .reader__actions button {
-  height: var(--reader-actions-height, 52px);
-  min-height: var(--reader-actions-height, 52px);
-}
-
 main[data-reader-fullscreen="true"] .reader__fullscreen-toolbar {
   display: block;
   position: fixed;

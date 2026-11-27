@@ -8,13 +8,14 @@ main[data-reader-fullscreen="true"] :is(.reader__item, .reader__scroll-panel) {
   max-width: min(100%, 1600px);
 }
 
-/* Keep a regular review card and its actions inside the fullscreen viewport. */
+/* Center the review content above the fixed actions. */
 @media (min-width: 641px) {
   main[data-reader-fullscreen="true"] .reader {
     align-content: center;
     gap: clamp(14px, 1.8vh, 22px);
     min-height: 100dvh;
-    padding-top: max(28px, calc(env(safe-area-inset-top) + 20px));
+    --reader-fullscreen-padding-top: max(28px, calc(env(safe-area-inset-top) + 20px));
+    padding-top: var(--reader-fullscreen-padding-top);
     padding-right: clamp(20px, 4vw, 72px);
     padding-bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px));
     padding-left: clamp(20px, 4vw, 72px);

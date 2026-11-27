@@ -74,3 +74,49 @@ test('serves deterministic gallery and video assets', async ({ page }) => {
   }))
     .toEqual({ width: 480, height: 270, duration: 3 });
 });
+
+test('keeps fullscreen actions fixed while a Telegram caption scrolls', async ({ page }) => {
+  const name = `telegram-fullscreen-${test.info().workerIndex}.local`;
+  const path = `dev/reader-fixtures/${name}.json`;
+  await writeFile(path, JSON.stringify({
+    id: 90211,
+    feed_id: 42,
+    link: 'https://t.me/fixture/90211',
+    title: 'Telegram photo post',
+    text: '<img src="{{origin}}/__fixtures/assets/square-1.svg">' + Array.from({ length: 36 }, (_, index) =>
+      `<p>Paragraph ${index + 1} of a long Telegram caption.</p>`).join(''),
+  }));
+  try {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.goto(`/__verify/${name}/reader?view=review`);
+    const photo = page.locator('.reader-card__vk-carousel img');
+    await expect(photo).toBeVisible();
+    await photo.evaluate((image: HTMLImageElement) => image.decode());
+    await page.getByRole('button', { name: 'Open Reader fullscreen' }).click();
+
+    const caption = page.getByRole('region', { name: 'Post text' });
+    const actions = page.locator('.reader__actions');
+    const keep = actions.getByRole('button', { name: 'Keep', exact: true });
+    const remove = actions.getByRole('button', { name: 'Delete', exact: true });
+    await expect(caption).toHaveAttribute('tabindex', '0');
+    const originalActions = await actions.boundingBox();
+    expect(originalActions).toEqual({ x: 339, y: 704, width: 688, height: 52 });
+    const keepBox = await keep.boundingBox();
+    const deleteBox = await remove.boundingBox();
+    expect(keepBox?.width).toBe(deleteBox?.width);
+    expect(keepBox?.height).toBe(deleteBox?.height);
+
+    await caption.focus();
+    await page.keyboard.press('End');
+    await expect.poll(() => caption.evaluate((element) => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThan(1);
+    expect(await page.locator('.reader').evaluate((element) => element.scrollTop)).toBe(0);
+    expect(await actions.boundingBox()).toEqual(originalActions);
+    await page.keyboard.press('Tab');
+    await expect(page.locator('.telegram-post__channel')).toBeFocused();
+    await page.locator('main').getByRole('button', { name: 'Exit Reader fullscreen' }).click();
+    await expect(caption).toHaveCount(0);
+    await expect(actions).toHaveCSS('position', 'static');
+  } finally {
+    await unlink(path);
+  }
+});

@@ -146,6 +146,7 @@ const en = {
     reviewedEverything: 'You’ve reviewed everything',
     switchToScroll: 'Switch to Scroll to browse all items again.',
     reviewView: 'Review view',
+    postText: 'Post text',
     currentItemAnnouncement: 'Current item: {{title}}. {{count}} remaining.',
     scrollView: 'Scroll view',
     pageControls: 'Scroll view pages',
